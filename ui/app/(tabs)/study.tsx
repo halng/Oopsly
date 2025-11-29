@@ -1,8 +1,24 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated } from 'react-native';
-import { FlipCardProps, Flashcard } from '../types';
 import { ChevronLeft, RotateCcw } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+
+interface Flashcard {
+  id: string;
+  front: string;
+  back: string;
+  deckId: string;
+  nextReview: Date;
+  interval: number;
+  easeFactor: number;
+  repetitions: number;
+}
+
+interface FlipCardProps {
+  front: string;
+  back: string;
+  flipped: Animated.Value;
+}
 
 // Mock data for flashcards
 const mockCards: Flashcard[] = [
