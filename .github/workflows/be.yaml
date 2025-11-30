@@ -1,0 +1,43 @@
+name: BE - CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'api/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'api/**'
+
+jobs:
+  style-check:
+    name: Check code conventions for api/
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Run Java style check (google-java-format)
+        run: |
+          if find api -name '*.java' -print -quit | grep -q .; then
+            JAR="/tmp/google-java-format.jar"
+            curl -sSL -o "$JAR" "https://github.com/google/google-java-format/releases/download/v1.15.0/google-java-format-1.15.0-all-deps.jar"
+            # fail if any java file is not formatted
+            find api -name '*.java' -print0 | xargs -0 java -jar "$JAR" --dry-run --set-exit-if-changed || {
+              echo "Java files are not formatted according to google-java-format"
+              exit 1
+            }
+            echo "Java files conform to google-java-format."
+          else
+            echo "No Java files found in api/"
+          fi

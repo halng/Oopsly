@@ -1,0 +1,51 @@
+name: UI CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ui/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'ui/**'
+
+jobs:
+  install:
+    name: Install dependencies (ui)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [18, 20, 21]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install packages in ui
+        working-directory: ui
+        run: |
+          set -e
+          if [ -f pnpm-lock.yaml ]; then
+            npm install -g pnpm
+            pnpm install --frozen-lockfile
+          elif [ -f yarn.lock ]; then
+            corepack enable
+            corepack prepare yarn@stable --activate
+            yarn install --frozen-lockfile
+          elif [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+            - name: Node (eslint - google) setup
+      - name: Run JS style check (eslint)
+        working-directory: ui
+        run: pnpm run lint
