@@ -1,0 +1,70 @@
+name: security-scans
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+  schedule:
+    - cron: '0 2 * * 0' # weekly Sunday 02:00 UTC
+
+concurrency:
+  group: security-scans-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
+jobs:
+  codeql:
+    name: CodeQL analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          # omit languages to let CodeQL autodetect, or list languages e.g. "javascript,python,go"
+          languages: javascript,java
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Run CodeQL analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: security
+
+  snyk:
+    name: Snyk scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Snyk CLI
+        uses: snyk/actions/setup@v3
+        with:
+          # use a pinned version if desired, e.g. '1.148.0'
+          version: 'latest'
+
+      - name: Authenticate Snyk
+        run: snyk auth $SNYK_TOKEN
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Run Snyk test
+        uses: snyk/actions/test@v2
+        with:
+          fail-on: 'high'
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Send results to Snyk monitor
+        uses: snyk/actions/monitor@v1
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
