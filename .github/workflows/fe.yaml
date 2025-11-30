@@ -45,7 +45,6 @@ jobs:
           else
             npm install
           fi
-            - name: Node (eslint - google) setup
       - name: Run JS style check (eslint)
         working-directory: ui
         run: pnpm run lint
