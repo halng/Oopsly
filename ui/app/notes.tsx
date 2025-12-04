@@ -11,6 +11,7 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native';
 import {
   Search,
@@ -27,8 +28,23 @@ import {
   Underline,
   List,
   Hash,
+  PenTool,
+  Square,
+  Circle,
+  Type,
+  Palette,
+  Eraser,
+  RotateCcw,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { GestureHandlerRootView, PanGestureHandler } from 'react-native-gesture-handler';
+import Animated, {
+  useAnimatedGestureHandler,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  runOnJS,
+} from 'react-native-reanimated';
 
 // Types
 type Note = {
@@ -38,6 +54,7 @@ type Note = {
   subject: string;
   createdAt: string;
   updatedAt: string;
+  drawings?: DrawingPath[]; // Added for storing drawings
 };
 
 type Subject = {
@@ -45,6 +62,20 @@ type Subject = {
   name: string;
   color: string;
 };
+
+type DrawingPath = {
+  id: string;
+  points: Point[];
+  color: string;
+  strokeWidth: number;
+};
+
+type Point = {
+  x: number;
+  y: number;
+};
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const NotesScreen = () => {
   const router = useRouter();
@@ -56,6 +87,7 @@ const NotesScreen = () => {
       subject: 'math',
       createdAt: '2023-05-15T10:30:00Z',
       updatedAt: '2023-05-15T10:30:00Z',
+      drawings: [],
     },
     {
       id: '2',
@@ -64,6 +96,7 @@ const NotesScreen = () => {
       subject: 'history',
       createdAt: '2023-05-14T14:20:00Z',
       updatedAt: '2023-05-14T14:20:00Z',
+      drawings: [],
     },
     {
       id: '3',
@@ -72,6 +105,7 @@ const NotesScreen = () => {
       subject: 'biology',
       createdAt: '2023-05-12T09:15:00Z',
       updatedAt: '2023-05-12T09:15:00Z',
+      drawings: [],
     },
   ]);
 
@@ -94,8 +128,16 @@ const NotesScreen = () => {
   });
   const [showFormattingToolbar, setShowFormattingToolbar] = useState<boolean>(false);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+  const [isDrawingMode, setIsDrawingMode] = useState<boolean>(false); // New state for drawing mode
+  
+  // Drawing states
+  const [currentColor, setCurrentColor] = useState<string>('#000000');
+  const [strokeWidth, setStrokeWidth] = useState<number>(3);
+  const [drawingPaths, setDrawingPaths] = useState<DrawingPath[]>([]);
+  const [tempPath, setTempPath] = useState<Point[]>([]);
   
   const contentRef = useRef<TextInput>(null);
+  const drawingCanvasRef = useRef<View>(null);
 
   // Filter notes based on subject and search query
   const filteredNotes = notes.filter(note => {
@@ -122,6 +164,7 @@ const NotesScreen = () => {
       subject: newNote.subject,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      drawings: [],
     };
 
     setNotes([note, ...notes]);
@@ -187,6 +230,48 @@ const NotesScreen = () => {
           : note
       ));
     }
+  };
+
+  // Drawing functions
+  const handleDraw = (point: Point) => {
+    setTempPath(prev => [...prev, point]);
+  };
+
+  const startDrawing = (point: Point) => {
+    setTempPath([point]);
+  };
+
+  const endDrawing = () => {
+    if (tempPath.length > 0) {
+      const newPath: DrawingPath = {
+        id: Math.random().toString(36).substring(7),
+        points: [...tempPath],
+        color: currentColor,
+        strokeWidth: strokeWidth,
+      };
+      setDrawingPaths(prev => [...prev, newPath]);
+      setTempPath([]);
+    }
+  };
+
+  // Save drawing to note
+  const saveDrawingToNote = () => {
+    if (!activeNoteId) return;
+    
+    setNotes(notes.map(note => 
+      note.id === activeNoteId 
+        ? { ...note, drawings: [...(note.drawings || []), ...drawingPaths], updatedAt: new Date().toISOString() } 
+        : note
+    ));
+    
+    setDrawingPaths([]);
+    setIsDrawingMode(false);
+  };
+
+  // Clear current drawing
+  const clearDrawing = () => {
+    setDrawingPaths([]);
+    setTempPath([]);
   };
 
   // Render subject selector
@@ -274,6 +359,165 @@ const NotesScreen = () => {
       </TouchableOpacity>
     );
   };
+
+  // Render drawing toolbar
+  const renderDrawingToolbar = () => (
+    <View className="absolute bottom-4 left-0 right-0">
+      <View className="bg-white mx-4 rounded-xl shadow-lg p-3">
+        {/* Color picker */}
+        <View className="flex-row justify-between mb-3">
+          {['#000000', '#FF0000', '#0000FF', '#00FF00', '#FFA500'].map(color => (
+            <TouchableOpacity
+              key={color}
+              className="w-8 h-8 rounded-full border-2 border-gray-300"
+              style={{ backgroundColor: color }}
+              onPress={() => setCurrentColor(color)}
+            >
+              {currentColor === color && (
+                <View className="w-4 h-4 rounded-full bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+        
+        {/* Brush size and tools */}
+        <View className="flex-row justify-between items-center">
+          <View className="flex-row items-center">
+            <TouchableOpacity
+              className="p-2"
+              onPress={() => setStrokeWidth(Math.max(1, strokeWidth - 1))}
+            >
+              <Text className="text-gray-700">-</Text>
+            </TouchableOpacity>
+            
+            <View 
+              className="mx-2 rounded-full bg-gray-300"
+              style={{ 
+                width: strokeWidth * 4, 
+                height: strokeWidth * 4 
+              }}
+            />
+            
+            <TouchableOpacity
+              className="p-2"
+              onPress={() => setStrokeWidth(Math.min(20, strokeWidth + 1))}
+            >
+              <Text className="text-gray-700">+</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View className="flex-row">
+            <TouchableOpacity
+              className="p-2 mx-1"
+              onPress={clearDrawing}
+            >
+              <RotateCcw size={20} color="#4B5563" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              className="p-2 mx-1"
+              onPress={() => setCurrentColor('#FFFFFF')} // Simple eraser
+            >
+              <Eraser size={20} color="#4B5563" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              className="p-2 mx-1 bg-blue-500 rounded-lg"
+              onPress={saveDrawingToNote}
+            >
+              <Text className="text-white font-bold">Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
+  // Render drawing canvas
+  const renderDrawingCanvas = () => (
+    <View className="flex-1">
+      <GestureHandlerRootView className="flex-1">
+        <PanGestureHandler
+          onGestureEvent={(event) => {
+            const { absoluteX, absoluteY } = event.nativeEvent;
+            drawingCanvasRef.current?.measure((x, y, width, height, pageX, pageY) => {
+              const point: Point = {
+                x: absoluteX - pageX,
+                y: absoluteY - pageY,
+              };
+              handleDraw(point);
+            });
+          }}
+          onBegan={(event) => {
+            const { absoluteX, absoluteY } = event.nativeEvent;
+            drawingCanvasRef.current?.measure((x, y, width, height, pageX, pageY) => {
+              const point: Point = {
+                x: absoluteX - pageX,
+                y: absoluteY - pageY,
+              };
+              startDrawing(point);
+            });
+          }}
+          onEnded={endDrawing}
+        >
+          <View 
+            ref={drawingCanvasRef}
+            className="flex-1 bg-white"
+          >
+            {/* Existing drawings */}
+            {activeNote?.drawings?.map(drawing => (
+              <View key={drawing.id} className="absolute inset-0">
+                {drawing.points.map((point, index) => {
+                  if (index === 0) return null;
+                  const prevPoint = drawing.points[index - 1];
+                  return (
+                    <View
+                      key={`${drawing.id}-${index}`}
+                      className="absolute"
+                      style={{
+                        left: prevPoint.x,
+                        top: prevPoint.y,
+                        width: Math.abs(point.x - prevPoint.x) || 1,
+                        height: Math.abs(point.y - prevPoint.y) || 1,
+                        backgroundColor: drawing.color,
+                        borderRadius: drawing.strokeWidth,
+                      }}
+                    />
+                  );
+                })}
+              </View>
+            ))}
+            
+            {/* Current drawing path */}
+            <View className="absolute inset-0">
+              {[...drawingPaths, { id: 'temp', points: tempPath, color: currentColor, strokeWidth }].map(path => (
+                path.points.map((point, index) => {
+                  if (index === 0) return null;
+                  const prevPoint = path.points[index - 1];
+                  return (
+                    <View
+                      key={`${path.id}-${index}`}
+                      className="absolute"
+                      style={{
+                        left: prevPoint.x,
+                        top: prevPoint.y,
+                        width: Math.abs(point.x - prevPoint.x) || 1,
+                        height: Math.abs(point.y - prevPoint.y) || 1,
+                        backgroundColor: path.color,
+                        borderRadius: path.strokeWidth,
+                      }}
+                    />
+                  );
+                })
+              ))}
+            </View>
+          </View>
+        </PanGestureHandler>
+      </GestureHandlerRootView>
+      
+      {renderDrawingToolbar()}
+    </View>
+  );
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -430,6 +674,14 @@ const NotesScreen = () => {
                 {activeNote?.title || 'Edit Note'}
               </Text>
               <View className="flex-row">
+                {!isDrawingMode && (
+                  <TouchableOpacity 
+                    className="mr-3"
+                    onPress={() => setIsDrawingMode(true)}
+                  >
+                    <PenTool color="white" size={24} />
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity 
                   className="mr-3"
                   onPress={() => activeNote && shareNote(activeNote)}
@@ -437,7 +689,10 @@ const NotesScreen = () => {
                   <Share2 color="white" size={24} />
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  onPress={() => setActiveNoteId(null)}
+                  onPress={() => {
+                    setIsDrawingMode(false);
+                    setActiveNoteId(null);
+                  }}
                 >
                   <X color="white" size={24} />
                 </TouchableOpacity>
@@ -445,7 +700,9 @@ const NotesScreen = () => {
             </View>
           </View>
           
-          {activeNote && (
+          {isDrawingMode ? (
+            renderDrawingCanvas()
+          ) : activeNote ? (
             <>
               <View className="flex-row items-center px-4 py-2 border-b border-gray-200">
                 <View 
@@ -480,6 +737,37 @@ const NotesScreen = () => {
                   onFocus={() => setShowFormattingToolbar(true)}
                   onBlur={() => setShowFormattingToolbar(false)}
                 />
+                
+                {/* Display saved drawings */}
+                {activeNote.drawings && activeNote.drawings.length > 0 && (
+                  <View className="p-4">
+                    <Text className="font-bold text-gray-700 mb-2">Drawings:</Text>
+                    <View className="h-40 bg-gray-100 rounded-lg relative">
+                      {activeNote.drawings.map(drawing => (
+                        <View key={drawing.id} className="absolute inset-0">
+                          {drawing.points.map((point, index) => {
+                            if (index === 0) return null;
+                            const prevPoint = drawing.points[index - 1];
+                            return (
+                              <View
+                                key={`${drawing.id}-${index}`}
+                                className="absolute"
+                                style={{
+                                  left: prevPoint.x * 0.3, // Scale down for preview
+                                  top: prevPoint.y * 0.3,
+                                  width: (Math.abs(point.x - prevPoint.x) || 1) * 0.3,
+                                  height: (Math.abs(point.y - prevPoint.y) || 1) * 0.3,
+                                  backgroundColor: drawing.color,
+                                  borderRadius: drawing.strokeWidth * 0.3,
+                                }}
+                              />
+                            );
+                          })}
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
               </ScrollView>
               
               {showFormattingToolbar && (
@@ -519,7 +807,7 @@ const NotesScreen = () => {
                 </View>
               )}
             </>
-          )}
+          ) : null}
         </KeyboardAvoidingView>
       </Modal>
     </View>

@@ -456,4 +456,4 @@ const SubjectDetailScreen = () => {
   );
 };
 
-export default SubjectDetailScreen;
+export default SubjectDetailScreen; 

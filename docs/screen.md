@@ -1,122 +1,214 @@
-### Global UI Elements (The Design System)
-* **Background:** Deep OLED Black (`#050505`).
-* **Primary Light:** Neon Cyan (`#00F0FF`) for active links.
-* **Secondary Light:** Warm Gold (`#FFD700`) for mastered/brilliant links.
-* **Warning Light:** Dim Red (`#FF3333`) for fading/decaying links.
-* **Font:** A clean, tech-sans font (e.g., *Inter* or *Rajdhani*).
+# Osmosis Mobile App - Screen Specification
 
----
+This document outlines the key screens and their functionalities for the Osmosis mobile app, designed to facilitate effective study habits through flashcards, active study sessions, and knowledge management.
 
-### Tab 1: The Web (Home Dashboard)
-*The user's "Garden of Knowledge." A 3D graph view.*
+## Screen List Overview
 
-* **Header:**
-    * **Top Left:** "Lumen: 450" (Currency).
-    * **Top Right:** "Spark Energy: 2/3" (Daily AI Limit).
-* **Main View (The Canvas):**
-    * **Visual:** A pannable, zoomable infinite canvas.
-    * **Content:** Floating **Clusters** (Groups of nodes).
-        * *Healthy Cluster:* Glowing bright blue with solid connecting lines.
-        * *Fading Cluster:* Dim, gray nodes with dotted/flickering lines.
-    * **Interaction:** Pinch to zoom. Drag to move. Tap a Cluster to open "Cluster Detail."
-* **Bottom Sheet (Mini-Summary):**
-    * "3 Clusters are dimming. Recharge required."
-    * **Primary Button:** `[ Quick Recharge (15 Sparks) ]`
+### Phase 1: Onboarding & Core Navigation
 
-### Tab 2: Recharge (The Study Interface)
-*The core SRS loop. Where the "Connecting" happens.*
+*The goal here is "Time to Value." The user must understand the app's utility within 60 seconds.*
 
-* **The Stage:**
-    * **Visual:** Two large glowing nodes float in the center.
-    * **Left Node:** `[ Java ]`
-    * **Right Node:** `[ Bytecode ]`
-    * **The Link:** A broken/disconnected line between them with a `?` in the middle.
-    * **The Prompt:** "How do they connect?"
-* **Interaction (The Reveal):**
-    * User taps the screen (or holds).
-    * **Animation:** The line "snaps" together with an electric sound. The label appears: **"Compiles into"**.
-* **The Grading (Bottom Bar):**
-    * Instead of "Again/Good/Easy," use narrative terms:
-    * **Button 1 (Red):** `[ Broken ]` (I forgot).
-    * **Button 2 (Blue):** `[ Connected ]` (I remembered).
-    * **Button 3 (Gold):** `[ Brilliant ]` (Too easy).
-* **Feedback:**
-    * If "Brilliant": The line bursts with light and thickens.
-    * If "Broken": The line flickers and fades.
+#### 1\. Onboarding / Login
 
-### Tab 3: Ignite (Center Floating Button)
-*The Creation Modal. The "Genesis" engine.*
+* **Core Requirements:**
+  * Social Login (Google/Apple) for 1-tap entry.
+  * "Guest Mode" to try the app without an account (data persists locally until signup).
+  * **User Personalisation:** Ask 3 quick questions: "What are you studying?", "When is your deadline?", "Daily goal duration?"
+* **Delight Factors:**
+  * Animated walkthrough of the "Osmosis" concept (absorption of knowledge).
+  * Pre-load a "Demo Deck" based on their interest so they can swipe immediately.
 
-* **Triggers:** Tapping the center `+` button opens this modal.
-* **Input Methods:**
-    * **Option A: "Capture" (Camera):** Scan a textbook page.
-    * **Option B: "Inject" (File):** Upload PDF/Text.
-    * **Option C: "Spark" (Manual):** Type a topic (e.g., "Photosynthesis").
-* **The Loading State (The Story):**
-    * *Visual:* Particles gathering in a vortex.
-    * *Text:* "Synthesizing connections... Identifying Sparks..."
-* **The Preview (The Editor):**
-    * Shows the generated graph.
-    * User can drag nodes to rearrange or swipe to delete bad connections.
-* **Final Action:** `[ Ignite ]` -> The sparks fly into "The Web."
+#### 2\. Home Dashboard
 
-### Tab 4: Explore (Community & Social)
-*Browsing other users' galaxies.*
+* **Core Requirements:**
+  * **Quick Actions:** "Study Now" (smart suggestion), "Add New", "Search".
+  * **Daily Snapshot:** Cards due today, tasks due today.
+  * **Streaks/Heatmap:** A visual representation of consistency (similar to GitHub contributions).
+* **Delight Factors:**
+  * Dynamic greeting: "Good Morning, Hao. You have 45 cards to review."
 
-* **Search:** "Find Universes..."
-* **Categories:**
-    * "Trending Galaxies" (Most downloaded decks).
-    * "Newborn Stars" (New uploads).
-* **Deck Preview Card:**
-    * Don't show a list. Show a **mini-thumbnail of their graph**.
-    * Stats: "50 Sparks • 120 Links".
-    * **Action:** `[ Clone to Web ]` (Downloads the deck).
+#### 3\. Global Search
 
-### Tab 5: Architect (Profile & Stats)
-*Long-term progress and settings.*
+* **Core Requirements:**
+  * Unified search across: Decks, Cards (front/back), Notes, and Resources.
+  * Filter chips: "Only Cards", "Only Notes", "Tags".
+* **Delight Factors:**
+  * Highlight search terms within the results.
+  * Recent search history.
 
-* **The Heatmap:**
-    * A grid of squares showing activity over the last 365 days.
-    * *Dark:* No study.
-    * *Bright:* High Lumen earned.
-* **Stats:**
-    * **Total Sparks:** 1,240.
-    * **Brilliance Score:** 85% (Avg retention).
-    * **Longest Streak:** 14 Days.
-* **Focus Settings:**
-    * "Focus Flow Duration" (Default: 25m).
-    * "Ambient Sound" (On/Off).
-* **Subscription:**
-    * **Free:** "Apprentice Architect" (Limit 3 AI/day).
-    * **Pro:** "Master Builder" (Infinite).
+#### 4\. Notifications (Hub)
 
----
+* **Core Requirements:**
+  * Categorised list: Study Reminders, System Updates, Achievement Unlocks.
+  * "Snooze" functionality for study reminders.
 
-### Secondary Screens (Drill-Downs)
+-----
 
-**Screen 6: Focus Flow (Pomodoro Mode)**
-* *Trigger:* Accessed via "Cluster Detail" or "Recharge."
-* **Visual:** Minimalist. No UI chrome.
-* **The Timer:** A glowing ring orbiting the current Spark. It slowly completes the circle.
-* **Control:** Tap to "Pause Orbit." Long press to "Abort Mission."
+### Phase 2: The Flashcard Engine (The Core Loop)
 
-**Screen 7: Cluster Detail (The Deck View)**
-* *Trigger:* Tapping a Cluster on the Home Web.
-* **Visual:** Focuses only on *this* specific group of nodes.
-* **List View Toggle:** A button to switch from "Graph View" to "List View" (for bulk editing).
-* **Actions:**
-    * `[ Rename Cluster ]`
-    * `[ Share Universe ]` (Generates a link).
-    * `[ Delete ]` (Warning: "The sparks will return to the void").
+*This is where the user spends 80% of their time. It must be frictionless.*
 
----
+#### 5\. Flashcard Deck List
 
-### Implementation Advice (React Native)
+* **Core Requirements:**
+  * Grid or List view.
+  * Visual progress bars: New vs. Learning vs. Review vs. Mastered.
+  * Folder/Sub-deck organisation hierarchy.
+* **Delight Factors:**
+  * Customisable deck covers (icons or uploaded images).
+  * Haptic feedback when long-pressing to reorder.
 
-For the **Graph Views** (Home & Cluster Detail), do not try to build a physics engine from scratch.
+#### 6\. Deck Details
 
-* **Recommended Library:** `react-native-skia` (for the glow effects) + `d3-force` (for the math).
-* **Logic:**
-    1.  Use `d3-force` to calculate the X/Y coordinates of the nodes based on connections.
-    2.  Pass those X/Y coordinates to Skia `Canvas`.
-    3.  Draw `<Circle>` for Sparks and `<Path>` for Links.
+* **Core Requirements:**
+  * High-level stats: Retention rate, cards count.
+  * Action Buttons: "Study Now", "Custom Study", "Browse Cards".
+* **Delight Factors:**
+  * "Time Estimate": Show "15 mins remaining" based on average answer speed.
+
+#### 7\. Create/Edit Flashcard (AI Powered)
+
+* **Core Requirements:**
+  * **Input Types:** Rich Text, LaTeX (for math), Code Blocks (syntax highlighting), Image/Audio.
+  * **AI Integration:** "Generate from Text" or "Scan Document" button.
+  * **Cloze Deletion:** Highlight text and tap "Hide" to create fill-in-the-blanks.
+* **Delight Factors:**
+  * Auto-tagging suggestions based on content.
+  * Live preview of how the card looks.
+
+#### 8\. Flashcard Review Session
+
+* **Core Requirements:**
+  * **Gestures:** Swipe Left (Hard/Again), Swipe Right (Good/Easy), Tap to flip.
+  * **Spaced Repetition Logic:** Invisible engine calculating the next interval.
+  * **Accessibility:** Text-to-speech support.
+* **Delight Factors:**
+  * **Micro-interactions:** Satisfying animations when a card is swiped away.
+  * **Haptics:** Subtle vibration on card flip and confidence rating.
+
+#### 9\. Flashcard Review Summary
+
+* **Core Requirements:**
+  * Session stats: Time spent, Cards reviewed, Forecast (future workload).
+* **Delight Factors:**
+  * **Gamification:** "Level Up" or "Streak Extended" animations.
+  * Motivational quote or fun fact upon completion.
+
+-----
+
+### Phase 3: Active Study & Planning
+
+*Integrating the "how" with the "when".*
+
+#### 10\. Study Session Setup
+
+* **Core Requirements:**
+  * Mode selection: Flashcards, Deep Reading, or Practice Exam.
+  * Timer settings: Open-ended or Pomodoro.
+  * Background noise selection (White noise, Rain, Lo-fi).
+
+#### 11\. Active Study Session (Focus Mode)
+
+* **Core Requirements:**
+  * **Phone Locking:** Prevent navigation away from the app (optional strict mode).
+  * **Timer Display:** Unobtrusive countdown.
+  * Quick "Jot Down" area for distracting thoughts to handle later.
+* **Delight Factors:**
+  * Screen "Wake Lock" (screen stays on).
+  * Fluid transitions between focus intervals and break intervals.
+
+#### 12\. Study Summary (Post-Session)
+
+* **Core Requirements:**
+  * Total focus time logged.
+  * Prompt to rate focus level (1-5 stars).
+
+#### 13\. Weekly Timetable / Calendar
+
+* **Core Requirements:**
+  * Drag-and-drop time blocking.
+  * Colour-coded blocks (Lecture vs. Self-Study vs. Exam).
+  * Sync with Google/Apple Calendar.
+
+#### 14\. Task List & Task Detail
+
+* **Core Requirements:**
+  * Prioritisation flags (High, Medium, Low).
+  * Sub-tasks/Checklists.
+  * Link a task to a Deck (e.g., "Review Java Deck").
+
+#### 15\. Exam Tracker
+
+* **Core Requirements:**
+  * Countdown timer (Days left).
+  * Syllabus coverage tracker (Percentage complete).
+
+-----
+
+### Phase 4: Knowledge Management (Notes & Resources)
+
+*The "Second Brain" aspect of Osmosis.*
+
+#### 16\. Notes List
+
+* **Core Requirements:**
+  * Sort by Last Edited, Created, or Alphabetical.
+  * Pinned notes at the top.
+
+#### 17\. Note Editor
+
+**Core Requirements:**
+
+* Markdown support.
+* **Bi-directional Linking:** Ability to link a Note to a Flashcard (and vice versa).
+* Export to PDF.
+
+#### 18\. Resource Library
+
+**Core Requirements:**
+
+* File manager for PDFs, Images, Audio.
+* **PDF Viewer:** Highlight text to instantly create a flashcard (AI context menu).
+
+-----
+
+### Phase 5: Analytics & Intelligence
+
+#### 19, 20, 21. Analytics (Study, Flashcard, Planner)
+
+* **Core Requirements:**
+  * **Retention Chart:** Forgetting curve visualisation.
+  * **Time Distribution:** Where is time being spent? (Subject breakdown).
+  * **Heatmaps:** Study habits by hour of the day.
+
+#### 22\. Optional AI Assistant
+
+* **Core Requirements:**
+  * Chat interface overlay.
+  * Context-aware: "Explain the card I am currently looking at."
+  * Socratic Tutor mode: The AI asks the user questions rather than just answering.
+
+-----
+
+### Phase 6: Ecosystem & Settings
+
+#### 23\. Settings / Profile
+
+* **Core Requirements:**
+  * **Spaced Repetition Settings:** Allow power users to tweak algorithm parameters (like Anki).
+  * Theme Selector (Light/Dark/System/OLED Black).
+  * Data Management (Export JSON/CSV).
+
+#### 24\. Optional Community Decks
+
+* **Core Requirements:**
+  * Marketplace/Repository UI.
+  * Ratings and Reviews for decks.
+  * "Preview Cards" before downloading.
+
+#### 25\. Optional Backup & Sync
+
+* **Core Requirements:**
+  * Visual indicator of sync status (Green checkmark).
+  * Conflict resolution (if edited on two devices).
+  * Offline-first architecture (app works perfectly without internet).
