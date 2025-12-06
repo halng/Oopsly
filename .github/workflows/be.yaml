@@ -27,6 +27,5 @@ jobs:
       - name: gradle caching
         uses: gradle/actions/setup-gradle@v5
       - name: Spotless Check
-        with:
-          working-directory: api
+        working-directory: api
         run: ./gradlew spotlessCheck
