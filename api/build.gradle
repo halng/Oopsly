@@ -38,9 +38,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
-	implementation 'org.springframework.ai:spring-ai-pdf-document-reader'
-	implementation 'org.springframework.ai:spring-ai-starter-model-vertex-ai-embedding'
+//	implementation 'org.springframework.ai:spring-ai-pdf-document-reader'
+//	implementation 'org.springframework.ai:spring-ai-starter-model-vertex-ai-embedding'
 	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -51,11 +52,34 @@ dependencies {
 
 dependencyManagement {
 	imports {
-		mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+//		mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
 		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
 	}
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+def composeFile = 'src/main/resources/docker-compose.yml'
+
+tasks.register('composeUp', Exec) {
+	group = 'docker'
+	description = "Start Docker Compose services using ${composeFile}"
+	workingDir = projectDir
+
+	commandLine 'docker', 'compose', '-f', composeFile, 'up', '-d', '--build'
+	doLast {
+		println "Docker Compose started using ${composeFile}"
+	}
+}
+
+tasks.register('composeDown', Exec) {
+	group = 'docker'
+	description = "Stop and remove Docker Compose services using ${composeFile}"
+	workingDir = projectDir
+	commandLine 'docker', 'compose', '-f', composeFile, 'down', '--volumes', '--remove-orphans'
+	doLast {
+		println "Docker Compose stopped and removed services from ${composeFile}"
+	}
 }
