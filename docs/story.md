@@ -9,24 +9,24 @@
 
 *Use this script for your Onboarding Screens. It sets the emotional stakes immediately.*
 
-**Screen 1: The Void**
+### Screen 1: The Void
 
 * **Visual:** The screen is pitch black (OLED dark). Silence.
 * **Text (Fades in slowly):** *"The mind is a vast, dark ocean."*
 * **Action:** The user must tap the screen to continue.
 
-**Screen 2: The First Spark**
+### Screen 2: The First Spark
 
 * **Visual:** Where the user tapped, a tiny, fragile glowing dot appears. It flickers weakly, like a dying candle.
 * **Text:** *"A single idea is fragile. Alone, it flickers... and eventually fades."*
 * **Action:** A second dot appears nearby. The user is prompted to drag a line between them.
 
-**Screen 3: The Connection**
+### Screen 3: The Connection
 
 * **Action:** As the user connects them, a **humming snap** sounds. The line glows neon blue. Both dots suddenly stabilize and shine brighter.
 * **Text:** *"But connected... they become brilliant."*
 
-**Screen 4: The Call to Action**
+### Screen 4: The Call to Action
 
 * **Visual:** The camera zooms out to reveal a massive, empty 3D space waiting to be filled.
 * **Text:** *"You are the Architect. Build your web. Push back the dark."*

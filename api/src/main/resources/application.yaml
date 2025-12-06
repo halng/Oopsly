@@ -1,0 +1,38 @@
+server:
+  port: 9009
+  active:
+    version: v1
+  servlet:
+    context-path: /api/${server.active.version}/osmosis
+
+spring:
+  autoconfigure:
+    exclude: org.springframework.ai.model.vertexai.autoconfigure.embedding.VertexAiTextEmbeddingAutoConfiguration
+  application:
+    name: api
+  main:
+    allow-bean-definition-overriding: true
+
+  datasource:
+    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:osmosis}
+    username: ${DB_USERNAME}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    generate-ddl: true
+    show-sql: true
+  security:
+    oauth2:
+      client:
+        registration:
+            google:
+                client-id: ${OAUTH2_CLIENT_ID:client-id}
+                client-secret: ${OAUTH2_CLIENT_SECRET:client-secret}
+                scope:
+                  - profile
+                  - email
+
+

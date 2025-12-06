@@ -1,50 +1,75 @@
-# Welcome to your Expo app 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+# Osmosis
 
-## Get started
+## Project Description
 
-1. Install dependencies
+Osmosis is an intelligent test generation application designed to help students create customized assessments for effective studying. With features to generate tests from topics, documents, or manually create flashcards, users can tailor their learning experience to any subject matter.
 
-   ```bash
-   npm install
-   ```
+## Style Guide
 
-2. Start the app
+- **Font**: System default (React Native)
+- **Border Radius**: rounded-lg for cards and buttons
+- **Padding**: p-4 for main containers
+- **Margin**: m-2 for spacing elements
+- **Shadow**: shadow-sm for subtle depth
 
-   ```bash
-   npx expo start
-   ```
+## Theme and Color Scheme
 
-In the output, you'll find options to open the app in a
+- **Primary**: #8BC34A (Green - for main actions and brand elements)
+- **Secondary**: #FF9800 (Orange - for supporting elements)
+- **Accent**: #03A9F4 (Blue - for highlights and CTAs)
+- **Background**: #F7F7F7 (Light gray background)
+- **Surface**: #FFFFFF (White cards and surfaces)
+- **Text**: #212121 (Dark gray for primary text)
+- **Text Secondary**: #757575 (Medium gray for secondary text)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Features
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+1. **Multiple Creation Methods**:
+   - Generate tests from topics using AI
+   - Upload documents for automatic test generation
+   - Manually create custom flashcards
 
-## Get a fresh project
+2. **Customizable Tests**:
+   - Adjust question count (1-50 questions)
+   - Set difficulty levels (Easy, Medium, Hard)
+   - Choose question types (Multiple Choice, True/False, Short Answer)
 
-When you're ready, run:
+3. **AI-Powered Generation**:
+   - Intelligent topic analysis
+   - Adaptive question generation
+   - Personalized difficulty adjustment
 
-```bash
-npm run reset-project
-```
+4. **Progress Tracking**:
+   - Visual progress indicators during generation
+   - Completion percentages
+   - Step-by-step processing feedback
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+5. **User-Friendly Interface**:
+   - Clean, modern design
+   - Intuitive navigation
+   - Helpful tips and guidance
 
-## Learn more
+## Technologies Used
 
-To learn more about developing your project with Expo, look at the following resources:
+- **React Native**: Cross-platform mobile development framework
+- **Expo**: Development platform for React Native
+- **NativeWind**: Tailwind CSS implementation for React Native
+- **Lucide Icons**: Lightweight SVG icon library
+- **Expo Router**: File-based routing system
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Usage Instructions
 
-## Join the community
+1. Launch the application
+2. Choose a creation method from the main screen:
+   - "Upload Document" for document-based tests
+   - "Generate from Topic" for AI-generated tests
+   - "Create Manually" for custom flashcards
+3. Configure your test settings:
+   - Enter a test title and topic
+   - Adjust the number of questions
+   - Select difficulty level
+4. Generate your test
+5. Take the test or save it for later
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The app provides helpful tips throughout the creation process to ensure optimal results.
