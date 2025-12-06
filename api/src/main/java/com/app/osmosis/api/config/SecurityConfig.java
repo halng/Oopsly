@@ -29,8 +29,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http.csrf(AbstractHttpConfigurer::disable)
-        .authorizeHttpRequests(
+    return http.authorizeHttpRequests(
             request -> request.requestMatchers("/health").permitAll().anyRequest().authenticated())
         .httpBasic(AbstractHttpConfigurer::disable)
         .formLogin(AbstractHttpConfigurer::disable)
