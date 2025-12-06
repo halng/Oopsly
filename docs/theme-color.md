@@ -6,9 +6,9 @@ Based on research into reading environments and digital colour theory, I have de
 
 ### The Design Philosophy: "Focus Flow"
 
-  * **Primary Brand Colour (Indigo):** Represents wisdom and depth. Unlike aggressive Red or hyper-active Orange, Indigo promotes deep concentration.
-  * **The "Paper" Metaphor:** We do not use "Screen White". We use "Paper White" (slightly off-white) to mimic physical study materials.
-  * **The "Deep Space" Metaphor:** For Dark Mode, we avoid "Dead Black" (`#000000`) which causes "smearing" on OLED screens when scrolling. We use a deep blue-grey to maintain pixel stability and reduce glare.
+* **Primary Brand Colour (Indigo):** Represents wisdom and depth. Unlike aggressive Red or hyper-active Orange, Indigo promotes deep concentration.
+* **The "Paper" Metaphor:** We do not use "Screen White". We use "Paper White" (slightly off-white) to mimic physical study materials.
+* **The "Deep Space" Metaphor:** For Dark Mode, we avoid "Dead Black" (`#000000`) which causes "smearing" on OLED screens when scrolling. We use a deep blue-grey to maintain pixel stability and reduce glare.
 
 -----
 
@@ -27,7 +27,7 @@ You can copy this directly into your React Native theme configuration (e.g., `th
 | **Surface** | `#FFFFFF` | **Pure White** | Flashcards, input fields, modal backgrounds. |
 | **Surface Alt** | `#F1F5F9` | **Cloud Grey** | Search bars, secondary button backgrounds. |
 | **Text Primary** | `#0F172A` | **Deep Ink** | Headings, main flashcard text. |
-| **Text Secondary**| `#64748B` | **Slate Grey** | Subtitles, timestamps, hints. |
+| **Text Secondary** | `#64748B` | **Slate Grey** | Subtitles, timestamps, hints. |
 | **Border** | `#E2E8F0` | **Pale Edge** | Hairlines, dividers, card borders. |
 | **Success** | `#10B981` | **Emerald** | "Easy" button, streaks, completed tasks. |
 | **Warning** | `#F59E0B` | **Amber** | "Hard" button, nearing deadlines. |
@@ -44,7 +44,7 @@ You can copy this directly into your React Native theme configuration (e.g., `th
 | **Surface** | `#1E293B` | **Gunmetal** | Flashcards, input fields, modal backgrounds. |
 | **Surface Alt** | `#334155` | **Steel** | Search bars, secondary button backgrounds. |
 | **Text Primary** | `#F1F5F9` | **Soft Mist** | Headings, main flashcard text. |
-| **Text Secondary**| `#94A3B8` | **Ash Grey** | Subtitles, timestamps, hints. |
+| **Text Secondary** | `#94A3B8` | **Ash Grey** | Subtitles, timestamps, hints. |
 | **Border** | `#334155` | **Steel Edge** | Hairlines, dividers, card borders. |
 | **Success** | `#34D399` | **Mint** | "Easy" button (brighter for dark mode visibility). |
 | **Warning** | `#FBBF24` | **Gold** | "Hard" button. |
