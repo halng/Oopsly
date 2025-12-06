@@ -18,6 +18,9 @@ package com.app.osmosis.api.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.UUID;
+
 import org.springframework.data.relational.core.mapping.Table;
 
 @Getter
@@ -30,7 +33,7 @@ import org.springframework.data.relational.core.mapping.Table;
 public class UserEntity extends Audit {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
-  private String id;
+  private UUID id;
 
   private String name;
   private String email;
