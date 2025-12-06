@@ -29,43 +29,43 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UserSessionHelper {
-  private static final Logger log = LoggerFactory.getLogger(UserSessionHelper.class);
-  private final CustomUserRepository userRepository;
+    private static final Logger log = LoggerFactory.getLogger(UserSessionHelper.class);
+    private final CustomUserRepository userRepository;
 
-  public UserSessionHelper(CustomUserRepository userRepository) {
-    this.userRepository = userRepository;
-  }
-
-  public String getCurrentUser() {
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-    if (auth == null || !auth.isAuthenticated()) {
-      throw new UnauthenticatedException("User is not authenticated");
+    public UserSessionHelper(CustomUserRepository userRepository) {
+        this.userRepository = userRepository;
     }
-    // Implementation to retrieve the current user's email from the security context
 
-    Object principal = auth.getPrincipal();
-    if (principal instanceof OAuth2User oAuth2User) {
-      String email = oAuth2User.getAttribute("email");
-      Optional<UserEntity> user = userRepository.findByEmail(email);
+    public String getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-      if (user.isPresent()) {
-        log.info("User found with email: {}", email);
-        return user.get().getId();
-      }
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new UnauthenticatedException("User is not authenticated");
+        }
+        // Implementation to retrieve the current user's email from the security context
 
-      log.error("User not found. Starting create new user flow for email: {}", email);
-      String name = oAuth2User.getAttribute("name");
-      String pictureUrl = oAuth2User.getAttribute("picture");
+        Object principal = auth.getPrincipal();
+        if (principal instanceof OAuth2User oAuth2User) {
+            String email = oAuth2User.getAttribute("email");
+            Optional<UserEntity> user = userRepository.findByEmail(email);
 
-      UserEntity userEntity =
-          UserEntity.builder().email(email).name(name).pictureUrl(pictureUrl).build();
-      UserEntity createdUser = userRepository.save(userEntity);
+            if (user.isPresent()) {
+                log.info("User found with email: {}", email);
+                return user.get().getId().toString();
+            }
 
-      return createdUser.getId();
-    } else {
-      // Fallback to principal's name or other identifier
-      return principal.toString();
+            log.error("User not found. Starting create new user flow for email: {}", email);
+            String name = oAuth2User.getAttribute("name");
+            String pictureUrl = oAuth2User.getAttribute("picture");
+
+            UserEntity userEntity =
+                    UserEntity.builder().email(email).name(name).pictureUrl(pictureUrl).build();
+            UserEntity createdUser = userRepository.save(userEntity);
+
+            return createdUser.getId().toString();
+        } else {
+            // Fallback to principal's name or other identifier
+            return principal.toString();
+        }
     }
-  }
 }

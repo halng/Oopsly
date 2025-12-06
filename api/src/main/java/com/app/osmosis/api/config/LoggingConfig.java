@@ -26,49 +26,49 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class LoggingConfig implements Filter {
-  private static final Logger LOGGER = LoggerFactory.getLogger(LoggingConfig.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoggingConfig.class);
 
-  @Override
-  public void init(FilterConfig filterConfig) throws ServletException {
-    Filter.super.init(filterConfig);
-  }
-
-  @Override
-  public void doFilter(
-      ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
-      throws IOException, ServletException {
-    long startTime = System.currentTimeMillis();
-
-    HttpServletRequest httpRequest = (HttpServletRequest) servletRequest;
-    String method = httpRequest.getMethod();
-    String path = httpRequest.getRequestURI();
-
-    try {
-      filterChain.doFilter(servletRequest, servletResponse);
-      long duration = System.currentTimeMillis() - startTime;
-
-      int status =
-          (servletResponse instanceof HttpServletResponse)
-              ? ((HttpServletResponse) servletResponse).getStatus()
-              : 0;
-
-      LOGGER.info("Request: {} {} | Status: {} | {} ms", method, path, status, duration);
-
-    } catch (Exception e) {
-      long duration = System.currentTimeMillis() - startTime;
-      LOGGER.error(
-          "Request: {} {} | Failed after {} ms | Error: {}",
-          method,
-          path,
-          duration,
-          e.getMessage(),
-          e);
-      throw e;
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+        Filter.super.init(filterConfig);
     }
-  }
 
-  @Override
-  public void destroy() {
-    Filter.super.destroy();
-  }
+    @Override
+    public void doFilter(
+            ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
+            throws IOException, ServletException {
+        long startTime = System.currentTimeMillis();
+
+        HttpServletRequest httpRequest = (HttpServletRequest) servletRequest;
+        String method = httpRequest.getMethod();
+        String path = httpRequest.getRequestURI();
+
+        try {
+            filterChain.doFilter(servletRequest, servletResponse);
+            long duration = System.currentTimeMillis() - startTime;
+
+            int status =
+                    (servletResponse instanceof HttpServletResponse)
+                            ? ((HttpServletResponse) servletResponse).getStatus()
+                            : 0;
+
+            LOGGER.info("Request: {} {} | Status: {} | {} ms", method, path, status, duration);
+
+        } catch (Exception e) {
+            long duration = System.currentTimeMillis() - startTime;
+            LOGGER.error(
+                    "Request: {} {} | Failed after {} ms | Error: {}",
+                    method,
+                    path,
+                    duration,
+                    e.getMessage(),
+                    e);
+            throw e;
+        }
+    }
+
+    @Override
+    public void destroy() {
+        Filter.super.destroy();
+    }
 }

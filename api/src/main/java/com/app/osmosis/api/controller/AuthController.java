@@ -26,19 +26,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class AuthController {
 
-  @GetMapping("/health")
-  public String health() {
-    return "OK";
-  }
+    @GetMapping("/health")
+    public String health() {
+        return "OK";
+    }
 
-  @GetMapping("/user")
-  public ApiRes authWithGoogle(@AuthenticationPrincipal OAuth2User principal) {
-    return ApiRes.ok("Success", principal.getAttributes());
-  }
+    @GetMapping("/user")
+    public ApiRes authWithGoogle(@AuthenticationPrincipal OAuth2User principal) {
+        return ApiRes.ok("Success", principal.getAttributes());
+    }
 
-  @PostMapping("onboard")
-  public ApiRes onboardUser(@AuthenticationPrincipal OAuth2User principal) {
-    // Onboarding logic here
-    return ApiRes.ok("User onboarded", principal.getAttributes());
-  }
+    @PostMapping("onboard")
+    public ApiRes onboardUser(@AuthenticationPrincipal OAuth2User principal) {
+        // Onboarding logic here
+        return ApiRes.ok("User onboarded", principal.getAttributes());
+    }
 }

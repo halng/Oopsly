@@ -3,6 +3,7 @@ plugins {
 	id 'org.springframework.boot' version '3.5.8'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'org.graalvm.buildtools.native' version '0.10.6'
+	id 'com.diffplug.spotless' version '8.1.0'
 }
 
 group = 'com.app.osmosis'
@@ -81,5 +82,38 @@ tasks.register('composeDown', Exec) {
 	commandLine 'docker', 'compose', '-f', composeFile, 'down', '--volumes', '--remove-orphans'
 	doLast {
 		println "Docker Compose stopped and removed services from ${composeFile}"
+	}
+}
+
+spotless {
+	java {
+		// 1. Target: Updated to catch ALL java files (main, test, submodules)
+		target 'src/**/*.java'
+
+		// 2. Import Order: Define a logical order (Standard: Java -> Javax -> Org -> Com -> Local)
+		// An empty string '' represents all other imports (local classes)
+		importOrder('java', 'javax', 'org', 'com', '')
+
+		// 3. Clean up imports
+		removeUnusedImports()
+
+		// 4. Formatter: CHOOSE ONE.
+		// I recommend Google Java Format for backend engineering.
+		// Using Prettier + GJF together is redundant and error-prone.
+		googleJavaFormat('1.17.0')
+				.aosp()  // Optional: Use 4-space indent (Android style) instead of Google's 2-space
+				.reflowLongStrings()
+
+		// 5. Annotations
+		formatAnnotations()
+
+		// 6. Extras (Added these for best practice)
+		toggleOffOn()             // Allows you to use // spotless:off in code
+		trimTrailingWhitespace()  // Removes trailing spaces
+		endWithNewline()          // Ensures file ends with a newline
+
+		// Note: 'cleanthat' is a code mutator, not just a formatter.
+		// Only keep this if you specifically want it refactoring your logic.
+		// cleanthat()
 	}
 }

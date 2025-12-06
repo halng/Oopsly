@@ -26,16 +26,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class DeckServiceImpl implements DeckService {
 
-  private final UserSessionHelper userSessionHelper;
+    private final UserSessionHelper userSessionHelper;
 
-  public DeckServiceImpl(UserSessionHelper userSessionHelper) {
-    this.userSessionHelper = userSessionHelper;
-  }
+    public DeckServiceImpl(UserSessionHelper userSessionHelper) {
+        this.userSessionHelper = userSessionHelper;
+    }
 
-  @Override
-  public ApiRes createDeck() {
-    log.info("Create deck");
+    @Override
+    public ApiRes createDeck() {
+        log.info("Create deck");
 
-    return ApiRes.ok("Deck created by " + userSessionHelper.getCurrentUser());
-  }
+        return ApiRes.ok("Deck created by " + userSessionHelper.getCurrentUser());
+    }
 }

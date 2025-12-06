@@ -27,7 +27,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Setter
 @MappedSuperclass
 public abstract class Audit {
-  @CreationTimestamp private Instant createdAt;
+    @CreationTimestamp private Instant createdAt;
 
-  @UpdateTimestamp private Instant updatedAt;
+    @UpdateTimestamp private Instant updatedAt;
 }

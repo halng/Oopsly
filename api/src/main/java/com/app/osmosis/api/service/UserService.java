@@ -19,5 +19,5 @@ package com.app.osmosis.api.service;
 import com.app.osmosis.api.viewmodel.ApiRes;
 
 public interface UserService {
-	ApiRes onboardUser(String email, String name, String pictureUrl);
+    ApiRes onboardUser(String email, String name, String pictureUrl);
 }

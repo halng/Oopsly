@@ -27,13 +27,17 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-  @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http.authorizeHttpRequests(
-            request -> request.requestMatchers("/health").permitAll().anyRequest().authenticated())
-        .httpBasic(AbstractHttpConfigurer::disable)
-        .formLogin(AbstractHttpConfigurer::disable)
-        .oauth2Login(Customizer.withDefaults())
-        .build();
-  }
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http.authorizeHttpRequests(
+                        request ->
+                                request.requestMatchers("/health")
+                                        .permitAll()
+                                        .anyRequest()
+                                        .authenticated())
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .oauth2Login(Customizer.withDefaults())
+                .build();
+    }
 }

@@ -26,14 +26,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/decks")
 public class DeckController {
 
-  private final DeckService deckService;
+    private final DeckService deckService;
 
-  public DeckController(DeckService deckService) {
-    this.deckService = deckService;
-  }
+    public DeckController(DeckService deckService) {
+        this.deckService = deckService;
+    }
 
-  @PostMapping
-  public ApiRes createDeck() {
-    return deckService.createDeck();
-  }
+    @PostMapping
+    public ApiRes createDeck() {
+        return deckService.createDeck();
+    }
 }

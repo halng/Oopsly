@@ -17,10 +17,8 @@
 package com.app.osmosis.api.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.UUID;
-
+import lombok.*;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Getter
@@ -31,11 +29,11 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table(name = "users")
 @Entity(name = "users")
 public class UserEntity extends Audit {
-  @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
-  private UUID id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-  private String name;
-  private String email;
-  private String pictureUrl;
+    private String name;
+    private String email;
+    private String pictureUrl;
 }

@@ -26,18 +26,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-	@ExceptionHandler(UnauthenticatedException.class)
-	public ApiRes handleUnauthenticatedException(UnauthenticatedException ex) {
-		log.warn("Unauthenticated access attempt: {}", ex.getMessage());
-		return ApiRes
-				.unauthorized("You must be logged in to access this resource.");
-	}
+    @ExceptionHandler(UnauthenticatedException.class)
+    public ApiRes handleUnauthenticatedException(UnauthenticatedException ex) {
+        log.warn("Unauthenticated access attempt: {}", ex.getMessage());
+        return ApiRes.unauthorized("You must be logged in to access this resource.");
+    }
 
-	@Order(1000)
-	@ExceptionHandler(Exception.class)
-	public ApiRes handleGenericException(Exception ex) {
-		log.error("Generic internal server error: {}", ex.getMessage(), ex);
-		return ApiRes
-				.internalError("Internal server error occurred. Please contact support if the problem persists.");
-	}
+    @Order(1000)
+    @ExceptionHandler(Exception.class)
+    public ApiRes handleGenericException(Exception ex) {
+        log.error("Generic internal server error: {}", ex.getMessage(), ex);
+        return ApiRes.internalError(
+                "Internal server error occurred. Please contact support if the problem persists.");
+    }
 }

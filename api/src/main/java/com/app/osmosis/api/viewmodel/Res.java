@@ -18,5 +18,4 @@ package com.app.osmosis.api.viewmodel;
 
 import java.time.Instant;
 
-public record Res(int status, String message, Object data, boolean isSuccess, Instant timestamp) {
-}
+public record Res(int status, String message, Object data, boolean isSuccess, Instant timestamp) {}

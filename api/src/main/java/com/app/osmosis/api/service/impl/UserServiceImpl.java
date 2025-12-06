@@ -22,8 +22,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class UserServiceImpl implements UserService {
-	@Override
-	public ApiRes onboardUser(String email, String name, String pictureUrl) {
-		return null;
-	}
+    @Override
+    public ApiRes onboardUser(String email, String name, String pictureUrl) {
+        return null;
+    }
 }
