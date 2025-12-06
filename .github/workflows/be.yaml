@@ -14,8 +14,7 @@ on:
 
 jobs:
   style-check:
-    name: Check code conventions for api/
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,5 +28,5 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
       - name: Spotless Check
         with:
-          working-directory: ./api
+          working-directory: api
         run: ./gradlew spotlessCheck
