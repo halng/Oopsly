@@ -26,5 +26,5 @@ public interface AuthService {
 
     ApiRes signIn(SignInRequest request);
 
-    ApiRes signInWithGoogle(Map<String, String> payload);
+    ApiRes signInWithProvider(Map<String, String> payload);
 }

@@ -47,7 +47,7 @@ public class AuthController {
     public ApiRes signInWithProvider(
             @RequestParam String provider, @RequestBody Map<String, String> payload) {
         return switch (provider.toLowerCase()) {
-            case "google" -> this.authService.signInWithGoogle(payload);
+            case "google" -> this.authService.signInWithProvider(payload);
             default -> ApiRes.error("Unsupported provider: " + provider);
         };
     }

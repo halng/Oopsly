@@ -91,7 +91,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ApiRes signInWithGoogle(Map<String, String> payload) {
+    public ApiRes signInWithProvider(Map<String, String> payload) {
         String googleToken = payload.get("token");
         if (googleToken == null || googleToken.isEmpty()) {
             return ApiRes.unauthorized("Missing Google token");
