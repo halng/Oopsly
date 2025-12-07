@@ -14,17 +14,14 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.service;
+package com.app.osmosis.api.exception;
 
-import com.app.osmosis.api.viewmodel.ApiRes;
-import com.app.osmosis.api.viewmodel.auth.SignInRequest;
-import com.app.osmosis.api.viewmodel.auth.SignUpRequest;
-import java.util.Map;
+public class AuthProviderException extends RuntimeException {
+    public AuthProviderException(String message) {
+        super(message);
+    }
 
-public interface AuthService {
-    ApiRes signUp(SignUpRequest signUpRequest);
-
-    ApiRes signIn(SignInRequest request);
-
-    ApiRes signInWithProvider(Map<String, String> payload);
+    public AuthProviderException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
