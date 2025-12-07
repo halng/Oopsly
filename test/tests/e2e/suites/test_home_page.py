@@ -14,6 +14,7 @@
 #     or other liability, whether in an action of contract, tort, or otherwise,
 #     arising from, out of, or in connection with the Software.
 
+import re
 import pytest
 from playwright.sync_api import expect
 from tests.e2e.pages.home_page import HomePage

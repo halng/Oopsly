@@ -36,10 +36,10 @@ public interface JwtService {
     String validateToken(String token);
 
     /**
-     * Extracts the user ID from the provided JWT token without validating its signature.
+     * Extracts the user ID from the provided JWT token.
      *
      * @param token the JWT token from which to extract the user ID
-     * @return the user ID as a String, or empty string if extraction fails
+     * @return the user ID as a String, or empty string if extraction fails or token is invalid
      */
     String extractUserId(String token);
 }
