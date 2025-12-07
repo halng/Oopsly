@@ -17,6 +17,7 @@
 package com.app.osmosis.api.service.impl;
 
 import com.app.osmosis.api.config.AppConfig;
+import com.app.osmosis.api.exception.AuthProviderException;
 import com.app.osmosis.api.service.GoogleAuthService;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -44,7 +45,7 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
             var token = verifier.verify(idToken);
             return token != null ? token.getPayload() : null;
         } catch (Exception ex) {
-            throw new RuntimeException(ex);
+            throw new AuthProviderException("Failed to verify Google ID token", ex);
         }
     }
 }
