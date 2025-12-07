@@ -240,6 +240,7 @@ const OsmosisApp = () => {
           <TouchableOpacity
             className="items-center"
             testID="quick-action-create-test"
+            onPress={() => router.push("/manual-creation")}
           >
             <View className="bg-indigo-100 p-3 rounded-full mb-1">
               <PlusCircle size={24} color="#4F46E5" />

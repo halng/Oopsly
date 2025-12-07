@@ -81,6 +81,7 @@ public class AuthServiceImpl implements AuthService {
                         .findByEmail(request.email())
                         .orElseThrow(() -> new NotFoundException("User not found"));
         if (user.getAuthProvider() == AuthProvider.LOCAL
+                && user.getHashedPassword() != null
                 && passwordEncoder.matches(request.password(), user.getHashedPassword())) {
             String token = jwtService.generateToken(user);
             return ApiRes.ok(

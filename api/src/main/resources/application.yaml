@@ -7,8 +7,12 @@ server:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:changeme}
-    expiration-in-ms: 86400000
+    # JWT secret key (minimum 32 characters/256 bits required for HS256).
+    # MUST be set via JWT_SECRET environment variable in production.
+    secret: ${JWT_SECRET}
+    # JWT expiration time in milliseconds (default: 24 hours).
+    # Override per environment using JWT_EXPIRATION_IN_MS for better security (e.g., shorter in production).
+    expiration-in-ms: ${JWT_EXPIRATION_IN_MS:86400000}
   google:
     client-id: ${GOOGLE_CLIENT_ID:changeme}
 

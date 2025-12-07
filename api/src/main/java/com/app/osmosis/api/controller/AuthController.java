@@ -20,6 +20,7 @@ import com.app.osmosis.api.service.AuthService;
 import com.app.osmosis.api.viewmodel.ApiRes;
 import com.app.osmosis.api.viewmodel.auth.SignInRequest;
 import com.app.osmosis.api.viewmodel.auth.SignUpRequest;
+import jakarta.validation.Valid;
 import java.util.Map;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,18 +35,18 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ApiRes signUp(@RequestBody SignUpRequest signUpRequest) {
+    public ApiRes signUp(@Valid @RequestBody SignUpRequest signUpRequest) {
         return authService.signUp(signUpRequest);
     }
 
     @PostMapping("/signin")
-    public ApiRes signIn(@RequestBody SignInRequest signInRequest) {
+    public ApiRes signIn(@Valid @RequestBody SignInRequest signInRequest) {
         return this.authService.signIn(signInRequest);
     }
 
-    @PostMapping("/signin")
+    @PostMapping("/signin/{provider}")
     public ApiRes signInWithProvider(
-            @RequestParam String provider, @RequestBody Map<String, String> payload) {
+            @PathVariable String provider, @RequestBody Map<String, String> payload) {
         return switch (provider.toLowerCase()) {
             case "google" -> this.authService.signInWithGoogle(payload);
             default -> ApiRes.error("Unsupported provider: " + provider);

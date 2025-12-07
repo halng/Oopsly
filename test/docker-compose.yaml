@@ -19,14 +19,14 @@ services:
     ports:
       - "8089:8089" # The Web UI
     volumes:
-      - ./tests/performance:/mnt/locust
+      - ./tests/perf:/mnt/locust
     command: -f /mnt/locust/locustfile.py --master
 
   # 3. Locust Worker (Scalable Load Generator)
   locust-worker:
     image: locustio/locust
     volumes:
-      - ./tests/performance:/mnt/locust
+      - ./tests/perf:/mnt/locust
     command: -f /mnt/locust/locustfile.py --worker --master-host locust-master
     depends_on:
       - locust-master

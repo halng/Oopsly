@@ -24,6 +24,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.Date;
+import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -50,16 +51,40 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public String validateToken(String token) {
-        return "";
+        try {
+            // Parse the token. If parsing fails, an exception will be thrown.
+            Jwts.parser()
+                    .verifyWith((SecretKey) getSignInKey())
+                    .build()
+                    .parseSignedClaims(token);
+            // If parsing is successful, return the subject (user identifier)
+            return extractUserId(token);
+        } catch (Exception e) {
+            // Token is invalid or expired
+            return "";
+        }
     }
 
     @Override
     public String extractUserId(String token) {
-        return "";
+        try {
+            return Jwts.parser()
+                    .verifyWith((SecretKey) getSignInKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private Key getSignInKey() {
         byte[] key = appConfig.getJwt().getSecret().getBytes();
+        if (key.length < 32) {
+            throw new IllegalStateException(
+                    "JWT secret key must be at least 32 bytes (256 bits) long for HS256.");
+        }
         return Keys.hmacShaKeyFor(key);
     }
 }

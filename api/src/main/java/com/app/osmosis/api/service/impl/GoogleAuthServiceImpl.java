@@ -44,7 +44,16 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
             var token = verifier.verify(idToken);
             return token != null ? token.getPayload() : null;
         } catch (Exception ex) {
-            throw new RuntimeException(ex);
+            throw new GoogleAuthException("Failed to verify Google ID token: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * Custom exception for Google authentication errors
+     */
+    public static class GoogleAuthException extends RuntimeException {
+        public GoogleAuthException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }

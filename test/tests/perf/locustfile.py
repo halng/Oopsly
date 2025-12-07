@@ -36,8 +36,3 @@ class OsmosisUser(HttpUser):
                 response.failure(
                     f"Health check failed with status: {response.status_code}"
                 )
-
-    # You can add more tasks with 'weights' to simulate traffic flow
-    # @task(3)
-    # def view_homepage(self):
-    #     self.client.get("/")

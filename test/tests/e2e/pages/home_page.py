@@ -57,13 +57,13 @@ class HomePage(BasePage):
         self.page.wait_for_load_state("networkidle")
         if action == "Tasks":
             self.btn_tasks.click()
-            # expect(self.page).to_have_url("http://localhost:8081/tasks-list")
+            expect(self.page).to_have_url("http://localhost:8081/tasks-list")
         elif action == "Notes":
             self.btn_notes.click()
-            # expect(self.page).to_have_url(re.compile(".*notes"))
+            expect(self.page).to_have_url(re.compile(".*notes"))
         elif action == "Planner":
             self.btn_planner.click()
-            # expect(self.page).to_have_url(re.compile(".*study-planner"))
+            expect(self.page).to_have_url(re.compile(".*study-planner"))
 
     def open_subject(self, subject_name: str):
         """Scrolls to a subject card and clicks it"""
