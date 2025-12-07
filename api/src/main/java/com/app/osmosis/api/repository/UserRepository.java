@@ -14,6 +14,15 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.config;
+package com.app.osmosis.api.repository;
 
-public class WebConfig {}
+import com.app.osmosis.api.entity.User;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, UUID> {
+    Optional<User> findByEmail(String email);
+}

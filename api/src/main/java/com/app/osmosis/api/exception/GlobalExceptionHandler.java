@@ -26,6 +26,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(NotFoundException.class)
+    public ApiRes handleNotFoundException(NotFoundException ex) {
+        log.warn("Resource not found: {}", ex.getMessage());
+        return ApiRes.notFound(ex.getMessage());
+    }
+
     @ExceptionHandler(UnauthenticatedException.class)
     public ApiRes handleUnauthenticatedException(UnauthenticatedException ex) {
         log.warn("Unauthenticated access attempt: {}", ex.getMessage());

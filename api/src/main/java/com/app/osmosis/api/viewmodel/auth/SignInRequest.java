@@ -14,23 +14,6 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.service.impl;
+package com.app.osmosis.api.viewmodel.auth;
 
-import com.app.osmosis.api.service.DeckService;
-import com.app.osmosis.api.viewmodel.ApiRes;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-@Slf4j
-@Service
-public class DeckServiceImpl implements DeckService {
-
-    public DeckServiceImpl() {}
-
-    @Override
-    public ApiRes createDeck() {
-        log.info("Create deck");
-
-        return ApiRes.ok("Deck created by ");
-    }
-}
+public record SignInRequest(String email, String password) {}

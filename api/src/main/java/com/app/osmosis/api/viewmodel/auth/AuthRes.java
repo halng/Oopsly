@@ -14,16 +14,6 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.service.impl;
+package com.app.osmosis.api.viewmodel.auth;
 
-import com.app.osmosis.api.service.UserService;
-import com.app.osmosis.api.viewmodel.ApiRes;
-import org.springframework.stereotype.Service;
-
-@Service
-public class UserServiceImpl implements UserService {
-    @Override
-    public ApiRes onboardUser(String email, String name, String pictureUrl) {
-        return null;
-    }
-}
+public record AuthRes(String token, String provider) {}

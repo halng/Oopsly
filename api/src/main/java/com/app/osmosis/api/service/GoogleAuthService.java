@@ -14,23 +14,10 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.service.impl;
+package com.app.osmosis.api.service;
 
-import com.app.osmosis.api.service.DeckService;
-import com.app.osmosis.api.viewmodel.ApiRes;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 
-@Slf4j
-@Service
-public class DeckServiceImpl implements DeckService {
-
-    public DeckServiceImpl() {}
-
-    @Override
-    public ApiRes createDeck() {
-        log.info("Create deck");
-
-        return ApiRes.ok("Deck created by ");
-    }
+public interface GoogleAuthService {
+    GoogleIdToken.Payload verify(String idToken);
 }

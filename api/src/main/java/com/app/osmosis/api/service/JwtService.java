@@ -16,8 +16,12 @@
 
 package com.app.osmosis.api.service;
 
-import com.app.osmosis.api.viewmodel.ApiRes;
+import com.app.osmosis.api.entity.User;
 
-public interface UserService {
-    ApiRes onboardUser(String email, String name, String pictureUrl);
+public interface JwtService {
+    String generateToken(User user);
+
+    String validateToken(String token);
+
+    String extractUserId(String token);
 }

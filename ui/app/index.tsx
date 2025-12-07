@@ -205,6 +205,7 @@ const OsmosisApp = () => {
         {/* Navigation Menu */}
         <View className="flex-row justify-around mt-4 pt-3 border-t border-gray-100">
           <TouchableOpacity
+            testID="quick-action-tasks"
             className="items-center"
             onPress={() => router.push("/tasks-list")}
           >
@@ -216,6 +217,7 @@ const OsmosisApp = () => {
 
           <TouchableOpacity
             className="items-center"
+            testID="quick-action-notes"
             onPress={() => router.push("/notes")}
           >
             <View className="bg-green-100 p-3 rounded-full mb-1">
@@ -226,6 +228,7 @@ const OsmosisApp = () => {
 
           <TouchableOpacity
             className="items-center"
+            testID="quick-action-planner"
             onPress={() => router.push("/study-planner")}
           >
             <View className="bg-purple-100 p-3 rounded-full mb-1">
@@ -236,7 +239,7 @@ const OsmosisApp = () => {
 
           <TouchableOpacity
             className="items-center"
-            onPress={() => router.push("/manual-creation")}
+            testID="quick-action-create-test"
           >
             <View className="bg-indigo-100 p-3 rounded-full mb-1">
               <PlusCircle size={24} color="#4F46E5" />
@@ -247,12 +250,12 @@ const OsmosisApp = () => {
       </View>
 
       {/* Main Content */}
-      <ScrollView className="flex-1">
+      <ScrollView className="flex-1" testID="main-scroll-view">
         {dummyData.map((shelf) => (
           <View key={shelf.id} className="mb-6">
             <View className="flex-row items-center px-4 mb-3 mt-2">
               <View className="mr-2">{shelf.icon}</View>
-              <Text className="text-lg font-bold text-gray-800">
+              <Text className="text-lg font-bold text-gray-800" testID={`shelf-name-${shelf.id}`}>
                 {shelf.name}
               </Text>
             </View>

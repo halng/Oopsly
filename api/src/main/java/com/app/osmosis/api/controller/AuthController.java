@@ -16,29 +16,39 @@
 
 package com.app.osmosis.api.controller;
 
+import com.app.osmosis.api.service.AuthService;
 import com.app.osmosis.api.viewmodel.ApiRes;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.app.osmosis.api.viewmodel.auth.SignInRequest;
+import com.app.osmosis.api.viewmodel.auth.SignUpRequest;
+import java.util.Map;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("auth")
 public class AuthController {
 
-    @GetMapping("/health")
-    public String health() {
-        return "OK";
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
-    @GetMapping("/user")
-    public ApiRes authWithGoogle(@AuthenticationPrincipal OAuth2User principal) {
-        return ApiRes.ok("Success", principal.getAttributes());
+    @PostMapping("/signup")
+    public ApiRes signUp(@RequestBody SignUpRequest signUpRequest) {
+        return authService.signUp(signUpRequest);
     }
 
-    @PostMapping("onboard")
-    public ApiRes onboardUser(@AuthenticationPrincipal OAuth2User principal) {
-        // Onboarding logic here
-        return ApiRes.ok("User onboarded", principal.getAttributes());
+    @PostMapping("/signin")
+    public ApiRes signIn(@RequestBody SignInRequest signInRequest) {
+        return this.authService.signIn(signInRequest);
+    }
+
+    @PostMapping("/signin")
+    public ApiRes signInWithProvider(
+            @RequestParam String provider, @RequestBody Map<String, String> payload) {
+        return switch (provider.toLowerCase()) {
+            case "google" -> this.authService.signInWithGoogle(payload);
+            default -> ApiRes.error("Unsupported provider: " + provider);
+        };
     }
 }

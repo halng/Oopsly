@@ -5,6 +5,13 @@ server:
   servlet:
     context-path: /api/${server.active.version}/osmosis
 
+app:
+  jwt:
+    secret: ${JWT_SECRET:changeme}
+    expiration-in-ms: 86400000
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:changeme}
+
 spring:
   autoconfigure:
     exclude: org.springframework.ai.model.vertexai.autoconfigure.embedding.VertexAiTextEmbeddingAutoConfiguration
@@ -24,15 +31,15 @@ spring:
       ddl-auto: update
     generate-ddl: true
     show-sql: true
-  security:
-    oauth2:
-      client:
-        registration:
-            google:
-                client-id: ${OAUTH2_CLIENT_ID:client-id}
-                client-secret: ${OAUTH2_CLIENT_SECRET:client-secret}
-                scope:
-                  - profile
-                  - email
+#  security:
+#    oauth2:
+#      client:
+#        registration:
+#            google:
+#                client-id: ${OAUTH2_CLIENT_ID:client-id}
+#                client-secret: ${OAUTH2_CLIENT_SECRET:client-secret}
+#                scope:
+#                  - profile
+#                  - email
 
 

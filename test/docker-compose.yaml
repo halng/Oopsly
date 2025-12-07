@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # 1. Appium Server (Mobile Testing Core)
+  appium:
+    image: appium/appium:latest
+    ports:
+      - "4723:4723"
+    environment:
+      - ALLOW_CORS=true
+    # MOUNTING USB: Essential for testing on REAL Android devices plugged into your laptop
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+    privileged: true
+
+  # 2. Locust Master (Performance Orchestrator)
+  locust-master:
+    image: locustio/locust
+    ports:
+      - "8089:8089" # The Web UI
+    volumes:
+      - ./tests/performance:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --master
+
+  # 3. Locust Worker (Scalable Load Generator)
+  locust-worker:
+    image: locustio/locust
+    volumes:
+      - ./tests/performance:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --worker --master-host locust-master
+    depends_on:
+      - locust-master
