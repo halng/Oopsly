@@ -38,6 +38,12 @@ public class GlobalExceptionHandler {
         return ApiRes.unauthorized("You must be logged in to access this resource.");
     }
 
+    @ExceptionHandler(AuthProviderException.class)
+    public ApiRes handleAuthProviderException(AuthProviderException ex) {
+        log.error("Authentication provider error: {}", ex.getMessage(), ex);
+        return ApiRes.unauthorized("Failed to authenticate with provider. Please try again.");
+    }
+
     @Order(1000)
     @ExceptionHandler(Exception.class)
     public ApiRes handleGenericException(Exception ex) {

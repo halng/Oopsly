@@ -92,13 +92,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ApiRes signInWithGoogle(Map<String, String> payload) {
-        String googleToken = payload.get("token");
-        if (googleToken == null || googleToken.isEmpty()) {
-            return ApiRes.unauthorized("Missing Google token");
+    public ApiRes signInWithProvider(Map<String, String> payload) {
+        String authToken = payload.get("token");
+        if (authToken == null || authToken.isEmpty()) {
+            return ApiRes.unauthorized("Missing authentication token");
         }
 
-        GoogleIdToken.Payload verifiedPayload = this.googleAuthService.verify(googleToken);
+        GoogleIdToken.Payload verifiedPayload = this.googleAuthService.verify(authToken);
 
         if (verifiedPayload != null) {
             String email = verifiedPayload.getEmail();
@@ -123,10 +123,10 @@ public class AuthServiceImpl implements AuthService {
 
             String token = jwtService.generateToken(user);
             return ApiRes.ok(
-                    "Sign in with Google successful",
+                    "Sign in successful",
                     new AuthRes(token, AuthProvider.GOOGLE.name()));
         }
 
-        return ApiRes.unauthorized("Invalid Google token");
+        return ApiRes.unauthorized("Invalid authentication token");
     }
 }
