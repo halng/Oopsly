@@ -15,20 +15,41 @@
  */
 
 import React from 'react';
-import { render, fireEvent, screen, act } from '@testing-library/react-native';
+import { render, fireEvent, screen, act, waitFor } from '@testing-library/react-native';
 import OTPVerification from '../app/verification';
 import { useRouter } from 'expo-router';
+import { otpService } from '../services/otp';
 
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
 }));
 
+jest.mock('../services/otp', () => ({
+  otpService: {
+    sendOTP: jest.fn(),
+    verifyOTP: jest.fn(),
+  },
+}));
+
+const mockSetCredentials = jest.fn();
+jest.mock('../store/AuthStore', () => ({
+  useAuthStore: jest.fn((selector) => {
+    const state = {
+      userEmail: 'test@example.com',
+      setCredentials: mockSetCredentials,
+    };
+    return selector ? selector(state) : state;
+  }),
+}));
+
 describe('OTPVerification', () => {
   const mockBack = jest.fn();
+  const mockPush = jest.fn();
 
   beforeEach(() => {
-    (useRouter as jest.Mock).mockReturnValue({ back: mockBack });
+    (useRouter as jest.Mock).mockReturnValue({ back: mockBack, push: mockPush });
     jest.useFakeTimers();
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
@@ -83,7 +104,72 @@ describe('OTPVerification', () => {
     expect(verifyBtn.props.accessibilityState?.disabled).toBe(false);
   });
 
-  it('handles the timer and resend logic', () => {
+  it('handles successful OTP verification', async () => {
+    (otpService.verifyOTP as jest.Mock).mockResolvedValue({
+      status: 200,
+      message: 'Authentication successful',
+      isSuccess: true,
+      data: {
+        access_token: 'access_token_123',
+        refresh_token: 'refresh_token_456',
+        type: 'Bearer',
+      },
+    });
+
+    render(<OTPVerification />);
+
+    // Fill all inputs
+    const inputs = [1, 2, 3, 4, 5, 6];
+    inputs.forEach(idx => {
+      fireEvent.changeText(screen.getByLabelText(`OTP digit ${idx}`), '1');
+    });
+
+    const verifyBtn = screen.getByLabelText('Verify and create account');
+    fireEvent.press(verifyBtn);
+
+    await waitFor(() => {
+      expect(otpService.verifyOTP).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        otp: '111111',
+      });
+      expect(mockSetCredentials).toHaveBeenCalledWith(
+        'test@example.com',
+        'access_token_123',
+        'refresh_token_456'
+      );
+      expect(mockPush).toHaveBeenCalledWith('/(user)');
+    });
+  });
+
+  it('handles OTP verification error', async () => {
+    (otpService.verifyOTP as jest.Mock).mockRejectedValue(new Error('Invalid OTP'));
+
+    render(<OTPVerification />);
+
+    // Fill all inputs
+    const inputs = [1, 2, 3, 4, 5, 6];
+    inputs.forEach(idx => {
+      fireEvent.changeText(screen.getByLabelText(`OTP digit ${idx}`), '1');
+    });
+
+    const verifyBtn = screen.getByLabelText('Verify and create account');
+    fireEvent.press(verifyBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Invalid OTP')).toBeTruthy();
+    });
+
+    // Should not navigate
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('handles the timer and resend logic', async () => {
+    (otpService.sendOTP as jest.Mock).mockResolvedValue({
+      status: 200,
+      message: 'OTP sent successfully',
+      isSuccess: true,
+    });
+
     render(<OTPVerification />);
     
     const resendBtn = screen.getByText('Resend');
@@ -112,6 +198,10 @@ describe('OTPVerification', () => {
 
     // Click Resend
     fireEvent.press(activeResendBtn);
+
+    await waitFor(() => {
+      expect(otpService.sendOTP).toHaveBeenCalledWith('test@example.com');
+    });
 
     // Timer should reset
     expect(screen.getByText('02:00')).toBeTruthy();
