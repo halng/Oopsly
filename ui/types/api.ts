@@ -32,3 +32,9 @@ export interface OTPVerifyRequest {
   email: string;
   otp: string;
 }
+
+export interface ApiErrorResponse {
+  message?: string;
+  status?: number;
+  error?: string;
+}

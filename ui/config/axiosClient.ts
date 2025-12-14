@@ -16,6 +16,7 @@
 
 import axios, { AxiosError } from 'axios';
 import { API_CONFIG } from './api';
+import { ApiErrorResponse } from '../types/api';
 
 // Create axios instance with default config
 export const apiClient = axios.create({
@@ -46,11 +47,11 @@ apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error: AxiosError) => {
+  (error: AxiosError<ApiErrorResponse>) => {
     // Handle common error responses
     if (error.response) {
       // Server responded with error status
-      const errorData = error.response.data as any;
+      const errorData = error.response.data;
       const errorMessage = errorData?.message || 'An error occurred';
       return Promise.reject(new Error(errorMessage));
     } else if (error.request) {
