@@ -82,6 +82,28 @@ class DeckControllerTest {
     }
 
     @Test
+    void getAllDecks_withAscendingSortDirection_delegatesToService() {
+        ApiRes expected = mock(ApiRes.class);
+        when(deckService.getAllDecks(any(Pageable.class))).thenReturn(expected);
+
+        ApiRes actual = deckController.getAllDecks(0, 10, "name", "ASC");
+
+        verify(deckService, times(1)).getAllDecks(any(Pageable.class));
+        assertSame(expected, actual);
+    }
+
+    @Test
+    void getAllDecks_withCustomPageSize_delegatesToService() {
+        ApiRes expected = mock(ApiRes.class);
+        when(deckService.getAllDecks(any(Pageable.class))).thenReturn(expected);
+
+        ApiRes actual = deckController.getAllDecks(2, 25, "updatedAt", "DESC");
+
+        verify(deckService, times(1)).getAllDecks(any(Pageable.class));
+        assertSame(expected, actual);
+    }
+
+    @Test
     void getDeckById_delegatesToService_and_returnsServiceResponse() {
         ApiRes expected = mock(ApiRes.class);
         when(deckService.getDeckById(deckId)).thenReturn(expected);

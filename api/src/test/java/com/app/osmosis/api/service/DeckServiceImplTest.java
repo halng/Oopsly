@@ -86,6 +86,21 @@ class DeckServiceImplTest {
         ApiRes result = deckService.createDeck(createDeck, userId);
 
         assertEquals(HttpStatus.CREATED, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertTrue(result.getBody().message().contains("created"));
+        verify(userRepository).findById(userId);
+        verify(deckRepository).save(any(DeckEntity.class));
+    }
+
+    @Test
+    void createDeck_withNullDescription_createsAndReturnsDeck() {
+        CreateDeck createDeck = new CreateDeck("New Deck", null);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+
+        ApiRes result = deckService.createDeck(createDeck, userId);
+
+        assertEquals(HttpStatus.CREATED, result.getStatusCode());
         verify(userRepository).findById(userId);
         verify(deckRepository).save(any(DeckEntity.class));
     }
@@ -113,12 +128,58 @@ class DeckServiceImplTest {
     }
 
     @Test
+    void getAllDecks_whenEmpty_returnsEmptyPage() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<DeckEntity> emptyPage = new PageImpl<>(java.util.List.of());
+        when(deckRepository.findByIsDeletedFalse(pageable)).thenReturn(emptyPage);
+
+        ApiRes result = deckService.getAllDecks(pageable);
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        verify(deckRepository).findByIsDeletedFalse(pageable);
+    }
+
+    @Test
+    void getAllDecks_withMultipleDecks_returnsAllDecks() {
+        Pageable pageable = PageRequest.of(0, 10);
+        DeckEntity deck2 =
+                DeckEntity.builder()
+                        .id(UUID.randomUUID())
+                        .name("Deck 2")
+                        .description("Description 2")
+                        .user(user)
+                        .isDeleted(false)
+                        .build();
+        deck2.setCreatedAt(Instant.now());
+        deck2.setUpdatedAt(Instant.now());
+
+        Page<DeckEntity> page = new PageImpl<>(java.util.List.of(deck, deck2));
+        when(deckRepository.findByIsDeletedFalse(pageable)).thenReturn(page);
+
+        ApiRes result = deckService.getAllDecks(pageable);
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        verify(deckRepository).findByIsDeletedFalse(pageable);
+    }
+
+    @Test
     void getDeckById_whenDeckExists_returnsDeck() {
         when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
 
         ApiRes result = deckService.getDeckById(deckId);
 
         assertEquals(HttpStatus.OK, result.getStatusCode());
+        verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
+    }
+
+    @Test
+    void getDeckById_returnsCorrectDeckData() {
+        when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
+
+        ApiRes result = deckService.getDeckById(deckId);
+
+        assertNotNull(result.getBody());
+        assertNotNull(result.getBody().data());
         verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
     }
 
@@ -140,6 +201,32 @@ class DeckServiceImplTest {
 
         assertEquals(HttpStatus.OK, result.getStatusCode());
         verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
+        verify(deckRepository).save(deck);
+    }
+
+    @Test
+    void updateDeck_actuallyUpdatesFields() {
+        UpdateDeck updateDeck = new UpdateDeck("Updated Name", "Updated Description");
+        when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
+        when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+
+        deckService.updateDeck(deckId, updateDeck, userId);
+
+        assertEquals("Updated Name", deck.getName());
+        assertEquals("Updated Description", deck.getDescription());
+        verify(deckRepository).save(deck);
+    }
+
+    @Test
+    void updateDeck_withNullDescription_updatesFields() {
+        UpdateDeck updateDeck = new UpdateDeck("New Name", null);
+        when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
+        when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+
+        deckService.updateDeck(deckId, updateDeck, userId);
+
+        assertEquals("New Name", deck.getName());
+        assertNull(deck.getDescription());
         verify(deckRepository).save(deck);
     }
 
@@ -178,6 +265,18 @@ class DeckServiceImplTest {
         verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
         verify(deckRepository).save(deck);
         assertTrue(deck.getIsDeleted());
+    }
+
+    @Test
+    void softDeleteDeck_setsIsDeletedToTrue() {
+        assertFalse(deck.getIsDeleted());
+        when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
+        when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+
+        deckService.softDeleteDeck(deckId, userId);
+
+        assertTrue(deck.getIsDeleted());
+        verify(deckRepository).save(deck);
     }
 
     @Test
