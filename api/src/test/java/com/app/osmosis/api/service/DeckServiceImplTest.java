@@ -131,7 +131,7 @@ class DeckServiceImplTest {
     }
 
     @Test
-    void updateDeck_whenUserOwnsDecK_updatesDeck() {
+    void updateDeck_whenUserOwnsDeck_updatesDeck() {
         UpdateDeck updateDeck = new UpdateDeck("Updated Deck", "Updated Description");
         when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
         when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
@@ -168,7 +168,7 @@ class DeckServiceImplTest {
     }
 
     @Test
-    void softDeleteDeck_whenUserOwnsDecK_softDeletesDeck() {
+    void softDeleteDeck_whenUserOwnsDeck_softDeletesDeck() {
         when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
         when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
 
