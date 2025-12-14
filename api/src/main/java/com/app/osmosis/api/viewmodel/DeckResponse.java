@@ -14,19 +14,10 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.repository;
+package com.app.osmosis.api.viewmodel;
 
-import com.app.osmosis.api.entity.DeckEntity;
-import java.util.Optional;
+import java.time.Instant;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-@Repository
-public interface DeckRepository extends JpaRepository<DeckEntity, UUID> {
-    Page<DeckEntity> findByIsDeletedFalse(Pageable pageable);
-
-    Optional<DeckEntity> findByIdAndIsDeletedFalse(UUID id);
-}
+public record DeckResponse(
+        UUID id, String name, String description, Instant createdAt, Instant updatedAt) {}

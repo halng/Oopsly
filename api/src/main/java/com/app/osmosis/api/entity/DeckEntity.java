@@ -16,4 +16,33 @@
 
 package com.app.osmosis.api.entity;
 
-public class DeckEntity {}
+import jakarta.persistence.*;
+import java.util.UUID;
+import lombok.*;
+import org.springframework.data.relational.core.mapping.Table;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "decks")
+@Entity(name = "decks")
+public class DeckEntity extends Audit {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(nullable = false)
+    private String name;
+
+    private String description;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+}

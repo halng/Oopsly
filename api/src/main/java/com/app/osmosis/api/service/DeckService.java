@@ -17,7 +17,19 @@
 package com.app.osmosis.api.service;
 
 import com.app.osmosis.api.viewmodel.ApiRes;
+import com.app.osmosis.api.viewmodel.CreateDeck;
+import com.app.osmosis.api.viewmodel.UpdateDeck;
+import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 
 public interface DeckService {
-    ApiRes createDeck();
+    ApiRes createDeck(CreateDeck createDeck, UUID userId);
+
+    ApiRes getAllDecks(Pageable pageable);
+
+    ApiRes getDeckById(UUID id);
+
+    ApiRes updateDeck(UUID id, UpdateDeck updateDeck, UUID userId);
+
+    ApiRes softDeleteDeck(UUID id, UUID userId);
 }

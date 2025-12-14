@@ -14,19 +14,8 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.repository;
+package com.app.osmosis.api.viewmodel;
 
-import com.app.osmosis.api.entity.DeckEntity;
-import java.util.Optional;
-import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import jakarta.validation.constraints.NotBlank;
 
-@Repository
-public interface DeckRepository extends JpaRepository<DeckEntity, UUID> {
-    Page<DeckEntity> findByIsDeletedFalse(Pageable pageable);
-
-    Optional<DeckEntity> findByIdAndIsDeletedFalse(UUID id);
-}
+public record UpdateDeck(@NotBlank(message = "Name is required") String name, String description) {}
