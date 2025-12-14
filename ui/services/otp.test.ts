@@ -16,7 +16,8 @@
 
 import { otpService } from './otp';
 import { apiClient } from '../config/axiosClient';
-import { ApiResponse, AuthTokens } from '../types/api';
+import { ApiResponse } from '../types/api';
+import { AuthTokens } from '../types/AuthViewModel';
 
 jest.mock('../config/axiosClient', () => ({
   apiClient: {

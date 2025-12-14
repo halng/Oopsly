@@ -22,19 +22,9 @@ export interface ApiResponse<T = any> {
   timestamp: string;
 }
 
-export interface AuthTokens {
-  access_token: string;
-  refresh_token: string;
-  type: string;
-}
-
-export interface OTPVerifyRequest {
-  email: string;
-  otp: string;
-}
-
 export interface ApiErrorResponse {
   message?: string;
   status?: number;
   error?: string;
 }
+

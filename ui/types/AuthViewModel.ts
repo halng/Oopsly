@@ -14,20 +14,13 @@
  *    limitations under the License.
  */
 
-import { apiClient } from '../config/axiosClient';
-import { ApiResponse } from '../types/api';
-import { AuthTokens, OTPVerifyRequest } from '../types/AuthViewModel';
+export interface AuthTokens {
+  access_token: string;
+  refresh_token: string;
+  type: string;
+}
 
-export const otpService = {
-  async sendOTP(email: string): Promise<ApiResponse<null>> {
-    const response = await apiClient.post<ApiResponse<null>>(`/otp`, null, {
-      params: { email },
-    });
-    return response.data;
-  },
-
-  async verifyOTP(request: OTPVerifyRequest): Promise<ApiResponse<AuthTokens>> {
-    const response = await apiClient.post<ApiResponse<AuthTokens>>('/otp/validate', request);
-    return response.data;
-  },
-};
+export interface OTPVerifyRequest {
+  email: string;
+  otp: string;
+}
