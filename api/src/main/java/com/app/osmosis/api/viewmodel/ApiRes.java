@@ -104,4 +104,13 @@ public class ApiRes extends ResponseEntity<Res> {
     public static ApiRes success(String message, Object data) {
         return new ApiRes(new Res(200, message, data, true, Instant.now()), HttpStatus.OK);
     }
+
+    public static ApiRes rateLimitExceeded(String message) {
+        return new ApiRes(
+                new Res(429, message, null, false, Instant.now()), HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    public static ApiRes forbidden(String message, Object data) {
+        return new ApiRes(new Res(403, message, data, false, Instant.now()), HttpStatus.FORBIDDEN);
+    }
 }

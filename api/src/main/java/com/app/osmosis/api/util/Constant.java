@@ -14,6 +14,15 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.viewmodel.auth;
+package com.app.osmosis.api.util;
 
-public record AuthRes(String token, String provider) {}
+public class Constant {
+    public static final String OTP_SUBJECT = "You're almost there! Here is your code";
+    public static final String OTP_REDIS_KEY = "otp:";
+    public static final String OTP_ATTEMPT_REDIS_KEY = "otp_attempt:";
+    public static final int OTP_EXPIRATION_MINUTES = 5;
+    public static final int OTP_MAX_ATTEMPT = 3;
+    public static final String TOKEN_TYPE_BEARER = "Bearer";
+    public static final String REFRESH_TOKEN_REDIS_KEY = "refresh_token:";
+    public static final int REFRESH_TOKEN_EXPIRATION_DAYS = 30;
+}

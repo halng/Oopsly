@@ -1,4 +1,4 @@
-name: UI CI
+name: FE - CI
 
 on:
   push:
@@ -51,8 +51,3 @@ jobs:
       - name: Run unit tests
         working-directory: ui
         run: pnpm run test:coverage
-      - name: Upload coverage to Codecov
-        if: success() && github.event_name == 'pull_request'
-        uses: codecov/codecov-action@v3
-        with:
-          files: ui/coverage/lcov.info

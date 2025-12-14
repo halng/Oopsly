@@ -1,0 +1,168 @@
+/*
+ *    Copyright 2025 Hao Nguyen Tan
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+package com.app.osmosis.api.service.impl;
+
+import com.app.osmosis.api.entity.User;
+import com.app.osmosis.api.messaging.EmailSender;
+import com.app.osmosis.api.repository.UserRepository;
+import com.app.osmosis.api.service.OTPService;
+import com.app.osmosis.api.util.Constant;
+import com.app.osmosis.api.util.JwtUtils;
+import com.app.osmosis.api.util.StringUtils;
+import com.app.osmosis.api.util.ValidateStatus;
+import com.app.osmosis.api.viewmodel.ApiRes;
+import com.app.osmosis.api.viewmodel.AuthRes;
+import com.app.osmosis.api.viewmodel.OTPReq;
+import jakarta.mail.MessagingException;
+import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Service;
+
+@Slf4j
+@Service
+@AllArgsConstructor
+public class OTPServiceImpl implements OTPService {
+
+    private final EmailSender emailSender;
+    private final UserRepository userRepository;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final JwtUtils jwtUtils;
+    private static final SecureRandom random = new SecureRandom();
+
+    @Override
+    public ApiRes sendOTP(String email) {
+        log.info("Sending OTP email to {}", StringUtils.masked(email));
+        String user = email.split("@")[0];
+        int otpCode = random.nextInt(900000) + 100000;
+        String otpKey = Constant.OTP_REDIS_KEY + user;
+        String attemptKey = Constant.OTP_ATTEMPT_REDIS_KEY + user;
+
+        try {
+            emailSender.sendEmail(email, String.valueOf(otpCode));
+            stringRedisTemplate
+                    .opsForValue()
+                    .set(
+                            otpKey,
+                            String.valueOf(otpCode),
+                            Constant.OTP_EXPIRATION_MINUTES,
+                            TimeUnit.MINUTES);
+            stringRedisTemplate
+                    .opsForValue()
+                    .set(attemptKey, "0", Constant.OTP_EXPIRATION_MINUTES, TimeUnit.MINUTES);
+        } catch (MessagingException e) {
+            log.error("Failed to send OTP email to {}: {}", email, e.getMessage());
+            return ApiRes.error("Failed to generate OTP. Please try again later.");
+        } catch (IOException e) {
+            log.error("IO Exception when sending OTP email to {}: {}", email, e.getMessage());
+            return ApiRes.error(
+                    "Failed to generate OTP due to an internal error. Please try again later.");
+        } catch (RuntimeException e) {
+            log.error("Runtime Exception when processing OTP for {}: {}", email, e.getMessage());
+            return ApiRes.error("An unexpected error occurred. Please try again later.");
+        } finally {
+            log.info("OTP process completed for {}", email);
+        }
+
+        return ApiRes.ok("OTP sent successfully to " + email);
+    }
+
+    @Override
+    public ApiRes verifyOTP(OTPReq otpReq) {
+        return switch (check(otpReq.email().split("@")[0], otpReq.otp())) {
+            case VALID -> handleAuthSuccess(otpReq.email());
+            case INVALID -> ApiRes.badRequest("OTP is invalid. Please try again.");
+            case EXPIRED -> ApiRes.notFound("OTP has expired. Please request a new one.");
+            case INVALIDATED -> ApiRes.rateLimitExceeded(
+                    "OTP has been invalidated due to too many failed attempts. Try again after 5"
+                            + " minutes.");
+        };
+    }
+
+    private ApiRes handleAuthSuccess(String email) {
+        log.info("Authentication successful for {}. Generating token..", StringUtils.masked(email));
+        Optional<User> user = userRepository.findByEmail(email);
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", "USER");
+        if (user.isEmpty()) {
+            log.warn("User not found for email {}", StringUtils.masked(email));
+            User createdUser = this.userRepository.save(User.builder().email(email).build());
+            claims.put("id", createdUser.getId());
+        } else {
+            claims.put("id", user.get().getId());
+        }
+
+        log.info("Generating JWT token for {}", StringUtils.masked(email));
+        String jwtToken = jwtUtils.generateTokenWithClaims(claims, email);
+        String refreshToken = jwtUtils.generateRefreshToken(email);
+
+        AuthRes authRes = new AuthRes(jwtToken, refreshToken, Constant.TOKEN_TYPE_BEARER);
+
+        log.info("Saving refresh token into cache for user {}", StringUtils.masked(email));
+        String refreshTokenKey = Constant.REFRESH_TOKEN_REDIS_KEY + claims.get("id");
+        stringRedisTemplate
+                .opsForValue()
+                .set(
+                        refreshTokenKey,
+                        refreshToken,
+                        Constant.REFRESH_TOKEN_EXPIRATION_DAYS,
+                        TimeUnit.DAYS);
+
+        return ApiRes.ok("Authentication successful.", authRes);
+    }
+
+    private ValidateStatus check(String user, String inputOtp) {
+        log.info("Checking OTP for {}", user);
+        String otpKey = Constant.OTP_REDIS_KEY + user;
+        String attemptKey = Constant.OTP_ATTEMPT_REDIS_KEY + user;
+
+        String storedOtp = stringRedisTemplate.opsForValue().get(otpKey);
+        String attemptStr = stringRedisTemplate.opsForValue().get(attemptKey);
+        int attempts = attemptStr != null ? Integer.parseInt(attemptStr) : 0;
+
+        if (storedOtp == null) {
+            return ValidateStatus.EXPIRED;
+        }
+
+        if (attempts >= Constant.OTP_MAX_ATTEMPT) {
+            return ValidateStatus.INVALIDATED;
+        }
+
+        if (storedOtp.equals(inputOtp)) {
+            stringRedisTemplate.delete(otpKey);
+            stringRedisTemplate.delete(attemptKey);
+            return ValidateStatus.VALID;
+        } else {
+            attempts++;
+            stringRedisTemplate
+                    .opsForValue()
+                    .set(
+                            attemptKey,
+                            String.valueOf(attempts),
+                            Constant.OTP_EXPIRATION_MINUTES,
+                            TimeUnit.MINUTES);
+            return ValidateStatus.INVALID;
+        }
+    }
+}

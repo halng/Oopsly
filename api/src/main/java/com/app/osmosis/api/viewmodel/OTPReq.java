@@ -14,17 +14,9 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.service;
+package com.app.osmosis.api.viewmodel;
 
-import com.app.osmosis.api.viewmodel.ApiRes;
-import com.app.osmosis.api.viewmodel.auth.SignInRequest;
-import com.app.osmosis.api.viewmodel.auth.SignUpRequest;
-import java.util.Map;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 
-public interface AuthService {
-    ApiRes signUp(SignUpRequest signUpRequest);
-
-    ApiRes signIn(SignInRequest request);
-
-    ApiRes signInWithProvider(Map<String, String> payload);
-}
+public record OTPReq(@Email String email, @Size(min = 6) String otp) {}

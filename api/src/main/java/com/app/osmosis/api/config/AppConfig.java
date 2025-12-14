@@ -46,6 +46,7 @@ public class AppConfig {
     public static class Jwt {
         private String secret;
         private long expirationInMs;
+        private long refreshExpirationInMs;
     }
 
     @Getter

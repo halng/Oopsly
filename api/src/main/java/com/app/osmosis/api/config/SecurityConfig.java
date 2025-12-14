@@ -43,12 +43,11 @@ public class SecurityConfig {
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(
                         req ->
-                                req.requestMatchers("/auth/**", "/health")
+                                req.requestMatchers("/otp/**", "/health")
                                         .permitAll()
                                         .anyRequest()
                                         .authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)
-                .oauth2Login(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

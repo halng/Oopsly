@@ -14,26 +14,25 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.controller;
+package com.app.osmosis.api.service;
 
-import com.app.osmosis.api.service.DeckService;
 import com.app.osmosis.api.viewmodel.ApiRes;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.app.osmosis.api.viewmodel.OTPReq;
 
-@RestController
-@RequestMapping("/decks")
-public class DeckController {
+public interface OTPService {
+    /**
+     * Sends an OTP to the specified email address.
+     *
+     * @param email: The recipient's email address.
+     * @return ApiRes: The response indicating success or failure of the operation.
+     */
+    ApiRes sendOTP(String email);
 
-    private final DeckService deckService;
-
-    public DeckController(DeckService deckService) {
-        this.deckService = deckService;
-    }
-
-    @PostMapping
-    public ApiRes createDeck() {
-        return deckService.createDeck();
-    }
+    /**
+     * Verifies the provided OTP for the specified email address.
+     *
+     * @param OTPVm: The OTP view model containing email and OTP code.
+     * @return ApiRes: The response indicating whether the OTP is valid or not.
+     */
+    ApiRes verifyOTP(OTPReq otpReq);
 }

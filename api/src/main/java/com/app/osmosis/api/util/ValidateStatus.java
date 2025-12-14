@@ -14,6 +14,11 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.viewmodel.auth;
+package com.app.osmosis.api.util;
 
-public record SignUpRequest(String email, String password, String name) {}
+public enum ValidateStatus {
+    VALID,
+    INVALIDATED,
+    INVALID,
+    EXPIRED
+}

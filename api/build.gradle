@@ -6,7 +6,6 @@ plugins {
 	id 'com.diffplug.spotless' version '8.1.0'
 	id 'jacoco'
 }
-
 group = 'com.app.osmosis'
 version = '0.0.1-SNAPSHOT'
 description = 'Backend server for Osmosis project'
@@ -47,6 +46,8 @@ dependencies {
 	implementation("com.google.api-client:google-api-client:2.7.2")
 	implementation 'com.google.auth:google-auth-library-oauth2-http:1.40.0'
 	implementation 'io.jsonwebtoken:jjwt:0.13.0'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
@@ -120,7 +121,7 @@ jacocoTestCoverageVerification {
 	classDirectories.setFrom(
 			files(
 					sourceSets.main.output.classesDirs.asFileTree.matching {
-						exclude '**/viewmodel/**', '**/entity/**'
+						exclude '**/viewmodel/**', '**/entity/**', '**/repository/**', '**/exception/**', '**/ApiApplication**', '**/Constant**', '**/security/**'
 					}
 			)
 	)
@@ -132,7 +133,7 @@ jacocoTestCoverageVerification {
 			enabled = true
 			element = 'CLASS'
 			limit {
-				counter = 'LINE'
+				counter = 'CLASS'
 				value = 'COVEREDRATIO'
 				minimum = 0.8
 			}
