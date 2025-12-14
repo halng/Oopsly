@@ -19,6 +19,7 @@ package com.app.osmosis.api.exception;
 import com.app.osmosis.api.viewmodel.ApiRes;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -26,10 +27,28 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(BadCredentialsException.class)
+    public ApiRes handleBadCredentialsException(BadCredentialsException ex) {
+        log.warn("Bad credentials provided: {}", ex.getMessage());
+        return ApiRes.forbidden(ex.getMessage());
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ApiRes handleNotFoundException(NotFoundException ex) {
+        log.warn("Resource not found: {}", ex.getMessage());
+        return ApiRes.notFound(ex.getMessage());
+    }
+
     @ExceptionHandler(UnauthenticatedException.class)
     public ApiRes handleUnauthenticatedException(UnauthenticatedException ex) {
         log.warn("Unauthenticated access attempt: {}", ex.getMessage());
         return ApiRes.unauthorized("You must be logged in to access this resource.");
+    }
+
+    @ExceptionHandler(AuthProviderException.class)
+    public ApiRes handleAuthProviderException(AuthProviderException ex) {
+        log.error("Authentication provider error: {}", ex.getMessage(), ex);
+        return ApiRes.unauthorized("Authentication failed. Please try again.");
     }
 
     @Order(1000)

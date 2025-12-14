@@ -14,10 +14,11 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.service;
+package com.app.osmosis.api.viewmodel;
 
-import com.app.osmosis.api.viewmodel.ApiRes;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public interface UserService {
-    ApiRes onboardUser(String email, String name, String pictureUrl);
-}
+public record AuthRes(
+        @JsonProperty("access_token") String accessToken,
+        @JsonProperty("refresh_token") String refreshToken,
+        String type) {}

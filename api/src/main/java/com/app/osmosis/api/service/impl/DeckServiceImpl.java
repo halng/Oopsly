@@ -16,7 +16,6 @@
 
 package com.app.osmosis.api.service.impl;
 
-import com.app.osmosis.api.config.secutity.UserSessionHelper;
 import com.app.osmosis.api.service.DeckService;
 import com.app.osmosis.api.viewmodel.ApiRes;
 import lombok.extern.slf4j.Slf4j;
@@ -26,16 +25,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class DeckServiceImpl implements DeckService {
 
-    private final UserSessionHelper userSessionHelper;
-
-    public DeckServiceImpl(UserSessionHelper userSessionHelper) {
-        this.userSessionHelper = userSessionHelper;
-    }
+    public DeckServiceImpl() {}
 
     @Override
     public ApiRes createDeck() {
         log.info("Create deck");
 
-        return ApiRes.ok("Deck created by " + userSessionHelper.getCurrentUser());
+        return ApiRes.ok("Deck created by ");
     }
 }

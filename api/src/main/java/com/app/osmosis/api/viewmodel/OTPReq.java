@@ -14,16 +14,9 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.service.impl;
+package com.app.osmosis.api.viewmodel;
 
-import com.app.osmosis.api.service.UserService;
-import com.app.osmosis.api.viewmodel.ApiRes;
-import org.springframework.stereotype.Service;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 
-@Service
-public class UserServiceImpl implements UserService {
-    @Override
-    public ApiRes onboardUser(String email, String name, String pictureUrl) {
-        return null;
-    }
-}
+public record OTPReq(@Email String email, @Size(min = 6) String otp) {}

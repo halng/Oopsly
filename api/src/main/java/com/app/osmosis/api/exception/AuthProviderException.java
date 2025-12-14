@@ -14,26 +14,14 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.controller;
+package com.app.osmosis.api.exception;
 
-import com.app.osmosis.api.service.DeckService;
-import com.app.osmosis.api.viewmodel.ApiRes;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-@RestController
-@RequestMapping("/decks")
-public class DeckController {
-
-    private final DeckService deckService;
-
-    public DeckController(DeckService deckService) {
-        this.deckService = deckService;
+public class AuthProviderException extends RuntimeException {
+    public AuthProviderException(String message) {
+        super(message);
     }
 
-    @PostMapping
-    public ApiRes createDeck() {
-        return deckService.createDeck();
+    public AuthProviderException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

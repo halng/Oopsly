@@ -86,4 +86,31 @@ public class ApiRes extends ResponseEntity<Res> {
         return new ApiRes(
                 new Res(401, message, null, false, Instant.now()), HttpStatus.UNAUTHORIZED);
     }
+
+    public static ApiRes forbidden(String message) {
+        return new ApiRes(new Res(403, message, null, false, Instant.now()), HttpStatus.FORBIDDEN);
+    }
+
+    public static ApiRes error(String message) {
+        return new ApiRes(
+                new Res(500, message, null, false, Instant.now()),
+                HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    public static ApiRes success(String message) {
+        return new ApiRes(new Res(200, message, null, true, Instant.now()), HttpStatus.OK);
+    }
+
+    public static ApiRes success(String message, Object data) {
+        return new ApiRes(new Res(200, message, data, true, Instant.now()), HttpStatus.OK);
+    }
+
+    public static ApiRes rateLimitExceeded(String message) {
+        return new ApiRes(
+                new Res(429, message, null, false, Instant.now()), HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    public static ApiRes forbidden(String message, Object data) {
+        return new ApiRes(new Res(403, message, data, false, Instant.now()), HttpStatus.FORBIDDEN);
+    }
 }

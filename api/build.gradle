@@ -4,8 +4,8 @@ plugins {
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'org.graalvm.buildtools.native' version '0.10.6'
 	id 'com.diffplug.spotless' version '8.1.0'
+	id 'jacoco'
 }
-
 group = 'com.app.osmosis'
 version = '0.0.1-SNAPSHOT'
 description = 'Backend server for Osmosis project'
@@ -35,7 +35,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+//	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
@@ -43,6 +43,14 @@ dependencies {
 //	implementation 'org.springframework.ai:spring-ai-starter-model-vertex-ai-embedding'
 	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation("com.google.api-client:google-api-client:2.7.2")
+	implementation 'com.google.auth:google-auth-library-oauth2-http:1.40.0'
+	implementation 'io.jsonwebtoken:jjwt:0.13.0'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -85,35 +93,65 @@ tasks.register('composeDown', Exec) {
 	}
 }
 
+jacocoTestReport {
+	dependsOn test
+
+	classDirectories.setFrom(
+			files(
+					sourceSets.main.output.classesDirs.asFileTree.matching {
+						exclude '**/viewmodel/**', '**/entity/**'
+					}
+			)
+	)
+
+	reports {
+		xml.required = true
+		csv.required = false
+		html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+	}
+}
+
+jacoco {
+	toolVersion = "0.8.13"
+}
+
+jacocoTestCoverageVerification {
+	dependsOn test
+
+	classDirectories.setFrom(
+			files(
+					sourceSets.main.output.classesDirs.asFileTree.matching {
+						exclude '**/viewmodel/**', '**/entity/**', '**/repository/**', '**/exception/**', '**/ApiApplication**', '**/Constant**', '**/security/**'
+					}
+			)
+	)
+
+	executionData.setFrom(fileTree(dir: project.buildDir, includes: ['jacoco/*.exec']))
+
+	violationRules {
+		rule {
+			enabled = true
+			element = 'CLASS'
+			limit {
+				counter = 'CLASS'
+				value = 'COVEREDRATIO'
+				minimum = 0.8
+			}
+		}
+	}
+}
+
 spotless {
 	java {
-		// 1. Target: Updated to catch ALL java files (main, test, submodules)
 		target 'src/**/*.java'
-
-		// 2. Import Order: Define a logical order (Standard: Java -> Javax -> Org -> Com -> Local)
-		// An empty string '' represents all other imports (local classes)
 		importOrder('java', 'javax', 'org', 'com', '')
-
-		// 3. Clean up imports
 		removeUnusedImports()
-
-		// 4. Formatter: CHOOSE ONE.
-		// I recommend Google Java Format for backend engineering.
-		// Using Prettier + GJF together is redundant and error-prone.
 		googleJavaFormat('1.17.0')
-				.aosp()  // Optional: Use 4-space indent (Android style) instead of Google's 2-space
+				.aosp()
 				.reflowLongStrings()
-
-		// 5. Annotations
 		formatAnnotations()
-
-		// 6. Extras (Added these for best practice)
-		toggleOffOn()             // Allows you to use // spotless:off in code
-		trimTrailingWhitespace()  // Removes trailing spaces
-		endWithNewline()          // Ensures file ends with a newline
-
-		// Note: 'cleanthat' is a code mutator, not just a formatter.
-		// Only keep this if you specifically want it refactoring your logic.
-		// cleanthat()
+		toggleOffOn()
+		trimTrailingWhitespace()
+		endWithNewline()
 	}
 }

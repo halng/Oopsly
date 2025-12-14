@@ -14,26 +14,10 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.entity;
+package com.app.osmosis.api.exception;
 
-import jakarta.persistence.*;
-import java.util.UUID;
-import lombok.*;
-import org.springframework.data.relational.core.mapping.Table;
-
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Table(name = "users")
-@Entity(name = "users")
-public class UserEntity extends Audit {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    private String name;
-    private String email;
-    private String pictureUrl;
+public class NotFoundException extends RuntimeException {
+    public NotFoundException(String message) {
+        super(message);
+    }
 }

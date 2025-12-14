@@ -13,6 +13,16 @@ services:
       - app-network
     restart: unless-stopped
 
+  redis:
+    image: docker.io/bitnami/redis:latest
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge

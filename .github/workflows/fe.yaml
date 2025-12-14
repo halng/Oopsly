@@ -1,4 +1,4 @@
-name: UI CI
+name: FE - CI
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
       - 'ui/**'
 
 jobs:
-  install:
+  build:
     name: Install dependencies (ui)
     runs-on: ubuntu-latest
     strategy:
@@ -48,3 +48,6 @@ jobs:
       - name: Run JS style check (eslint)
         working-directory: ui
         run: pnpm run lint
+      - name: Run unit tests
+        working-directory: ui
+        run: pnpm run test:coverage
