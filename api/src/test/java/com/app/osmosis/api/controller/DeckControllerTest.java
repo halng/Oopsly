@@ -23,8 +23,8 @@ import static org.mockito.Mockito.*;
 
 import com.app.osmosis.api.service.DeckService;
 import com.app.osmosis.api.viewmodel.ApiRes;
-import com.app.osmosis.api.viewmodel.CreateDeck;
-import com.app.osmosis.api.viewmodel.UpdateDeck;
+import com.app.osmosis.api.viewmodel.DeckReq;
+import com.app.osmosis.api.viewmodel.UpdateDeckReq;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,8 +33,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 
 @ExtendWith(MockitoExtension.class)
 class DeckControllerTest {
@@ -43,35 +41,27 @@ class DeckControllerTest {
 
     @InjectMocks private DeckController deckController;
 
-    private UUID userId;
     private UUID deckId;
-    private UserDetails userDetails;
 
     @BeforeEach
     void setUp() {
-        userId = UUID.randomUUID();
         deckId = UUID.randomUUID();
-        userDetails =
-                User.withUsername(userId.toString())
-                        .password("password")
-                        .authorities("USER")
-                        .build();
     }
 
     @Test
-    void createDeck_delegatesToService_and_returnsServiceResponse() {
-        CreateDeck createDeck = new CreateDeck("Test Deck", "Description");
+    void createDeck_withValidReq_thenReturnsSuccess() {
+        DeckReq deckReq = new DeckReq("Test Deck", "Description");
         ApiRes expected = mock(ApiRes.class);
-        when(deckService.createDeck(eq(createDeck), eq(userId))).thenReturn(expected);
+        when(deckService.createDeck(eq(deckReq))).thenReturn(expected);
 
-        ApiRes actual = deckController.createDeck(createDeck, userDetails);
+        ApiRes actual = deckController.createDeck(deckReq);
 
-        verify(deckService, times(1)).createDeck(eq(createDeck), eq(userId));
+        verify(deckService, times(1)).createDeck(eq(deckReq));
         assertSame(expected, actual);
     }
 
     @Test
-    void getAllDecks_delegatesToService_and_returnsServiceResponse() {
+    void getAllDecks_withDefaultParams_thenReturnsSuccess() {
         ApiRes expected = mock(ApiRes.class);
         when(deckService.getAllDecks(any(Pageable.class))).thenReturn(expected);
 
@@ -82,7 +72,7 @@ class DeckControllerTest {
     }
 
     @Test
-    void getAllDecks_withAscendingSortDirection_delegatesToService() {
+    void getAllDecks_withAscendingSortDirection_thenReturnsSuccess() {
         ApiRes expected = mock(ApiRes.class);
         when(deckService.getAllDecks(any(Pageable.class))).thenReturn(expected);
 
@@ -93,7 +83,7 @@ class DeckControllerTest {
     }
 
     @Test
-    void getAllDecks_withCustomPageSize_delegatesToService() {
+    void getAllDecks_withCustomPageSize_thenReturnsSuccess() {
         ApiRes expected = mock(ApiRes.class);
         when(deckService.getAllDecks(any(Pageable.class))).thenReturn(expected);
 
@@ -104,7 +94,7 @@ class DeckControllerTest {
     }
 
     @Test
-    void getDeckById_delegatesToService_and_returnsServiceResponse() {
+    void getDeckById_withValidId_thenReturnsSuccess() {
         ApiRes expected = mock(ApiRes.class);
         when(deckService.getDeckById(deckId)).thenReturn(expected);
 
@@ -115,25 +105,25 @@ class DeckControllerTest {
     }
 
     @Test
-    void updateDeck_delegatesToService_and_returnsServiceResponse() {
-        UpdateDeck updateDeck = new UpdateDeck("Updated Deck", "Updated Description");
+    void updateDeck_withValidReq_thenReturnsSuccess() {
+        UpdateDeckReq updateDeckReq = new UpdateDeckReq("Updated Deck", "Updated Description");
         ApiRes expected = mock(ApiRes.class);
-        when(deckService.updateDeck(eq(deckId), eq(updateDeck), eq(userId))).thenReturn(expected);
+        when(deckService.updateDeck(eq(deckId), eq(updateDeckReq))).thenReturn(expected);
 
-        ApiRes actual = deckController.updateDeck(deckId, updateDeck, userDetails);
+        ApiRes actual = deckController.updateDeck(deckId, updateDeckReq);
 
-        verify(deckService, times(1)).updateDeck(eq(deckId), eq(updateDeck), eq(userId));
+        verify(deckService, times(1)).updateDeck(eq(deckId), eq(updateDeckReq));
         assertSame(expected, actual);
     }
 
     @Test
-    void softDeleteDeck_delegatesToService_and_returnsServiceResponse() {
+    void softDeleteDeck_withValidId_thenReturnsSuccess() {
         ApiRes expected = mock(ApiRes.class);
-        when(deckService.softDeleteDeck(eq(deckId), eq(userId))).thenReturn(expected);
+        when(deckService.softDeleteDeck(eq(deckId))).thenReturn(expected);
 
-        ApiRes actual = deckController.softDeleteDeck(deckId, userDetails);
+        ApiRes actual = deckController.softDeleteDeck(deckId);
 
-        verify(deckService, times(1)).softDeleteDeck(eq(deckId), eq(userId));
+        verify(deckService, times(1)).softDeleteDeck(eq(deckId));
         assertSame(expected, actual);
     }
 }

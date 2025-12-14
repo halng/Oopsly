@@ -19,5 +19,5 @@ package com.app.osmosis.api.viewmodel;
 import java.time.Instant;
 import java.util.UUID;
 
-public record DeckResponse(
+public record DeckRes(
         UUID id, String name, String description, Instant createdAt, Instant updatedAt) {}

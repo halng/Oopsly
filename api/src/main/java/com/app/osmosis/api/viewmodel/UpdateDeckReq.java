@@ -18,4 +18,5 @@ package com.app.osmosis.api.viewmodel;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record UpdateDeck(@NotBlank(message = "Name is required") String name, String description) {}
+public record UpdateDeckReq(
+        @NotBlank(message = "Name is required") String name, String description) {}

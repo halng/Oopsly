@@ -23,13 +23,15 @@ import com.app.osmosis.api.repository.DeckRepository;
 import com.app.osmosis.api.repository.UserRepository;
 import com.app.osmosis.api.service.DeckService;
 import com.app.osmosis.api.viewmodel.ApiRes;
-import com.app.osmosis.api.viewmodel.CreateDeck;
-import com.app.osmosis.api.viewmodel.DeckResponse;
-import com.app.osmosis.api.viewmodel.UpdateDeck;
+import com.app.osmosis.api.viewmodel.DeckReq;
+import com.app.osmosis.api.viewmodel.DeckRes;
+import com.app.osmosis.api.viewmodel.UpdateDeckReq;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,8 +49,9 @@ public class DeckServiceImpl implements DeckService {
 
     @Override
     @Transactional
-    public ApiRes createDeck(CreateDeck createDeck, UUID userId) {
-        log.info("Creating deck with name: {} for user: {}", createDeck.name(), userId);
+    public ApiRes createDeck(DeckReq deckReq) {
+        UUID userId = getCurrentUserId();
+        log.info("Creating deck with name: {} for user: {}", deckReq.name(), userId);
 
         User user =
                 userRepository
@@ -57,14 +60,14 @@ public class DeckServiceImpl implements DeckService {
 
         DeckEntity deck =
                 DeckEntity.builder()
-                        .name(createDeck.name())
-                        .description(createDeck.description())
+                        .name(deckReq.name())
+                        .description(deckReq.description())
                         .user(user)
                         .isDeleted(false)
                         .build();
 
         DeckEntity savedDeck = deckRepository.save(deck);
-        DeckResponse response = mapToResponse(savedDeck);
+        DeckRes response = mapToResponse(savedDeck);
 
         log.info("Deck created successfully with id: {}", savedDeck.getId());
         return ApiRes.created("Deck created successfully", response);
@@ -76,7 +79,7 @@ public class DeckServiceImpl implements DeckService {
         log.info("Fetching all non-deleted decks with pagination: {}", pageable);
 
         Page<DeckEntity> decks = deckRepository.findByIsDeletedFalse(pageable);
-        Page<DeckResponse> response = decks.map(this::mapToResponse);
+        Page<DeckRes> response = decks.map(this::mapToResponse);
 
         log.info("Retrieved {} decks", decks.getTotalElements());
         return ApiRes.ok("Decks retrieved successfully", response);
@@ -92,7 +95,7 @@ public class DeckServiceImpl implements DeckService {
                         .findByIdAndIsDeletedFalse(id)
                         .orElseThrow(() -> new NotFoundException("Deck not found"));
 
-        DeckResponse response = mapToResponse(deck);
+        DeckRes response = mapToResponse(deck);
 
         log.info("Deck retrieved successfully");
         return ApiRes.ok("Deck retrieved successfully", response);
@@ -100,7 +103,8 @@ public class DeckServiceImpl implements DeckService {
 
     @Override
     @Transactional
-    public ApiRes updateDeck(UUID id, UpdateDeck updateDeck, UUID userId) {
+    public ApiRes updateDeck(UUID id, UpdateDeckReq updateDeckReq) {
+        UUID userId = getCurrentUserId();
         log.info("Updating deck with id: {} for user: {}", id, userId);
 
         DeckEntity deck =
@@ -113,11 +117,11 @@ public class DeckServiceImpl implements DeckService {
             return ApiRes.forbidden("You do not have permission to update this deck");
         }
 
-        deck.setName(updateDeck.name());
-        deck.setDescription(updateDeck.description());
+        deck.setName(updateDeckReq.name());
+        deck.setDescription(updateDeckReq.description());
 
         DeckEntity updatedDeck = deckRepository.save(deck);
-        DeckResponse response = mapToResponse(updatedDeck);
+        DeckRes response = mapToResponse(updatedDeck);
 
         log.info("Deck updated successfully");
         return ApiRes.ok("Deck updated successfully", response);
@@ -125,7 +129,8 @@ public class DeckServiceImpl implements DeckService {
 
     @Override
     @Transactional
-    public ApiRes softDeleteDeck(UUID id, UUID userId) {
+    public ApiRes softDeleteDeck(UUID id) {
+        UUID userId = getCurrentUserId();
         log.info("Soft deleting deck with id: {} for user: {}", id, userId);
 
         DeckEntity deck =
@@ -145,8 +150,16 @@ public class DeckServiceImpl implements DeckService {
         return ApiRes.ok("Deck deleted successfully");
     }
 
-    private DeckResponse mapToResponse(DeckEntity deck) {
-        return new DeckResponse(
+    private UUID getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null) {
+            throw new NotFoundException("User not authenticated");
+        }
+        return UUID.fromString(authentication.getName());
+    }
+
+    private DeckRes mapToResponse(DeckEntity deck) {
+        return new DeckRes(
                 deck.getId(),
                 deck.getName(),
                 deck.getDescription(),

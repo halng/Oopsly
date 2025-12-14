@@ -27,8 +27,8 @@ import com.app.osmosis.api.repository.DeckRepository;
 import com.app.osmosis.api.repository.UserRepository;
 import com.app.osmosis.api.service.impl.DeckServiceImpl;
 import com.app.osmosis.api.viewmodel.ApiRes;
-import com.app.osmosis.api.viewmodel.CreateDeck;
-import com.app.osmosis.api.viewmodel.UpdateDeck;
+import com.app.osmosis.api.viewmodel.DeckReq;
+import com.app.osmosis.api.viewmodel.UpdateDeckReq;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,12 +36,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @ExtendWith(MockitoExtension.class)
 class DeckServiceImplTest {
@@ -49,6 +53,10 @@ class DeckServiceImplTest {
     @Mock private DeckRepository deckRepository;
 
     @Mock private UserRepository userRepository;
+
+    @Mock private SecurityContext securityContext;
+
+    @Mock private Authentication authentication;
 
     private DeckServiceImpl deckService;
 
@@ -78,45 +86,92 @@ class DeckServiceImplTest {
     }
 
     @Test
-    void createDeck_whenUserExists_createsAndReturnsDeck() {
-        CreateDeck createDeck = new CreateDeck("New Deck", "Description");
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+    void createDeck_whenUserExists_thenReturnsCreated() {
+        DeckReq deckReq = new DeckReq("New Deck", "Description");
 
-        ApiRes result = deckService.createDeck(createDeck, userId);
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
+                mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder
+                    .when(SecurityContextHolder::getContext)
+                    .thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.getName()).thenReturn(userId.toString());
 
-        assertEquals(HttpStatus.CREATED, result.getStatusCode());
-        assertNotNull(result.getBody());
-        assertTrue(result.getBody().message().contains("created"));
-        verify(userRepository).findById(userId);
-        verify(deckRepository).save(any(DeckEntity.class));
+            when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+            when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+
+            ApiRes result = deckService.createDeck(deckReq);
+
+            assertEquals(HttpStatus.CREATED, result.getStatusCode());
+            assertNotNull(result.getBody());
+            assertTrue(result.getBody().message().contains("created"));
+            verify(userRepository).findById(userId);
+            verify(deckRepository).save(any(DeckEntity.class));
+        }
     }
 
     @Test
-    void createDeck_withNullDescription_createsAndReturnsDeck() {
-        CreateDeck createDeck = new CreateDeck("New Deck", null);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+    void createDeck_withNullDescription_thenReturnsCreated() {
+        DeckReq deckReq = new DeckReq("New Deck", null);
 
-        ApiRes result = deckService.createDeck(createDeck, userId);
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
+                mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder
+                    .when(SecurityContextHolder::getContext)
+                    .thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.getName()).thenReturn(userId.toString());
 
-        assertEquals(HttpStatus.CREATED, result.getStatusCode());
-        verify(userRepository).findById(userId);
-        verify(deckRepository).save(any(DeckEntity.class));
+            when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+            when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+
+            ApiRes result = deckService.createDeck(deckReq);
+
+            assertEquals(HttpStatus.CREATED, result.getStatusCode());
+            verify(userRepository).findById(userId);
+            verify(deckRepository).save(any(DeckEntity.class));
+        }
     }
 
     @Test
-    void createDeck_whenUserNotFound_throwsNotFoundException() {
-        CreateDeck createDeck = new CreateDeck("New Deck", "Description");
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+    void createDeck_whenUserNotFound_thenThrowsNotFoundException() {
+        DeckReq deckReq = new DeckReq("New Deck", "Description");
 
-        assertThrows(NotFoundException.class, () -> deckService.createDeck(createDeck, userId));
-        verify(userRepository).findById(userId);
-        verify(deckRepository, never()).save(any());
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
+                mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder
+                    .when(SecurityContextHolder::getContext)
+                    .thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.getName()).thenReturn(userId.toString());
+
+            when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+            assertThrows(NotFoundException.class, () -> deckService.createDeck(deckReq));
+            verify(userRepository).findById(userId);
+            verify(deckRepository, never()).save(any());
+        }
     }
 
     @Test
-    void getAllDecks_returnsPageOfDecks() {
+    void createDeck_whenUserNotAuthenticated_thenThrowsNotFoundException() {
+        DeckReq deckReq = new DeckReq("New Deck", "Description");
+
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
+                mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder
+                    .when(SecurityContextHolder::getContext)
+                    .thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(null);
+
+            assertThrows(NotFoundException.class, () -> deckService.createDeck(deckReq));
+            verify(userRepository, never()).findById(any());
+            verify(deckRepository, never()).save(any());
+        }
+    }
+
+    @Test
+    void getAllDecks_whenDecksExist_thenReturnsPage() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<DeckEntity> page = new PageImpl<>(java.util.List.of(deck));
         when(deckRepository.findByIsDeletedFalse(pageable)).thenReturn(page);
@@ -128,7 +183,7 @@ class DeckServiceImplTest {
     }
 
     @Test
-    void getAllDecks_whenEmpty_returnsEmptyPage() {
+    void getAllDecks_whenEmpty_thenReturnsEmptyPage() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<DeckEntity> emptyPage = new PageImpl<>(java.util.List.of());
         when(deckRepository.findByIsDeletedFalse(pageable)).thenReturn(emptyPage);
@@ -140,7 +195,7 @@ class DeckServiceImplTest {
     }
 
     @Test
-    void getAllDecks_withMultipleDecks_returnsAllDecks() {
+    void getAllDecks_withMultipleDecks_thenReturnsAllDecks() {
         Pageable pageable = PageRequest.of(0, 10);
         DeckEntity deck2 =
                 DeckEntity.builder()
@@ -163,7 +218,7 @@ class DeckServiceImplTest {
     }
 
     @Test
-    void getDeckById_whenDeckExists_returnsDeck() {
+    void getDeckById_whenDeckExists_thenReturnsDeck() {
         when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
 
         ApiRes result = deckService.getDeckById(deckId);
@@ -173,7 +228,7 @@ class DeckServiceImplTest {
     }
 
     @Test
-    void getDeckById_returnsCorrectDeckData() {
+    void getDeckById_whenDeckExists_thenReturnsCorrectDeckData() {
         when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
 
         ApiRes result = deckService.getDeckById(deckId);
@@ -184,7 +239,7 @@ class DeckServiceImplTest {
     }
 
     @Test
-    void getDeckById_whenDeckNotFound_throwsNotFoundException() {
+    void getDeckById_whenDeckNotFound_thenThrowsNotFoundException() {
         when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> deckService.getDeckById(deckId));
@@ -192,111 +247,199 @@ class DeckServiceImplTest {
     }
 
     @Test
-    void updateDeck_whenUserOwnsDeck_updatesDeck() {
-        UpdateDeck updateDeck = new UpdateDeck("Updated Deck", "Updated Description");
-        when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
-        when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+    void updateDeck_whenUserOwnsDeck_thenUpdatesSuccessfully() {
+        UpdateDeckReq updateDeckReq = new UpdateDeckReq("Updated Deck", "Updated Description");
 
-        ApiRes result = deckService.updateDeck(deckId, updateDeck, userId);
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
+                mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder
+                    .when(SecurityContextHolder::getContext)
+                    .thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.getName()).thenReturn(userId.toString());
 
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-        verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
-        verify(deckRepository).save(deck);
+            when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
+            when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+
+            ApiRes result = deckService.updateDeck(deckId, updateDeckReq);
+
+            assertEquals(HttpStatus.OK, result.getStatusCode());
+            verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
+            verify(deckRepository).save(deck);
+        }
     }
 
     @Test
-    void updateDeck_actuallyUpdatesFields() {
-        UpdateDeck updateDeck = new UpdateDeck("Updated Name", "Updated Description");
-        when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
-        when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+    void updateDeck_whenCalled_thenActuallyUpdatesFields() {
+        UpdateDeckReq updateDeckReq = new UpdateDeckReq("Updated Name", "Updated Description");
 
-        deckService.updateDeck(deckId, updateDeck, userId);
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
+                mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder
+                    .when(SecurityContextHolder::getContext)
+                    .thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.getName()).thenReturn(userId.toString());
 
-        assertEquals("Updated Name", deck.getName());
-        assertEquals("Updated Description", deck.getDescription());
-        verify(deckRepository).save(deck);
+            when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
+            when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+
+            deckService.updateDeck(deckId, updateDeckReq);
+
+            assertEquals("Updated Name", deck.getName());
+            assertEquals("Updated Description", deck.getDescription());
+            verify(deckRepository).save(deck);
+        }
     }
 
     @Test
-    void updateDeck_withNullDescription_updatesFields() {
-        UpdateDeck updateDeck = new UpdateDeck("New Name", null);
-        when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
-        when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+    void updateDeck_withNullDescription_thenUpdatesFields() {
+        UpdateDeckReq updateDeckReq = new UpdateDeckReq("New Name", null);
 
-        deckService.updateDeck(deckId, updateDeck, userId);
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
+                mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder
+                    .when(SecurityContextHolder::getContext)
+                    .thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.getName()).thenReturn(userId.toString());
 
-        assertEquals("New Name", deck.getName());
-        assertNull(deck.getDescription());
-        verify(deckRepository).save(deck);
+            when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
+            when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+
+            deckService.updateDeck(deckId, updateDeckReq);
+
+            assertEquals("New Name", deck.getName());
+            assertNull(deck.getDescription());
+            verify(deckRepository).save(deck);
+        }
     }
 
     @Test
-    void updateDeck_whenUserDoesNotOwnDeck_returnsForbidden() {
+    void updateDeck_whenUserDoesNotOwnDeck_thenReturnsForbidden() {
         UUID otherUserId = UUID.randomUUID();
-        UpdateDeck updateDeck = new UpdateDeck("Updated Deck", "Updated Description");
-        when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
+        UpdateDeckReq updateDeckReq = new UpdateDeckReq("Updated Deck", "Updated Description");
 
-        ApiRes result = deckService.updateDeck(deckId, updateDeck, otherUserId);
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
+                mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder
+                    .when(SecurityContextHolder::getContext)
+                    .thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.getName()).thenReturn(otherUserId.toString());
 
-        assertEquals(HttpStatus.FORBIDDEN, result.getStatusCode());
-        verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
-        verify(deckRepository, never()).save(any());
+            when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
+
+            ApiRes result = deckService.updateDeck(deckId, updateDeckReq);
+
+            assertEquals(HttpStatus.FORBIDDEN, result.getStatusCode());
+            verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
+            verify(deckRepository, never()).save(any());
+        }
     }
 
     @Test
-    void updateDeck_whenDeckNotFound_throwsNotFoundException() {
-        UpdateDeck updateDeck = new UpdateDeck("Updated Deck", "Updated Description");
-        when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.empty());
+    void updateDeck_whenDeckNotFound_thenThrowsNotFoundException() {
+        UpdateDeckReq updateDeckReq = new UpdateDeckReq("Updated Deck", "Updated Description");
 
-        assertThrows(
-                NotFoundException.class, () -> deckService.updateDeck(deckId, updateDeck, userId));
-        verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
-        verify(deckRepository, never()).save(any());
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
+                mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder
+                    .when(SecurityContextHolder::getContext)
+                    .thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.getName()).thenReturn(userId.toString());
+
+            when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.empty());
+
+            assertThrows(
+                    NotFoundException.class, () -> deckService.updateDeck(deckId, updateDeckReq));
+            verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
+            verify(deckRepository, never()).save(any());
+        }
     }
 
     @Test
-    void softDeleteDeck_whenUserOwnsDeck_softDeletesDeck() {
-        when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
-        when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+    void softDeleteDeck_whenUserOwnsDeck_thenSoftDeletesSuccessfully() {
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
+                mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder
+                    .when(SecurityContextHolder::getContext)
+                    .thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.getName()).thenReturn(userId.toString());
 
-        ApiRes result = deckService.softDeleteDeck(deckId, userId);
+            when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
+            when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
 
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-        verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
-        verify(deckRepository).save(deck);
-        assertTrue(deck.getIsDeleted());
+            ApiRes result = deckService.softDeleteDeck(deckId);
+
+            assertEquals(HttpStatus.OK, result.getStatusCode());
+            verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
+            verify(deckRepository).save(deck);
+            assertTrue(deck.getIsDeleted());
+        }
     }
 
     @Test
-    void softDeleteDeck_setsIsDeletedToTrue() {
+    void softDeleteDeck_whenCalled_thenSetsIsDeletedToTrue() {
         assertFalse(deck.getIsDeleted());
-        when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
-        when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
 
-        deckService.softDeleteDeck(deckId, userId);
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
+                mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder
+                    .when(SecurityContextHolder::getContext)
+                    .thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.getName()).thenReturn(userId.toString());
 
-        assertTrue(deck.getIsDeleted());
-        verify(deckRepository).save(deck);
+            when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
+            when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+
+            deckService.softDeleteDeck(deckId);
+
+            assertTrue(deck.getIsDeleted());
+            verify(deckRepository).save(deck);
+        }
     }
 
     @Test
-    void softDeleteDeck_whenUserDoesNotOwnDeck_returnsForbidden() {
+    void softDeleteDeck_whenUserDoesNotOwnDeck_thenReturnsForbidden() {
         UUID otherUserId = UUID.randomUUID();
-        when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
 
-        ApiRes result = deckService.softDeleteDeck(deckId, otherUserId);
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
+                mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder
+                    .when(SecurityContextHolder::getContext)
+                    .thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.getName()).thenReturn(otherUserId.toString());
 
-        assertEquals(HttpStatus.FORBIDDEN, result.getStatusCode());
-        verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
-        verify(deckRepository, never()).save(any());
+            when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.of(deck));
+
+            ApiRes result = deckService.softDeleteDeck(deckId);
+
+            assertEquals(HttpStatus.FORBIDDEN, result.getStatusCode());
+            verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
+            verify(deckRepository, never()).save(any());
+        }
     }
 
     @Test
-    void softDeleteDeck_whenDeckNotFound_throwsNotFoundException() {
-        when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.empty());
+    void softDeleteDeck_whenDeckNotFound_thenThrowsNotFoundException() {
+        try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
+                mockStatic(SecurityContextHolder.class)) {
+            mockedSecurityContextHolder
+                    .when(SecurityContextHolder::getContext)
+                    .thenReturn(securityContext);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            when(authentication.getName()).thenReturn(userId.toString());
 
-        assertThrows(NotFoundException.class, () -> deckService.softDeleteDeck(deckId, userId));
-        verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
-        verify(deckRepository, never()).save(any());
+            when(deckRepository.findByIdAndIsDeletedFalse(deckId)).thenReturn(Optional.empty());
+
+            assertThrows(NotFoundException.class, () -> deckService.softDeleteDeck(deckId));
+            verify(deckRepository).findByIdAndIsDeletedFalse(deckId);
+            verify(deckRepository, never()).save(any());
+        }
     }
 }
