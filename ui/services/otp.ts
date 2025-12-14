@@ -27,15 +27,16 @@ export const otpService = {
     });
 
     if (!response.ok) {
+      let errorMessage = 'Failed to send OTP';
       try {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send OTP');
-      } catch (e) {
-        if (e instanceof Error && e.message !== 'Failed to send OTP') {
-          throw new Error('Failed to send OTP');
+        if (errorData.message) {
+          errorMessage = errorData.message;
         }
-        throw e;
+      } catch {
+        // If JSON parsing fails, use default error message
       }
+      throw new Error(errorMessage);
     }
 
     return response.json();
@@ -51,15 +52,16 @@ export const otpService = {
     });
 
     if (!response.ok) {
+      let errorMessage = 'Failed to verify OTP';
       try {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to verify OTP');
-      } catch (e) {
-        if (e instanceof Error && e.message !== 'Failed to verify OTP') {
-          throw new Error('Failed to verify OTP');
+        if (errorData.message) {
+          errorMessage = errorData.message;
         }
-        throw e;
+      } catch {
+        // If JSON parsing fails, use default error message
       }
+      throw new Error(errorMessage);
     }
 
     return response.json();

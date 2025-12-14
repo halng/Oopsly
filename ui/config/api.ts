@@ -14,8 +14,6 @@
  *    limitations under the License.
  */
 
-import Constants from 'expo-constants';
-
 export const API_CONFIG = {
   BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080',
 };
