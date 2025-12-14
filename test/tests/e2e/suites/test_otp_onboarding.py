@@ -98,7 +98,8 @@ def test_navigation_to_verification(page: Page, current_device_name):
     # Wait for navigation to verification page
     # Note: In real scenario, this would trigger OTP sending
     # For e2e tests, you may need to mock the API or use a test backend
-    expect(page).to_have_url(onboarding.url + "/verification", timeout=15000)
+    verification = VerificationPage(page)
+    expect(page).to_have_url(verification.url, timeout=15000)
 
 
 def test_verification_page_initial_render(page: Page, current_device_name):
@@ -212,7 +213,8 @@ def test_back_navigation_from_verification(page: Page, current_device_name):
     verification.back_button.click()
     
     # Should navigate back to onboarding
-    expect(page).to_have_url("**/onboard", timeout=5000)
+    onboarding = OnboardingPage(page)
+    expect(page).to_have_url(onboarding.url, timeout=5000)
 
 
 def test_complete_otp_flow_ui(page: Page, current_device_name):
