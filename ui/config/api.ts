@@ -15,5 +15,5 @@
  */
 
 export const API_CONFIG = {
-  BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080',
+  BASE_URL: process.env.BACKEND_API || 'http://localhost:9009',
 };

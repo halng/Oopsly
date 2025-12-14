@@ -14,64 +14,19 @@
  *    limitations under the License.
  */
 
-import { API_CONFIG } from '../config/api';
+import { apiClient } from '../config/axiosClient';
 import { ApiResponse, AuthTokens, OTPVerifyRequest } from '../types/api';
 
 export const otpService = {
   async sendOTP(email: string): Promise<ApiResponse<null>> {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/otp?email=${encodeURIComponent(email)}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const response = await apiClient.post<ApiResponse<null>>(`/otp`, null, {
+      params: { email },
     });
-
-    if (!response.ok) {
-      let errorMessage = 'Failed to send OTP';
-      try {
-        const errorData = await response.json();
-        if (errorData.message) {
-          errorMessage = errorData.message;
-        }
-      } catch {
-        // If JSON parsing fails, use default error message
-      }
-      throw new Error(errorMessage);
-    }
-
-    try {
-      return await response.json();
-    } catch {
-      throw new Error('Invalid response from server');
-    }
+    return response.data;
   },
 
   async verifyOTP(request: OTPVerifyRequest): Promise<ApiResponse<AuthTokens>> {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/otp/validate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      let errorMessage = 'Failed to verify OTP';
-      try {
-        const errorData = await response.json();
-        if (errorData.message) {
-          errorMessage = errorData.message;
-        }
-      } catch {
-        // If JSON parsing fails, use default error message
-      }
-      throw new Error(errorMessage);
-    }
-
-    try {
-      return await response.json();
-    } catch {
-      throw new Error('Invalid response from server');
-    }
+    const response = await apiClient.post<ApiResponse<AuthTokens>>('/otp/validate', request);
+    return response.data;
   },
 };
