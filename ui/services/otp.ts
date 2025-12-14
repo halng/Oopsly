@@ -39,7 +39,11 @@ export const otpService = {
       throw new Error(errorMessage);
     }
 
-    return response.json();
+    try {
+      return await response.json();
+    } catch {
+      throw new Error('Invalid response from server');
+    }
   },
 
   async verifyOTP(request: OTPVerifyRequest): Promise<ApiResponse<AuthTokens>> {
@@ -64,6 +68,10 @@ export const otpService = {
       throw new Error(errorMessage);
     }
 
-    return response.json();
+    try {
+      return await response.json();
+    } catch {
+      throw new Error('Invalid response from server');
+    }
   },
 };
