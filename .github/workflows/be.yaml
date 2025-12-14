@@ -29,3 +29,22 @@ jobs:
       - name: Spotless Check
         working-directory: api
         run: ./gradlew spotlessCheck
+      - name: Run Unit Tests
+        working-directory: api
+        run: ./gradlew test
+      - name: Run Code Coverage
+        working-directory: api
+        run: ./gradlew jacocoTestReport
+      - name: Perf Tests
+        working-directory: api
+        run: ./gradlew jmh
+      - name: Publish Code Coverage Report
+        if: always()
+        uses: codecov/codecov-action@v3
+        with:
+          files: api/build/reports/jacoco/test/jacocoTestReport.xml
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results

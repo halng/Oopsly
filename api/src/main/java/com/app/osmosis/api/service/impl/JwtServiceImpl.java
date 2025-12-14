@@ -36,7 +36,7 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
-    public String generateToken(User user) {
+    public String generateToken(User user) {    
         return Jwts.builder()
                 .subject(user.getEmail())
                 .issuedAt(new Date())

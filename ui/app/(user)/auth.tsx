@@ -97,7 +97,7 @@ const AuthScreen = () => {
           {/* Back Button */}
           <TouchableOpacity
             className="absolute top-12 left-4 bg-white/80 rounded-full p-2"
-            onPress={() => router.back()}
+            onPress={() => router.push("/")}
           >
             <ArrowLeft size={24} color="#4F46E5" />
           </TouchableOpacity>

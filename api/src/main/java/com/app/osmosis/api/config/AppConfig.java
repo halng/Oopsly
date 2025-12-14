@@ -39,6 +39,7 @@ public class AppConfig {
 
     private Jwt jwt = new Jwt();
     private Google google = new Google();
+    private Features features = new Features();
 
     @Getter
     @Setter
@@ -51,5 +52,12 @@ public class AppConfig {
     @Setter
     public static class Google {
         private String clientId;
+    }
+
+    @Getter
+    @Setter
+    public static class Features {
+        private boolean authWithGoogle;
+        private boolean authWithJwt;
     }
 }

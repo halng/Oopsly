@@ -11,6 +11,9 @@ app:
     expiration-in-ms: 86400000
   google:
     client-id: ${GOOGLE_CLIENT_ID:changeme}
+  features:
+    authWithGoogle: false
+    authWithJwt: true
 
 spring:
   autoconfigure:
