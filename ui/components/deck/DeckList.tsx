@@ -53,7 +53,7 @@ export const DeckList: React.FC<DeckListProps> = ({ onDeckPress }) => {
       setError(null);
 
       const response = await deckService.fetchDecks();
-      setDecks(response.data.content);
+      setDecks(response.data?.content || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch decks');
     } finally {

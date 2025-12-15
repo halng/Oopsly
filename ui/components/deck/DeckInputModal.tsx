@@ -24,6 +24,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { X } from 'lucide-react-native';
 import { Deck, CreateDeckVm, UpdateDeckVm } from '../../types/Deck';
@@ -62,7 +63,7 @@ export const DeckInputModal: React.FC<DeckInputModalProps> = ({
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      setError('Deck name is required');
+      Alert.alert('Validation Error', 'Deck name is required');
       return;
     }
 
@@ -73,7 +74,9 @@ export const DeckInputModal: React.FC<DeckInputModalProps> = ({
         description: description.trim() || undefined,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      Alert.alert('Error', errorMessage);
+      setError(errorMessage);
     }
   };
 

@@ -15,9 +15,12 @@
  */
 
 import React from 'react';
+import { Alert } from 'react-native';
 import { render, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { DeckInputModal } from './DeckInputModal';
 import { Deck } from '../../types/Deck';
+
+jest.spyOn(Alert, 'alert');
 
 describe('DeckInputModal', () => {
   const mockOnClose = jest.fn();
@@ -90,7 +93,7 @@ describe('DeckInputModal', () => {
       fireEvent.press(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Deck name is required')).toBeTruthy();
+        expect(Alert.alert).toHaveBeenCalledWith('Validation Error', 'Deck name is required');
       });
 
       expect(mockOnSubmit).not.toHaveBeenCalled();
