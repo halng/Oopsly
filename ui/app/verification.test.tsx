@@ -110,6 +110,7 @@ describe('OTPVerification', () => {
       message: 'Authentication successful',
       isSuccess: true,
       data: {
+        // snyk:ignore:HardcodedNonCryptoSecret - Test mock data, not real secrets
         access_token: 'access_token_123',
         refresh_token: 'refresh_token_456',
         type: 'Bearer',

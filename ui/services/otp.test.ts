@@ -103,6 +103,7 @@ describe('otpService', () => {
     };
 
     it('should successfully verify OTP and return auth tokens', async () => {
+      // snyk:ignore:HardcodedNonCryptoSecret - Test mock data, not real secrets
       const mockAuthTokens: AuthTokens = {
         access_token: 'mock_access_token',
         refresh_token: 'mock_refresh_token',
@@ -213,6 +214,7 @@ describe('otpService', () => {
       ];
 
       for (const request of requests) {
+        // snyk:ignore:HardcodedNonCryptoSecret - Test mock data, not real secrets
         const mockAuthTokens: AuthTokens = {
           access_token: 'mock_access_token',
           refresh_token: 'mock_refresh_token',
