@@ -16,4 +16,21 @@
 
 package com.app.osmosis.api.repository;
 
-public class DeckRepository {}
+import com.app.osmosis.api.entity.DeckEntity;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface DeckRepository extends JpaRepository<DeckEntity, UUID> {
+    Page<DeckEntity> findByIsDeletedFalse(Pageable pageable);
+
+    Page<DeckEntity> findByUserIdAndIsDeletedFalse(UUID userId, Pageable pageable);
+
+    Optional<DeckEntity> findByIdAndIsDeletedFalse(UUID id);
+
+    Optional<DeckEntity> findByIdAndUserIdAndIsDeletedFalse(UUID id, UUID userId);
+}
