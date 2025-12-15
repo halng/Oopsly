@@ -18,11 +18,15 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
+import { otpService } from '../services/otp';
+import { useAuthStore } from '../store/AuthStore';
 
 export default function EmailInputScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const setUserEmail = useAuthStore((state) => state.setUserEmail);
 
   // Basic email validation
   const isValidEmail = (email: string) => {
@@ -33,13 +37,18 @@ export default function EmailInputScreen() {
     if (!isValidEmail(email)) return;
     
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
+    setError('');
     
-    // Navigate to next screen
-    router.push('/verification'); // Assuming the next screen route
-  }, [email, router]);
+    try {
+      await otpService.sendOTP(email);
+      setUserEmail(email);
+      router.push('/verification');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send OTP');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [email, router, setUserEmail]);
 
   const isEmailValid = isValidEmail(email);
 
@@ -83,6 +92,11 @@ export default function EmailInputScreen() {
             accessibilityHint="Enter your email address"
           />
         </View>
+
+        {/* Error Message */}
+        {error ? (
+          <Text className="text-red-500 text-sm mb-4">{error}</Text>
+        ) : null}
       </View>
 
       {/* Bottom Button */}

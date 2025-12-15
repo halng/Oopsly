@@ -18,16 +18,20 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
+import { otpService } from '../services/otp';
+import { useAuthStore } from '../store/AuthStore';
 
 export default function OTPVerification() {
   const router = useRouter();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(120); // 2 minutes in seconds
   const [isResendActive, setIsResendActive] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [error, setError] = useState('');
   const inputRefs = useRef<Array<TextInput | null>>([]);
   
-  // Mock email - in real app, this would come from navigation params or state
-  const userEmail = "user@example.com";
+  const userEmail = useAuthStore((state) => state.userEmail);
+  const setCredentials = useAuthStore((state) => state.setCredentials);
 
   useEffect(() => {
     // Auto-focus first input on mount
@@ -77,21 +81,43 @@ export default function OTPVerification() {
     }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (!isResendActive) return;
     
-    // Reset timer and resend state
-    setTimer(120);
-    setIsResendActive(false);
+    setError('');
     
-    // Mock resend API call
-    console.log('Resending OTP...');
+    try {
+      await otpService.sendOTP(userEmail);
+      // Reset timer and resend state
+      setTimer(120);
+      setIsResendActive(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resend OTP');
+    }
   };
 
-  const handleVerify = () => {
-    // Mock verification
-    console.log('Verifying OTP:', otp.join(''));
-    // Navigate to next screen or handle verification logic
+  const handleVerify = async () => {
+    setError('');
+    setIsVerifying(true);
+    
+    try {
+      const otpCode = otp.join('');
+      const response = await otpService.verifyOTP({
+        email: userEmail,
+        otp: otpCode,
+      });
+      
+      if (response.isSuccess && response.data) {
+        setCredentials(userEmail, response.data.access_token, response.data.refresh_token);
+        router.push('/(user)');
+      } else {
+        setError(response.message || 'Verification failed');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to verify OTP');
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const isOtpComplete = otp.every(digit => digit !== '');
@@ -140,6 +166,11 @@ export default function OTPVerification() {
           ))}
         </View>
 
+        {/* Error Message */}
+        {error ? (
+          <Text className="mt-4 text-red-500 text-sm text-center">{error}</Text>
+        ) : null}
+
         {/* Timer and Resend */}
         <View className="flex-row items-center justify-center mt-8 space-x-1">
           <Text className="text-gray-600">{formatTime(timer)}</Text>
@@ -159,13 +190,13 @@ export default function OTPVerification() {
       <View className="px-6 absolute bottom-8 w-full">
         <TouchableOpacity
           onPress={handleVerify}
-          disabled={!isOtpComplete}
+          disabled={!isOtpComplete || isVerifying}
           className={`py-4 rounded-xl items-center
-            ${isOtpComplete ? 'bg-indigo-600' : 'bg-gray-300'}`}
+            ${isOtpComplete && !isVerifying ? 'bg-indigo-600' : 'bg-gray-300'}`}
           accessibilityLabel="Verify and create account"
         >
           <Text className="text-white font-semibold">
-            Verify & Create Account
+            {isVerifying ? 'Verifying...' : 'Verify & Create Account'}
           </Text>
         </TouchableOpacity>
       </View>

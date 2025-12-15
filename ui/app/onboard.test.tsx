@@ -15,12 +15,29 @@
  */
 
 import React from 'react';
-import { render, fireEvent, screen, act, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import EmailInputScreen from '../app/onboard';
 import { useRouter } from 'expo-router';
+import { otpService } from '../services/otp';
 
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
+}));
+
+jest.mock('../services/otp', () => ({
+  otpService: {
+    sendOTP: jest.fn(),
+  },
+}));
+
+const mockSetUserEmail = jest.fn();
+jest.mock('../store/AuthStore', () => ({
+  useAuthStore: jest.fn((selector) => {
+    if (selector) {
+      return selector({ setUserEmail: mockSetUserEmail });
+    }
+    return { setUserEmail: mockSetUserEmail };
+  }),
 }));
 
 describe('EmailInputScreen', () => {
@@ -32,11 +49,7 @@ describe('EmailInputScreen', () => {
       push: mockPush,
       back: mockBack 
     });
-    jest.useFakeTimers(); // Control time for the API simulation
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
+    jest.clearAllMocks();
   });
 
   it('validates email correctly', () => {
@@ -57,7 +70,13 @@ describe('EmailInputScreen', () => {
     expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
   });
 
-  it('handles loading state and navigation', async () => {
+  it('handles successful OTP send and navigation', async () => {
+    (otpService.sendOTP as jest.Mock).mockResolvedValue({
+      status: 200,
+      message: 'OTP sent successfully',
+      isSuccess: true,
+    });
+
     render(<EmailInputScreen />);
     
     const input = screen.getByPlaceholderText('name@example.com');
@@ -66,19 +85,36 @@ describe('EmailInputScreen', () => {
     const continueBtn = screen.getByLabelText('Continue button');
     fireEvent.press(continueBtn);
 
-    // Should show loading indicator (ActivityIndicator)
-    // Note: ActivityIndicator usually has role="progressbar" or similar depending on RN version,
-    // or we check if button is disabled during loading.
+    // Should show loading state
     expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
 
-    // Fast-forward the 1-second timeout
-    act(() => {
-      jest.advanceTimersByTime(1000);
+    await waitFor(() => {
+      expect(otpService.sendOTP).toHaveBeenCalledWith('user@example.com');
     });
 
     await waitFor(() => {
+      expect(mockSetUserEmail).toHaveBeenCalledWith('user@example.com');
       expect(mockPush).toHaveBeenCalledWith('/verification');
     });
+  });
+
+  it('handles OTP send error', async () => {
+    (otpService.sendOTP as jest.Mock).mockRejectedValue(new Error('Failed to send OTP'));
+
+    render(<EmailInputScreen />);
+    
+    const input = screen.getByPlaceholderText('name@example.com');
+    fireEvent.changeText(input, 'user@example.com');
+    
+    const continueBtn = screen.getByLabelText('Continue button');
+    fireEvent.press(continueBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to send OTP')).toBeTruthy();
+    });
+
+    // Should not navigate
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it('navigates back when arrow is pressed', () => {
