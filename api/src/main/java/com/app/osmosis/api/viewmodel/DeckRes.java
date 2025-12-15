@@ -14,36 +14,10 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.entity;
+package com.app.osmosis.api.viewmodel;
 
-import jakarta.persistence.*;
+import java.time.Instant;
 import java.util.UUID;
-import lombok.*;
 
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@ToString
-@Table(name = "decks")
-@Entity(name = "decks")
-public class DeckEntity extends Audit {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    @Column(nullable = false)
-    private String name;
-
-    private String description;
-
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean isDeleted = false;
-
-    @ToString.Exclude
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-}
+public record DeckRes(
+        UUID id, String name, String description, Instant createdAt, Instant updatedAt) {}
