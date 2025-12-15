@@ -19,13 +19,13 @@ package com.app.osmosis.api.entity;
 import jakarta.persistence.*;
 import java.util.UUID;
 import lombok.*;
-import org.springframework.data.relational.core.mapping.Table;
 
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 @Table(name = "decks")
 @Entity(name = "decks")
 public class DeckEntity extends Audit {
@@ -42,6 +42,7 @@ public class DeckEntity extends Audit {
     @Builder.Default
     private Boolean isDeleted = false;
 
+    @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

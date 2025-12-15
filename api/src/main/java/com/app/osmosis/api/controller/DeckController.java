@@ -21,14 +21,19 @@ import com.app.osmosis.api.viewmodel.ApiRes;
 import com.app.osmosis.api.viewmodel.DeckReq;
 import com.app.osmosis.api.viewmodel.UpdateDeckReq;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
+@Validated
 @RestController
 @RequestMapping("/decks")
 public class DeckController {
@@ -46,9 +51,13 @@ public class DeckController {
 
     @GetMapping
     public ApiRes getAllDecks(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
+            @RequestParam(defaultValue = "createdAt")
+                    @Pattern(
+                            regexp = "^(name|createdAt|updatedAt)$",
+                            message = "sortBy must be one of: name, createdAt, updatedAt")
+                    String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDirection) {
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));

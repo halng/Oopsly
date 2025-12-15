@@ -19,6 +19,7 @@ package com.app.osmosis.api.service.impl;
 import com.app.osmosis.api.entity.DeckEntity;
 import com.app.osmosis.api.entity.User;
 import com.app.osmosis.api.exception.NotFoundException;
+import com.app.osmosis.api.exception.UnauthenticatedException;
 import com.app.osmosis.api.repository.DeckRepository;
 import com.app.osmosis.api.repository.UserRepository;
 import com.app.osmosis.api.service.DeckService;
@@ -153,7 +154,7 @@ public class DeckServiceImpl implements DeckService {
     private UUID getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getName() == null) {
-            throw new NotFoundException("User not authenticated");
+            throw new UnauthenticatedException("User not authenticated");
         }
         return UUID.fromString(authentication.getName());
     }

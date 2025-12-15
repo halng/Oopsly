@@ -23,6 +23,7 @@ import static org.mockito.Mockito.*;
 import com.app.osmosis.api.entity.DeckEntity;
 import com.app.osmosis.api.entity.User;
 import com.app.osmosis.api.exception.NotFoundException;
+import com.app.osmosis.api.exception.UnauthenticatedException;
 import com.app.osmosis.api.repository.DeckRepository;
 import com.app.osmosis.api.repository.UserRepository;
 import com.app.osmosis.api.service.impl.DeckServiceImpl;
@@ -154,7 +155,7 @@ class DeckServiceImplTest {
     }
 
     @Test
-    void createDeck_whenUserNotAuthenticated_thenThrowsNotFoundException() {
+    void createDeck_whenUserNotAuthenticated_thenThrowsUnauthenticatedException() {
         DeckReq deckReq = new DeckReq("New Deck", "Description");
 
         try (MockedStatic<SecurityContextHolder> mockedSecurityContextHolder =
@@ -164,7 +165,7 @@ class DeckServiceImplTest {
                     .thenReturn(securityContext);
             when(securityContext.getAuthentication()).thenReturn(null);
 
-            assertThrows(NotFoundException.class, () -> deckService.createDeck(deckReq));
+            assertThrows(UnauthenticatedException.class, () -> deckService.createDeck(deckReq));
             verify(userRepository, never()).findById(any());
             verify(deckRepository, never()).save(any());
         }
