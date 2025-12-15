@@ -110,6 +110,7 @@ export const DeckInputModal: React.FC<DeckInputModalProps> = ({
                 onPress={handleClose}
                 disabled={isLoading}
                 testID="modal-close-button"
+                accessibilityLabel="Close modal"
               >
                 <X size={24} color="#6B7280" />
               </TouchableOpacity>
@@ -130,6 +131,8 @@ export const DeckInputModal: React.FC<DeckInputModalProps> = ({
                 onChangeText={setName}
                 editable={!isLoading}
                 testID="deck-name-input"
+                accessibilityLabel="Deck name"
+                accessibilityHint="Enter a name for your deck"
               />
             </View>
 
@@ -145,6 +148,8 @@ export const DeckInputModal: React.FC<DeckInputModalProps> = ({
                 textAlignVertical="top"
                 editable={!isLoading}
                 testID="deck-description-input"
+                accessibilityLabel="Deck description"
+                accessibilityHint="Enter an optional description for your deck"
               />
             </View>
 
@@ -154,6 +159,8 @@ export const DeckInputModal: React.FC<DeckInputModalProps> = ({
                 onPress={handleClose}
                 disabled={isLoading}
                 testID="modal-cancel-button"
+                accessibilityLabel="Cancel"
+                accessibilityHint="Close the modal without saving"
               >
                 <Text className="text-gray-700 font-semibold">Cancel</Text>
               </TouchableOpacity>
@@ -162,6 +169,8 @@ export const DeckInputModal: React.FC<DeckInputModalProps> = ({
                 onPress={handleSubmit}
                 disabled={isLoading}
                 testID="modal-submit-button"
+                accessibilityLabel={isEditing ? 'Update deck' : 'Create deck'}
+                accessibilityHint={isEditing ? 'Save changes to your deck' : 'Create a new deck'}
               >
                 {isLoading ? (
                   <ActivityIndicator color="white" size="small" />

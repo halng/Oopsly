@@ -143,6 +143,8 @@ export const DeckList: React.FC<DeckListProps> = ({ onDeckPress }) => {
         className="bg-indigo-600 rounded-lg px-6 py-3"
         onPress={handleCreateDeck}
         testID="create-first-deck-button"
+        accessibilityLabel="Create your first deck"
+        accessibilityHint="Opens a dialog to create a new deck"
       >
         <Text className="text-white font-semibold">Create Your First Deck</Text>
       </TouchableOpacity>
@@ -160,6 +162,8 @@ export const DeckList: React.FC<DeckListProps> = ({ onDeckPress }) => {
         className="bg-indigo-600 rounded-lg px-6 py-3"
         onPress={() => fetchDecks()}
         testID="retry-button"
+        accessibilityLabel="Try again"
+        accessibilityHint="Retry loading the deck list"
       >
         <Text className="text-white font-semibold">Try Again</Text>
       </TouchableOpacity>
@@ -210,6 +214,8 @@ export const DeckList: React.FC<DeckListProps> = ({ onDeckPress }) => {
           className="absolute bottom-6 right-6 w-14 h-14 bg-indigo-600 rounded-full items-center justify-center shadow-lg"
           onPress={handleCreateDeck}
           testID="fab-create-deck"
+          accessibilityLabel="Create new deck"
+          accessibilityHint="Opens a dialog to create a new deck"
         >
           <Plus size={28} color="white" />
         </TouchableOpacity>

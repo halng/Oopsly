@@ -39,6 +39,7 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck, onEdit, onDelete, onPr
       onPress={() => onPress?.(deck)}
       activeOpacity={0.7}
       testID={`deck-card-${deck.id}`}
+      accessibilityLabel={`Open deck ${deck.name}`}
     >
       <View className="flex-row items-start justify-between">
         <View className="flex-1 mr-3">
@@ -64,6 +65,7 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck, onEdit, onDelete, onPr
             className="p-2 mr-1"
             onPress={() => onEdit(deck)}
             testID={`deck-edit-${deck.id}`}
+            accessibilityLabel={`Edit deck ${deck.name}`}
           >
             <Edit3 size={18} color="#6B7280" />
           </TouchableOpacity>
@@ -71,6 +73,7 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck, onEdit, onDelete, onPr
             className="p-2"
             onPress={() => onDelete(deck)}
             testID={`deck-delete-${deck.id}`}
+            accessibilityLabel={`Delete deck ${deck.name}`}
           >
             <Trash2 size={18} color="#EF4444" />
           </TouchableOpacity>
