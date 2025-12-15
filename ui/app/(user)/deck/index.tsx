@@ -17,8 +17,8 @@
 import React from "react";
 import { View, Text } from "react-native";
 import { useRouter } from "expo-router";
-import { DeckList } from "../../components/deck";
-import { Deck } from "../../types/Deck";
+import { DeckList } from "../../../components/deck";
+import { Deck } from "../../../types/Deck";
 
 export default function DeckManagementScreen() {
   const router = useRouter();
