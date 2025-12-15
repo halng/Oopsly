@@ -28,5 +28,9 @@ import org.springframework.stereotype.Repository;
 public interface DeckRepository extends JpaRepository<DeckEntity, UUID> {
     Page<DeckEntity> findByIsDeletedFalse(Pageable pageable);
 
+    Page<DeckEntity> findByUserIdAndIsDeletedFalse(UUID userId, Pageable pageable);
+
     Optional<DeckEntity> findByIdAndIsDeletedFalse(UUID id);
+
+    Optional<DeckEntity> findByIdAndUserIdAndIsDeletedFalse(UUID id, UUID userId);
 }

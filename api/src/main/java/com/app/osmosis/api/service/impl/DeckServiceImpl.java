@@ -77,23 +77,28 @@ public class DeckServiceImpl implements DeckService {
     @Override
     @Transactional(readOnly = true)
     public ApiRes getAllDecks(Pageable pageable) {
-        log.info("Fetching all non-deleted decks with pagination: {}", pageable);
+        UUID userId = getCurrentUserId();
+        log.info(
+                "Fetching all non-deleted decks for user: {} with pagination: {}",
+                userId,
+                pageable);
 
-        Page<DeckEntity> decks = deckRepository.findByIsDeletedFalse(pageable);
+        Page<DeckEntity> decks = deckRepository.findByUserIdAndIsDeletedFalse(userId, pageable);
         Page<DeckRes> response = decks.map(this::mapToResponse);
 
-        log.info("Retrieved {} decks", decks.getTotalElements());
+        log.info("Retrieved {} decks for user: {}", decks.getTotalElements(), userId);
         return ApiRes.ok("Decks retrieved successfully", response);
     }
 
     @Override
     @Transactional(readOnly = true)
     public ApiRes getDeckById(UUID id) {
-        log.info("Fetching deck with id: {}", id);
+        UUID userId = getCurrentUserId();
+        log.info("Fetching deck with id: {} for user: {}", id, userId);
 
         DeckEntity deck =
                 deckRepository
-                        .findByIdAndIsDeletedFalse(id)
+                        .findByIdAndUserIdAndIsDeletedFalse(id, userId)
                         .orElseThrow(() -> new NotFoundException("Deck not found"));
 
         DeckRes response = mapToResponse(deck);

@@ -17,15 +17,16 @@
 package com.app.osmosis.api.entity;
 
 import jakarta.persistence.*;
+import java.util.List;
 import java.util.UUID;
 import lombok.*;
-import org.springframework.data.relational.core.mapping.Table;
 
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 @Table(name = "users")
 @Entity(name = "users")
 public class User extends Audit {
@@ -45,4 +46,8 @@ public class User extends Audit {
 
     @Enumerated(EnumType.STRING)
     private AuthProvider authProvider;
+
+    @ToString.Exclude
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DeckEntity> decks;
 }
