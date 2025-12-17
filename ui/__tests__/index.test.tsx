@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react-native';
-import WelcomeScreen from '../app/index'; // Adjust path if needed
+import WelcomeScreen from '@/app/index'; // Adjust path if needed
 import { useRouter } from 'expo-router';
 
 // Mock Expo Router

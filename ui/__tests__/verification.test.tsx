@@ -16,15 +16,15 @@
 
 import React from 'react';
 import { render, fireEvent, screen, act, waitFor } from '@testing-library/react-native';
-import OTPVerification from '../app/verification';
+import OTPVerification from '@/app/verification';
 import { useRouter } from 'expo-router';
-import { otpService } from '../services/otp';
+import { otpService } from '@/services/otp';
 
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('../services/otp', () => ({
+jest.mock('@/services/otp', () => ({
   otpService: {
     sendOTP: jest.fn(),
     verifyOTP: jest.fn(),
@@ -32,7 +32,7 @@ jest.mock('../services/otp', () => ({
 }));
 
 const mockSetCredentials = jest.fn();
-jest.mock('../store/AuthStore', () => ({
+jest.mock('@/store/AuthStore', () => ({
   useAuthStore: jest.fn((selector) => {
     const state = {
       userEmail: 'test@example.com',
