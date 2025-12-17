@@ -14,15 +14,15 @@
  *    limitations under the License.
  */
 
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
-import { render, fireEvent, screen, waitFor, act } from '@testing-library/react-native';
 import { Alert } from 'react-native';
-import { DeckList } from './DeckList';
-import { deckService } from '../../services/deckService';
-import { Deck, DeckPaginatedResponse } from '../../types/Deck';
-import { ApiResponse } from '../../types/api';
+import { DeckList } from '../../../components/deck/DeckList';
+import { deckService } from '../../../services/deckService';
+import { Deck, DeckPaginatedResponse } from '../../../types/Deck';
+import { ApiResponse } from '../../../types/api';
 
-jest.mock('../../services/deckService', () => ({
+jest.mock('../../../services/deckService', () => ({
   deckService: {
     fetchDecks: jest.fn(),
     createDeck: jest.fn(),

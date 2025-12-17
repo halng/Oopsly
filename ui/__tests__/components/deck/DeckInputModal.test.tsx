@@ -14,11 +14,11 @@
  *    limitations under the License.
  */
 
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import { Alert } from 'react-native';
-import { render, fireEvent, screen, waitFor } from '@testing-library/react-native';
-import { DeckInputModal } from './DeckInputModal';
-import { Deck } from '../../types/Deck';
+import { DeckInputModal } from '../../../components/deck/DeckInputModal';
+import { Deck } from '../../../types/Deck';
 
 jest.spyOn(Alert, 'alert');
 
