@@ -14,10 +14,10 @@
  *    limitations under the License.
  */
 
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { render, fireEvent, screen } from '@testing-library/react-native';
-import { DeckCard } from './DeckCard';
-import { Deck } from '../../types/Deck';
+import { DeckCard } from '../../../components/deck/DeckCard';
+import { Deck } from '../../../types/Deck';
 
 describe('DeckCard', () => {
   const mockDeck: Deck = {

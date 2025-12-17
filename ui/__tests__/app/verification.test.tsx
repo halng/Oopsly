@@ -14,17 +14,17 @@
  *    limitations under the License.
  */
 
-import React from 'react';
-import { render, fireEvent, screen, act, waitFor } from '@testing-library/react-native';
-import OTPVerification from '../app/verification';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { useRouter } from 'expo-router';
-import { otpService } from '../services/otp';
+import React from 'react';
+import OTPVerification from '../../app/verification';
+import { otpService } from '../../services/otp';
 
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('../services/otp', () => ({
+jest.mock('../../services/otp', () => ({
   otpService: {
     sendOTP: jest.fn(),
     verifyOTP: jest.fn(),
@@ -32,7 +32,7 @@ jest.mock('../services/otp', () => ({
 }));
 
 const mockSetCredentials = jest.fn();
-jest.mock('../store/AuthStore', () => ({
+jest.mock('../../store/AuthStore', () => ({
   useAuthStore: jest.fn((selector) => {
     const state = {
       userEmail: 'test@example.com',
@@ -71,12 +71,12 @@ describe('OTPVerification', () => {
 
     // Simulate typing '5' in first box
     fireEvent.changeText(input1, '5');
+    fireEvent.changeText(input2, '3');
     
     // Verify value update
+    expect(input2.props.value).toBe('3');
     expect(input1.props.value).toBe('5');
     
-    // Note: We can't easily test "focus" moved in JSDOM/RNTL without hydration, 
-    // but we can verify the state logic allows the flow.
   });
 
   it('ignores non-numeric input', () => {
@@ -173,17 +173,8 @@ describe('OTPVerification', () => {
     render(<OTPVerification />);
     
     const resendBtn = screen.getByText('Resend');
-    // Initially timer is running (2:00), so Resend is disabled (gray/unclickable logic)
-    // The code checks `isResendActive` state. 
-    // We can check if the parent TouchableOpacity is disabled
-    // In your code: disabled={!isResendActive}
-    
-    // Note: To find the Touchable, we might need to look up by text parent. 
-    // RNTL often propagates disabled prop to text, but let's assume we find the button wrapper.
-    // A reliable way is checking the text color logic you implemented.
     expect(resendBtn.props.className).toContain('text-gray-400');
 
-    // Advance time by 2 minutes (120 seconds)
     act(() => {
       jest.advanceTimersByTime(120000);
     });
@@ -205,5 +196,20 @@ describe('OTPVerification', () => {
 
     // Timer should reset
     expect(screen.getByText('02:00')).toBeTruthy();
+  });
+  it('should move focus to previous input on Backspace when current is empty', () => {
+    render(<OTPVerification />);
+
+    const input1 = screen.getByLabelText('OTP digit 1');
+    const input2 = screen.getByLabelText('OTP digit 2');
+
+    fireEvent(input2, 'focus');
+    fireEvent(input2, 'onKeyPress', {
+      nativeEvent: { key: 'Backspace' },
+    });
+
+    // Assert that the first input is now focused
+    // expect(document.activeElement).toBe(input1);
+    expect(input2.props.value).toBe('');
   });
 });

@@ -14,12 +14,12 @@
  *    limitations under the License.
  */
 
-import { otpService } from './otp';
-import { apiClient } from '../config/axiosClient';
-import { ApiResponse } from '../types/api';
-import { AuthTokens } from '../types/AuthViewModel';
+import { apiClient } from '../../config/axiosClient';
+import { otpService } from '../../services/otp';
+import { ApiResponse } from '../../types/api';
+import { AuthTokens } from '../../types/AuthViewModel';
 
-jest.mock('../config/axiosClient', () => ({
+jest.mock('../../config/axiosClient', () => ({
   apiClient: {
     post: jest.fn(),
   },

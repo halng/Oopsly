@@ -14,12 +14,12 @@
  *    limitations under the License.
  */
 
-import { deckService } from './deckService';
-import { apiClient } from '../config/axiosClient';
-import { ApiResponse } from '../types/api';
-import { Deck, DeckPaginatedResponse } from '../types/Deck';
+import { apiClient } from '../../config/axiosClient';
+import { deckService } from '../../services/deckService';
+import { ApiResponse } from '../../types/api';
+import { Deck, DeckPaginatedResponse } from '../../types/Deck';
 
-jest.mock('../config/axiosClient', () => ({
+jest.mock('../../config/axiosClient', () => ({
   apiClient: {
     get: jest.fn(),
     post: jest.fn(),
