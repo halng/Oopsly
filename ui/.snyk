@@ -1,0 +1,10 @@
+# Snyk (https://snyk.io) policy file
+
+version: v1.25.0
+
+ignore:
+  # Test fixtures - not real secrets, used only in test files
+  SNYK-JS-HARDCODEDNONCRYPTOGRAPHICSECRET-6508126:
+    - '*':
+        reason: Test fixture values in test files - not actual credentials
+        expires: 2026-12-17T00:00:00.000Z
