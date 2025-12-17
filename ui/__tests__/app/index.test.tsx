@@ -14,10 +14,10 @@
  *    limitations under the License.
  */
 
-import React from 'react';
-import { render, fireEvent, screen } from '@testing-library/react-native';
-import WelcomeScreen from '../app/index'; // Adjust path if needed
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import { useRouter } from 'expo-router';
+import React from 'react';
+import WelcomeScreen from '../../app/index'; // Adjust path if needed
 
 // Mock Expo Router
 jest.mock('expo-router', () => ({

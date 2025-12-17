@@ -14,13 +14,30 @@
  *    limitations under the License.
  */
 
-import React from 'react';
-import { render, fireEvent, screen, act, waitFor } from '@testing-library/react-native';
-import EmailInputScreen from '../app/onboard';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { useRouter } from 'expo-router';
+import React from 'react';
+import EmailInputScreen from '../../app/onboard';
+import { otpService } from '../../services/otp';
 
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
+}));
+
+jest.mock('../../services/otp', () => ({
+  otpService: {
+    sendOTP: jest.fn(),
+  },
+}));
+
+const mockSetUserEmail = jest.fn();
+jest.mock('../../store/AuthStore', () => ({
+  useAuthStore: jest.fn((selector) => {
+    if (selector) {
+      return selector({ setUserEmail: mockSetUserEmail });
+    }
+    return { setUserEmail: mockSetUserEmail };
+  }),
 }));
 
 describe('EmailInputScreen', () => {

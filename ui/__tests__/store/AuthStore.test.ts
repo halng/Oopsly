@@ -1,4 +1,4 @@
-import { useAuthStore } from './AuthStore';
+import { useAuthStore } from '../../store/AuthStore';
 
 describe('useAuthStore', () => {
   const initialState = useAuthStore.getState();
