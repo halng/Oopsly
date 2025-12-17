@@ -110,8 +110,8 @@ describe('OTPVerification', () => {
       message: 'Authentication successful',
       isSuccess: true,
       data: {
-        access_token: 'access_token_123',
-        refresh_token: 'refresh_token_456',
+        access_token: 'test-access',
+        refresh_token: 'test-refresh',
         type: 'Bearer',
       },
     });
@@ -134,8 +134,8 @@ describe('OTPVerification', () => {
       });
       expect(mockSetCredentials).toHaveBeenCalledWith(
         'test@example.com',
-        'access_token_123',
-        'refresh_token_456'
+        'test-access',
+        'test-refresh'
       );
       expect(mockPush).toHaveBeenCalledWith('/(user)');
     });

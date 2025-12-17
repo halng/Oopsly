@@ -104,8 +104,8 @@ describe('otpService', () => {
 
     it('should successfully verify OTP and return auth tokens', async () => {
       const mockAuthTokens: AuthTokens = {
-        access_token: 'mock_access_token',
-        refresh_token: 'mock_refresh_token',
+        access_token: 'test-access',
+        refresh_token: 'test-refresh',
         type: 'Bearer',
       };
 
@@ -123,8 +123,8 @@ describe('otpService', () => {
 
       expect(apiClient.post).toHaveBeenCalledWith('/otp/validate', mockRequest);
       expect(result).toEqual(mockResponse);
-      expect(result.data.access_token).toBe('mock_access_token');
-      expect(result.data.refresh_token).toBe('mock_refresh_token');
+      expect(result.data.access_token).toBe('test-access');
+      expect(result.data.refresh_token).toBe('test-refresh');
       expect(result.data.type).toBe('Bearer');
     });
 
@@ -214,8 +214,8 @@ describe('otpService', () => {
 
       for (const request of requests) {
         const mockAuthTokens: AuthTokens = {
-          access_token: 'mock_access_token',
-          refresh_token: 'mock_refresh_token',
+          access_token: 'test-access',
+          refresh_token: 'test-refresh',
           type: 'Bearer',
         };
 
