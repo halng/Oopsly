@@ -14,18 +14,19 @@
  *    limitations under the License.
  */
 
-import { apiClient } from '../../config/axiosClient';
-import { otpService } from '../../services/otp';
-import { ApiResponse } from '../../types/api';
+
+import { apiClient } from '@/services';
+import {AuthService} from '@/services/AuthService';
+import { ApiResponse } from '../../types/ApiRes';
 import { AuthTokens } from '../../types/AuthViewModel';
 
-jest.mock('../../config/axiosClient', () => ({
+jest.mock('@/services', () => ({
   apiClient: {
     post: jest.fn(),
   },
 }));
 
-describe('otpService', () => {
+describe('AuthService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -44,11 +45,9 @@ describe('otpService', () => {
 
       (apiClient.post as jest.Mock).mockResolvedValue({ data: mockResponse });
 
-      const result = await otpService.sendOTP(mockEmail);
+      const result = await AuthService.CreateOTP(mockEmail);
 
-      expect(apiClient.post).toHaveBeenCalledWith('/otp', null, {
-        params: { email: mockEmail },
-      });
+      expect(apiClient.post).toHaveBeenCalledWith(`/otp?email=${mockEmail}`);
       expect(result).toEqual(mockResponse);
     });
 
@@ -56,23 +55,21 @@ describe('otpService', () => {
       const errorMessage = 'Failed to send OTP';
       (apiClient.post as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
-      await expect(otpService.sendOTP(mockEmail)).rejects.toThrow(errorMessage);
-      expect(apiClient.post).toHaveBeenCalledWith('/otp', null, {
-        params: { email: mockEmail },
-      });
+      await expect(AuthService.CreateOTP(mockEmail)).rejects.toThrow(errorMessage);
+      expect(apiClient.post).toHaveBeenCalledWith(`/otp?email=${mockEmail}`);
     });
 
     it('should handle network error when sending OTP', async () => {
       (apiClient.post as jest.Mock).mockRejectedValue(new Error('Network error. Please check your connection.'));
 
-      await expect(otpService.sendOTP(mockEmail)).rejects.toThrow('Network error. Please check your connection.');
+      await expect(AuthService.CreateOTP(mockEmail)).rejects.toThrow('Network error. Please check your connection.');
     });
 
     it('should handle server error response when sending OTP', async () => {
       const errorMessage = 'Invalid email format';
       (apiClient.post as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
-      await expect(otpService.sendOTP(mockEmail)).rejects.toThrow(errorMessage);
+      await expect(AuthService.CreateOTP(mockEmail)).rejects.toThrow(errorMessage);
     });
 
     it('should send OTP with special characters in email', async () => {
@@ -87,11 +84,9 @@ describe('otpService', () => {
 
       (apiClient.post as jest.Mock).mockResolvedValue({ data: mockResponse });
 
-      const result = await otpService.sendOTP(specialEmail);
+      const result = await AuthService.CreateOTP(specialEmail);
 
-      expect(apiClient.post).toHaveBeenCalledWith('/otp', null, {
-        params: { email: specialEmail },
-      });
+      expect(apiClient.post).toHaveBeenCalledWith(`/otp?email=${specialEmail}`);
       expect(result).toEqual(mockResponse);
     });
   });
@@ -119,7 +114,7 @@ describe('otpService', () => {
 
       (apiClient.post as jest.Mock).mockResolvedValue({ data: mockResponse });
 
-      const result = await otpService.verifyOTP(mockRequest);
+      const result = await AuthService.ValidateOTP(mockRequest.email, mockRequest.otp);
 
       expect(apiClient.post).toHaveBeenCalledWith('/otp/validate', mockRequest);
       expect(result).toEqual(mockResponse);
@@ -132,7 +127,7 @@ describe('otpService', () => {
       const errorMessage = 'OTP is invalid. Please try again.';
       (apiClient.post as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
-      await expect(otpService.verifyOTP(mockRequest)).rejects.toThrow(errorMessage);
+      await expect(AuthService.ValidateOTP(mockRequest.email, mockRequest.otp)).rejects.toThrow(errorMessage);
       expect(apiClient.post).toHaveBeenCalledWith('/otp/validate', mockRequest);
     });
 
@@ -140,20 +135,20 @@ describe('otpService', () => {
       const errorMessage = 'OTP has expired. Please request a new one.';
       (apiClient.post as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
-      await expect(otpService.verifyOTP(mockRequest)).rejects.toThrow(errorMessage);
+      await expect(AuthService.ValidateOTP(mockRequest.email, mockRequest.otp)).rejects.toThrow(errorMessage);
     });
 
     it('should handle rate limit error', async () => {
       const errorMessage = 'OTP has been invalidated due to too many failed attempts. Try again after 5 minutes.';
       (apiClient.post as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
-      await expect(otpService.verifyOTP(mockRequest)).rejects.toThrow(errorMessage);
+      await expect(AuthService.ValidateOTP(mockRequest.email, mockRequest.otp)).rejects.toThrow(errorMessage);
     });
 
     it('should handle network error when verifying OTP', async () => {
       (apiClient.post as jest.Mock).mockRejectedValue(new Error('Network error. Please check your connection.'));
 
-      await expect(otpService.verifyOTP(mockRequest)).rejects.toThrow('Network error. Please check your connection.');
+      await expect(AuthService.ValidateOTP(mockRequest.email, mockRequest.otp)).rejects.toThrow('Network error. Please check your connection.');
     });
 
     it('should verify OTP with different email formats', async () => {
@@ -180,7 +175,7 @@ describe('otpService', () => {
 
         (apiClient.post as jest.Mock).mockResolvedValue({ data: mockResponse });
 
-        const result = await otpService.verifyOTP(request);
+        const result = await AuthService.ValidateOTP(request.email, request.otp);
 
         expect(apiClient.post).toHaveBeenCalledWith('/otp/validate', request);
         expect(result.data.access_token).toBe(`token_${request.otp}`);
@@ -193,7 +188,7 @@ describe('otpService', () => {
       
       (apiClient.post as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
-      await expect(otpService.verifyOTP(emptyRequest)).rejects.toThrow(errorMessage);
+      await expect(AuthService.ValidateOTP(emptyRequest.email, emptyRequest.otp)).rejects.toThrow(errorMessage);
     });
 
     it('should handle empty OTP gracefully', async () => {
@@ -202,7 +197,7 @@ describe('otpService', () => {
       
       (apiClient.post as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
-      await expect(otpService.verifyOTP(emptyOtpRequest)).rejects.toThrow(errorMessage);
+      await expect(AuthService.ValidateOTP(emptyOtpRequest.email, emptyOtpRequest.otp)).rejects.toThrow(errorMessage);
     });
 
     it('should handle OTP with different lengths', async () => {
@@ -229,7 +224,7 @@ describe('otpService', () => {
 
         (apiClient.post as jest.Mock).mockResolvedValue({ data: mockResponse });
 
-        const result = await otpService.verifyOTP(request);
+        const result = await AuthService.ValidateOTP(request.email, request.otp);
 
         expect(result.isSuccess).toBe(true);
       }

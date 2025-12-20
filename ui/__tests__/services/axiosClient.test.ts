@@ -14,9 +14,12 @@
  *    limitations under the License.
  */
 
-import { apiClient } from '../../config/axiosClient';
-import { API_CONFIG } from '../../config/api';
+import { apiClient } from '@/services'
 import MockAdapter from 'axios-mock-adapter';
+
+const API_CONFIG = {
+  BASE_URL: 'http://localhost:9009/api/v1/osmosis',
+};
 
 describe('axiosClient', () => {
   let mock: MockAdapter;
@@ -114,75 +117,3 @@ describe('axiosClient', () => {
     });
   });
 });
-
-// import axios, { 
-//   AxiosError, 
-//   AxiosResponse, 
-//   InternalAxiosRequestConfig 
-// } from 'axios';
-// import { API_CONFIG } from './api';
-// import { ApiErrorResponse } from '../types/api';
-
-// // Create axios instance
-// export const apiClient = axios.create({
-//   baseURL: API_CONFIG.BASE_URL,
-//   timeout: 30000,
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-// });
-
-// // --- Request Interceptor ---
-// apiClient.interceptors.request.use(
-//   (config: InternalAxiosRequestConfig) => {
-//     // Example: Read token from localStorage/Cookie
-//     const token = localStorage.getItem('accessToken'); 
-    
-//     if (token && config.headers) {
-//       config.headers.Authorization = `Bearer ${token}`;
-//     }
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
-
-// // --- Response Interceptor ---
-// apiClient.interceptors.response.use(
-//   (response: AxiosResponse) => {
-//     // OPTION 1: Return the full response (keep as is if you need headers/status)
-//     // return response; 
-
-//     // OPTION 2: Unwrap data directly (Cleaner usage in components)
-//     return response.data;
-//   },
-//   (error: AxiosError<ApiErrorResponse>) => {
-//     // 1. Handle Global Auth Errors (Optional but recommended)
-//     if (error.response?.status === 401) {
-//       // Handle logout logic here, e.g., clear storage, redirect to login
-//       // window.location.href = '/login';
-//     }
-
-//     // 2. Construct a more useful error object
-//     if (error.response) {
-//       // Server responded with a status code outside the 2xx range
-//       const errorData = error.response.data;
-//       const errorMessage = errorData?.message || 'An error occurred';
-      
-//       // Reject with the specific data so the UI can read field-specific validation errors
-//       // You can also attach the status code to the error object if needed
-//       const customError = new Error(errorMessage) as any;
-//       customError.status = error.response.status;
-//       customError.data = errorData;
-      
-//       return Promise.reject(customError);
-//     } else if (error.request) {
-//       // Request was made but no response received
-//       return Promise.reject(new Error('Network error. Please check your internet connection.'));
-//     } else {
-//       // Something else happened
-//       return Promise.reject(new Error(error.message || 'An unexpected error occurred'));
-//     }
-//   }
-// );

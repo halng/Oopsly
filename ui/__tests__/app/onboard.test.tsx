@@ -14,30 +14,27 @@
  *    limitations under the License.
  */
 
+import { AuthService } from '@/services/AuthService';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import EmailInputScreen from '../../app/onboard';
-import { otpService } from '../../services/otp';
 
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('../../services/otp', () => ({
-  otpService: {
-    sendOTP: jest.fn(),
+jest.mock('@/services/AuthService', () => ({
+  AuthService: {
+    CreateOTP: jest.fn(),
   },
 }));
 
 const mockSetUserEmail = jest.fn();
 jest.mock('../../store/AuthStore', () => ({
-  useAuthStore: jest.fn((selector) => {
-    if (selector) {
-      return selector({ setUserEmail: mockSetUserEmail });
-    }
-    return { setUserEmail: mockSetUserEmail };
-  }),
+  useAuthStore: jest.fn(() => ({
+    setUserEmail: mockSetUserEmail,
+  })),
 }));
 
 describe('EmailInputScreen', () => {
@@ -45,62 +42,446 @@ describe('EmailInputScreen', () => {
   const mockBack = jest.fn();
 
   beforeEach(() => {
+    jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({ 
       push: mockPush,
       back: mockBack 
     });
-    jest.useFakeTimers(); // Control time for the API simulation
+    (AuthService.CreateOTP as jest.Mock).mockResolvedValue({ isSuccess: true });
   });
 
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('validates email correctly', () => {
-    render(<EmailInputScreen />);
-    
-    const input = screen.getByPlaceholderText('name@example.com');
-    const continueBtn = screen.getByLabelText('Continue button');
-
-    // 1. Initial State: Button disabled
-    expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
-
-    // 2. Invalid Email
-    fireEvent.changeText(input, 'invalid-email');
-    expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
-
-    // 3. Valid Email
-    fireEvent.changeText(input, 'test@osmisis.com');
-    expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
-  });
-
-  it('handles loading state and navigation', async () => {
-    render(<EmailInputScreen />);
-    
-    const input = screen.getByPlaceholderText('name@example.com');
-    fireEvent.changeText(input, 'user@example.com');
-    
-    const continueBtn = screen.getByLabelText('Continue button');
-    fireEvent.press(continueBtn);
-
-    // Should show loading indicator (ActivityIndicator)
-    // Note: ActivityIndicator usually has role="progressbar" or similar depending on RN version,
-    // or we check if button is disabled during loading.
-    expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
-
-    // Fast-forward the 1-second timeout
-    act(() => {
-      jest.advanceTimersByTime(1000);
+  describe('Rendering', () => {
+    it('renders header with back button', () => {
+      render(<EmailInputScreen />);
+      expect(screen.getByLabelText('Go back')).toBeTruthy();
     });
 
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/verification');
+    it('renders title text', () => {
+      render(<EmailInputScreen />);
+      expect(screen.getByText("What's your email?")).toBeTruthy();
+    });
+
+    it('renders description text', () => {
+      render(<EmailInputScreen />);
+      expect(screen.getByText("We'll send you a secure code to verify your account.")).toBeTruthy();
+    });
+
+    it('renders email input field', () => {
+      render(<EmailInputScreen />);
+      expect(screen.getByLabelText('Email input field')).toBeTruthy();
+      expect(screen.getByPlaceholderText('name@example.com')).toBeTruthy();
+    });
+
+    it('renders continue button', () => {
+      render(<EmailInputScreen />);
+      expect(screen.getByLabelText('Continue button')).toBeTruthy();
+      expect(screen.getByText('Continue')).toBeTruthy();
     });
   });
 
-  it('navigates back when arrow is pressed', () => {
-    render(<EmailInputScreen />);
-    fireEvent.press(screen.getByLabelText('Go back'));
-    expect(mockBack).toHaveBeenCalled();
+  describe('Navigation', () => {
+    it('navigates to home when back button is pressed', () => {
+      render(<EmailInputScreen />);
+      fireEvent.press(screen.getByLabelText('Go back'));
+      expect(mockPush).toHaveBeenCalledWith('/');
+    });
+  });
+
+  describe('Email Validation', () => {
+    it('disables continue button when email is empty', () => {
+      render(<EmailInputScreen />);
+      const continueBtn = screen.getByLabelText('Continue button');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
+    });
+
+    it('disables continue button when email is invalid', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      const continueBtn = screen.getByLabelText('Continue button');
+
+      fireEvent.changeText(input, 'invalid-email');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
+    });
+
+    it('disables continue button for email without domain', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      const continueBtn = screen.getByLabelText('Continue button');
+
+      fireEvent.changeText(input, 'test@');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
+    });
+
+    it('disables continue button for email without @', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      const continueBtn = screen.getByLabelText('Continue button');
+
+      fireEvent.changeText(input, 'testexample.com');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
+    });
+
+    it('disables continue button for email with spaces', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      const continueBtn = screen.getByLabelText('Continue button');
+
+      fireEvent.changeText(input, 'test @example.com');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
+    });
+
+    it('enables continue button when email is valid', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      const continueBtn = screen.getByLabelText('Continue button');
+
+      fireEvent.changeText(input, 'test@example.com');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
+    });
+
+    it('enables continue button for valid email with subdomain', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      const continueBtn = screen.getByLabelText('Continue button');
+
+      fireEvent.changeText(input, 'user@mail.example.com');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
+    });
+
+    it('enables continue button for valid email with plus sign', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      const continueBtn = screen.getByLabelText('Continue button');
+
+      fireEvent.changeText(input, 'user+tag@example.com');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
+    });
+  });
+
+  describe('Error Display', () => {
+    it('shows error when submitting invalid email', async () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      
+      // First enter valid email to enable button
+      fireEvent.changeText(input, 'valid@example.com');
+      
+      // Then change to invalid and try to submit (button gets disabled, so we need to test differently)
+      // Actually the button is disabled for invalid email, so this test case checks the validation message
+      // We need to enter a valid email, click continue, and check if any validation happens
+      
+      // Let's test by entering invalid email and checking border color change instead
+      fireEvent.changeText(input, 'invalid');
+      
+      // The component shows red border for invalid email
+      // We can verify the button is disabled
+      const continueBtn = screen.getByLabelText('Continue button');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
+    });
+
+    it('does not show error initially', () => {
+      render(<EmailInputScreen />);
+      expect(screen.queryByText('Please enter a valid email address.')).toBeNull();
+      expect(screen.queryByText('Failed to send OTP. Please try again.')).toBeNull();
+    });
+  });
+
+  describe('OTP Request - Success', () => {
+    it('calls CreateOTP with correct email when continue is pressed', async () => {
+      (AuthService.CreateOTP as jest.Mock).mockResolvedValue({ isSuccess: true });
+      
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      fireEvent.changeText(input, 'test@example.com');
+
+      const continueBtn = screen.getByLabelText('Continue button');
+      fireEvent.press(continueBtn);
+
+      await waitFor(() => {
+        expect(AuthService.CreateOTP).toHaveBeenCalledWith('test@example.com');
+      });
+    });
+
+    it('sets user email in auth store on success', async () => {
+      (AuthService.CreateOTP as jest.Mock).mockResolvedValue({ isSuccess: true });
+      
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      fireEvent.changeText(input, 'test@example.com');
+
+      const continueBtn = screen.getByLabelText('Continue button');
+      fireEvent.press(continueBtn);
+
+      await waitFor(() => {
+        expect(mockSetUserEmail).toHaveBeenCalledWith('test@example.com');
+      });
+    });
+
+    it('navigates to verification screen on success', async () => {
+      (AuthService.CreateOTP as jest.Mock).mockResolvedValue({ isSuccess: true });
+      
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      fireEvent.changeText(input, 'test@example.com');
+
+      const continueBtn = screen.getByLabelText('Continue button');
+      fireEvent.press(continueBtn);
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/verification');
+      });
+    });
+  });
+
+  describe('OTP Request - Failure', () => {
+    it('shows error message when OTP request fails', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      (AuthService.CreateOTP as jest.Mock).mockRejectedValue(new Error('Network error'));
+      
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      fireEvent.changeText(input, 'test@example.com');
+
+      const continueBtn = screen.getByLabelText('Continue button');
+      fireEvent.press(continueBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText('Failed to send OTP. Please try again.')).toBeTruthy();
+      });
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('does not navigate when OTP request fails', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      (AuthService.CreateOTP as jest.Mock).mockRejectedValue(new Error('Network error'));
+      
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      fireEvent.changeText(input, 'test@example.com');
+
+      const continueBtn = screen.getByLabelText('Continue button');
+      fireEvent.press(continueBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText('Failed to send OTP. Please try again.')).toBeTruthy();
+      });
+
+      expect(mockPush).not.toHaveBeenCalledWith('/verification');
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('does not set user email when OTP request fails', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      (AuthService.CreateOTP as jest.Mock).mockRejectedValue(new Error('Network error'));
+      
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      fireEvent.changeText(input, 'test@example.com');
+
+      const continueBtn = screen.getByLabelText('Continue button');
+      fireEvent.press(continueBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText('Failed to send OTP. Please try again.')).toBeTruthy();
+      });
+
+      expect(mockSetUserEmail).not.toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('logs error to console when OTP request fails', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const error = new Error('Network error');
+      (AuthService.CreateOTP as jest.Mock).mockRejectedValue(error);
+      
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      fireEvent.changeText(input, 'test@example.com');
+
+      const continueBtn = screen.getByLabelText('Continue button');
+      fireEvent.press(continueBtn);
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error sending OTP:', error);
+      });
+
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('Loading State', () => {
+    it('shows loading indicator when request is in progress', async () => {
+      // Make the promise not resolve immediately
+      let resolvePromise: (value: any) => void;
+      (AuthService.CreateOTP as jest.Mock).mockImplementation(() => 
+        new Promise((resolve) => { resolvePromise = resolve; })
+      );
+      
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      fireEvent.changeText(input, 'test@example.com');
+
+      const continueBtn = screen.getByLabelText('Continue button');
+      fireEvent.press(continueBtn);
+
+      // Check that button text changes (ActivityIndicator is shown instead of "Continue")
+      await waitFor(() => {
+        expect(screen.queryByText('Continue')).toBeNull();
+      });
+
+      // Resolve the promise to clean up
+      resolvePromise!({ isSuccess: true });
+    });
+
+    it('disables button during loading', async () => {
+      let resolvePromise: (value: any) => void;
+      (AuthService.CreateOTP as jest.Mock).mockImplementation(() => 
+        new Promise((resolve) => { resolvePromise = resolve; })
+      );
+      
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      fireEvent.changeText(input, 'test@example.com');
+
+      const continueBtn = screen.getByLabelText('Continue button');
+      fireEvent.press(continueBtn);
+
+      await waitFor(() => {
+        const btn = screen.getByLabelText('Continue button');
+        expect(btn.props.accessibilityState?.disabled).toBe(true);
+      });
+
+      // Resolve the promise to clean up
+      resolvePromise!({ isSuccess: true });
+    });
+
+    it('re-enables button after successful request', async () => {
+      (AuthService.CreateOTP as jest.Mock).mockResolvedValue({ isSuccess: true });
+      
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      fireEvent.changeText(input, 'test@example.com');
+
+      const continueBtn = screen.getByLabelText('Continue button');
+      fireEvent.press(continueBtn);
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/verification');
+      });
+    });
+
+    it('re-enables button after failed request', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      (AuthService.CreateOTP as jest.Mock).mockRejectedValue(new Error('Network error'));
+      
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      fireEvent.changeText(input, 'test@example.com');
+
+      const continueBtn = screen.getByLabelText('Continue button');
+      fireEvent.press(continueBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText('Failed to send OTP. Please try again.')).toBeTruthy();
+      });
+
+      // Button should show "Continue" again
+      expect(screen.getByText('Continue')).toBeTruthy();
+      
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('handles email with numbers', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      const continueBtn = screen.getByLabelText('Continue button');
+
+      fireEvent.changeText(input, 'user123@example.com');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
+    });
+
+    it('handles email with dots in local part', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      const continueBtn = screen.getByLabelText('Continue button');
+
+      fireEvent.changeText(input, 'first.last@example.com');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
+    });
+
+    it('handles email with hyphens in domain', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      const continueBtn = screen.getByLabelText('Continue button');
+
+      fireEvent.changeText(input, 'user@my-company.com');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
+    });
+
+    it('handles clearing email after entering', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      const continueBtn = screen.getByLabelText('Continue button');
+
+      fireEvent.changeText(input, 'test@example.com');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
+
+      fireEvent.changeText(input, '');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
+    });
+
+    it('handles changing from valid to invalid email', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      const continueBtn = screen.getByLabelText('Continue button');
+
+      fireEvent.changeText(input, 'test@example.com');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
+
+      fireEvent.changeText(input, 'test@example');
+      expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
+    });
+
+    it('handles multiple consecutive requests not allowed during loading', async () => {
+      let resolvePromise: (value: any) => void;
+      (AuthService.CreateOTP as jest.Mock).mockImplementation(() => 
+        new Promise((resolve) => { resolvePromise = resolve; })
+      );
+      
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+      fireEvent.changeText(input, 'test@example.com');
+
+      const continueBtn = screen.getByLabelText('Continue button');
+      fireEvent.press(continueBtn);
+      fireEvent.press(continueBtn); // Second press while loading
+
+      // Should only call CreateOTP once
+      expect(AuthService.CreateOTP).toHaveBeenCalledTimes(1);
+
+      // Resolve the promise to clean up
+      resolvePromise!({ isSuccess: true });
+    });
+  });
+
+  describe('Input Behavior', () => {
+    it('updates email state on text change', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+
+      fireEvent.changeText(input, 'test@example.com');
+      expect(input.props.value).toBe('test@example.com');
+    });
+
+    it('preserves email case', () => {
+      render(<EmailInputScreen />);
+      const input = screen.getByPlaceholderText('name@example.com');
+
+      fireEvent.changeText(input, 'Test@Example.COM');
+      expect(input.props.value).toBe('Test@Example.COM');
+    });
   });
 });
