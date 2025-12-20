@@ -81,7 +81,7 @@ public class OTPServiceImpl implements OTPService {
             log.error("Runtime Exception when processing OTP for {}: {}", email, e.getMessage());
             return ApiRes.error("An unexpected error occurred. Please try again later.");
         } finally {
-            log.info("OTP process completed for {}", email);
+            log.info("OTP process completed for {}", StringUtils.masked(email));
         }
 
         return ApiRes.ok("OTP sent successfully to " + email);
