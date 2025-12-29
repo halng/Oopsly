@@ -14,6 +14,12 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.viewmodel;
+package com.app.osmosis.api.service;
 
-public record CreateDeck() {}
+import com.app.osmosis.api.entity.User;
+
+public interface UserService {
+    String getCurrentUserId();
+
+    User getCurrentUser();
+}

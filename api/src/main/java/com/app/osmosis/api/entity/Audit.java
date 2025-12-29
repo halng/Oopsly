@@ -30,4 +30,6 @@ public abstract class Audit {
     @CreationTimestamp private Instant createdAt;
 
     @UpdateTimestamp private Instant updatedAt;
+
+    private Boolean deleted = false;
 }

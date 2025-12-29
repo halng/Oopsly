@@ -17,6 +17,7 @@
 package com.app.osmosis.api.entity;
 
 import jakarta.persistence.*;
+import java.util.List;
 import java.util.UUID;
 import lombok.*;
 import org.springframework.data.relational.core.mapping.Table;
@@ -43,6 +44,6 @@ public class User extends Audit {
 
     private String pictureUrl;
 
-    @Enumerated(EnumType.STRING)
-    private AuthProvider authProvider;
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<DeckEntity> decks;
 }

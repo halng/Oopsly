@@ -14,28 +14,17 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.entity;
+package com.app.osmosis.api.controller;
 
-import jakarta.persistence.*;
-import java.util.UUID;
-import lombok.*;
+import com.app.osmosis.api.service.DeckService;
+import com.app.osmosis.api.viewmodel.DeckReq;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Getter
-@Setter
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Table
-@Entity(name = "decks")
-public class DeckEntity extends Audit {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    private String name;
-    private String description;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+@RestController
+@RequestMapping("/decks")
+public class DeckController extends AbstractController<DeckReq> {
+    public DeckController(DeckService service) {
+        super(service);
+    }
 }

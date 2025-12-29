@@ -16,21 +16,56 @@
 
 package com.app.osmosis.api.service.impl;
 
+import com.app.osmosis.api.entity.DeckEntity;
+import com.app.osmosis.api.entity.User;
+import com.app.osmosis.api.repository.DeckRepository;
 import com.app.osmosis.api.service.DeckService;
-import com.app.osmosis.api.viewmodel.ApiRes;
+import com.app.osmosis.api.service.UserService;
+import com.app.osmosis.api.viewmodel.DeckReq;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class DeckServiceImpl implements DeckService {
 
-    public DeckServiceImpl() {}
+    private final DeckRepository deckRepository;
+    private final UserService userService;
 
     @Override
-    public ApiRes createDeck() {
-        log.info("Create deck");
+    public DeckEntity mapper(@NonNull DeckReq from, DeckEntity to) {
+        if (to == null) {
+            User currentUser = this.getCurrentUser();
+            return DeckEntity.builder()
+                    .name(from.name())
+                    .description(from.description())
+                    .user(currentUser)
+                    .build();
+        }
 
-        return ApiRes.ok("Deck created by ");
+        to.setName(from.name());
+        to.setDescription(from.description());
+        return to;
+    }
+
+    @Override
+    public DeckReq toViewModel(DeckEntity from) {
+        return new DeckReq(
+                from.getName(),
+                from.getDescription()
+        );
+    }
+
+    @Override
+    public DeckRepository getRepository() {
+        return deckRepository;
+    }
+
+    @Override
+    public User getCurrentUser() {
+        return userService.getCurrentUser();
     }
 }

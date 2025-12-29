@@ -14,28 +14,10 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.entity;
+package com.app.osmosis.api.viewmodel;
 
-import jakarta.persistence.*;
-import java.util.UUID;
-import lombok.*;
+import jakarta.validation.constraints.Size;
+import lombok.NonNull;
 
-@Getter
-@Setter
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Table
-@Entity(name = "decks")
-public class DeckEntity extends Audit {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    private String name;
-    private String description;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-}
+public record DeckReq(
+        @NonNull String name, @NonNull @Size(min = 50, max = 100) String description) {}

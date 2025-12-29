@@ -14,28 +14,18 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.entity;
+package com.app.osmosis.api.repository;
 
-import jakarta.persistence.*;
-import java.util.UUID;
-import lombok.*;
+import com.app.osmosis.api.entity.User;
+import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.NoRepositoryBean;
 
-@Getter
-@Setter
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Table
-@Entity(name = "decks")
-public class DeckEntity extends Audit {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+@NoRepositoryBean
+public interface BaseRepository<T, K> extends JpaRepository<T, K> {
+    Optional<T> findByIdAndUser(K k, User user);
 
-    private String name;
-    private String description;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    Page<T> findAllByUser(User user, Pageable pageable);
 }

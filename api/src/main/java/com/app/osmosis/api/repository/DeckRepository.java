@@ -16,4 +16,9 @@
 
 package com.app.osmosis.api.repository;
 
-public class DeckRepository {}
+import com.app.osmosis.api.entity.DeckEntity;
+import java.util.UUID;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface DeckRepository extends BaseRepository<DeckEntity, UUID> {}

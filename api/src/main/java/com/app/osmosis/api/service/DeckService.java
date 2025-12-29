@@ -16,8 +16,8 @@
 
 package com.app.osmosis.api.service;
 
-import com.app.osmosis.api.viewmodel.ApiRes;
+import com.app.osmosis.api.entity.DeckEntity;
+import com.app.osmosis.api.viewmodel.DeckReq;
+import java.util.UUID;
 
-public interface DeckService {
-    ApiRes createDeck();
-}
+public interface DeckService extends Service<DeckEntity, UUID, DeckReq> {}
