@@ -17,7 +17,7 @@
 import { useAuthStore } from '@/store';
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
-import RootLayout from './_layout';
+import RootLayout from '../../app/_layout';
 
 jest.mock('expo-router', () => {
   const React = require('react');

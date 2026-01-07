@@ -18,11 +18,15 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
+import { AuthService } from '@/services/AuthService';
+import { useAuthStore } from '@/store';
 
 export default function EmailInputScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const authState = useAuthStore();
+  const [error, setError] = useState<string | null>(null);
 
   // Basic email validation
   const isValidEmail = (email: string) => {
@@ -30,16 +34,26 @@ export default function EmailInputScreen() {
   };
 
   const handleContinue = useCallback(async () => {
-    if (!isValidEmail(email)) return;
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address.');
+      return;
+    };
     
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
+    AuthService.CreateOTP(email)
+      .then(() => {
+        console.log('OTP sent successfully');
+        authState.setUserEmail(email);
+        setIsLoading(false);  
+        router.push('/verification');
+      })
+      .catch((error) => {
+        setError('Failed to send OTP. Please try again.');
+        setIsLoading(false);
+        console.error('Error sending OTP:', error);
+      })
     
-    // Navigate to next screen
-    router.push('/verification'); // Assuming the next screen route
-  }, [email, router]);
+  }, [email, router, authState]);
 
   const isEmailValid = isValidEmail(email);
 
@@ -48,7 +62,7 @@ export default function EmailInputScreen() {
       {/* Header */}
       <View className="px-4 pt-12 pb-4">
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.push("/")}
           className="w-10 h-10 items-center justify-center"
           accessibilityLabel="Go back"
         >
@@ -82,6 +96,7 @@ export default function EmailInputScreen() {
             accessibilityLabel="Email input field"
             accessibilityHint="Enter your email address"
           />
+          {error && <Text className="text-red-500 mt-2">{error}</Text>}
         </View>
       </View>
 

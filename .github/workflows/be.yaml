@@ -4,13 +4,17 @@ on:
   push:
     branches:
       - main
+      - release/**
     paths:
       - 'api/**'
+      - '.github/workflows/be.yaml'
   pull_request:
     branches:
       - main
+      - release/**
     paths:
       - 'api/**'
+      - '.github/workflows/be.yaml'
 
 jobs:
   build:
