@@ -50,3 +50,17 @@ spring:
           starttls:
             enable: true
 
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: gpt-4o
+      audio:
+        transcription:
+          options:
+            model: whisper-1
+        speech:
+          options:
+            model: tts-1
+

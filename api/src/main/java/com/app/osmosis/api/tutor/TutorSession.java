@@ -14,10 +14,18 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.repository;
+package com.app.osmosis.api.tutor;
 
-import com.app.osmosis.api.entity.DeckEntity;
+import java.time.Instant;
 import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.Builder;
+import lombok.Data;
 
-public interface DeckRepository extends JpaRepository<DeckEntity, UUID> {}
+@Data
+@Builder
+public class TutorSession {
+    private UUID sessionId;
+    private UUID deckId;
+    private UUID activeCardId;
+    private Instant lastInteraction;
+}

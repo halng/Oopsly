@@ -14,10 +14,14 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.repository;
+package com.app.osmosis.api.service;
 
-import com.app.osmosis.api.entity.DeckEntity;
+import com.app.osmosis.api.entity.CardEntity;
+import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface DeckRepository extends JpaRepository<DeckEntity, UUID> {}
+public interface SpacedRepetitionService {
+    Optional<CardEntity> findNextDueCard(UUID deckId);
+
+    CardEntity recordReview(UUID cardId, boolean correct);
+}

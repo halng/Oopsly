@@ -16,8 +16,12 @@
 
 package com.app.osmosis.api.repository;
 
-import com.app.osmosis.api.entity.DeckEntity;
+import com.app.osmosis.api.entity.CardEntity;
+import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface DeckRepository extends JpaRepository<DeckEntity, UUID> {}
+public interface CardRepository extends JpaRepository<CardEntity, UUID> {
+    Optional<CardEntity> findTopByDeck_IdAndDueAtLessThanEqualOrderByDueAtAsc(UUID deckId, Instant now);
+}

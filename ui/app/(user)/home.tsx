@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { useRouter } from "expo-router";
 import {
   Flame,
@@ -10,9 +18,12 @@ import {
   Calendar,
   StickyNote,
   CheckSquare,
-  User,
   PlusCircle,
+  Mic,
+  Headphones,
 } from "lucide-react-native";
+import { API_BASE_URL, DEMO_DECK_ID } from "@/constants/api";
+import { useTutorSessionStore } from "@/store/TutorSessionStore";
 
 // Dummy data for shelves and subjects
 const dummyData = [
@@ -61,6 +72,9 @@ const dummyData = [
 
 const OsmosisApp = () => {
   const router = useRouter();
+  const tutorSession = useTutorSessionStore();
+  const [isSending, setIsSending] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   // Render subject cards horizontally
   const renderSubjectCards = (subjects) => {
@@ -103,6 +117,16 @@ const OsmosisApp = () => {
                   </Text>
                 </View>
               </View>
+
+              <TouchableOpacity
+                className="mt-3 bg-indigo-50 rounded-lg py-2 flex-row items-center justify-center"
+                onPress={() => startAudioDrill(subject.id)}
+              >
+                <Headphones size={16} color="#4F46E5" />
+                <Text className="text-indigo-600 text-sm font-medium ml-1">
+                  Audio Drill
+                </Text>
+              </TouchableOpacity>
             </TouchableOpacity>
           ))}
         </View>
@@ -168,6 +192,61 @@ const OsmosisApp = () => {
   //     </ScrollView>
   //   );
   // };
+
+  const handleMicPress = async () => {
+    if (!DEMO_DECK_ID) {
+      Alert.alert(
+        "Deck not set",
+        "Set EXPO_PUBLIC_DEMO_DECK_ID to a real deck UUID to start the tutor."
+      );
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const formData = new FormData();
+      formData.append("deckId", DEMO_DECK_ID);
+      if (sessionId) {
+        formData.append("sessionId", sessionId);
+      }
+      formData.append("text", "Let's practice the next card.");
+
+      const response = await fetch(`${API_BASE_URL}/tutor/voice`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
+        body: formData,
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.message || "Tutor request failed");
+      }
+
+      const newSessionId = payload?.data?.sessionId;
+      if (newSessionId) {
+        setSessionId(newSessionId);
+      }
+
+      Alert.alert(
+        "Tutor",
+        payload?.data?.tutorReply || payload?.message || "Tutor responded."
+      );
+    } catch (error) {
+      Alert.alert(
+        "Tutor error",
+        error instanceof Error ? error.message : "Unable to reach tutor"
+      );
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const startAudioDrill = (deckId: string) => {
+    tutorSession.startSession(deckId);
+    router.push("/tutor-session");
+  };
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -266,6 +345,20 @@ const OsmosisApp = () => {
 
         <View className="h-24" />
       </ScrollView>
+
+      <TouchableOpacity
+        accessibilityLabel="Start voice tutor"
+        className="absolute bottom-10 right-6 w-14 h-14 rounded-full bg-indigo-600 items-center justify-center"
+        style={{ shadowColor: "#111827", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 12 }}
+        onPress={handleMicPress}
+        disabled={isSending}
+      >
+        {isSending ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Mic color="#fff" size={26} />
+        )}
+      </TouchableOpacity>
     </View>
   );
 };

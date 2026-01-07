@@ -14,10 +14,17 @@
  *    limitations under the License.
  */
 
-package com.app.osmosis.api.repository;
+package com.app.osmosis.api.viewmodel;
 
-import com.app.osmosis.api.entity.DeckEntity;
+import java.time.Instant;
 import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface DeckRepository extends JpaRepository<DeckEntity, UUID> {}
+public record TutorTurnResponse(
+        UUID sessionId,
+        UUID deckId,
+        UUID cardId,
+        String cardQuestion,
+        String userTranscript,
+        String tutorReply,
+        String tutorReplyAudioBase64,
+        Instant nextDueAt) {}
