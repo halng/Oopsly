@@ -33,6 +33,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Random;
+
 @ExtendWith(MockitoExtension.class)
 class SecurityConfigTest {
 
@@ -61,7 +65,7 @@ class SecurityConfigTest {
     @Test
     void givenPasswordEncoder_whenEncoding_thenUsesStrength10() {
         PasswordEncoder encoder = securityConfig.passwordEncoder();
-        String rawPassword = "testPassword123";
+        String rawPassword = generateDummyString();
 
         String encoded = encoder.encode(rawPassword);
 
@@ -102,7 +106,7 @@ class SecurityConfigTest {
     @Test
     void givenPasswordEncoder_whenEncodingMultipleTimes_thenProducesDifferentHashes() {
         PasswordEncoder encoder = securityConfig.passwordEncoder();
-        String password = "samePassword";
+        String password = generateDummyString();
 
         String hash1 = encoder.encode(password);
         String hash2 = encoder.encode(password);
@@ -115,11 +119,17 @@ class SecurityConfigTest {
     @Test
     void givenPasswordEncoder_whenMatchingIncorrectPassword_thenReturnsFalse() {
         PasswordEncoder encoder = securityConfig.passwordEncoder();
-        String correctPassword = "correctPassword";
-        String wrongPassword = "wrongPassword";
+        String correctPassword = generateDummyString();
+        String wrongPassword = generateDummyString();
 
         String encoded = encoder.encode(correctPassword);
 
         assertFalse(encoder.matches(wrongPassword, encoded));
+    }
+
+    String generateDummyString() {
+        byte[] array = new byte[7]; // length is bounded by 7
+        new Random().nextBytes(array);
+        return new String(array, StandardCharsets.UTF_8);
     }
 }
