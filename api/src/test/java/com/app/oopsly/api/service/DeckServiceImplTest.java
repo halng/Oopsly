@@ -17,85 +17,198 @@
 package com.app.oopsly.api.service;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
+import com.app.oopsly.api.entity.DeckEntity;
+import com.app.oopsly.api.entity.User;
+import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.repository.DeckRepository;
 import com.app.oopsly.api.service.impl.DeckServiceImpl;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.DeckReq;
-import java.util.List;
-import org.junit.jupiter.api.AfterEach;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class DeckServiceImplTest {
 
-    private DeckRepository deckRepository;
-    private UserService userService;
-    private DeckServiceImpl deckService;
-    private Logger logger;
-    private ListAppender<ILoggingEvent> listAppender;
+    @Mock private DeckRepository deckRepository;
+
+    @Mock private UserService userService;
+
+    @InjectMocks private DeckServiceImpl deckService;
+
     private DeckReq deckReq;
+    private User currentUser;
+    private UUID deckId;
 
     @BeforeEach
     void setUp() {
-        deckReq = new DeckReq("Sample Deck", "A deck for testing purposes");
-        deckRepository = mock(DeckRepository.class);
-        userService = mock(UserService.class);
-        deckService = new DeckServiceImpl(deckRepository, userService);
-
-        logger = (Logger) LoggerFactory.getLogger(DeckServiceImpl.class);
-        listAppender = new ListAppender<>();
-        listAppender.start();
-        logger.addAppender(listAppender);
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (listAppender != null) {
-            logger.detachAppender(listAppender);
-            listAppender.stop();
-        }
+        deckReq =
+                new DeckReq(
+                        "Sample Deck",
+                        "A deck for testing purposes with sufficient description length to meet"
+                                + " validation");
+        currentUser = new User();
+        currentUser.setEmail("test@example.com");
+        deckId = UUID.randomUUID();
     }
 
     @Test
-    void createDeck_returnsApiResWithExpectedMessage_andLogsInfo() {
-        ApiRes res = deckService.create(deckReq);
+    void toEntity_withNullExisting_createsNewEntity() {
+        when(userService.getCurrentUser()).thenReturn(currentUser);
 
-        assertNotNull(res, "Expected non-null ApiRes");
+        DeckEntity result = deckService.toEntity(deckReq, null);
 
-        List<ILoggingEvent> logs = listAppender.list;
-        assertFalse(logs.isEmpty(), "Expected at least one log entry");
-        boolean found =
-                logs.stream()
-                        .anyMatch(
-                                e ->
-                                        e.getLevel() == Level.INFO
-                                                && e.getFormattedMessage().contains("Create deck"));
-        assertTrue(found, "Expected an INFO log containing 'Create deck'");
+        assertNotNull(result);
+        assertEquals(deckReq.name(), result.getName());
+        assertEquals(deckReq.description(), result.getDescription());
+        assertEquals(currentUser, result.getUser());
     }
 
     @Test
-    void createDeck_calledMultipleTimes_logsEachInvocation() {
-        deckService.create(deckReq);
-        deckService.create(deckReq);
+    void toEntity_withExistingEntity_updatesEntity() {
+        DeckEntity existing = new DeckEntity();
+        existing.setName("Old Name");
+        existing.setDescription("Old Description with sufficient length for validation");
+        existing.setUser(currentUser);
 
-        List<ILoggingEvent> logs = listAppender.list;
-        long createDeckCount =
-                logs.stream()
-                        .filter(
-                                e ->
-                                        e.getLevel() == Level.INFO
-                                                && e.getFormattedMessage().contains("Create deck"))
-                        .count();
-        assertTrue(
-                createDeckCount >= 2,
-                "Expected at least two 'Create deck' INFO log entries after two invocations");
+        DeckEntity result = deckService.toEntity(deckReq, existing);
+
+        assertSame(existing, result);
+        assertEquals(deckReq.name(), result.getName());
+        assertEquals(deckReq.description(), result.getDescription());
+    }
+
+    @Test
+    void toViewModel_convertsEntityToViewModel() {
+        DeckEntity entity = new DeckEntity();
+        entity.setName("Test Deck");
+        entity.setDescription("Test Description with sufficient length for validation");
+
+        DeckReq result = deckService.toViewModel(entity);
+
+        assertNotNull(result);
+        assertEquals(entity.getName(), result.name());
+        assertEquals(entity.getDescription(), result.description());
+    }
+
+    @Test
+    void getRepository_returnsDeckRepository() {
+        assertSame(deckRepository, deckService.getRepository());
+    }
+
+    @Test
+    void getCurrentUser_delegatesToUserService() {
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+
+        User result = deckService.getCurrentUser();
+
+        assertSame(currentUser, result);
+        verify(userService, times(1)).getCurrentUser();
+    }
+
+    @Test
+    void create_savesNewDeck() {
+        DeckEntity savedDeck = new DeckEntity();
+        savedDeck.setId(deckId);
+        savedDeck.setName(deckReq.name());
+        savedDeck.setDescription(deckReq.description());
+        savedDeck.setUser(currentUser);
+
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(deckRepository.save(any(DeckEntity.class))).thenReturn(savedDeck);
+
+        ApiRes result = deckService.create(deckReq);
+
+        assertNotNull(result);
+        verify(deckRepository, times(1)).save(any(DeckEntity.class));
+    }
+
+    @Test
+    void update_updatesExistingDeck() {
+        DeckEntity existingDeck = new DeckEntity();
+        existingDeck.setId(deckId);
+        existingDeck.setName("Old Name");
+        existingDeck.setDescription("Old Description with sufficient length");
+        existingDeck.setUser(currentUser);
+
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(deckRepository.findByIdAndUser(deckId, currentUser))
+                .thenReturn(Optional.of(existingDeck));
+        when(deckRepository.save(any(DeckEntity.class))).thenReturn(existingDeck);
+
+        ApiRes result = deckService.update(deckReq, deckId);
+
+        assertNotNull(result);
+        verify(deckRepository, times(1)).findByIdAndUser(deckId, currentUser);
+        verify(deckRepository, times(1)).save(any(DeckEntity.class));
+    }
+
+    @Test
+    void update_throwsNotFoundException_whenDeckNotFound() {
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> deckService.update(deckReq, deckId));
+        verify(deckRepository, never()).save(any(DeckEntity.class));
+    }
+
+    @Test
+    void delete_softDeletesDeck() {
+        DeckEntity existingDeck = new DeckEntity();
+        existingDeck.setId(deckId);
+        existingDeck.setDeleted(false);
+        existingDeck.setUser(currentUser);
+
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(deckRepository.findByIdAndUser(deckId, currentUser))
+                .thenReturn(Optional.of(existingDeck));
+        when(deckRepository.save(any(DeckEntity.class))).thenReturn(existingDeck);
+
+        ApiRes result = deckService.delete(deckId);
+
+        assertNotNull(result);
+        assertTrue(existingDeck.getDeleted());
+        verify(deckRepository, times(1)).save(existingDeck);
+    }
+
+    @Test
+    void delete_throwsNotFoundException_whenDeckNotFound() {
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> deckService.delete(deckId));
+    }
+
+    @Test
+    void getById_returnsDeck() {
+        DeckEntity existingDeck = new DeckEntity();
+        existingDeck.setId(deckId);
+        existingDeck.setUser(currentUser);
+
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(deckRepository.findByIdAndUser(deckId, currentUser))
+                .thenReturn(Optional.of(existingDeck));
+
+        ApiRes result = deckService.getById(deckId);
+
+        assertNotNull(result);
+        verify(deckRepository, times(1)).findByIdAndUser(deckId, currentUser);
+    }
+
+    @Test
+    void getById_throwsNotFoundException_whenDeckNotFound() {
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> deckService.getById(deckId));
     }
 }

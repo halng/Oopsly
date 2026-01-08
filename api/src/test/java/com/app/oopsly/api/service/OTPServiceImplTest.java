@@ -81,8 +81,7 @@ class OTPServiceImplTest {
         // act
         var res = otpService.sendOTP(email);
 
-        // assert - interaction checks
-        verify(emailSender, times(1)).sendEmail(eq(email), anyString());
+        // assert - interaction checks (email is sent asynchronously, so we check redis only)
         verify(valueOps, times(1))
                 .set(
                         eq(Constant.OTP_REDIS_KEY + userKey),
@@ -99,49 +98,76 @@ class OTPServiceImplTest {
     }
 
     @Test
-    void sendOTP_messagingException_returnsError_and_doesNotStore() throws Exception {
-        // arrange
+    void sendOTP_messagingException_stillStoresOtpInRedis() throws Exception {
+        // arrange - email sending is async, so exception won't affect OTP storage
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
         doThrow(new MessagingException("fail")).when(emailSender).sendEmail(eq(email), anyString());
 
         // act
         var res = otpService.sendOTP(email);
 
-        // assert
-        verify(emailSender, times(1)).sendEmail(eq(email), anyString());
-        verify(valueOps, never())
-                .set(eq(Constant.OTP_REDIS_KEY + userKey), anyString(), anyLong(), any());
-        verify(valueOps, never())
-                .set(eq(Constant.OTP_ATTEMPT_REDIS_KEY + userKey), anyString(), anyLong(), any());
+        // assert - OTP is stored in Redis even if email fails (async)
+        verify(valueOps, times(1))
+                .set(
+                        eq(Constant.OTP_REDIS_KEY + userKey),
+                        anyString(),
+                        eq(Long.valueOf(Constant.OTP_EXPIRATION_MINUTES)),
+                        eq(TimeUnit.MINUTES));
+        verify(valueOps, times(1))
+                .set(
+                        eq(Constant.OTP_ATTEMPT_REDIS_KEY + userKey),
+                        eq("0"),
+                        eq(Long.valueOf(Constant.OTP_EXPIRATION_MINUTES)),
+                        eq(TimeUnit.MINUTES));
         assertNotNull(res);
     }
 
     @Test
-    void sendOTP_ioException_returnsError_and_doesNotStore() throws Exception {
-        // arrange
+    void sendOTP_ioException_stillStoresOtpInRedis() throws Exception {
+        // arrange - email sending is async, so exception won't affect OTP storage
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
         doThrow(new IOException("io")).when(emailSender).sendEmail(eq(email), anyString());
 
         // act
         var res = otpService.sendOTP(email);
 
-        // assert
-        verify(emailSender, times(1)).sendEmail(eq(email), anyString());
-        verify(valueOps, never())
-                .set(eq(Constant.OTP_REDIS_KEY + userKey), anyString(), anyLong(), any());
+        // assert - OTP is stored in Redis even if email fails (async)
+        verify(valueOps, times(1))
+                .set(
+                        eq(Constant.OTP_REDIS_KEY + userKey),
+                        anyString(),
+                        eq(Long.valueOf(Constant.OTP_EXPIRATION_MINUTES)),
+                        eq(TimeUnit.MINUTES));
+        verify(valueOps, times(1))
+                .set(
+                        eq(Constant.OTP_ATTEMPT_REDIS_KEY + userKey),
+                        eq("0"),
+                        eq(Long.valueOf(Constant.OTP_EXPIRATION_MINUTES)),
+                        eq(TimeUnit.MINUTES));
         assertNotNull(res);
     }
 
     @Test
-    void sendOTP_runtimeException_returnsError_and_doesNotStore() throws Exception {
-        // arrange
-        doThrow(new RuntimeException("boom")).when(emailSender).sendEmail(eq(email), anyString());
+    void sendOTP_runtimeException_stillStoresOtpInRedis() throws Exception {
+        // arrange - email sending is async, so exception won't affect OTP storage
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
 
         // act
         var res = otpService.sendOTP(email);
 
-        // assert
-        verify(emailSender, times(1)).sendEmail(eq(email), anyString());
-        verify(valueOps, never())
-                .set(eq(Constant.OTP_REDIS_KEY + userKey), anyString(), anyLong(), any());
+        // assert - OTP is stored in Redis even if email fails (async)
+        verify(valueOps, times(1))
+                .set(
+                        eq(Constant.OTP_REDIS_KEY + userKey),
+                        anyString(),
+                        eq(Long.valueOf(Constant.OTP_EXPIRATION_MINUTES)),
+                        eq(TimeUnit.MINUTES));
+        verify(valueOps, times(1))
+                .set(
+                        eq(Constant.OTP_ATTEMPT_REDIS_KEY + userKey),
+                        eq("0"),
+                        eq(Long.valueOf(Constant.OTP_EXPIRATION_MINUTES)),
+                        eq(TimeUnit.MINUTES));
         assertNotNull(res);
     }
 
