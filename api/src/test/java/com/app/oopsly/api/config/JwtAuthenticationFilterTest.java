@@ -150,4 +150,82 @@ class JwtAuthenticationFilterTest {
         assertNull(SecurityContextHolder.getContext().getAuthentication());
         verify(filterChain).doFilter(request, response);
     }
+
+    @Test
+    @DisplayName("Should handle empty Bearer token gracefully")
+    void doFilterInternal_EmptyBearerToken() throws ServletException, IOException {
+        // Arrange
+        when(request.getHeader("Authorization")).thenReturn("Bearer ");
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        verify(filterChain).doFilter(request, response);
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    @DisplayName("Should handle Bearer with extra spaces")
+    void doFilterInternal_BearerWithSpaces() throws ServletException, IOException {
+        // Arrange
+        when(request.getHeader("Authorization")).thenReturn("Bearer  token"); // extra space
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert - Should still process even with space issues
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("Should handle null role from JWT")
+    void doFilterInternal_NullRole() throws ServletException, IOException {
+        // Arrange
+        String token = "valid.token";
+        String userId = "user123";
+
+        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(jwtUtils.extractUserId(token)).thenReturn(userId);
+        when(jwtUtils.extractUserRole(token)).thenReturn(null);
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth);
+        assertEquals(userId, auth.getPrincipal());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("Should handle filterChain exception")
+    void doFilterInternal_FilterChainException() throws ServletException, IOException {
+        // Arrange
+        when(request.getHeader("Authorization")).thenReturn(null);
+        doThrow(new ServletException("Chain error"))
+                .when(filterChain)
+                .doFilter(request, response);
+
+        // Act & Assert
+        assertThrows(
+                ServletException.class,
+                () -> jwtAuthenticationFilter.doFilterInternal(request, response, filterChain));
+    }
+
+    @Test
+    @DisplayName("Should handle different Bearer case variations")
+    void doFilterInternal_BearerCaseInsensitive() throws ServletException, IOException {
+        // Arrange - lowercase bearer
+        when(request.getHeader("Authorization")).thenReturn("bearer token");
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert - Should not process lowercase bearer
+        verify(filterChain).doFilter(request, response);
+        verifyNoInteractions(jwtUtils);
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
 }
