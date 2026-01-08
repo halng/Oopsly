@@ -6,9 +6,9 @@ plugins {
 	id 'com.diffplug.spotless' version '8.1.0'
 	id 'jacoco'
 }
-group = 'com.app.osmosis'
+group = 'com.app.oopsly'
 version = '0.0.1-SNAPSHOT'
-description = 'Backend server for Osmosis project'
+description = 'Backend server for Oopsly project'
 
 java {
 	toolchain {
