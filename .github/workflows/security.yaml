@@ -106,7 +106,7 @@ jobs:
       - name: Check Snyk version
         run: snyk --version
       - name: Authenticate Snyk
-        run: snyk auth 21a2c028-1b98-43fc-a1bc-a5280425a3c5 $SNYK_TOKEN
+        run: snyk auth $SNYK_TOKEN
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
