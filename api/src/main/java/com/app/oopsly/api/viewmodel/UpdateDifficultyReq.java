@@ -19,4 +19,4 @@ package com.app.oopsly.api.viewmodel;
 import com.app.oopsly.api.entity.DifficultyLevel;
 import jakarta.validation.constraints.NotNull;
 
-public record CardUpdateReq(@NotNull DifficultyLevel difficultyLevel) {}
+public record UpdateDifficultyReq(@NotNull DifficultyLevel difficultyLevel) {}

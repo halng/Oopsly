@@ -53,6 +53,7 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public ApiRes create(UUID deckId, CardReq request) {
+        log.info("Creating {} cards for deck: {}", request.cards().size(), deckId);
         DeckEntity deck = getDeckForCurrentUser(deckId);
 
         List<CardEntity> cards =
@@ -67,6 +68,7 @@ public class CardServiceImpl implements CardService {
                         .collect(Collectors.toList());
 
         List<CardEntity> savedCards = cardRepository.saveAll(cards);
+        log.info("Successfully created {} cards for deck: {}", savedCards.size(), deckId);
         List<CardRes> responseCards =
                 savedCards.stream().map(this::toCardRes).collect(Collectors.toList());
 
@@ -74,7 +76,12 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public ApiRes update(UUID deckId, UUID cardId, DifficultyLevel difficultyLevel) {
+    public ApiRes updateDifficulty(UUID deckId, UUID cardId, DifficultyLevel difficultyLevel) {
+        log.info(
+                "Updating difficulty for card: {} in deck: {} to {}",
+                cardId,
+                deckId,
+                difficultyLevel);
         DeckEntity deck = getDeckForCurrentUser(deckId);
         CardEntity existingCard =
                 cardRepository
@@ -83,14 +90,18 @@ public class CardServiceImpl implements CardService {
                                 () -> new NotFoundException("Card not found with id: " + cardId));
 
         existingCard.setDifficultyLevel(difficultyLevel);
-        existingCard.setNextPracticeTime(calculateNextPracticeTime(difficultyLevel));
+        Instant nextPracticeTime = calculateNextPracticeTime(difficultyLevel);
+        existingCard.setNextPracticeTime(nextPracticeTime);
+        log.info("Card: {} next practice time set to: {}", cardId, nextPracticeTime);
 
         cardRepository.save(existingCard);
+        log.info("Successfully updated difficulty for card: {}", cardId);
         return ApiRes.success("Updated successfully", toCardRes(existingCard));
     }
 
     @Override
     public ApiRes delete(UUID deckId, UUID cardId) {
+        log.info("Deleting card: {} from deck: {}", cardId, deckId);
         DeckEntity deck = getDeckForCurrentUser(deckId);
         CardEntity existingCard =
                 cardRepository
@@ -99,22 +110,26 @@ public class CardServiceImpl implements CardService {
                                 () -> new NotFoundException("Card not found with id: " + cardId));
         existingCard.setDeleted(true);
         cardRepository.save(existingCard);
+        log.info("Successfully deleted card: {}", cardId);
         return ApiRes.success("Deleted successfully");
     }
 
     @Override
     public ApiRes getById(UUID deckId, UUID cardId) {
+        log.info("Getting card: {} from deck: {}", cardId, deckId);
         DeckEntity deck = getDeckForCurrentUser(deckId);
         CardEntity card =
                 cardRepository
                         .findByIdAndDeck(cardId, deck)
                         .orElseThrow(
                                 () -> new NotFoundException("Card not found with id: " + cardId));
+        log.info("Successfully retrieved card: {}", cardId);
         return ApiRes.success("Fetched successfully", toCardRes(card));
     }
 
     @Override
     public ApiRes getAll(UUID deckId, int page, int size) {
+        log.info("Getting all cards for deck: {} with page: {} and size: {}", deckId, page, size);
         DeckEntity deck = getDeckForCurrentUser(deckId);
         Pageable pageable = PageRequest.of(page, size);
         Page<CardEntity> pageData = cardRepository.findAllByDeck(deck, pageable);
@@ -127,18 +142,26 @@ public class CardServiceImpl implements CardService {
         response.put("totalItems", pageData.getTotalElements());
         response.put("totalPages", pageData.getTotalPages());
         response.put("hasNextPage", pageData.hasNext());
+        log.info(
+                "Successfully retrieved {} cards for deck: {} (total: {})",
+                cards.size(),
+                deckId,
+                pageData.getTotalElements());
         return ApiRes.success("Fetched successfully", response);
     }
 
     @Override
     public Instant calculateNextPracticeTime(DifficultyLevel difficultyLevel) {
         Instant now = Instant.now();
-        return switch (difficultyLevel) {
-            case AGAIN -> now.plus(1, ChronoUnit.MINUTES);
-            case HARD -> now.plus(10, ChronoUnit.MINUTES);
-            case GOOD -> now.plus(1, ChronoUnit.DAYS);
-            case EASY -> now.plus(4, ChronoUnit.DAYS);
-        };
+        Instant nextTime =
+                switch (difficultyLevel) {
+                    case AGAIN -> now.plus(1, ChronoUnit.MINUTES);
+                    case HARD -> now.plus(10, ChronoUnit.MINUTES);
+                    case GOOD -> now.plus(1, ChronoUnit.DAYS);
+                    case EASY -> now.plus(4, ChronoUnit.DAYS);
+                };
+        log.debug("Calculated next practice time for difficulty {}: {}", difficultyLevel, nextTime);
+        return nextTime;
     }
 
     private CardEntity toEntityFromItem(CardItemReq item) {
@@ -156,6 +179,7 @@ public class CardServiceImpl implements CardService {
 
     private DeckEntity getDeckForCurrentUser(UUID deckId) {
         User currentUser = userService.getCurrentUser();
+        log.debug("Getting deck: {} for user: {}", deckId, currentUser.getEmail());
         return deckRepository
                 .findByIdAndUser(deckId, currentUser)
                 .orElseThrow(() -> new NotFoundException("Deck not found with id: " + deckId));

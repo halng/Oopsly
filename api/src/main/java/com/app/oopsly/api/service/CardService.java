@@ -25,7 +25,7 @@ import java.util.UUID;
 public interface CardService {
     ApiRes create(UUID deckId, CardReq request);
 
-    ApiRes update(UUID deckId, UUID cardId, DifficultyLevel difficultyLevel);
+    ApiRes updateDifficulty(UUID deckId, UUID cardId, DifficultyLevel difficultyLevel);
 
     ApiRes delete(UUID deckId, UUID cardId);
 

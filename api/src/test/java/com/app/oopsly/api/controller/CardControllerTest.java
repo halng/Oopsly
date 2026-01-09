@@ -24,7 +24,7 @@ import com.app.oopsly.api.service.CardService;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CardItemReq;
 import com.app.oopsly.api.viewmodel.CardReq;
-import com.app.oopsly.api.viewmodel.CardUpdateReq;
+import com.app.oopsly.api.viewmodel.UpdateDifficultyReq;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +42,7 @@ class CardControllerTest {
     @InjectMocks private CardController cardController;
 
     private CardReq cardReq;
-    private CardUpdateReq cardUpdateReq;
+    private UpdateDifficultyReq updateDifficultyReq;
     private UUID deckId;
     private UUID cardId;
     private ApiRes expectedResponse;
@@ -51,7 +51,7 @@ class CardControllerTest {
     void setUp() {
         List<CardItemReq> cardItems = List.of(new CardItemReq("Test Topic", "Test Answer"));
         cardReq = new CardReq(cardItems);
-        cardUpdateReq = new CardUpdateReq(DifficultyLevel.GOOD);
+        updateDifficultyReq = new UpdateDifficultyReq(DifficultyLevel.GOOD);
         deckId = UUID.randomUUID();
         cardId = UUID.randomUUID();
         expectedResponse = ApiRes.success("Success");
@@ -68,13 +68,14 @@ class CardControllerTest {
     }
 
     @Test
-    void update_delegatesToCardService() {
-        when(cardService.update(deckId, cardId, DifficultyLevel.GOOD)).thenReturn(expectedResponse);
+    void updateDifficulty_delegatesToCardService() {
+        when(cardService.updateDifficulty(deckId, cardId, DifficultyLevel.GOOD))
+                .thenReturn(expectedResponse);
 
-        ApiRes result = cardController.update(deckId, cardId, cardUpdateReq);
+        ApiRes result = cardController.updateDifficulty(deckId, cardId, updateDifficultyReq);
 
         assertSame(expectedResponse, result);
-        verify(cardService, times(1)).update(deckId, cardId, DifficultyLevel.GOOD);
+        verify(cardService, times(1)).updateDifficulty(deckId, cardId, DifficultyLevel.GOOD);
     }
 
     @Test

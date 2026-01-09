@@ -119,7 +119,7 @@ class CardServiceImplTest {
     }
 
     @Test
-    void update_updatesDifficultyLevelAndNextPracticeTime() {
+    void updateDifficulty_updatesDifficultyLevelAndNextPracticeTime() {
         CardEntity existingCard = new CardEntity();
         existingCard.setId(cardId);
         existingCard.setTopic("Topic");
@@ -131,7 +131,7 @@ class CardServiceImplTest {
         when(cardRepository.findByIdAndDeck(cardId, deck)).thenReturn(Optional.of(existingCard));
         when(cardRepository.save(any(CardEntity.class))).thenReturn(existingCard);
 
-        ApiRes result = cardService.update(deckId, cardId, DifficultyLevel.GOOD);
+        ApiRes result = cardService.updateDifficulty(deckId, cardId, DifficultyLevel.GOOD);
 
         assertNotNull(result);
         assertEquals(DifficultyLevel.GOOD, existingCard.getDifficultyLevel());
@@ -142,26 +142,26 @@ class CardServiceImplTest {
     }
 
     @Test
-    void update_throwsNotFoundException_whenDeckNotFound() {
+    void updateDifficulty_throwsNotFoundException_whenDeckNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
-                () -> cardService.update(deckId, cardId, DifficultyLevel.EASY));
+                () -> cardService.updateDifficulty(deckId, cardId, DifficultyLevel.EASY));
         verify(cardRepository, never()).findByIdAndDeck(any(), any());
         verify(cardRepository, never()).save(any(CardEntity.class));
     }
 
     @Test
-    void update_throwsNotFoundException_whenCardNotFound() {
+    void updateDifficulty_throwsNotFoundException_whenCardNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
         when(cardRepository.findByIdAndDeck(cardId, deck)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
-                () -> cardService.update(deckId, cardId, DifficultyLevel.HARD));
+                () -> cardService.updateDifficulty(deckId, cardId, DifficultyLevel.HARD));
         verify(cardRepository, never()).save(any(CardEntity.class));
     }
 
@@ -311,7 +311,7 @@ class CardServiceImplTest {
     }
 
     @Test
-    void update_withAllDifficultyLevels_calculatesCorrectNextPracticeTime() {
+    void updateDifficulty_withAllDifficultyLevels_calculatesCorrectNextPracticeTime() {
         for (DifficultyLevel level : DifficultyLevel.values()) {
             CardEntity existingCard = new CardEntity();
             existingCard.setId(cardId);
@@ -325,7 +325,7 @@ class CardServiceImplTest {
                     .thenReturn(Optional.of(existingCard));
             when(cardRepository.save(any(CardEntity.class))).thenReturn(existingCard);
 
-            ApiRes result = cardService.update(deckId, cardId, level);
+            ApiRes result = cardService.updateDifficulty(deckId, cardId, level);
             assertNotNull(result);
             assertEquals(level, existingCard.getDifficultyLevel());
             assertNotNull(existingCard.getNextPracticeTime());
