@@ -38,6 +38,8 @@ public class CardEntity extends Audit {
 
     private Instant nextPracticeTime;
 
+    @Builder.Default private Integer numberOfPractice = 0;
+
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "deck_id", nullable = false)

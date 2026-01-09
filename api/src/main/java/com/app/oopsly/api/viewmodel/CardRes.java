@@ -25,4 +25,5 @@ public record CardRes(
         String topic,
         String answer,
         DifficultyLevel difficultyLevel,
-        Instant nextPracticeTime) {}
+        Instant nextPracticeTime,
+        Integer numberOfPractice) {}

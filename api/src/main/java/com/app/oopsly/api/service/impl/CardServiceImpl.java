@@ -92,7 +92,12 @@ public class CardServiceImpl implements CardService {
         existingCard.setDifficultyLevel(difficultyLevel);
         Instant nextPracticeTime = calculateNextPracticeTime(difficultyLevel);
         existingCard.setNextPracticeTime(nextPracticeTime);
-        log.info("Card: {} next practice time set to: {}", cardId, nextPracticeTime);
+        existingCard.setNumberOfPractice(existingCard.getNumberOfPractice() + 1);
+        log.info(
+                "Card: {} next practice time set to: {}, practice count: {}",
+                cardId,
+                nextPracticeTime,
+                existingCard.getNumberOfPractice());
 
         cardRepository.save(existingCard);
         log.info("Successfully updated difficulty for card: {}", cardId);
@@ -174,7 +179,8 @@ public class CardServiceImpl implements CardService {
                 entity.getTopic(),
                 entity.getAnswer(),
                 entity.getDifficultyLevel(),
-                entity.getNextPracticeTime());
+                entity.getNextPracticeTime(),
+                entity.getNumberOfPractice());
     }
 
     private DeckEntity getDeckForCurrentUser(UUID deckId) {

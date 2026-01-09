@@ -111,32 +111,30 @@ class CardControllerTest {
     }
 
     @Test
-    void getAll_throwsIllegalArgumentException_whenPageIsNegative() {
-        int page = -1;
-        int size = 10;
+    void getAll_withValidPageAndSize_delegatesToCardService() {
+        int page = 1;
+        int size = 20;
+        when(cardService.getAll(deckId, page, size)).thenReturn(expectedResponse);
 
-        assertThrows(
-                IllegalArgumentException.class, () -> cardController.getAll(deckId, page, size));
-        verify(cardService, never()).getAll(any(), anyInt(), anyInt());
+        ApiRes result = cardController.getAll(deckId, page, size);
+
+        assertSame(expectedResponse, result);
+        verify(cardService, times(1)).getAll(deckId, page, size);
     }
 
     @Test
-    void getAll_throwsIllegalArgumentException_whenSizeIsZero() {
-        int page = 0;
-        int size = 0;
+    void create_withMultipleCards_delegatesToCardService() {
+        List<CardItemReq> multipleCardItems =
+                List.of(
+                        new CardItemReq("Topic 1", "Answer 1"),
+                        new CardItemReq("Topic 2", "Answer 2"),
+                        new CardItemReq("Topic 3", "Answer 3"));
+        CardReq multipleCardsReq = new CardReq(multipleCardItems);
+        when(cardService.create(deckId, multipleCardsReq)).thenReturn(expectedResponse);
 
-        assertThrows(
-                IllegalArgumentException.class, () -> cardController.getAll(deckId, page, size));
-        verify(cardService, never()).getAll(any(), anyInt(), anyInt());
-    }
+        ApiRes result = cardController.create(deckId, multipleCardsReq);
 
-    @Test
-    void getAll_throwsIllegalArgumentException_whenSizeIsNegative() {
-        int page = 0;
-        int size = -1;
-
-        assertThrows(
-                IllegalArgumentException.class, () -> cardController.getAll(deckId, page, size));
-        verify(cardService, never()).getAll(any(), anyInt(), anyInt());
+        assertSame(expectedResponse, result);
+        verify(cardService, times(1)).create(deckId, multipleCardsReq);
     }
 }

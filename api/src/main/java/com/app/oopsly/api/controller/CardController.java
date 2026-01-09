@@ -21,15 +21,18 @@ import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CardReq;
 import com.app.oopsly.api.viewmodel.UpdateDifficultyReq;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
 @RequestMapping("/decks/{deckId}/cards")
 @RequiredArgsConstructor
+@Validated
 public class CardController {
 
     private final CardService cardService;
@@ -66,11 +69,11 @@ public class CardController {
     }
 
     @GetMapping("")
-    ApiRes getAll(@PathVariable UUID deckId, @RequestParam int page, @RequestParam int size) {
+    ApiRes getAll(
+            @PathVariable UUID deckId,
+            @RequestParam @Min(value = 0, message = "Page must be greater than or equal to 0") int page,
+            @RequestParam @Min(value = 1, message = "Size must be greater than 0") int size) {
         log.info("Getting all cards for deck: {} with page: {} and size: {}", deckId, page, size);
-        if (page < 0 || size <= 0) {
-            throw new IllegalArgumentException("Page and size must be greater than 0");
-        }
         return cardService.getAll(deckId, page, size);
     }
 }
