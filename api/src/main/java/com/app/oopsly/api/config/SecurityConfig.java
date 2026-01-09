@@ -37,8 +37,8 @@ public class SecurityConfig {
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, AppConfig appConfig) {
         this.jwtAuthFilter = jwtAuthFilter;
-		this.appConfig = appConfig;
-	}
+        this.appConfig = appConfig;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
