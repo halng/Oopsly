@@ -23,9 +23,9 @@ import com.app.oopsly.api.repository.DeckRepository;
 import com.app.oopsly.api.service.DeckService;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.DeckPageRes;
 import com.app.oopsly.api.viewmodel.DeckReq;
 import com.app.oopsly.api.viewmodel.DeckRes;
+import com.app.oopsly.api.viewmodel.PagingRes;
 import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
@@ -46,12 +46,14 @@ public class DeckServiceImpl implements DeckService {
 
     @Override
     public ApiRes create(DeckReq request) {
+        log.info("Creating deck for user {}", this.currentUser().getId());
         DeckEntity savedEntity = deckRepository.save(this.toEntity(request, null));
         return ApiRes.success("Created successfully", this.toViewModel(savedEntity));
     }
 
     @Override
     public ApiRes update(DeckReq request, UUID id) {
+        log.info("Updating deck {} for user {}", id, this.currentUser().getId());
         DeckEntity existingEntity =
                 deckRepository
                         .findByIdAndUser(id, this.currentUser())
@@ -65,6 +67,7 @@ public class DeckServiceImpl implements DeckService {
 
     @Override
     public ApiRes delete(UUID id) {
+        log.info("Deleting deck {} for user {}", id, this.currentUser().getId());
         DeckEntity existingEntity =
                 deckRepository
                         .findByIdAndUser(id, this.currentUser())
@@ -78,6 +81,7 @@ public class DeckServiceImpl implements DeckService {
 
     @Override
     public ApiRes getById(UUID id) {
+        log.info("Fetching deck {} for user {}", id, this.currentUser().getId());
         DeckEntity entity =
                 deckRepository
                         .findByIdAndUser(id, this.currentUser())
@@ -88,12 +92,17 @@ public class DeckServiceImpl implements DeckService {
 
     @Override
     public ApiRes getAll(int page, int size) {
+        log.info(
+                "Fetching decks page {} size {} for user {}",
+                page,
+                size,
+                this.currentUser().getId());
         Pageable pageable = PageRequest.of(page, size);
         Page<DeckEntity> pageData = deckRepository.findAllByUser(this.currentUser(), pageable);
         List<DeckRes> entities = pageData.getContent().stream().map(this::toViewModel).toList();
 
-        DeckPageRes response =
-                new DeckPageRes(
+        PagingRes<DeckRes> response =
+                new PagingRes<>(
                         entities,
                         pageable.getPageNumber(),
                         pageData.getTotalElements(),

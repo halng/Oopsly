@@ -20,6 +20,7 @@ import com.app.oopsly.api.service.DeckService;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.DeckReq;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -61,7 +62,7 @@ public class DeckController {
     }
 
     @GetMapping("")
-    ApiRes getAll(@RequestParam int page, @RequestParam int size) {
+    ApiRes getAll(@RequestParam @Min(1) int page, @RequestParam @Min(1) int size) {
         if (page <= 0 || size <= 0) {
             throw new IllegalArgumentException("Page and size must be greater than 0");
         }

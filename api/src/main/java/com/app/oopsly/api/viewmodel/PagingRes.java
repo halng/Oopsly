@@ -19,8 +19,8 @@ package com.app.oopsly.api.viewmodel;
 import java.util.List;
 import lombok.NonNull;
 
-public record DeckPageRes(
-        @NonNull List<DeckRes> entities,
+public record PagingRes<T>(
+        @NonNull List<T> entities,
         int currentPage,
         long totalItems,
         int totalPages,

@@ -26,7 +26,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "decks")
-@Entity(name = "DeckEntity")
+@Entity
 public class DeckEntity extends Audit {
 
     private String name;
