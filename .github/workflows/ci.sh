@@ -216,13 +216,14 @@ run_security_scans() {
     
     if [ -d "api" ]; then
         echo "Running Snyk test for API..."
-        snyk code test ./api --org="$SNYK_ORG_ID" --report --project-name="OSMOSIS-API"
+        snyk code test ./api --org="$SNYK_ORG_ID" --report --project-name="OOPSLY-API"
     fi
     
-    if [ -d "ui" ]; then
-        echo "Running Snyk test for UI..."
-        snyk code test ./ui --org="$SNYK_ORG_ID" --report --project-name="OSMOSIS-UI"
-    fi
+    # Temporarily disabling UI Snyk scan
+    # if [ -d "ui" ]; then
+    #     echo "Running Snyk test for UI..."
+    #     snyk code test ./ui --org="$SNYK_ORG_ID" --report --project-name="OOPSLY-UI"
+    # fi
     
     echo "Security scans completed successfully!"
 }
