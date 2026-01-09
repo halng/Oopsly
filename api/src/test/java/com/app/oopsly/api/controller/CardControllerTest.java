@@ -138,11 +138,4 @@ class CardControllerTest {
                 IllegalArgumentException.class, () -> cardController.getAll(deckId, page, size));
         verify(cardService, never()).getAll(any(), anyInt(), anyInt());
     }
-
-    @Test
-    void extendsAbstractController() {
-        assertTrue(
-                cardController instanceof AbstractController,
-                "CardController should extend AbstractController");
-    }
 }

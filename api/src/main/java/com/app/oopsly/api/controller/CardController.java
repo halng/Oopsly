@@ -16,25 +16,21 @@
 
 package com.app.oopsly.api.controller;
 
-import com.app.oopsly.api.entity.CardEntity;
 import com.app.oopsly.api.service.CardService;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CardReq;
 import com.app.oopsly.api.viewmodel.CardUpdateReq;
 import jakarta.validation.Valid;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/decks/{deckId}/cards")
-public class CardController extends AbstractController<CardEntity, CardReq> {
+@RequiredArgsConstructor
+public class CardController {
 
     private final CardService cardService;
-
-    public CardController(CardService cardService) {
-        super(cardService);
-        this.cardService = cardService;
-    }
 
     @PostMapping("")
     ApiRes create(@PathVariable UUID deckId, @Valid @RequestBody CardReq requestBody) {

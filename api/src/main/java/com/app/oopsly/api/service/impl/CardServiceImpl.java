@@ -21,7 +21,6 @@ import com.app.oopsly.api.entity.DeckEntity;
 import com.app.oopsly.api.entity.DifficultyLevel;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
-import com.app.oopsly.api.repository.BaseRepository;
 import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.DeckRepository;
 import com.app.oopsly.api.service.CardService;
@@ -36,7 +35,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -143,19 +141,6 @@ public class CardServiceImpl implements CardService {
         };
     }
 
-    @Override
-    public CardEntity toEntity(@NonNull CardReq from, CardEntity to) {
-        if (to == null) {
-            return CardEntity.builder().build();
-        }
-        return to;
-    }
-
-    @Override
-    public CardReq toViewModel(CardEntity from) {
-        return new CardReq(List.of(new CardItemReq(from.getTopic(), from.getAnswer())));
-    }
-
     private CardEntity toEntityFromItem(CardItemReq item) {
         return CardEntity.builder().topic(item.topic()).answer(item.answer()).build();
     }
@@ -167,16 +152,6 @@ public class CardServiceImpl implements CardService {
                 entity.getAnswer(),
                 entity.getDifficultyLevel(),
                 entity.getNextPracticeTime());
-    }
-
-    @Override
-    public BaseRepository<CardEntity, UUID> getRepository() {
-        return cardRepository;
-    }
-
-    @Override
-    public User getCurrentUser() {
-        return userService.getCurrentUser();
     }
 
     private DeckEntity getDeckForCurrentUser(UUID deckId) {

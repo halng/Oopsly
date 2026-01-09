@@ -16,14 +16,13 @@
 
 package com.app.oopsly.api.service;
 
-import com.app.oopsly.api.entity.CardEntity;
 import com.app.oopsly.api.entity.DifficultyLevel;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CardReq;
 import java.time.Instant;
 import java.util.UUID;
 
-public interface CardService extends Service<CardEntity, CardReq> {
+public interface CardService {
     ApiRes create(UUID deckId, CardReq request);
 
     ApiRes update(UUID deckId, UUID cardId, DifficultyLevel difficultyLevel);
