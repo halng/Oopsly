@@ -17,8 +17,20 @@
 package com.app.oopsly.api.repository;
 
 import com.app.oopsly.api.entity.DeckEntity;
+import com.app.oopsly.api.entity.User;
+import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface DeckRepository extends BaseRepository<DeckEntity, UUID> {}
+public interface DeckRepository extends JpaRepository<DeckEntity, UUID> {
+    @Query("SELECT e FROM decks e WHERE e.id = ?1 AND e.user = ?2 AND e.deleted = false")
+    Optional<DeckEntity> findByIdAndUser(UUID id, User user);
+
+    @Query("SELECT e FROM decks e WHERE e.user = ?1 AND e.deleted = false")
+    Page<DeckEntity> findAllByUser(User user, Pageable pageable);
+}

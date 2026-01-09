@@ -104,9 +104,20 @@ class DeckControllerTest {
     }
 
     @Test
-    void extendsAbstractController() {
-        assertTrue(
-                deckController instanceof AbstractController,
-                "DeckController should extend AbstractController");
+    void getAll_withInvalidPage_throwsException() {
+        int page = -1;
+        int size = 10;
+
+        assertThrows(IllegalArgumentException.class, () -> deckController.getAll(page, size));
+        verify(deckService, never()).getAll(anyInt(), anyInt());
+    }
+
+    @Test
+    void getAll_withInvalidSize_throwsException() {
+        int page = 0;
+        int size = 0;
+
+        assertThrows(IllegalArgumentException.class, () -> deckController.getAll(page, size));
+        verify(deckService, never()).getAll(anyInt(), anyInt());
     }
 }
