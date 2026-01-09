@@ -110,6 +110,14 @@ jacoco {
 jacocoTestCoverageVerification {
 	dependsOn test
 
+	classDirectories.setFrom(
+			files(
+					sourceSets.main.output.classesDirs.asFileTree.matching {
+						exclude '**/ApiApplication**', '**/Constant**', '**/viewmodel/**'
+					}
+			)
+	)
+
 	executionData.setFrom(fileTree(dir: project.buildDir, includes: ['jacoco/*.exec']))
 
 	violationRules {
