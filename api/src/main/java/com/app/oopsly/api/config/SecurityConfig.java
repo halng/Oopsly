@@ -1,5 +1,6 @@
 package com.app.oopsly.api.config;
 
+import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,10 +56,15 @@ public class SecurityConfig {
             public void addCorsMappings(CorsRegistry corsRegistry) {
                 // Restrict CORS to specific allowed origins instead of "*"
                 // Origins are configured via app.cors.allowed-origins property
+                String[] origins =
+                        Arrays.stream(allowedOrigins.split(","))
+                                .map(String::trim)
+                                .toArray(String[]::new);
+
                 corsRegistry
                         .addMapping("/**")
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-                        .allowedOrigins(allowedOrigins.split(","))
+                        .allowedOrigins(origins)
                         .allowedHeaders("*")
                         .allowCredentials(true);
             }
