@@ -179,8 +179,7 @@ class ServiceDefaultMethodsTest {
         List<TestEntity> entities = Arrays.asList(new TestEntity(), new TestEntity());
         Page<TestEntity> firstPage = new PageImpl<>(entities, PageRequest.of(0, 2), 5);
 
-        when(repository.findAllByUser(eq(currentUser), any(Pageable.class)))
-                .thenReturn(firstPage);
+        when(repository.findAllByUser(eq(currentUser), any(Pageable.class))).thenReturn(firstPage);
 
         ApiRes result = service.getAll(0, 2);
 
@@ -204,8 +203,7 @@ class ServiceDefaultMethodsTest {
         List<TestEntity> entities = Arrays.asList(new TestEntity(), new TestEntity());
         Page<TestEntity> singlePage = new PageImpl<>(entities, PageRequest.of(0, 10), 2);
 
-        when(repository.findAllByUser(eq(currentUser), any(Pageable.class)))
-                .thenReturn(singlePage);
+        when(repository.findAllByUser(eq(currentUser), any(Pageable.class))).thenReturn(singlePage);
 
         ApiRes result = service.getAll(0, 10);
 

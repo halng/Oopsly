@@ -66,8 +66,7 @@ class ValidateStatusTest {
 
     @Test
     void valueOf_throwsException_forInvalidValue() {
-        assertThrows(
-                IllegalArgumentException.class, () -> ValidateStatus.valueOf("NONEXISTENT"));
+        assertThrows(IllegalArgumentException.class, () -> ValidateStatus.valueOf("NONEXISTENT"));
     }
 
     @Test

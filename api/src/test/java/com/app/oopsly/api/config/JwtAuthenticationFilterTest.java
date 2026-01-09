@@ -204,9 +204,7 @@ class JwtAuthenticationFilterTest {
     void doFilterInternal_FilterChainException() throws ServletException, IOException {
         // Arrange
         when(request.getHeader("Authorization")).thenReturn(null);
-        doThrow(new ServletException("Chain error"))
-                .when(filterChain)
-                .doFilter(request, response);
+        doThrow(new ServletException("Chain error")).when(filterChain).doFilter(request, response);
 
         // Act & Assert
         assertThrows(

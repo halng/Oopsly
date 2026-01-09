@@ -17,10 +17,8 @@
 package com.app.oopsly.api.controller;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.entity.DeckEntity;
 import com.app.oopsly.api.service.DeckService;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.DeckReq;

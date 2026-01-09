@@ -32,8 +32,6 @@ import com.app.oopsly.api.service.impl.OTPServiceImpl;
 import com.app.oopsly.api.util.Constant;
 import com.app.oopsly.api.util.JwtUtils;
 import com.app.oopsly.api.viewmodel.OTPReq;
-import jakarta.mail.MessagingException;
-import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -386,8 +384,7 @@ class OTPServiceImplTest {
 
         when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
         when(valueOps.get(otpKey)).thenReturn("222222"); // incorrect OTP
-        when(valueOps.get(attemptKey))
-                .thenReturn(String.valueOf(Constant.OTP_MAX_ATTEMPT - 1));
+        when(valueOps.get(attemptKey)).thenReturn(String.valueOf(Constant.OTP_MAX_ATTEMPT - 1));
 
         OTPReq otpReq = mock(OTPReq.class);
         when(otpReq.email()).thenReturn(email);
