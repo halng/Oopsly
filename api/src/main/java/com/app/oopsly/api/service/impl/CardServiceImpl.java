@@ -58,13 +58,7 @@ public class CardServiceImpl implements CardService {
 
         List<CardEntity> cards =
                 request.cards().stream()
-                        .map(
-                                cardItem -> {
-                                    CardEntity card = toEntityFromItem(cardItem);
-                                    card.setDeck(deck);
-                                    card.setNextPracticeTime(Instant.now());
-                                    return card;
-                                })
+                        .map(cardItem -> createCardEntity(cardItem, deck))
                         .collect(Collectors.toList());
 
         List<CardEntity> savedCards = cardRepository.saveAll(cards);
@@ -93,11 +87,6 @@ public class CardServiceImpl implements CardService {
         Instant nextPracticeTime = calculateNextPracticeTime(difficultyLevel);
         existingCard.setNextPracticeTime(nextPracticeTime);
         existingCard.setNumberOfPractice(existingCard.getNumberOfPractice() + 1);
-        log.info(
-                "Card: {} next practice time set to: {}, practice count: {}",
-                cardId,
-                nextPracticeTime,
-                existingCard.getNumberOfPractice());
 
         cardRepository.save(existingCard);
         log.info("Successfully updated difficulty for card: {}", cardId);
@@ -158,19 +147,23 @@ public class CardServiceImpl implements CardService {
     @Override
     public Instant calculateNextPracticeTime(DifficultyLevel difficultyLevel) {
         Instant now = Instant.now();
-        Instant nextTime =
-                switch (difficultyLevel) {
-                    case AGAIN -> now.plus(1, ChronoUnit.MINUTES);
-                    case HARD -> now.plus(10, ChronoUnit.MINUTES);
-                    case GOOD -> now.plus(1, ChronoUnit.DAYS);
-                    case EASY -> now.plus(4, ChronoUnit.DAYS);
-                };
-        log.debug("Calculated next practice time for difficulty {}: {}", difficultyLevel, nextTime);
-        return nextTime;
+        return switch (difficultyLevel) {
+            case AGAIN -> now.plus(1, ChronoUnit.MINUTES);
+            case HARD -> now.plus(10, ChronoUnit.MINUTES);
+            case GOOD -> now.plus(1, ChronoUnit.DAYS);
+            case EASY -> now.plus(4, ChronoUnit.DAYS);
+        };
     }
 
     private CardEntity toEntityFromItem(CardItemReq item) {
         return CardEntity.builder().topic(item.topic()).answer(item.answer()).build();
+    }
+
+    private CardEntity createCardEntity(CardItemReq cardItem, DeckEntity deck) {
+        CardEntity card = toEntityFromItem(cardItem);
+        card.setDeck(deck);
+        card.setNextPracticeTime(Instant.now());
+        return card;
     }
 
     private CardRes toCardRes(CardEntity entity) {
