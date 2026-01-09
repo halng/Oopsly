@@ -7,16 +7,14 @@ server:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:}
+    secret: ${JWT_SECRET:changeme}
     expiration-in-ms: 86400000
     refresh-expiration-in-ms: 604800000
   google:
-    client-id: ${GOOGLE_CLIENT_ID:}
+    client-id: ${GOOGLE_CLIENT_ID:changeme}
   features:
     authWithGoogle: false
     authWithJwt: true
-  cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:19006}
 
 spring:
   autoconfigure:
@@ -35,7 +33,6 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: update
@@ -44,8 +41,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${EMAIL_USERNAME:}
-    password: ${EMAIL_PASSWORD:}
+    username: ${EMAIL_USERNAME:changeme@gmail.com}
+    password: ${EMAIL_PASSWORD:changeme}
     properties:
       mail:
         smtp:
