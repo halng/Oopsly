@@ -6,6 +6,7 @@ server:
     context-path: /api/${server.active.version}/oopsly
 
 app:
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
   jwt:
     secret: ${JWT_SECRET:changeme}
     expiration-in-ms: 86400000

@@ -5,6 +5,7 @@ plugins {
 	id 'org.graalvm.buildtools.native' version '0.10.6'
 	id 'com.diffplug.spotless' version '8.1.0'
 	id 'jacoco'
+	id 'org.barfuin.gradle.jacocolog' version '4.0.0'
 }
 group = 'com.app.oopsly'
 version = '0.0.1-SNAPSHOT'
@@ -132,6 +133,8 @@ jacocoTestCoverageVerification {
 		}
 	}
 }
+
+tasks.jacocoTestCoverageVerification.finalizedBy(jacocoTestReport)
 
 spotless {
 	java {

@@ -18,7 +18,6 @@ package com.app.oopsly.api.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -34,10 +33,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @EnableWebSecurity
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private final AppConfig appConfig;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, AppConfig appConfig) {
         this.jwtAuthFilter = jwtAuthFilter;
-    }
+		this.appConfig = appConfig;
+	}
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -57,15 +58,15 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Profile("dev")
     public WebMvcConfigurer corsConfigurer() {
+
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry corsRegistry) {
                 corsRegistry
                         .addMapping("/**")
-                        .allowedMethods("*")
-                        .allowedOrigins("*")
+                        .allowedMethods("GET", "POST", "PUT", "PATCH", "OPTIONS")
+                        .allowedOrigins(appConfig.getAllowedOrigins())
                         .allowedHeaders("*");
             }
         };

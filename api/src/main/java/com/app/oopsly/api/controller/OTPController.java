@@ -41,9 +41,6 @@ public class OTPController {
         return otpService.sendOTP(email);
     }
 
-    // deepcode ignore SpringCsrfProtection: This is a stateless JWT-based REST API.
-    // CSRF protection is not applicable as authentication uses Bearer tokens in headers,
-    // not session cookies. This endpoint is publicly accessible for OTP validation.
     @PostMapping("/validate")
     ApiRes validateOTP(@Valid @RequestBody OTPReq otpReq) {
         return otpService.verifyOTP(otpReq);

@@ -29,6 +29,8 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app")
 public class AppConfig {
 
+    private String allowedOrigins;
+
     public GsonFactory getJsonFactory() {
         return new GsonFactory();
     }

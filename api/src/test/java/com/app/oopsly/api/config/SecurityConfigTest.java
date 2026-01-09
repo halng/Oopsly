@@ -41,10 +41,12 @@ class SecurityConfigTest {
     @Mock private JwtAuthenticationFilter jwtAuthFilter;
 
     private SecurityConfig securityConfig;
+    @Mock
+    private AppConfig appConfig;
 
     @BeforeEach
     void setUp() {
-        securityConfig = new SecurityConfig(jwtAuthFilter);
+        securityConfig = new SecurityConfig(jwtAuthFilter, appConfig);
     }
 
     @Test
