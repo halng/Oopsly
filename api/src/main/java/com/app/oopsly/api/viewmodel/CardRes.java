@@ -16,8 +16,13 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import java.util.List;
+import com.app.oopsly.api.entity.DifficultyLevel;
+import java.time.Instant;
+import java.util.UUID;
 
-public record CardReq(@NotEmpty @Valid List<CardItemReq> cards) {}
+public record CardRes(
+        UUID id,
+        String topic,
+        String answer,
+        DifficultyLevel difficultyLevel,
+        Instant nextPracticeTime) {}

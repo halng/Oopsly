@@ -16,8 +16,7 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import java.util.List;
+import com.app.oopsly.api.entity.DifficultyLevel;
+import jakarta.validation.constraints.NotNull;
 
-public record CardReq(@NotEmpty @Valid List<CardItemReq> cards) {}
+public record CardUpdateReq(@NotNull DifficultyLevel difficultyLevel) {}

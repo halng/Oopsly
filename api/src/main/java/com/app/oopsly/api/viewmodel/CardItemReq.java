@@ -16,8 +16,9 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import java.util.List;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
-public record CardReq(@NotEmpty @Valid List<CardItemReq> cards) {}
+public record CardItemReq(
+        @NotNull @Size(min = 1, max = 500) String topic,
+        @NotNull @Size(min = 1, max = 2000) String answer) {}

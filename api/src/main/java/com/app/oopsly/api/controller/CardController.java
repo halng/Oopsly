@@ -20,6 +20,7 @@ import com.app.oopsly.api.entity.CardEntity;
 import com.app.oopsly.api.service.CardService;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CardReq;
+import com.app.oopsly.api.viewmodel.CardUpdateReq;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.*;
@@ -43,9 +44,9 @@ public class CardController extends AbstractController<CardEntity, CardReq> {
     @PutMapping("/{id}")
     ApiRes update(
             @PathVariable UUID deckId,
-            @Valid @RequestBody CardReq requestBody,
-            @PathVariable UUID id) {
-        return cardService.update(deckId, id, requestBody);
+            @PathVariable UUID id,
+            @Valid @RequestBody CardUpdateReq requestBody) {
+        return cardService.update(deckId, id, requestBody.difficultyLevel());
     }
 
     @GetMapping("/{id}")
