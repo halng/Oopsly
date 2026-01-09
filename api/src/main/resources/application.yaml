@@ -3,9 +3,10 @@ server:
   active:
     version: v1
   servlet:
-    context-path: /api/${server.active.version}/osmosis
+    context-path: /api/${server.active.version}/oopsly
 
 app:
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
   jwt:
     secret: ${JWT_SECRET:changeme}
     expiration-in-ms: 86400000
@@ -26,7 +27,7 @@ spring:
 
   datasource:
     password: ${DB_PASSWORD}
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:osmosis}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:oopsly}
     username: ${DB_USERNAME}
     driver-class-name: org.postgresql.Driver
   data:
@@ -35,7 +36,7 @@ spring:
       port: ${REDIS_PORT:6379}
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     generate-ddl: true
     show-sql: true
   mail:

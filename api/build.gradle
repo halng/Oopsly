@@ -5,10 +5,11 @@ plugins {
 	id 'org.graalvm.buildtools.native' version '0.10.6'
 	id 'com.diffplug.spotless' version '8.1.0'
 	id 'jacoco'
+	id 'org.barfuin.gradle.jacocolog' version '4.0.0'
 }
-group = 'com.app.osmosis'
+group = 'com.app.oopsly'
 version = '0.0.1-SNAPSHOT'
-description = 'Backend server for Osmosis project'
+description = 'Backend server for Oopsly project'
 
 java {
 	toolchain {
@@ -96,14 +97,6 @@ tasks.register('composeDown', Exec) {
 jacocoTestReport {
 	dependsOn test
 
-	classDirectories.setFrom(
-			files(
-					sourceSets.main.output.classesDirs.asFileTree.matching {
-						exclude '**/viewmodel/**', '**/entity/**'
-					}
-			)
-	)
-
 	reports {
 		xml.required = true
 		csv.required = false
@@ -121,7 +114,7 @@ jacocoTestCoverageVerification {
 	classDirectories.setFrom(
 			files(
 					sourceSets.main.output.classesDirs.asFileTree.matching {
-						exclude '**/viewmodel/**', '**/entity/**', '**/repository/**', '**/exception/**', '**/ApiApplication**', '**/Constant**', '**/security/**'
+						exclude '**/ApiApplication**', '**/Constant**', '**/viewmodel/**'
 					}
 			)
 	)
@@ -135,11 +128,13 @@ jacocoTestCoverageVerification {
 			limit {
 				counter = 'CLASS'
 				value = 'COVEREDRATIO'
-				minimum = 0.8
+				minimum = 0.9
 			}
 		}
 	}
 }
+
+tasks.jacocoTestCoverageVerification.finalizedBy(jacocoTestReport)
 
 spotless {
 	java {
