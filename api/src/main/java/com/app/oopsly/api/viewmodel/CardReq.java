@@ -16,7 +16,7 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import com.app.oopsly.api.entity.CardEntity;
+import com.app.oopsly.api.entity.DifficultyLevel;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
@@ -24,5 +24,5 @@ import java.time.Instant;
 public record CardReq(
         @NotNull @Size(min = 1, max = 500) String topic,
         @NotNull @Size(min = 1, max = 2000) String answer,
-        CardEntity.DifficultyLevel difficultyLevel,
+        DifficultyLevel difficultyLevel,
         Instant nextPracticeTime) {}

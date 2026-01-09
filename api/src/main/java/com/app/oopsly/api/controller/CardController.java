@@ -16,42 +16,46 @@
 
 package com.app.oopsly.api.controller;
 
+import com.app.oopsly.api.entity.CardEntity;
 import com.app.oopsly.api.service.CardService;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CardReq;
 import jakarta.validation.Valid;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/decks/{deckId}/cards")
-@RequiredArgsConstructor
-public class CardController {
+public class CardController extends AbstractController<CardEntity, CardReq> {
 
     private final CardService cardService;
+
+    public CardController(CardService cardService) {
+        super(cardService);
+        this.cardService = cardService;
+    }
 
     @PostMapping("")
     ApiRes create(@PathVariable UUID deckId, @Valid @RequestBody CardReq requestBody) {
         return cardService.create(deckId, requestBody);
     }
 
-    @PutMapping("/{cardId}")
+    @PutMapping("/{id}")
     ApiRes update(
             @PathVariable UUID deckId,
-            @PathVariable UUID cardId,
-            @Valid @RequestBody CardReq requestBody) {
-        return cardService.update(deckId, cardId, requestBody);
+            @Valid @RequestBody CardReq requestBody,
+            @PathVariable UUID id) {
+        return cardService.update(deckId, id, requestBody);
     }
 
-    @GetMapping("/{cardId}")
-    ApiRes getById(@PathVariable UUID deckId, @PathVariable UUID cardId) {
-        return cardService.getById(deckId, cardId);
+    @GetMapping("/{id}")
+    ApiRes getById(@PathVariable UUID deckId, @PathVariable UUID id) {
+        return cardService.getById(deckId, id);
     }
 
-    @PatchMapping("/{cardId}")
-    ApiRes deleteById(@PathVariable UUID deckId, @PathVariable UUID cardId) {
-        return cardService.delete(deckId, cardId);
+    @PatchMapping("/{id}")
+    ApiRes deleteById(@PathVariable UUID deckId, @PathVariable UUID id) {
+        return cardService.delete(deckId, id);
     }
 
     @GetMapping("")

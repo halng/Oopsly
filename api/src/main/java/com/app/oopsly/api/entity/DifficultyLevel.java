@@ -16,29 +16,9 @@
 
 package com.app.oopsly.api.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import java.util.List;
-import lombok.*;
-
-@Getter
-@Setter
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Table
-@Entity(name = "decks")
-public class DeckEntity extends Audit {
-
-    private String name;
-    private String description;
-
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "deck", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<CardEntity> cards;
+public enum DifficultyLevel {
+    HARD,
+    GOOD,
+    EASY,
+    AGAIN
 }

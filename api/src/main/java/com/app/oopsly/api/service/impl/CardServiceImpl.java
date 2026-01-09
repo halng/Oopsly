@@ -20,6 +20,7 @@ import com.app.oopsly.api.entity.CardEntity;
 import com.app.oopsly.api.entity.DeckEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
+import com.app.oopsly.api.repository.BaseRepository;
 import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.DeckRepository;
 import com.app.oopsly.api.service.CardService;
@@ -133,6 +134,16 @@ public class CardServiceImpl implements CardService {
                 from.getAnswer(),
                 from.getDifficultyLevel(),
                 from.getNextPracticeTime());
+    }
+
+    @Override
+    public BaseRepository<CardEntity, UUID> getRepository() {
+        return cardRepository;
+    }
+
+    @Override
+    public User getCurrentUser() {
+        return userService.getCurrentUser();
     }
 
     private DeckEntity getDeckForCurrentUser(UUID deckId) {

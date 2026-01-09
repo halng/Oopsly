@@ -23,6 +23,7 @@ import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.entity.CardEntity;
 import com.app.oopsly.api.entity.DeckEntity;
+import com.app.oopsly.api.entity.DifficultyLevel;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.repository.CardRepository;
@@ -71,7 +72,7 @@ class CardServiceImplTest {
                 new CardReq(
                         "Sample Topic",
                         "Sample Answer for testing purposes",
-                        CardEntity.DifficultyLevel.EASY,
+                        DifficultyLevel.EASY,
                         nextPracticeTime);
         currentUser = new User();
         currentUser.setEmail("test@example.com");
@@ -98,7 +99,7 @@ class CardServiceImplTest {
         CardEntity existing = new CardEntity();
         existing.setTopic("Old Topic");
         existing.setAnswer("Old Answer");
-        existing.setDifficultyLevel(CardEntity.DifficultyLevel.HARD);
+        existing.setDifficultyLevel(DifficultyLevel.HARD);
         existing.setDeck(deck);
 
         CardEntity result = cardService.toEntity(cardReq, existing);
@@ -115,7 +116,7 @@ class CardServiceImplTest {
         CardEntity entity = new CardEntity();
         entity.setTopic("Test Topic");
         entity.setAnswer("Test Answer");
-        entity.setDifficultyLevel(CardEntity.DifficultyLevel.GOOD);
+        entity.setDifficultyLevel(DifficultyLevel.GOOD);
         entity.setNextPracticeTime(nextPracticeTime);
 
         CardReq result = cardService.toViewModel(entity);
@@ -163,7 +164,7 @@ class CardServiceImplTest {
         existingCard.setId(cardId);
         existingCard.setTopic("Old Topic");
         existingCard.setAnswer("Old Answer");
-        existingCard.setDifficultyLevel(CardEntity.DifficultyLevel.HARD);
+        existingCard.setDifficultyLevel(DifficultyLevel.HARD);
         existingCard.setDeck(deck);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
@@ -306,7 +307,7 @@ class CardServiceImplTest {
 
     @Test
     void toEntity_withAllDifficultyLevels() {
-        for (CardEntity.DifficultyLevel level : CardEntity.DifficultyLevel.values()) {
+        for (DifficultyLevel level : DifficultyLevel.values()) {
             CardReq req = new CardReq("Topic", "Answer", level, nextPracticeTime);
             CardEntity result = cardService.toEntity(req, null);
             assertEquals(level, result.getDifficultyLevel());
@@ -323,7 +324,7 @@ class CardServiceImplTest {
 
     @Test
     void create_withDifferentDifficultyLevels_savesCorrectly() {
-        for (CardEntity.DifficultyLevel level : CardEntity.DifficultyLevel.values()) {
+        for (DifficultyLevel level : DifficultyLevel.values()) {
             CardReq req = new CardReq("Topic", "Answer", level, nextPracticeTime);
 
             CardEntity savedCard = new CardEntity();

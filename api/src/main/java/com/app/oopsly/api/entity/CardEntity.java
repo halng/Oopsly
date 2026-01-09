@@ -42,11 +42,4 @@ public class CardEntity extends Audit {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "deck_id", nullable = false)
     private DeckEntity deck;
-
-    public enum DifficultyLevel {
-        HARD,
-        GOOD,
-        EASY,
-        AGAIN
-    }
 }

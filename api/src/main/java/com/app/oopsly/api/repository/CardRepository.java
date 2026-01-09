@@ -22,12 +22,11 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface CardRepository extends JpaRepository<CardEntity, UUID> {
+public interface CardRepository extends BaseRepository<CardEntity, UUID> {
     @Query("SELECT c FROM cards c WHERE c.id = ?1 AND c.deck = ?2 AND c.deleted = false")
     Optional<CardEntity> findByIdAndDeck(UUID id, DeckEntity deck);
 

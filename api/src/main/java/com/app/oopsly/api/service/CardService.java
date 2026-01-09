@@ -21,7 +21,7 @@ import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CardReq;
 import java.util.UUID;
 
-public interface CardService {
+public interface CardService extends Service<CardEntity, CardReq> {
     ApiRes create(UUID deckId, CardReq request);
 
     ApiRes update(UUID deckId, UUID cardId, CardReq request);
@@ -31,8 +31,4 @@ public interface CardService {
     ApiRes getById(UUID deckId, UUID cardId);
 
     ApiRes getAll(UUID deckId, int page, int size);
-
-    CardEntity toEntity(CardReq from, CardEntity to);
-
-    CardReq toViewModel(CardEntity from);
 }
