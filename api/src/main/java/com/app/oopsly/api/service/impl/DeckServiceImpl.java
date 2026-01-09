@@ -24,6 +24,7 @@ import com.app.oopsly.api.service.DeckService;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.DeckReq;
+import com.app.oopsly.api.viewmodel.DeckView;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -79,14 +80,14 @@ public class DeckServiceImpl implements DeckService {
                 deckRepository
                         .findByIdAndUser(id, this.getCurrentUser())
                         .orElseThrow(() -> new NotFoundException("Entity not found with id: " + id));
-        return ApiRes.success("Fetched successfully", entity);
+        return ApiRes.success("Fetched successfully", this.toViewModel(entity));
     }
 
     @Override
     public ApiRes getAll(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<DeckEntity> pageData = deckRepository.findAllByUser(this.getCurrentUser(), pageable);
-        List<DeckEntity> entities = pageData.getContent();
+        List<DeckView> entities = pageData.getContent().stream().map(this::toViewModel).toList();
 
         HashMap<String, Object> response = new HashMap<>();
         response.put("entities", entities);
@@ -114,12 +115,8 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
-    public DeckReq toViewModel(DeckEntity from) {
-        return new DeckReq(from.getName(), from.getDescription());
-    }
-
-    public DeckRepository getRepository() {
-        return deckRepository;
+    public DeckView toViewModel(DeckEntity from) {
+        return new DeckView(from.getId(), from.getName(), from.getDescription());
     }
 
     @Override

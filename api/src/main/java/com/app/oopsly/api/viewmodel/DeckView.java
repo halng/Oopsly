@@ -14,29 +14,9 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.service;
+package com.app.oopsly.api.viewmodel;
 
-import com.app.oopsly.api.entity.DeckEntity;
-import com.app.oopsly.api.entity.User;
-import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.DeckReq;
-import com.app.oopsly.api.viewmodel.DeckView;
 import java.util.UUID;
+import lombok.NonNull;
 
-public interface DeckService {
-    ApiRes create(DeckReq request);
-
-    ApiRes update(DeckReq request, UUID id);
-
-    ApiRes delete(UUID id);
-
-    ApiRes getById(UUID id);
-
-    ApiRes getAll(int page, int size);
-
-    DeckEntity toEntity(DeckReq from, DeckEntity to);
-
-    DeckView toViewModel(DeckEntity from);
-
-    User getCurrentUser();
-}
+public record DeckView(@NonNull UUID id, @NonNull String name, @NonNull String description) {}

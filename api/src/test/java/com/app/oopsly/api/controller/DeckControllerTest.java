@@ -93,19 +93,19 @@ class DeckControllerTest {
 
     @Test
     void getAll_delegatesToDeckService() {
-        int page = 0;
+        int page = 1;
         int size = 10;
-        when(deckService.getAll(page, size)).thenReturn(expectedResponse);
+        when(deckService.getAll(page - 1, size)).thenReturn(expectedResponse);
 
         ApiRes result = deckController.getAll(page, size);
 
         assertSame(expectedResponse, result);
-        verify(deckService, times(1)).getAll(page, size);
+        verify(deckService, times(1)).getAll(page - 1, size);
     }
 
     @Test
     void getAll_withInvalidPage_throwsException() {
-        int page = -1;
+        int page = 0;
         int size = 10;
 
         assertThrows(IllegalArgumentException.class, () -> deckController.getAll(page, size));

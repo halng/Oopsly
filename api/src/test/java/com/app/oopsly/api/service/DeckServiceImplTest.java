@@ -28,6 +28,7 @@ import com.app.oopsly.api.repository.DeckRepository;
 import com.app.oopsly.api.service.impl.DeckServiceImpl;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.DeckReq;
+import com.app.oopsly.api.viewmodel.DeckView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -97,19 +98,16 @@ class DeckServiceImplTest {
     @Test
     void toViewModel_convertsEntityToViewModel() {
         DeckEntity entity = new DeckEntity();
+        entity.setId(deckId);
         entity.setName("Test Deck");
         entity.setDescription("Test Description with sufficient length for validation");
 
-        DeckReq result = deckService.toViewModel(entity);
+        DeckView result = deckService.toViewModel(entity);
 
         assertNotNull(result);
+        assertEquals(entity.getId(), result.id());
         assertEquals(entity.getName(), result.name());
         assertEquals(entity.getDescription(), result.description());
-    }
-
-    @Test
-    void getRepository_returnsDeckRepository() {
-        assertSame(deckRepository, deckService.getRepository());
     }
 
     @Test
@@ -200,6 +198,8 @@ class DeckServiceImplTest {
         DeckEntity existingDeck = new DeckEntity();
         existingDeck.setId(deckId);
         existingDeck.setUser(currentUser);
+        existingDeck.setName(deckReq.name());
+        existingDeck.setDescription(deckReq.description());
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser))
@@ -236,13 +236,15 @@ class DeckServiceImplTest {
     @Test
     void toViewModel_withEntityHavingNullFields_handlesGracefully() {
         DeckEntity entity = new DeckEntity();
+        entity.setId(deckId);
         entity.setName("Test");
         entity.setDescription(
                 "Test Description with sufficient length for validation requirements");
 
-        DeckReq result = deckService.toViewModel(entity);
+        DeckView result = deckService.toViewModel(entity);
 
         assertNotNull(result);
+        assertEquals(deckId, result.id());
         assertEquals("Test", result.name());
     }
 

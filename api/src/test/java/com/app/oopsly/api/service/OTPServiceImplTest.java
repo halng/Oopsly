@@ -74,7 +74,6 @@ class OTPServiceImplTest {
     void sendOTP_success_storesOtpAndAttempts_and_sendsEmail() throws Exception {
         // arrange
         when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
-        doNothing().when(emailSender).sendEmail(eq(email), anyString());
 
         // act
         var res = otpService.sendOTP(email);

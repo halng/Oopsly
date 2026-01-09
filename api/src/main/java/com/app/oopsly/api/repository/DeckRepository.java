@@ -28,9 +28,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DeckRepository extends JpaRepository<DeckEntity, UUID> {
-    @Query("SELECT e FROM decks e WHERE e.id = ?1 AND e.user = ?2 AND e.deleted = false")
+    @Query("SELECT e FROM DeckEntity e WHERE e.id = ?1 AND e.user = ?2 AND e.deleted = false")
     Optional<DeckEntity> findByIdAndUser(UUID id, User user);
 
-    @Query("SELECT e FROM decks e WHERE e.user = ?1 AND e.deleted = false")
+    @Query("SELECT e FROM DeckEntity e WHERE e.user = ?1 AND e.deleted = false")
     Page<DeckEntity> findAllByUser(User user, Pageable pageable);
 }
