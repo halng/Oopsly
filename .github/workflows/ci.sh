@@ -8,6 +8,78 @@ echo "====================================="
 echo "Starting Unified CI Pipeline"
 echo "====================================="
 
+# Validate environment by checking tool versions
+validate_environment() {
+    echo ""
+    echo "====================================="
+    echo "Validating Environment"
+    echo "====================================="
+    
+    local validation_failed=false
+    
+    # Check Java
+    echo "Checking Java..."
+    if command -v java &> /dev/null; then
+        java -version
+    else
+        echo "ERROR: Java is not installed"
+        validation_failed=true
+    fi
+    
+    # Check Gradle wrapper (will be checked in api directory)
+    echo "Checking Gradle..."
+    if [ -d "api" ] && [ -f "api/gradlew" ]; then
+        echo "Gradle wrapper found in api directory"
+    else
+        echo "WARNING: Gradle wrapper not found in api directory"
+    fi
+    
+    # Check Node.js
+    echo "Checking Node.js..."
+    if command -v node &> /dev/null; then
+        node --version
+    else
+        echo "ERROR: Node.js is not installed"
+        validation_failed=true
+    fi
+    
+    # Check npm
+    echo "Checking npm..."
+    if command -v npm &> /dev/null; then
+        npm --version
+    else
+        echo "ERROR: npm is not installed"
+        validation_failed=true
+    fi
+    
+    # Check Python
+    echo "Checking Python..."
+    if command -v python &> /dev/null; then
+        python --version
+    else
+        echo "ERROR: Python is not installed"
+        validation_failed=true
+    fi
+    
+    # Check pip
+    echo "Checking pip..."
+    if command -v pip &> /dev/null; then
+        pip --version
+    else
+        echo "ERROR: pip is not installed"
+        validation_failed=true
+    fi
+    
+    if [ "$validation_failed" = true ]; then
+        echo ""
+        echo "ERROR: Environment validation failed. Please install missing dependencies."
+        exit 1
+    fi
+    
+    echo ""
+    echo "Environment validation completed successfully!"
+}
+
 # Backend CI (api directory)
 run_backend_ci() {
     echo ""
@@ -178,6 +250,9 @@ main() {
                 ;;
         esac
     done
+    
+    # Validate environment first
+    validate_environment
     
     # Run all CI steps
     run_backend_ci
