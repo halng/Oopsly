@@ -18,7 +18,7 @@ package com.app.oopsly.api.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import java.util.List;
+import java.time.Instant;
 import lombok.*;
 
 @Getter
@@ -27,17 +27,26 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table
-@Entity(name = "decks")
-public class DeckEntity extends Audit {
+@Entity(name = "cards")
+public class CardEntity extends Audit {
 
-    private String name;
-    private String description;
+    private String topic;
+    private String answer;
+
+    @Enumerated(EnumType.STRING)
+    private DifficultyLevel difficultyLevel;
+
+    private Instant nextPracticeTime;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "deck_id", nullable = false)
+    private DeckEntity deck;
 
-    @OneToMany(mappedBy = "deck", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<CardEntity> cards;
+    public enum DifficultyLevel {
+        HARD,
+        GOOD,
+        EASY,
+        AGAIN
+    }
 }

@@ -14,30 +14,25 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.entity;
+package com.app.oopsly.api.service;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import java.util.List;
-import lombok.*;
+import com.app.oopsly.api.entity.CardEntity;
+import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.CardReq;
+import java.util.UUID;
 
-@Getter
-@Setter
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Table
-@Entity(name = "decks")
-public class DeckEntity extends Audit {
+public interface CardService {
+    ApiRes create(UUID deckId, CardReq request);
 
-    private String name;
-    private String description;
+    ApiRes update(UUID deckId, UUID cardId, CardReq request);
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    ApiRes delete(UUID deckId, UUID cardId);
 
-    @OneToMany(mappedBy = "deck", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<CardEntity> cards;
+    ApiRes getById(UUID deckId, UUID cardId);
+
+    ApiRes getAll(UUID deckId, int page, int size);
+
+    CardEntity toEntity(CardReq from, CardEntity to);
+
+    CardReq toViewModel(CardEntity from);
 }
