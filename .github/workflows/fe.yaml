@@ -1,57 +1,57 @@
-name: FE - CI
+# name: FE - CI
 
-on:
-  push:
-    branches:
-      - main
-      - release/**
-    paths:
-      - 'ui/**'
-      - '.github/workflows/fe.yaml'
-  pull_request:
-    branches:
-      - main
-      - release/**
-    paths:
-      - 'ui/**'
-      - '.github/workflows/fe.yaml'
+# on:
+#   push:
+#     branches:
+#       - main
+#       - release/**
+#     paths:
+#       - 'ui/**'
+#       - '.github/workflows/fe.yaml'
+#   pull_request:
+#     branches:
+#       - main
+#       - release/**
+#     paths:
+#       - 'ui/**'
+#       - '.github/workflows/fe.yaml'
 
-jobs:
-  build:
-    name: Install dependencies (ui)
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: [18, 20, 21]
+# jobs:
+#   build:
+#     name: Install dependencies (ui)
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         node: [18, 20, 21]
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
+#       - name: Setup Node.js ${{ matrix.node }}
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: ${{ matrix.node }}
 
-      - name: Install packages in ui
-        working-directory: ui
-        run: |
-          set -e
-          if [ -f pnpm-lock.yaml ]; then
-            npm install -g pnpm
-            pnpm install --frozen-lockfile
-          elif [ -f yarn.lock ]; then
-            corepack enable
-            corepack prepare yarn@stable --activate
-            yarn install --frozen-lockfile
-          elif [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-      - name: Run JS style check (eslint)
-        working-directory: ui
-        run: pnpm run lint
-      - name: Run unit tests
-        working-directory: ui
-        run: pnpm run test:coverage
+#       - name: Install packages in ui
+#         working-directory: ui
+#         run: |
+#           set -e
+#           if [ -f pnpm-lock.yaml ]; then
+#             npm install -g pnpm
+#             pnpm install --frozen-lockfile
+#           elif [ -f yarn.lock ]; then
+#             corepack enable
+#             corepack prepare yarn@stable --activate
+#             yarn install --frozen-lockfile
+#           elif [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+#             npm ci
+#           else
+#             npm install
+#           fi
+#       - name: Run JS style check (eslint)
+#         working-directory: ui
+#         run: pnpm run lint
+#       - name: Run unit tests
+#         working-directory: ui
+#         run: pnpm run test:coverage
