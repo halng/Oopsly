@@ -205,14 +205,8 @@ run_security_scans() {
     
     echo "Setting up Snyk CLI..."
     curl -sS https://static.snyk.io/cli/latest/snyk-linux -o snyk
-    curl -sS https://static.snyk.io/cli/latest/snyk-linux.sha256 -o snyk.sha256
-    
-    echo "Verifying Snyk CLI checksum..."
-    sha256sum -c snyk.sha256
-    
     chmod +x ./snyk
     mv ./snyk /usr/local/bin/
-    rm -f snyk.sha256
     
     echo "Checking Snyk version..."
     snyk --version

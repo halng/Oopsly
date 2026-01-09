@@ -23,7 +23,6 @@ permissions:
 
 jobs:
   ci:
-    name: Unified CI
     runs-on: ubuntu-latest
 
     steps:
