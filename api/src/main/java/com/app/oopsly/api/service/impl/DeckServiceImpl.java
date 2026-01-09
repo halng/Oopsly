@@ -26,11 +26,11 @@ import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.DeckPageRes;
 import com.app.oopsly.api.viewmodel.DeckReq;
 import com.app.oopsly.api.viewmodel.DeckRes;
+import java.util.List;
+import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import java.util.List;
-import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -55,7 +55,8 @@ public class DeckServiceImpl implements DeckService {
         DeckEntity existingEntity =
                 deckRepository
                         .findByIdAndUser(id, this.currentUser())
-                        .orElseThrow(() -> new NotFoundException("Entity not found with id: " + id));
+                        .orElseThrow(
+                                () -> new NotFoundException("Entity not found with id: " + id));
 
         DeckEntity newEntity = this.toEntity(request, existingEntity);
         deckRepository.save(newEntity);
@@ -67,7 +68,8 @@ public class DeckServiceImpl implements DeckService {
         DeckEntity existingEntity =
                 deckRepository
                         .findByIdAndUser(id, this.currentUser())
-                        .orElseThrow(() -> new NotFoundException("Entity not found with id: " + id));
+                        .orElseThrow(
+                                () -> new NotFoundException("Entity not found with id: " + id));
 
         existingEntity.setDeleted(true);
         deckRepository.save(existingEntity);
@@ -79,7 +81,8 @@ public class DeckServiceImpl implements DeckService {
         DeckEntity entity =
                 deckRepository
                         .findByIdAndUser(id, this.currentUser())
-                        .orElseThrow(() -> new NotFoundException("Entity not found with id: " + id));
+                        .orElseThrow(
+                                () -> new NotFoundException("Entity not found with id: " + id));
         return ApiRes.success("Fetched successfully", this.toViewModel(entity));
     }
 

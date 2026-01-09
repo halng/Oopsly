@@ -246,5 +246,4 @@ class DeckServiceImplTest {
         assertNotNull(result);
         verify(deckRepository, times(1)).findAllByUser(eq(currentUser), any(Pageable.class));
     }
-
 }
