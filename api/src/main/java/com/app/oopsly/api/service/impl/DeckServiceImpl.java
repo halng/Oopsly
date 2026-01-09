@@ -23,12 +23,12 @@ import com.app.oopsly.api.repository.DeckRepository;
 import com.app.oopsly.api.service.DeckService;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.DeckPageRes;
 import com.app.oopsly.api.viewmodel.DeckReq;
-import com.app.oopsly.api.viewmodel.DeckView;
+import com.app.oopsly.api.viewmodel.DeckRes;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -54,7 +54,7 @@ public class DeckServiceImpl implements DeckService {
     public ApiRes update(DeckReq request, UUID id) {
         DeckEntity existingEntity =
                 deckRepository
-                        .findByIdAndUser(id, this.getCurrentUser())
+                        .findByIdAndUser(id, this.currentUser())
                         .orElseThrow(() -> new NotFoundException("Entity not found with id: " + id));
 
         DeckEntity newEntity = this.toEntity(request, existingEntity);
@@ -66,7 +66,7 @@ public class DeckServiceImpl implements DeckService {
     public ApiRes delete(UUID id) {
         DeckEntity existingEntity =
                 deckRepository
-                        .findByIdAndUser(id, this.getCurrentUser())
+                        .findByIdAndUser(id, this.currentUser())
                         .orElseThrow(() -> new NotFoundException("Entity not found with id: " + id));
 
         existingEntity.setDeleted(true);
@@ -78,7 +78,7 @@ public class DeckServiceImpl implements DeckService {
     public ApiRes getById(UUID id) {
         DeckEntity entity =
                 deckRepository
-                        .findByIdAndUser(id, this.getCurrentUser())
+                        .findByIdAndUser(id, this.currentUser())
                         .orElseThrow(() -> new NotFoundException("Entity not found with id: " + id));
         return ApiRes.success("Fetched successfully", this.toViewModel(entity));
     }
@@ -86,22 +86,22 @@ public class DeckServiceImpl implements DeckService {
     @Override
     public ApiRes getAll(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<DeckEntity> pageData = deckRepository.findAllByUser(this.getCurrentUser(), pageable);
-        List<DeckView> entities = pageData.getContent().stream().map(this::toViewModel).toList();
+        Page<DeckEntity> pageData = deckRepository.findAllByUser(this.currentUser(), pageable);
+        List<DeckRes> entities = pageData.getContent().stream().map(this::toViewModel).toList();
 
-        HashMap<String, Object> response = new HashMap<>();
-        response.put("entities", entities);
-        response.put("currentPage", pageable.getPageNumber());
-        response.put("totalItems", pageData.getTotalElements());
-        response.put("totalPages", pageData.getTotalPages());
-        response.put("hasNextPage", pageData.hasNext());
+        DeckPageRes response =
+                new DeckPageRes(
+                        entities,
+                        pageable.getPageNumber(),
+                        pageData.getTotalElements(),
+                        pageData.getTotalPages(),
+                        pageData.hasNext());
         return ApiRes.success("Fetched successfully", response);
     }
 
-    @Override
-    public DeckEntity toEntity(@NonNull DeckReq from, DeckEntity to) {
+    DeckEntity toEntity(@NonNull DeckReq from, DeckEntity to) {
         if (to == null) {
-            User currentUser = this.getCurrentUser();
+            User currentUser = this.currentUser();
             return DeckEntity.builder()
                     .name(from.name())
                     .description(from.description())
@@ -114,13 +114,11 @@ public class DeckServiceImpl implements DeckService {
         return to;
     }
 
-    @Override
-    public DeckView toViewModel(DeckEntity from) {
-        return new DeckView(from.getId(), from.getName(), from.getDescription());
+    DeckRes toViewModel(DeckEntity from) {
+        return new DeckRes(from.getId(), from.getName(), from.getDescription());
     }
 
-    @Override
-    public User getCurrentUser() {
+    User currentUser() {
         return userService.getCurrentUser();
     }
 }

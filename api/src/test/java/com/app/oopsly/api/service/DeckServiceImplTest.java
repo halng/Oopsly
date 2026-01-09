@@ -28,7 +28,6 @@ import com.app.oopsly.api.repository.DeckRepository;
 import com.app.oopsly.api.service.impl.DeckServiceImpl;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.DeckReq;
-import com.app.oopsly.api.viewmodel.DeckView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -67,57 +66,6 @@ class DeckServiceImplTest {
         currentUser = new User();
         currentUser.setEmail("test@example.com");
         deckId = UUID.randomUUID();
-    }
-
-    @Test
-    void toEntity_withNullExisting_createsNewEntity() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-
-        DeckEntity result = deckService.toEntity(deckReq, null);
-
-        assertNotNull(result);
-        assertEquals(deckReq.name(), result.getName());
-        assertEquals(deckReq.description(), result.getDescription());
-        assertEquals(currentUser, result.getUser());
-    }
-
-    @Test
-    void toEntity_withExistingEntity_updatesEntity() {
-        DeckEntity existing = new DeckEntity();
-        existing.setName("Old Name");
-        existing.setDescription("Old Description with sufficient length for validation");
-        existing.setUser(currentUser);
-
-        DeckEntity result = deckService.toEntity(deckReq, existing);
-
-        assertSame(existing, result);
-        assertEquals(deckReq.name(), result.getName());
-        assertEquals(deckReq.description(), result.getDescription());
-    }
-
-    @Test
-    void toViewModel_convertsEntityToViewModel() {
-        DeckEntity entity = new DeckEntity();
-        entity.setId(deckId);
-        entity.setName("Test Deck");
-        entity.setDescription("Test Description with sufficient length for validation");
-
-        DeckView result = deckService.toViewModel(entity);
-
-        assertNotNull(result);
-        assertEquals(entity.getId(), result.id());
-        assertEquals(entity.getName(), result.name());
-        assertEquals(entity.getDescription(), result.description());
-    }
-
-    @Test
-    void getCurrentUser_delegatesToUserService() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-
-        User result = deckService.getCurrentUser();
-
-        assertSame(currentUser, result);
-        verify(userService, times(1)).getCurrentUser();
     }
 
     @Test
@@ -220,35 +168,6 @@ class DeckServiceImplTest {
     }
 
     @Test
-    void toEntity_withMinimumValidData_createsEntity() {
-        DeckReq minimalReq =
-                new DeckReq(
-                        "T",
-                        "12345678901234567890123456789012345678901234567890"); // exactly 50 chars
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-
-        DeckEntity result = deckService.toEntity(minimalReq, null);
-
-        assertNotNull(result);
-        assertEquals("T", result.getName());
-    }
-
-    @Test
-    void toViewModel_withEntityHavingNullFields_handlesGracefully() {
-        DeckEntity entity = new DeckEntity();
-        entity.setId(deckId);
-        entity.setName("Test");
-        entity.setDescription(
-                "Test Description with sufficient length for validation requirements");
-
-        DeckView result = deckService.toViewModel(entity);
-
-        assertNotNull(result);
-        assertEquals(deckId, result.id());
-        assertEquals("Test", result.name());
-    }
-
-    @Test
     void create_withMultipleDecks_createsAll() {
         DeckEntity savedDeck = new DeckEntity();
         savedDeck.setId(UUID.randomUUID());
@@ -328,19 +247,4 @@ class DeckServiceImplTest {
         verify(deckRepository, times(1)).findAllByUser(eq(currentUser), any(Pageable.class));
     }
 
-    @Test
-    void toEntity_withDifferentUsers_usesCurrentUser() {
-        User otherUser = new User();
-        otherUser.setId(UUID.randomUUID());
-        otherUser.setEmail("other@example.com");
-
-        DeckEntity existingDeck = new DeckEntity();
-        existingDeck.setUser(otherUser);
-
-        DeckEntity result = deckService.toEntity(deckReq, existingDeck);
-
-        // User should not be changed during update
-        assertSame(otherUser, result.getUser());
-        assertEquals(deckReq.name(), result.getName());
-    }
 }

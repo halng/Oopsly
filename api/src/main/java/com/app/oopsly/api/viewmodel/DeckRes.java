@@ -19,4 +19,4 @@ package com.app.oopsly.api.viewmodel;
 import java.util.UUID;
 import lombok.NonNull;
 
-public record DeckView(@NonNull UUID id, @NonNull String name, @NonNull String description) {}
+public record DeckRes(@NonNull UUID id, @NonNull String name, @NonNull String description) {}
