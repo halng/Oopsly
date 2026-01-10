@@ -34,7 +34,9 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/otp")
-@Tag(name = "OTP", description = "OTP management APIs for generating and validating one-time passwords")
+@Tag(
+        name = "OTP",
+        description = "OTP management APIs for generating and validating one-time passwords")
 public class OTPController {
     private final String EMAIL_RE = "^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$";
     private final OTPService otpService;
@@ -45,34 +47,48 @@ public class OTPController {
 
     @Operation(
             summary = "Generate OTP",
-            description = "Generates and sends a one-time password to the specified email address"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OTP sent successfully",
-                    content = @Content(schema = @Schema(implementation = ApiRes.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid email format"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
+            description = "Generates and sends a one-time password to the specified email address")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "OTP sent successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "400", description = "Invalid email format"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @PostMapping()
-    ApiRes createOTP(@Parameter(description = "Email address to send OTP", required = true, example = "user@example.com")
-            @RequestParam("email") @Pattern(regexp = EMAIL_RE, message = "Invalid Email Format") String email) {
+    ApiRes createOTP(
+            @Parameter(
+                            description = "Email address to send OTP",
+                            required = true,
+                            example = "user@example.com")
+                    @RequestParam("email")
+                    @Pattern(regexp = EMAIL_RE, message = "Invalid Email Format") String email) {
         return otpService.sendOTP(email);
     }
 
-
     @Operation(
             summary = "Validate OTP",
-            description = "Verifies the one-time password for the given email address"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OTP validated successfully",
-                    content = @Content(schema = @Schema(implementation = ApiRes.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid OTP or request format"),
-            @ApiResponse(responseCode = "401", description = "OTP expired or incorrect"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
+            description = "Verifies the one-time password for the given email address")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "OTP validated successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "400", description = "Invalid OTP or request format"),
+                @ApiResponse(responseCode = "401", description = "OTP expired or incorrect"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @PostMapping("/validate")
-    ApiRes validateOTP(@Parameter(description = "OTP validation request containing email and OTP code", required = true, example = "111111") @Valid @RequestBody OTPReq otpReq) {
+    ApiRes validateOTP(
+            @Parameter(
+                            description = "OTP validation request containing email and OTP code",
+                            required = true,
+                            example = "111111")
+                    @Valid @RequestBody
+                    OTPReq otpReq) {
         return otpService.verifyOTP(otpReq);
     }
 }

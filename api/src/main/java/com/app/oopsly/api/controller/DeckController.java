@@ -41,7 +41,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/decks")
-@Tag(name = "Deck", description = "Deck management APIs for creating, updating, retrieving and deleting decks")
+@Tag(
+        name = "Deck",
+        description = "Deck management APIs for creating, updating, retrieving and deleting decks")
 public class DeckController {
     private final DeckService service;
 
@@ -51,91 +53,109 @@ public class DeckController {
 
     @Operation(
             summary = "Create deck",
-            description = "Creates a new deck with the provided information"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Deck created successfully",
-                    content = @Content(schema = @Schema(implementation = ApiRes.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid request body"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
+            description = "Creates a new deck with the provided information")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Deck created successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "400", description = "Invalid request body"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @PostMapping("")
     ApiRes create(
-            @Parameter(description = "Deck creation request", required = true)
-            @Valid @RequestBody DeckReq requestBody) {
+            @Parameter(description = "Deck creation request", required = true) @Valid @RequestBody
+                    DeckReq requestBody) {
         return this.service.create(requestBody);
     }
 
-    @Operation(
-            summary = "Update deck",
-            description = "Updates an existing deck by ID"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Deck updated successfully",
-                    content = @Content(schema = @Schema(implementation = ApiRes.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid request body or ID"),
-            @ApiResponse(responseCode = "404", description = "Deck not found"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
+    @Operation(summary = "Update deck", description = "Updates an existing deck by ID")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Deck updated successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "400", description = "Invalid request body or ID"),
+                @ApiResponse(responseCode = "404", description = "Deck not found"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @PutMapping("/{id}")
     ApiRes update(
-            @Parameter(description = "Deck update request", required = true)
-            @Valid @RequestBody DeckReq requestBody,
-            @Parameter(description = "Deck ID", required = true, example = "123e4567-e89b-12d3-a456-426614174000")
-            @PathVariable UUID id) {
+            @Parameter(description = "Deck update request", required = true) @Valid @RequestBody
+                    DeckReq requestBody,
+            @Parameter(
+                            description = "Deck ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174000")
+                    @PathVariable
+                    UUID id) {
         return this.service.update(requestBody, id);
     }
 
     @Operation(
             summary = "Get deck by ID",
-            description = "Retrieves a deck by its unique identifier"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Deck retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = ApiRes.class))),
-            @ApiResponse(responseCode = "404", description = "Deck not found"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
+            description = "Retrieves a deck by its unique identifier")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Deck retrieved successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "404", description = "Deck not found"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @GetMapping("/{id}")
     ApiRes getById(
-            @Parameter(description = "Deck ID", required = true, example = "123e4567-e89b-12d3-a456-426614174000")
-            @PathVariable UUID id) {
+            @Parameter(
+                            description = "Deck ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174000")
+                    @PathVariable
+                    UUID id) {
         return this.service.getById(id);
     }
 
-    @Operation(
-            summary = "Delete deck",
-            description = "Soft deletes a deck by ID"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Deck deleted successfully",
-                    content = @Content(schema = @Schema(implementation = ApiRes.class))),
-            @ApiResponse(responseCode = "404", description = "Deck not found"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
+    @Operation(summary = "Delete deck", description = "Soft deletes a deck by ID")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Deck deleted successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "404", description = "Deck not found"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @PatchMapping("/{id}")
     ApiRes deleteById(
-            @Parameter(description = "Deck ID", required = true, example = "123e4567-e89b-12d3-a456-426614174000")
-            @PathVariable UUID id) {
+            @Parameter(
+                            description = "Deck ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174000")
+                    @PathVariable
+                    UUID id) {
         return this.service.delete(id);
     }
 
-    @Operation(
-            summary = "Get all decks",
-            description = "Retrieves a paginated list of all decks"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Decks retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = ApiRes.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid pagination parameters"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
+    @Operation(summary = "Get all decks", description = "Retrieves a paginated list of all decks")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Decks retrieved successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "400", description = "Invalid pagination parameters"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @GetMapping("")
     ApiRes getAll(
             @Parameter(description = "Page number (starts from 1)", required = true, example = "1")
-            @RequestParam @Min(1) int page,
+                    @RequestParam
+                    @Min(1) int page,
             @Parameter(description = "Page size", required = true, example = "10")
-            @RequestParam @Min(1) int size) {
+                    @RequestParam
+                    @Min(1) int size) {
         return this.service.getAll(page - 1, size);
     }
 }

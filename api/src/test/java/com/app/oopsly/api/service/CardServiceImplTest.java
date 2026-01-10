@@ -33,14 +33,13 @@ import com.app.oopsly.api.service.impl.CardServiceImpl;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CardItemReq;
 import com.app.oopsly.api.viewmodel.CardReq;
+import com.app.oopsly.api.viewmodel.UpdateDifficultyReq;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import com.app.oopsly.api.viewmodel.UpdateDifficultyReq;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -333,8 +332,9 @@ class CardServiceImplTest {
                     .thenReturn(Optional.of(existingCard));
             when(cardRepository.saveAll(any())).thenReturn(List.of(existingCard));
 
-            ApiRes result = cardService.updateDifficulty(deckId,
-                    List.of(new UpdateDifficultyReq(cardId, level.name())));
+            ApiRes result =
+                    cardService.updateDifficulty(
+                            deckId, List.of(new UpdateDifficultyReq(cardId, level.name())));
             assertNotNull(result);
             assertEquals(level, existingCard.getDifficultyLevel());
             assertNotNull(existingCard.getNextPracticeTime());
