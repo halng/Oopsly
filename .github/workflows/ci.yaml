@@ -58,8 +58,6 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN_IAM: ${{ secrets.SONAR_TOKEN_IAM }}
-          SONAR_TOKEN_ADMIN_UI: ${{ secrets.SONAR_TOKEN_ADMIN_UI }}
           DOCKER_USERNAME: halng
           DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           EVENT_NAME: ${{ github.event_name  }}

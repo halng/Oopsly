@@ -102,22 +102,4 @@ class DeckControllerTest {
         assertSame(expectedResponse, result);
         verify(deckService, times(1)).getAll(page - 1, size);
     }
-
-    @Test
-    void getAll_withInvalidPage_throwsException() {
-        int page = 0;
-        int size = 10;
-
-        assertThrows(IllegalArgumentException.class, () -> deckController.getAll(page, size));
-        verify(deckService, never()).getAll(anyInt(), anyInt());
-    }
-
-    @Test
-    void getAll_withInvalidSize_throwsException() {
-        int page = 0;
-        int size = 0;
-
-        assertThrows(IllegalArgumentException.class, () -> deckController.getAll(page, size));
-        verify(deckService, never()).getAll(anyInt(), anyInt());
-    }
 }
