@@ -1,0 +1,315 @@
+/*
+ *    Copyright 2026 Hao Nguyen Tan
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+package com.app.oopsly.api.service;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import com.app.oopsly.api.entity.Question;
+import com.app.oopsly.api.entity.TestSuite;
+import com.app.oopsly.api.exception.NotFoundException;
+import com.app.oopsly.api.exception.ValidationException;
+import com.app.oopsly.api.repository.QuestionRepository;
+import com.app.oopsly.api.repository.TestSuiteRepository;
+import com.app.oopsly.api.service.impl.QuestionServiceImpl;
+import com.app.oopsly.api.util.QuestionType;
+import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.QuestionReq;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class QuestionServiceImplTest {
+
+    @Mock private QuestionRepository questionRepository;
+
+    @Mock private TestSuiteRepository testSuiteRepository;
+
+    @Spy private ObjectMapper objectMapper;
+
+    @InjectMocks private QuestionServiceImpl questionService;
+
+    private TestSuite testSuite;
+    private UUID testSuiteId;
+    private UUID questionId;
+
+    @BeforeEach
+    void setUp() {
+        testSuiteId = UUID.randomUUID();
+        questionId = UUID.randomUUID();
+
+        testSuite = new TestSuite();
+        testSuite.setId(testSuiteId);
+        testSuite.setTitle("Test Suite");
+        testSuite.setIsActive(true);
+        testSuite.setDeleted(false);
+    }
+
+    @Test
+    void create_savesNewQuestion_withMultipleChoice() {
+        String metadata = "{\"options\":[\"A\",\"B\",\"C\"],\"correct_indices\":[0,2]}";
+        QuestionReq questionReq = new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+
+        Question savedQuestion = new Question();
+        savedQuestion.setId(questionId);
+        savedQuestion.setText(questionReq.text());
+        savedQuestion.setType(questionReq.type());
+        savedQuestion.setMetadata(questionReq.metadata());
+        savedQuestion.setTestSuite(testSuite);
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+        when(questionRepository.save(any(Question.class))).thenReturn(savedQuestion);
+
+        ApiRes result = questionService.create(testSuiteId, questionReq);
+
+        assertNotNull(result);
+        verify(questionRepository, times(1)).save(any(Question.class));
+    }
+
+    @Test
+    void create_savesNewQuestion_withTrueFalse() {
+        String metadata = "{\"correct_value\":true}";
+        QuestionReq questionReq = new QuestionReq("Is the sky blue?", QuestionType.TRUE_FALSE, metadata);
+
+        Question savedQuestion = new Question();
+        savedQuestion.setId(questionId);
+        savedQuestion.setText(questionReq.text());
+        savedQuestion.setType(questionReq.type());
+        savedQuestion.setMetadata(questionReq.metadata());
+        savedQuestion.setTestSuite(testSuite);
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+        when(questionRepository.save(any(Question.class))).thenReturn(savedQuestion);
+
+        ApiRes result = questionService.create(testSuiteId, questionReq);
+
+        assertNotNull(result);
+        verify(questionRepository, times(1)).save(any(Question.class));
+    }
+
+    @Test
+    void create_savesNewQuestion_withFillBlank() {
+        String metadata = "{\"accepted_answers\":[\"photosynthesis\",\"Photosynthesis\"]}";
+        QuestionReq questionReq =
+                new QuestionReq("What is the process by which plants make food?", QuestionType.FILL_BLANK, metadata);
+
+        Question savedQuestion = new Question();
+        savedQuestion.setId(questionId);
+        savedQuestion.setText(questionReq.text());
+        savedQuestion.setType(questionReq.type());
+        savedQuestion.setMetadata(questionReq.metadata());
+        savedQuestion.setTestSuite(testSuite);
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+        when(questionRepository.save(any(Question.class))).thenReturn(savedQuestion);
+
+        ApiRes result = questionService.create(testSuiteId, questionReq);
+
+        assertNotNull(result);
+        verify(questionRepository, times(1)).save(any(Question.class));
+    }
+
+    @Test
+    void create_throwsValidationException_whenMultipleChoiceHasNoOptions() {
+        String metadata = "{\"correct_indices\":[0,2]}";
+        QuestionReq questionReq = new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+
+        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
+        verify(questionRepository, never()).save(any(Question.class));
+    }
+
+    @Test
+    void create_throwsValidationException_whenTrueFalseHasNoCorrectValue() {
+        String metadata = "{\"something\":\"else\"}";
+        QuestionReq questionReq = new QuestionReq("Is the sky blue?", QuestionType.TRUE_FALSE, metadata);
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+
+        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
+        verify(questionRepository, never()).save(any(Question.class));
+    }
+
+    @Test
+    void create_throwsValidationException_whenFillBlankHasNoAcceptedAnswers() {
+        String metadata = "{\"something\":\"else\"}";
+        QuestionReq questionReq = new QuestionReq("Fill in the blank", QuestionType.FILL_BLANK, metadata);
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+
+        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
+        verify(questionRepository, never()).save(any(Question.class));
+    }
+
+    @Test
+    void create_throwsValidationException_whenFillBlankHasEmptyAcceptedAnswers() {
+        String metadata = "{\"accepted_answers\":[]}";
+        QuestionReq questionReq = new QuestionReq("Fill in the blank", QuestionType.FILL_BLANK, metadata);
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+
+        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
+        verify(questionRepository, never()).save(any(Question.class));
+    }
+
+    @Test
+    void create_throwsValidationException_whenMetadataIsInvalidJson() {
+        String metadata = "invalid json";
+        QuestionReq questionReq = new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+
+        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
+        verify(questionRepository, never()).save(any(Question.class));
+    }
+
+    @Test
+    void create_throwsNotFoundException_whenTestSuiteNotFound() {
+        String metadata = "{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}";
+        QuestionReq questionReq = new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> questionService.create(testSuiteId, questionReq));
+        verify(questionRepository, never()).save(any(Question.class));
+    }
+
+    @Test
+    void update_updatesExistingQuestion() {
+        String metadata = "{\"options\":[\"A\",\"B\",\"C\"],\"correct_indices\":[1]}";
+        QuestionReq questionReq = new QuestionReq("Updated question?", QuestionType.MULTIPLE_CHOICE, metadata);
+
+        Question existingQuestion = new Question();
+        existingQuestion.setId(questionId);
+        existingQuestion.setText("Old question");
+        existingQuestion.setType(QuestionType.MULTIPLE_CHOICE);
+        existingQuestion.setMetadata("{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}");
+        existingQuestion.setTestSuite(testSuite);
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+        when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
+                .thenReturn(Optional.of(existingQuestion));
+        when(questionRepository.save(any(Question.class))).thenReturn(existingQuestion);
+
+        ApiRes result = questionService.update(testSuiteId, questionId, questionReq);
+
+        assertNotNull(result);
+        verify(questionRepository, times(1)).save(any(Question.class));
+    }
+
+    @Test
+    void update_throwsNotFoundException_whenQuestionNotFound() {
+        String metadata = "{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}";
+        QuestionReq questionReq = new QuestionReq("Updated question?", QuestionType.MULTIPLE_CHOICE, metadata);
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+        when(questionRepository.findByIdAndTestSuite(questionId, testSuite)).thenReturn(Optional.empty());
+
+        assertThrows(
+                NotFoundException.class,
+                () -> questionService.update(testSuiteId, questionId, questionReq));
+        verify(questionRepository, never()).save(any(Question.class));
+    }
+
+    @Test
+    void delete_softDeletesQuestion() {
+        Question existingQuestion = new Question();
+        existingQuestion.setId(questionId);
+        existingQuestion.setDeleted(false);
+        existingQuestion.setTestSuite(testSuite);
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+        when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
+                .thenReturn(Optional.of(existingQuestion));
+        when(questionRepository.save(any(Question.class))).thenReturn(existingQuestion);
+
+        ApiRes result = questionService.delete(testSuiteId, questionId);
+
+        assertNotNull(result);
+        assertTrue(existingQuestion.getDeleted());
+        verify(questionRepository, times(1)).save(existingQuestion);
+    }
+
+    @Test
+    void delete_throwsNotFoundException_whenQuestionNotFound() {
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+        when(questionRepository.findByIdAndTestSuite(questionId, testSuite)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> questionService.delete(testSuiteId, questionId));
+    }
+
+    @Test
+    void getById_returnsQuestion() {
+        Question question = new Question();
+        question.setId(questionId);
+        question.setText("Test Question");
+        question.setType(QuestionType.TRUE_FALSE);
+        question.setMetadata("{\"correct_value\":true}");
+        question.setTestSuite(testSuite);
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+        when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
+                .thenReturn(Optional.of(question));
+
+        ApiRes result = questionService.getById(testSuiteId, questionId);
+
+        assertNotNull(result);
+        verify(questionRepository, times(1)).findByIdAndTestSuite(questionId, testSuite);
+    }
+
+    @Test
+    void getById_throwsNotFoundException_whenQuestionNotFound() {
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+        when(questionRepository.findByIdAndTestSuite(questionId, testSuite)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> questionService.getById(testSuiteId, questionId));
+    }
+
+    @Test
+    void getAllByTestSuite_returnsAllQuestions() {
+        List<Question> questions = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            Question question = new Question();
+            question.setId(UUID.randomUUID());
+            question.setText("Question " + i);
+            question.setType(QuestionType.TRUE_FALSE);
+            question.setMetadata("{\"correct_value\":true}");
+            question.setTestSuite(testSuite);
+            questions.add(question);
+        }
+
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+        when(questionRepository.findAllByTestSuite(testSuite)).thenReturn(questions);
+
+        ApiRes result = questionService.getAllByTestSuite(testSuiteId);
+
+        assertNotNull(result);
+        verify(questionRepository, times(1)).findAllByTestSuite(testSuite);
+    }
+}
