@@ -142,7 +142,8 @@ public class QuestionServiceImpl implements QuestionService {
                     break;
 
                 case TRUE_FALSE:
-                    if (!jsonNode.has("correct_value") || !jsonNode.get("correct_value").isBoolean()) {
+                    if (!jsonNode.has("correct_value")
+                            || !jsonNode.get("correct_value").isBoolean()) {
                         throw new ValidationException(
                                 "True/False questions must have 'correct_value' boolean in"
                                         + " metadata");
@@ -194,6 +195,8 @@ public class QuestionServiceImpl implements QuestionService {
                 .findById(testSuiteId)
                 .filter(ts -> !ts.getDeleted())
                 .orElseThrow(
-                        () -> new NotFoundException("Test suite not found with id: " + testSuiteId));
+                        () ->
+                                new NotFoundException(
+                                        "Test suite not found with id: " + testSuiteId));
     }
 }

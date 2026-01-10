@@ -73,7 +73,8 @@ class QuestionServiceImplTest {
     @Test
     void create_savesNewQuestion_withMultipleChoice() {
         String metadata = "{\"options\":[\"A\",\"B\",\"C\"],\"correct_indices\":[0,2]}";
-        QuestionReq questionReq = new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+        QuestionReq questionReq =
+                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
 
         Question savedQuestion = new Question();
         savedQuestion.setId(questionId);
@@ -94,7 +95,8 @@ class QuestionServiceImplTest {
     @Test
     void create_savesNewQuestion_withTrueFalse() {
         String metadata = "{\"correct_value\":true}";
-        QuestionReq questionReq = new QuestionReq("Is the sky blue?", QuestionType.TRUE_FALSE, metadata);
+        QuestionReq questionReq =
+                new QuestionReq("Is the sky blue?", QuestionType.TRUE_FALSE, metadata);
 
         Question savedQuestion = new Question();
         savedQuestion.setId(questionId);
@@ -116,7 +118,10 @@ class QuestionServiceImplTest {
     void create_savesNewQuestion_withFillBlank() {
         String metadata = "{\"accepted_answers\":[\"photosynthesis\",\"Photosynthesis\"]}";
         QuestionReq questionReq =
-                new QuestionReq("What is the process by which plants make food?", QuestionType.FILL_BLANK, metadata);
+                new QuestionReq(
+                        "What is the process by which plants make food?",
+                        QuestionType.FILL_BLANK,
+                        metadata);
 
         Question savedQuestion = new Question();
         savedQuestion.setId(questionId);
@@ -137,73 +142,86 @@ class QuestionServiceImplTest {
     @Test
     void create_throwsValidationException_whenMultipleChoiceHasNoOptions() {
         String metadata = "{\"correct_indices\":[0,2]}";
-        QuestionReq questionReq = new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+        QuestionReq questionReq =
+                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
 
-        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
+        assertThrows(
+                ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
         verify(questionRepository, never()).save(any(Question.class));
     }
 
     @Test
     void create_throwsValidationException_whenTrueFalseHasNoCorrectValue() {
         String metadata = "{\"something\":\"else\"}";
-        QuestionReq questionReq = new QuestionReq("Is the sky blue?", QuestionType.TRUE_FALSE, metadata);
+        QuestionReq questionReq =
+                new QuestionReq("Is the sky blue?", QuestionType.TRUE_FALSE, metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
 
-        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
+        assertThrows(
+                ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
         verify(questionRepository, never()).save(any(Question.class));
     }
 
     @Test
     void create_throwsValidationException_whenFillBlankHasNoAcceptedAnswers() {
         String metadata = "{\"something\":\"else\"}";
-        QuestionReq questionReq = new QuestionReq("Fill in the blank", QuestionType.FILL_BLANK, metadata);
+        QuestionReq questionReq =
+                new QuestionReq("Fill in the blank", QuestionType.FILL_BLANK, metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
 
-        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
+        assertThrows(
+                ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
         verify(questionRepository, never()).save(any(Question.class));
     }
 
     @Test
     void create_throwsValidationException_whenFillBlankHasEmptyAcceptedAnswers() {
         String metadata = "{\"accepted_answers\":[]}";
-        QuestionReq questionReq = new QuestionReq("Fill in the blank", QuestionType.FILL_BLANK, metadata);
+        QuestionReq questionReq =
+                new QuestionReq("Fill in the blank", QuestionType.FILL_BLANK, metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
 
-        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
+        assertThrows(
+                ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
         verify(questionRepository, never()).save(any(Question.class));
     }
 
     @Test
     void create_throwsValidationException_whenMetadataIsInvalidJson() {
         String metadata = "invalid json";
-        QuestionReq questionReq = new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+        QuestionReq questionReq =
+                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
 
-        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
+        assertThrows(
+                ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
         verify(questionRepository, never()).save(any(Question.class));
     }
 
     @Test
     void create_throwsNotFoundException_whenTestSuiteNotFound() {
         String metadata = "{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}";
-        QuestionReq questionReq = new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+        QuestionReq questionReq =
+                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> questionService.create(testSuiteId, questionReq));
+        assertThrows(
+                NotFoundException.class, () -> questionService.create(testSuiteId, questionReq));
         verify(questionRepository, never()).save(any(Question.class));
     }
 
     @Test
     void update_updatesExistingQuestion() {
         String metadata = "{\"options\":[\"A\",\"B\",\"C\"],\"correct_indices\":[1]}";
-        QuestionReq questionReq = new QuestionReq("Updated question?", QuestionType.MULTIPLE_CHOICE, metadata);
+        QuestionReq questionReq =
+                new QuestionReq("Updated question?", QuestionType.MULTIPLE_CHOICE, metadata);
 
         Question existingQuestion = new Question();
         existingQuestion.setId(questionId);
@@ -226,10 +244,12 @@ class QuestionServiceImplTest {
     @Test
     void update_throwsNotFoundException_whenQuestionNotFound() {
         String metadata = "{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}";
-        QuestionReq questionReq = new QuestionReq("Updated question?", QuestionType.MULTIPLE_CHOICE, metadata);
+        QuestionReq questionReq =
+                new QuestionReq("Updated question?", QuestionType.MULTIPLE_CHOICE, metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.findByIdAndTestSuite(questionId, testSuite)).thenReturn(Optional.empty());
+        when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
+                .thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
@@ -259,9 +279,11 @@ class QuestionServiceImplTest {
     @Test
     void delete_throwsNotFoundException_whenQuestionNotFound() {
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.findByIdAndTestSuite(questionId, testSuite)).thenReturn(Optional.empty());
+        when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
+                .thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> questionService.delete(testSuiteId, questionId));
+        assertThrows(
+                NotFoundException.class, () -> questionService.delete(testSuiteId, questionId));
     }
 
     @Test
@@ -286,9 +308,11 @@ class QuestionServiceImplTest {
     @Test
     void getById_throwsNotFoundException_whenQuestionNotFound() {
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.findByIdAndTestSuite(questionId, testSuite)).thenReturn(Optional.empty());
+        when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
+                .thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> questionService.getById(testSuiteId, questionId));
+        assertThrows(
+                NotFoundException.class, () -> questionService.getById(testSuiteId, questionId));
     }
 
     @Test

@@ -95,8 +95,7 @@ class TestSuiteServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
 
-        assertThrows(
-                NotFoundException.class, () -> testSuiteService.create(deckId, testSuiteReq));
+        assertThrows(NotFoundException.class, () -> testSuiteService.create(deckId, testSuiteReq));
         verify(testSuiteRepository, never()).save(any(TestSuite.class));
     }
 
@@ -158,8 +157,7 @@ class TestSuiteServiceImplTest {
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
         when(testSuiteRepository.findByIdAndDeck(testSuiteId, deck)).thenReturn(Optional.empty());
 
-        assertThrows(
-                NotFoundException.class, () -> testSuiteService.delete(deckId, testSuiteId));
+        assertThrows(NotFoundException.class, () -> testSuiteService.delete(deckId, testSuiteId));
     }
 
     @Test
@@ -187,8 +185,7 @@ class TestSuiteServiceImplTest {
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
         when(testSuiteRepository.findByIdAndDeck(testSuiteId, deck)).thenReturn(Optional.empty());
 
-        assertThrows(
-                NotFoundException.class, () -> testSuiteService.getById(deckId, testSuiteId));
+        assertThrows(NotFoundException.class, () -> testSuiteService.getById(deckId, testSuiteId));
     }
 
     @Test
