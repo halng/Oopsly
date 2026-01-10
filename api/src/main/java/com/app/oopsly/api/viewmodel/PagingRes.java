@@ -14,31 +14,14 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.entity;
+package com.app.oopsly.api.viewmodel;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
 import java.util.List;
-import lombok.*;
+import lombok.NonNull;
 
-@Getter
-@Setter
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "decks")
-@Entity
-public class DeckEntity extends Audit {
-
-    private String name;
-    private String description;
-
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "deck", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<CardEntity> cards;
-}
+public record PagingRes<T>(
+        @NonNull List<T> entities,
+        int currentPage,
+        long totalItems,
+        int totalPages,
+        boolean hasNextPage) {}

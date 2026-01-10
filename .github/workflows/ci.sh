@@ -98,6 +98,20 @@ run_backend_ci() {
         
         echo "Running Code Coverage and Verification..."
         ./gradlew jacocoTestCoverageVerification
+
+        echo "Logging to container registry..."
+        echo "$DOCKER_PASSWORD" | docker login ghcr.io -u "$DOCKER_USERNAME" --password-stdin
+
+        echo "Building and Pushing Docker Image..."
+        if [ -n "$IMAGE_TAG" ]; then
+            echo "Building Docker image with tag: $IMAGE_TAG"
+            ./gradlew bootBuildImage --imageName=ghcr.io/halng/oopsly-api:"$IMAGE_TAG"
+            docker push ghcr.io/halng/oopsly-api:"$IMAGE_TAG"
+
+            echo "Docker image ghcr.io/halng/oopsly-api:$IMAGE_TAG built and pushed successfully!"
+        else
+            echo "No IMAGE_TAG set; skipping Docker image build and push."
+        fi
         
         cd ..
         echo "Backend CI completed successfully!"
@@ -232,6 +246,17 @@ run_security_scans() {
 main() {
     # Parse arguments
     SKIP_SECURITY=false
+
+    COMMIT_HASH=$(git rev-parse --short HEAD)
+
+    if [[ "$REF" == "refs/heads/main" ]]; then
+        export IMAGE_TAG="snapshot-$COMMIT_HASH"
+    elif [[ "$REF" == "refs/heads/release" ]]; then
+        export IMAGE_TAG="latest-$COMMIT_HASH"
+    else
+        export IMAGE_TAG="dev-$COMMIT_HASH"
+        echo "Non-deployment branch detected. Building with dev tag only."
+    fi
     
     while [[ $# -gt 0 ]]; do
         case $1 in

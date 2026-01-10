@@ -16,16 +16,53 @@
 
 package com.app.oopsly.api.controller;
 
-import com.app.oopsly.api.entity.DeckEntity;
 import com.app.oopsly.api.service.DeckService;
+import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.DeckReq;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import java.util.UUID;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/decks")
-public class DeckController extends AbstractController<DeckEntity, DeckReq> {
+public class DeckController {
+    private final DeckService service;
+
     public DeckController(DeckService service) {
-        super(service);
+        this.service = service;
+    }
+
+    @PostMapping("")
+    ApiRes create(@Valid @RequestBody DeckReq requestBody) {
+        return this.service.create(requestBody);
+    }
+
+    @PutMapping("/{id}")
+    ApiRes update(@Valid @RequestBody DeckReq requestBody, @PathVariable UUID id) {
+        return this.service.update(requestBody, id);
+    }
+
+    @GetMapping("/{id}")
+    ApiRes getById(@PathVariable UUID id) {
+        return this.service.getById(id);
+    }
+
+    @PatchMapping("/{id}")
+    ApiRes deleteById(@PathVariable UUID id) {
+        return this.service.delete(id);
+    }
+
+    @GetMapping("")
+    ApiRes getAll(@RequestParam @Min(1) int page, @RequestParam @Min(1) int size) {
+        return this.service.getAll(page - 1, size);
     }
 }

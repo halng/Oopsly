@@ -16,7 +16,18 @@
 
 package com.app.oopsly.api.service;
 
-import com.app.oopsly.api.entity.DeckEntity;
+import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.DeckReq;
+import java.util.UUID;
 
-public interface DeckService extends Service<DeckEntity, DeckReq> {}
+public interface DeckService {
+    ApiRes create(DeckReq request);
+
+    ApiRes update(DeckReq request, UUID id);
+
+    ApiRes delete(UUID id);
+
+    ApiRes getById(UUID id);
+
+    ApiRes getAll(int page, int size);
+}
