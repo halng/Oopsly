@@ -121,9 +121,7 @@ public class CollectionController {
                         description = "Collection updated successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(responseCode = "400", description = "Invalid request body"),
-                @ApiResponse(
-                        responseCode = "404",
-                        description = "Collection or deck not found"),
+                @ApiResponse(responseCode = "404", description = "Collection or deck not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PutMapping("/{id}")
@@ -156,9 +154,7 @@ public class CollectionController {
                         responseCode = "200",
                         description = "Collection retrieved successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(
-                        responseCode = "404",
-                        description = "Collection or deck not found"),
+                @ApiResponse(responseCode = "404", description = "Collection or deck not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/{id}")
@@ -188,9 +184,7 @@ public class CollectionController {
                         responseCode = "200",
                         description = "Collection deleted successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(
-                        responseCode = "404",
-                        description = "Collection or deck not found"),
+                @ApiResponse(responseCode = "404", description = "Collection or deck not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PatchMapping("/{id}")

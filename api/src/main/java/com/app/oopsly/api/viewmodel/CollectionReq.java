@@ -18,4 +18,5 @@ package com.app.oopsly.api.viewmodel;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record CollectionReq(@NotBlank(message = "Name is required") String name, String description) {}
+public record CollectionReq(
+        @NotBlank(message = "Name is required") String name, String description) {}

@@ -165,8 +165,7 @@ class CollectionServiceImplTest {
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.empty());
+        when(collectionRepository.findByIdAndDeck(collectionId, deck)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
@@ -206,8 +205,7 @@ class CollectionServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
 
-        assertThrows(
-                NotFoundException.class, () -> collectionService.delete(deckId, collectionId));
+        assertThrows(NotFoundException.class, () -> collectionService.delete(deckId, collectionId));
         verify(collectionRepository, never()).findByIdAndDeck(any(), any());
     }
 
@@ -215,11 +213,9 @@ class CollectionServiceImplTest {
     void delete_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.empty());
+        when(collectionRepository.findByIdAndDeck(collectionId, deck)).thenReturn(Optional.empty());
 
-        assertThrows(
-                NotFoundException.class, () -> collectionService.delete(deckId, collectionId));
+        assertThrows(NotFoundException.class, () -> collectionService.delete(deckId, collectionId));
         verify(collectionRepository, never()).save(any(CollectionEntity.class));
     }
 
@@ -251,8 +247,7 @@ class CollectionServiceImplTest {
     void getById_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.empty());
+        when(collectionRepository.findByIdAndDeck(collectionId, deck)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class, () -> collectionService.getById(deckId, collectionId));

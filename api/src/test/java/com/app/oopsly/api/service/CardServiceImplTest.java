@@ -138,8 +138,7 @@ class CardServiceImplTest {
     void create_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.empty());
+        when(collectionRepository.findByIdAndDeck(collectionId, deck)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class, () -> cardService.create(deckId, collectionId, cardReq));
@@ -194,8 +193,7 @@ class CardServiceImplTest {
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.empty());
+        when(collectionRepository.findByIdAndDeck(collectionId, deck)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
@@ -256,8 +254,7 @@ class CardServiceImplTest {
     void delete_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.empty());
+        when(collectionRepository.findByIdAndDeck(collectionId, deck)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class, () -> cardService.delete(deckId, collectionId, cardId));
@@ -311,8 +308,7 @@ class CardServiceImplTest {
     void getById_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.empty());
+        when(collectionRepository.findByIdAndDeck(collectionId, deck)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class, () -> cardService.getById(deckId, collectionId, cardId));
@@ -374,8 +370,7 @@ class CardServiceImplTest {
     void getAll_CardsByCollection_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.empty());
+        when(collectionRepository.findByIdAndDeck(collectionId, deck)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,

@@ -71,8 +71,7 @@ class CollectionCascadeDeleteIntegrationTest {
 
         // Set security context with test user
         SecurityContextHolder.getContext()
-                .setAuthentication(
-                        new UsernamePasswordAuthenticationToken(testUser, null, null));
+                .setAuthentication(new UsernamePasswordAuthenticationToken(testUser, null, null));
 
         // Create and save test deck
         testDeck = new DeckEntity();

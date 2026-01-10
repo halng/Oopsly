@@ -79,8 +79,7 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public ApiRes delete(UUID deckId, UUID collectionId, UUID cardId) {
-        log.info(
-                "Deleting card: {} from collection: {} in deck: {}", cardId, collectionId, deckId);
+        log.info("Deleting card: {} from collection: {} in deck: {}", cardId, collectionId, deckId);
         CollectionEntity collection = getCollectionForCurrentUser(deckId, collectionId);
         CardEntity existingCard =
                 cardRepository
@@ -95,8 +94,7 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public ApiRes getById(UUID deckId, UUID collectionId, UUID cardId) {
-        log.info(
-                "Getting card: {} from collection: {} in deck: {}", cardId, collectionId, deckId);
+        log.info("Getting card: {} from collection: {} in deck: {}", cardId, collectionId, deckId);
         CollectionEntity collection = getCollectionForCurrentUser(deckId, collectionId);
         CardEntity card =
                 cardRepository
@@ -163,7 +161,8 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public ApiRes updateDifficulty(UUID deckId, UUID collectionId, List<UpdateDifficultyReq> reqList) {
+    public ApiRes updateDifficulty(
+            UUID deckId, UUID collectionId, List<UpdateDifficultyReq> reqList) {
         log.info(
                 "Updating difficulty for cards in collection: {} in deck: {}. Total cards: {}",
                 collectionId,
@@ -179,8 +178,7 @@ public class CardServiceImpl implements CardService {
                                                 collection, item.cardId(), item.newLevel()))
                         .collect(Collectors.toList());
         cardRepository.saveAll(updatedList);
-        log.info(
-                "Successfully updated difficulty for all cards in collection: {}", collectionId);
+        log.info("Successfully updated difficulty for all cards in collection: {}", collectionId);
         return ApiRes.success("Updated successfully");
     }
 

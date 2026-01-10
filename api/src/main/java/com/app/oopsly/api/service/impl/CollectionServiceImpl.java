@@ -134,7 +134,11 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     public ApiRes getAllByDeck(UUID deckId, int page, int size) {
-        log.info("Getting all collections for deck: {} with page: {} and size: {}", deckId, page, size);
+        log.info(
+                "Getting all collections for deck: {} with page: {} and size: {}",
+                deckId,
+                page,
+                size);
         DeckEntity deck = getDeckForCurrentUser(deckId);
         Pageable pageable = PageRequest.of(page, size);
         Page<CollectionEntity> pageData = collectionRepository.findAllByDeck(deck, pageable);
