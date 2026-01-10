@@ -4,3 +4,11 @@ __pycache__/
 .idea/
 .vscode/
 test-results/
+# Generated test files
+tests/integration/generated/
+
+# WireMock recordings
+wiremock/
+
+# Test reports
+reports/

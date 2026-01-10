@@ -22,6 +22,10 @@ from pathlib import Path
 from typing import Dict, Any
 
 
+# Optional: Enable response recording for WireMock
+ENABLE_RECORDING = os.getenv("ENABLE_RECORDING", "false").lower() == "true"
+
+
 @pytest.fixture(scope="session")
 def openapi_spec() -> Dict[str, Any]:
     """
@@ -55,6 +59,7 @@ def api_base_url(openapi_spec) -> str:
 def api_client(api_base_url):
     """
     Create a reusable HTTP client configured with the API base URL.
+    Optionally wraps with response recorder for WireMock integration.
     """
     session = requests.Session()
     session.headers.update({
@@ -87,7 +92,15 @@ def api_client(api_base_url):
         def delete(self, path: str, **kwargs) -> requests.Response:
             return self.request("DELETE", path, **kwargs)
     
-    return APIClient(api_base_url, session)
+    client = APIClient(api_base_url, session)
+    
+    # Optionally wrap with recording client
+    if ENABLE_RECORDING:
+        from tests.integration.utils.response_recorder import WireMockRecorder, RecordingAPIClient
+        recorder = WireMockRecorder(output_dir="wiremock/mappings")
+        client = RecordingAPIClient(client, recorder)
+    
+    return client
 
 
 @pytest.fixture
