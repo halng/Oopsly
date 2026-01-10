@@ -18,6 +18,9 @@ app:
     authWithJwt: true
 
 spring:
+  threads:
+    virtual:
+      enabled: true
   autoconfigure:
     exclude: org.springframework.ai.model.vertexai.autoconfigure.embedding.VertexAiTextEmbeddingAutoConfiguration
   application:

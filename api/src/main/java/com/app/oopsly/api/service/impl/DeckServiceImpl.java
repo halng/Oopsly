@@ -18,13 +18,22 @@ package com.app.oopsly.api.service.impl;
 
 import com.app.oopsly.api.entity.DeckEntity;
 import com.app.oopsly.api.entity.User;
+import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.repository.DeckRepository;
 import com.app.oopsly.api.service.DeckService;
 import com.app.oopsly.api.service.UserService;
+import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.DeckReq;
+import com.app.oopsly.api.viewmodel.DeckRes;
+import com.app.oopsly.api.viewmodel.PagingRes;
+import java.util.List;
+import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -36,9 +45,75 @@ public class DeckServiceImpl implements DeckService {
     private final UserService userService;
 
     @Override
-    public DeckEntity toEntity(@NonNull DeckReq from, DeckEntity to) {
+    public ApiRes create(DeckReq request) {
+        log.info("Creating deck for user {}", this.currentUser().getId());
+        DeckEntity savedEntity = deckRepository.save(this.toEntity(request, null));
+        return ApiRes.success("Created successfully", this.toViewModel(savedEntity));
+    }
+
+    @Override
+    public ApiRes update(DeckReq request, UUID id) {
+        log.info("Updating deck {} for user {}", id, this.currentUser().getId());
+        DeckEntity existingEntity =
+                deckRepository
+                        .findByIdAndUser(id, this.currentUser())
+                        .orElseThrow(
+                                () -> new NotFoundException("Entity not found with id: " + id));
+
+        DeckEntity newEntity = this.toEntity(request, existingEntity);
+        deckRepository.save(newEntity);
+        return ApiRes.success("Updated successfully");
+    }
+
+    @Override
+    public ApiRes delete(UUID id) {
+        log.info("Deleting deck {} for user {}", id, this.currentUser().getId());
+        DeckEntity existingEntity =
+                deckRepository
+                        .findByIdAndUser(id, this.currentUser())
+                        .orElseThrow(
+                                () -> new NotFoundException("Entity not found with id: " + id));
+
+        existingEntity.setDeleted(true);
+        deckRepository.save(existingEntity);
+        return ApiRes.success("Deleted successfully");
+    }
+
+    @Override
+    public ApiRes getById(UUID id) {
+        log.info("Fetching deck {} for user {}", id, this.currentUser().getId());
+        DeckEntity entity =
+                deckRepository
+                        .findByIdAndUser(id, this.currentUser())
+                        .orElseThrow(
+                                () -> new NotFoundException("Entity not found with id: " + id));
+        return ApiRes.success("Fetched successfully", this.toViewModel(entity));
+    }
+
+    @Override
+    public ApiRes getAll(int page, int size) {
+        log.info(
+                "Fetching decks page {} size {} for user {}",
+                page,
+                size,
+                this.currentUser().getId());
+        Pageable pageable = PageRequest.of(page, size);
+        Page<DeckEntity> pageData = deckRepository.findAllByUser(this.currentUser(), pageable);
+        List<DeckRes> entities = pageData.getContent().stream().map(this::toViewModel).toList();
+
+        PagingRes<DeckRes> response =
+                new PagingRes<>(
+                        entities,
+                        pageable.getPageNumber(),
+                        pageData.getTotalElements(),
+                        pageData.getTotalPages(),
+                        pageData.hasNext());
+        return ApiRes.success("Fetched successfully", response);
+    }
+
+    DeckEntity toEntity(@NonNull DeckReq from, DeckEntity to) {
         if (to == null) {
-            User currentUser = this.getCurrentUser();
+            User currentUser = this.currentUser();
             return DeckEntity.builder()
                     .name(from.name())
                     .description(from.description())
@@ -51,18 +126,11 @@ public class DeckServiceImpl implements DeckService {
         return to;
     }
 
-    @Override
-    public DeckReq toViewModel(DeckEntity from) {
-        return new DeckReq(from.getName(), from.getDescription());
+    DeckRes toViewModel(DeckEntity from) {
+        return new DeckRes(from.getId(), from.getName(), from.getDescription());
     }
 
-    @Override
-    public DeckRepository getRepository() {
-        return deckRepository;
-    }
-
-    @Override
-    public User getCurrentUser() {
+    User currentUser() {
         return userService.getCurrentUser();
     }
 }

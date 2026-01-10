@@ -93,20 +93,13 @@ class DeckControllerTest {
 
     @Test
     void getAll_delegatesToDeckService() {
-        int page = 0;
+        int page = 1;
         int size = 10;
-        when(deckService.getAll(page, size)).thenReturn(expectedResponse);
+        when(deckService.getAll(page - 1, size)).thenReturn(expectedResponse);
 
         ApiRes result = deckController.getAll(page, size);
 
         assertSame(expectedResponse, result);
-        verify(deckService, times(1)).getAll(page, size);
-    }
-
-    @Test
-    void extendsAbstractController() {
-        assertTrue(
-                deckController instanceof AbstractController,
-                "DeckController should extend AbstractController");
+        verify(deckService, times(1)).getAll(page - 1, size);
     }
 }

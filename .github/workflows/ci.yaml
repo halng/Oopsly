@@ -20,6 +20,7 @@ permissions:
   contents: read
   actions: read
   security-events: write
+  packages: write
 
 jobs:
   ci:
@@ -57,3 +58,8 @@ jobs:
         run: ./.github/workflows/ci.sh
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCKER_USERNAME: halng
+          DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name  }}
+          REF: ${{ github.ref }}

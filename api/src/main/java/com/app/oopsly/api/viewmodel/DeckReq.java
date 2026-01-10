@@ -20,4 +20,4 @@ import jakarta.validation.constraints.Size;
 import lombok.NonNull;
 
 public record DeckReq(
-        @NonNull String name, @NonNull @Size(min = 50, max = 100) String description) {}
+        @NonNull String name, @NonNull @Size(min = 10, max = 100) String description) {}
