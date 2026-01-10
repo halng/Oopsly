@@ -20,5 +20,14 @@ public enum DifficultyLevel {
     HARD,
     GOOD,
     EASY,
-    AGAIN
+    AGAIN;
+
+    public static DifficultyLevel fromString(String level) {
+        for (DifficultyLevel dl : DifficultyLevel.values()) {
+            if (dl.name().equalsIgnoreCase(level)) {
+                return dl;
+            }
+        }
+        throw new IllegalArgumentException("Invalid difficulty level: " + level);
+    }
 }

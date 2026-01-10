@@ -25,10 +25,8 @@ import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.DeckRepository;
 import com.app.oopsly.api.service.CardService;
 import com.app.oopsly.api.service.UserService;
-import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.CardItemReq;
-import com.app.oopsly.api.viewmodel.CardReq;
-import com.app.oopsly.api.viewmodel.CardRes;
+import com.app.oopsly.api.util.StringUtils;
+import com.app.oopsly.api.viewmodel.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -61,36 +59,12 @@ public class CardServiceImpl implements CardService {
                         .map(cardItem -> createCardEntity(cardItem, deck))
                         .collect(Collectors.toList());
 
-        List<CardEntity> savedCards = cardRepository.saveAll(cards);
+        List<CardEntity> savedCards = cardRepository.saveAllAndFlush(cards);
         log.info("Successfully created {} cards for deck: {}", savedCards.size(), deckId);
         List<CardRes> responseCards =
                 savedCards.stream().map(this::toCardRes).collect(Collectors.toList());
 
         return ApiRes.success("Created successfully", responseCards);
-    }
-
-    @Override
-    public ApiRes updateDifficulty(UUID deckId, UUID cardId, DifficultyLevel difficultyLevel) {
-        log.info(
-                "Updating difficulty for card: {} in deck: {} to {}",
-                cardId,
-                deckId,
-                difficultyLevel);
-        DeckEntity deck = getDeckForCurrentUser(deckId);
-        CardEntity existingCard =
-                cardRepository
-                        .findByIdAndDeck(cardId, deck)
-                        .orElseThrow(
-                                () -> new NotFoundException("Card not found with id: " + cardId));
-
-        existingCard.setDifficultyLevel(difficultyLevel);
-        Instant nextPracticeTime = calculateNextPracticeTime(difficultyLevel);
-        existingCard.setNextPracticeTime(nextPracticeTime);
-        existingCard.setNumberOfPractice(existingCard.getNumberOfPractice() + 1);
-
-        cardRepository.save(existingCard);
-        log.info("Successfully updated difficulty for card: {}", cardId);
-        return ApiRes.success("Updated successfully", toCardRes(existingCard));
     }
 
     @Override
@@ -122,7 +96,7 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public ApiRes getAll(UUID deckId, int page, int size) {
+    public ApiRes getAllCardsByDeck(UUID deckId, int page, int size) {
         log.info("Getting all cards for deck: {} with page: {} and size: {}", deckId, page, size);
         DeckEntity deck = getDeckForCurrentUser(deckId);
         Pageable pageable = PageRequest.of(page, size);
@@ -155,8 +129,61 @@ public class CardServiceImpl implements CardService {
         };
     }
 
+    @Override
+    public ApiRes updateCard(UUID deckId, UUID cardId, CardItemReq item) {
+        DeckEntity deck = getDeckForCurrentUser(deckId);
+        CardEntity existingCard =
+                cardRepository
+                        .findByIdAndDeck(cardId, deck)
+                        .orElseThrow(
+                                () -> new NotFoundException("Card not found with id: " + cardId));
+
+        existingCard.setFront(item.front());
+        existingCard.setBack(item.back());
+        cardRepository.save(existingCard);
+        log.info("Successfully updated card: {}", cardId);
+        return ApiRes.success("Updated successfully", toCardRes(existingCard));
+    }
+
+    @Override
+    public ApiRes updateDifficulty(UUID deckId, List<UpdateDifficultyReq> reqList) {
+        log.info(
+                "Updating difficulty for cards in deck: {}. Total cards: {}",
+                deckId,
+                reqList.size());
+        DeckEntity deck = getDeckForCurrentUser(deckId);
+
+        List<CardEntity> updatedList =
+                reqList.stream()
+                        .map(
+                                item ->
+                                        updateSingleCardDifficulty(
+                                                deck, item.cardId(), item.newLevel()))
+                        .collect(Collectors.toList());
+        cardRepository.saveAll(updatedList);
+        log.info("Successfully updated difficulty for all cards in deck: {}", deckId);
+        return ApiRes.success("Updated successfully");
+    }
+
+    private CardEntity updateSingleCardDifficulty(
+            DeckEntity deck, UUID cardId, String difficultyLevel) {
+        CardEntity existingCard =
+                cardRepository
+                        .findByIdAndDeck(cardId, deck)
+                        .orElseThrow(
+                                () -> new NotFoundException("Card not found with id: " + cardId));
+
+        DifficultyLevel level = DifficultyLevel.fromString(difficultyLevel);
+        existingCard.setDifficultyLevel(level);
+        Instant nextPracticeTime = calculateNextPracticeTime(level);
+        existingCard.setNextPracticeTime(nextPracticeTime);
+        existingCard.setNumberOfPractice(existingCard.getNumberOfPractice() + 1);
+
+        return existingCard;
+    }
+
     private CardEntity toEntityFromItem(CardItemReq item) {
-        return CardEntity.builder().topic(item.topic()).answer(item.answer()).build();
+        return CardEntity.builder().front(item.front()).back(item.back()).build();
     }
 
     private CardEntity createCardEntity(CardItemReq cardItem, DeckEntity deck) {
@@ -169,8 +196,8 @@ public class CardServiceImpl implements CardService {
     private CardRes toCardRes(CardEntity entity) {
         return new CardRes(
                 entity.getId(),
-                entity.getTopic(),
-                entity.getAnswer(),
+                entity.getFront(),
+                entity.getBack(),
                 entity.getDifficultyLevel(),
                 entity.getNextPracticeTime(),
                 entity.getNumberOfPractice());
@@ -178,7 +205,10 @@ public class CardServiceImpl implements CardService {
 
     private DeckEntity getDeckForCurrentUser(UUID deckId) {
         User currentUser = userService.getCurrentUser();
-        log.debug("Getting deck: {} for user: {}", deckId, currentUser.getEmail());
+        log.debug(
+                "Getting deck: {} for user: {}",
+                deckId,
+                StringUtils.masked(currentUser.getEmail()));
         return deckRepository
                 .findByIdAndUser(deckId, currentUser)
                 .orElseThrow(() -> new NotFoundException("Deck not found with id: " + deckId));

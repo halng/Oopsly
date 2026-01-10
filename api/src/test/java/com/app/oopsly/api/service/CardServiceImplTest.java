@@ -39,6 +39,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.app.oopsly.api.viewmodel.UpdateDifficultyReq;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,6 +68,7 @@ class CardServiceImplTest {
     private DeckEntity deck;
     private UUID deckId;
     private UUID cardId;
+    private List<UpdateDifficultyReq> updateDifficultyReq;
 
     @BeforeEach
     void setUp() {
@@ -92,21 +95,21 @@ class CardServiceImplTest {
         for (int i = 0; i < 2; i++) {
             CardEntity card = new CardEntity();
             card.setId(UUID.randomUUID());
-            card.setTopic(cardItems.get(i).topic());
-            card.setAnswer(cardItems.get(i).answer());
+            card.setFront(cardItems.get(i).front());
+            card.setBack(cardItems.get(i).back());
             card.setDeck(deck);
             savedCards.add(card);
         }
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(cardRepository.saveAll(anyList())).thenReturn(savedCards);
+        when(cardRepository.saveAllAndFlush(anyList())).thenReturn(savedCards);
 
         ApiRes result = cardService.create(deckId, request);
 
         assertNotNull(result);
         verify(deckRepository, times(1)).findByIdAndUser(deckId, currentUser);
-        verify(cardRepository, times(1)).saveAll(anyList());
+        verify(cardRepository, times(1)).saveAllAndFlush(anyList());
     }
 
     @Test
@@ -120,48 +123,53 @@ class CardServiceImplTest {
 
     @Test
     void updateDifficulty_updatesDifficultyLevelAndNextPracticeTime() {
+        updateDifficultyReq = List.of(new UpdateDifficultyReq(cardId, DifficultyLevel.GOOD.name()));
         CardEntity existingCard = new CardEntity();
         existingCard.setId(cardId);
-        existingCard.setTopic("Topic");
-        existingCard.setAnswer("Answer");
+        existingCard.setFront("Topic");
+        existingCard.setBack("Answer");
         existingCard.setDeck(deck);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
         when(cardRepository.findByIdAndDeck(cardId, deck)).thenReturn(Optional.of(existingCard));
-        when(cardRepository.save(any(CardEntity.class))).thenReturn(existingCard);
+        when(cardRepository.saveAll(any())).thenReturn(List.of(existingCard));
 
-        ApiRes result = cardService.updateDifficulty(deckId, cardId, DifficultyLevel.GOOD);
+        ApiRes result = cardService.updateDifficulty(deckId, updateDifficultyReq);
 
         assertNotNull(result);
         assertEquals(DifficultyLevel.GOOD, existingCard.getDifficultyLevel());
         assertNotNull(existingCard.getNextPracticeTime());
         verify(deckRepository, times(1)).findByIdAndUser(deckId, currentUser);
         verify(cardRepository, times(1)).findByIdAndDeck(cardId, deck);
-        verify(cardRepository, times(1)).save(any(CardEntity.class));
+        verify(cardRepository, times(1)).saveAll(any());
     }
 
     @Test
     void updateDifficulty_throwsNotFoundException_whenDeckNotFound() {
+        updateDifficultyReq = List.of(new UpdateDifficultyReq(cardId, DifficultyLevel.EASY.name()));
+
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
-                () -> cardService.updateDifficulty(deckId, cardId, DifficultyLevel.EASY));
+                () -> cardService.updateDifficulty(deckId, updateDifficultyReq));
         verify(cardRepository, never()).findByIdAndDeck(any(), any());
         verify(cardRepository, never()).save(any(CardEntity.class));
     }
 
     @Test
     void updateDifficulty_throwsNotFoundException_whenCardNotFound() {
+        updateDifficultyReq = List.of(new UpdateDifficultyReq(cardId, DifficultyLevel.HARD.name()));
+
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
         when(cardRepository.findByIdAndDeck(cardId, deck)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
-                () -> cardService.updateDifficulty(deckId, cardId, DifficultyLevel.HARD));
+                () -> cardService.updateDifficulty(deckId, updateDifficultyReq));
         verify(cardRepository, never()).save(any(CardEntity.class));
     }
 
@@ -238,13 +246,13 @@ class CardServiceImplTest {
     }
 
     @Test
-    void getAll_withPagination_returnsCards() {
+    void getAll_CardsByDeck_withPagination_returnsCards() {
         List<CardEntity> cards = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             CardEntity card = new CardEntity();
             card.setId(UUID.randomUUID());
-            card.setTopic("Topic " + i);
-            card.setAnswer("Answer " + i);
+            card.setFront("Topic " + i);
+            card.setBack("Answer " + i);
             card.setDeck(deck);
             cards.add(card);
         }
@@ -254,7 +262,7 @@ class CardServiceImplTest {
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
         when(cardRepository.findAllByDeck(eq(deck), any(Pageable.class))).thenReturn(page);
 
-        ApiRes result = cardService.getAll(deckId, 0, 10);
+        ApiRes result = cardService.getAllCardsByDeck(deckId, 0, 10);
 
         assertNotNull(result);
         verify(deckRepository, times(1)).findByIdAndUser(deckId, currentUser);
@@ -262,11 +270,11 @@ class CardServiceImplTest {
     }
 
     @Test
-    void getAll_throwsNotFoundException_whenDeckNotFound() {
+    void getAll_CardsByDeck_throwsNotFoundException_whenDeckNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> cardService.getAll(deckId, 0, 10));
+        assertThrows(NotFoundException.class, () -> cardService.getAllCardsByDeck(deckId, 0, 10));
         verify(cardRepository, never()).findAllByDeck(any(), any());
     }
 
@@ -315,17 +323,18 @@ class CardServiceImplTest {
         for (DifficultyLevel level : DifficultyLevel.values()) {
             CardEntity existingCard = new CardEntity();
             existingCard.setId(cardId);
-            existingCard.setTopic("Topic");
-            existingCard.setAnswer("Answer");
+            existingCard.setFront("Topic");
+            existingCard.setBack("Answer");
             existingCard.setDeck(deck);
 
             when(userService.getCurrentUser()).thenReturn(currentUser);
             when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
             when(cardRepository.findByIdAndDeck(cardId, deck))
                     .thenReturn(Optional.of(existingCard));
-            when(cardRepository.save(any(CardEntity.class))).thenReturn(existingCard);
+            when(cardRepository.saveAll(any())).thenReturn(List.of(existingCard));
 
-            ApiRes result = cardService.updateDifficulty(deckId, cardId, level);
+            ApiRes result = cardService.updateDifficulty(deckId,
+                    List.of(new UpdateDifficultyReq(cardId, level.name())));
             assertNotNull(result);
             assertEquals(level, existingCard.getDifficultyLevel());
             assertNotNull(existingCard.getNextPracticeTime());

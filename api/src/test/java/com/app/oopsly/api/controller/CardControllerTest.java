@@ -42,7 +42,7 @@ class CardControllerTest {
     @InjectMocks private CardController cardController;
 
     private CardReq cardReq;
-    private UpdateDifficultyReq updateDifficultyReq;
+    private List<UpdateDifficultyReq> updateDifficultyReq;
     private UUID deckId;
     private UUID cardId;
     private ApiRes expectedResponse;
@@ -51,7 +51,7 @@ class CardControllerTest {
     void setUp() {
         List<CardItemReq> cardItems = List.of(new CardItemReq("Test Topic", "Test Answer"));
         cardReq = new CardReq(cardItems);
-        updateDifficultyReq = new UpdateDifficultyReq(DifficultyLevel.GOOD);
+        updateDifficultyReq = List.of(new UpdateDifficultyReq(cardId, DifficultyLevel.GOOD.name()));
         deckId = UUID.randomUUID();
         cardId = UUID.randomUUID();
         expectedResponse = ApiRes.success("Success");
@@ -69,13 +69,14 @@ class CardControllerTest {
 
     @Test
     void updateDifficulty_delegatesToCardService() {
-        when(cardService.updateDifficulty(deckId, cardId, DifficultyLevel.GOOD))
+
+        when(cardService.updateDifficulty(deckId, updateDifficultyReq))
                 .thenReturn(expectedResponse);
 
-        ApiRes result = cardController.updateDifficulty(deckId, cardId, updateDifficultyReq);
+        ApiRes result = cardController.updateDifficulty(deckId, updateDifficultyReq);
 
         assertSame(expectedResponse, result);
-        verify(cardService, times(1)).updateDifficulty(deckId, cardId, DifficultyLevel.GOOD);
+        verify(cardService, times(1)).updateDifficulty(deckId, updateDifficultyReq);
     }
 
     @Test
@@ -102,24 +103,24 @@ class CardControllerTest {
     void getAll_delegatesToCardService() {
         int page = 0;
         int size = 10;
-        when(cardService.getAll(deckId, page, size)).thenReturn(expectedResponse);
+        when(cardService.getAllCardsByDeck(deckId, page, size)).thenReturn(expectedResponse);
 
-        ApiRes result = cardController.getAll(deckId, page, size);
+        ApiRes result = cardController.getAllCardsByDeck(deckId, page, size);
 
         assertSame(expectedResponse, result);
-        verify(cardService, times(1)).getAll(deckId, page, size);
+        verify(cardService, times(1)).getAllCardsByDeck(deckId, page, size);
     }
 
     @Test
     void getAll_withValidPageAndSize_delegatesToCardService() {
         int page = 1;
         int size = 20;
-        when(cardService.getAll(deckId, page, size)).thenReturn(expectedResponse);
+        when(cardService.getAllCardsByDeck(deckId, page, size)).thenReturn(expectedResponse);
 
-        ApiRes result = cardController.getAll(deckId, page, size);
+        ApiRes result = cardController.getAllCardsByDeck(deckId, page, size);
 
         assertSame(expectedResponse, result);
-        verify(cardService, times(1)).getAll(deckId, page, size);
+        verify(cardService, times(1)).getAllCardsByDeck(deckId, page, size);
     }
 
     @Test

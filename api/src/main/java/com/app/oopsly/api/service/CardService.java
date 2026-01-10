@@ -18,20 +18,25 @@ package com.app.oopsly.api.service;
 
 import com.app.oopsly.api.entity.DifficultyLevel;
 import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.CardItemReq;
 import com.app.oopsly.api.viewmodel.CardReq;
+import com.app.oopsly.api.viewmodel.UpdateDifficultyReq;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public interface CardService {
     ApiRes create(UUID deckId, CardReq request);
 
-    ApiRes updateDifficulty(UUID deckId, UUID cardId, DifficultyLevel difficultyLevel);
+    ApiRes updateDifficulty(UUID deckId, List<UpdateDifficultyReq> reqList);
 
     ApiRes delete(UUID deckId, UUID cardId);
 
     ApiRes getById(UUID deckId, UUID cardId);
 
-    ApiRes getAll(UUID deckId, int page, int size);
+    ApiRes getAllCardsByDeck(UUID deckId, int page, int size);
 
     Instant calculateNextPracticeTime(DifficultyLevel difficultyLevel);
+
+    ApiRes updateCard(UUID deckId, UUID cardId, CardItemReq request);
 }

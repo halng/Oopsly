@@ -30,8 +30,8 @@ import lombok.*;
 @Entity(name = "cards")
 public class CardEntity extends Audit {
 
-    private String topic;
-    private String answer;
+    private String front;
+    private String back;
 
     @Enumerated(EnumType.STRING)
     private DifficultyLevel difficultyLevel;

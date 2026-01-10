@@ -16,7 +16,7 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import com.app.oopsly.api.entity.DifficultyLevel;
 import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
 
-public record UpdateDifficultyReq(@NotNull DifficultyLevel difficultyLevel) {}
+public record UpdateDifficultyReq(@NotNull UUID cardId, @NotNull String newLevel) {}

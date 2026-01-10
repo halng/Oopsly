@@ -20,5 +20,5 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record CardItemReq(
-        @NotNull @Size(min = 1, max = 500) String topic,
-        @NotNull @Size(min = 1, max = 2000) String answer) {}
+        @NotNull @Size(min = 1, max = 500) String front,
+        @NotNull @Size(min = 1, max = 2000) String back) {}
