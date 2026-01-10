@@ -16,28 +16,33 @@
 
 package com.app.oopsly.api.entity;
 
+import com.app.oopsly.api.util.QuestionType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import java.util.List;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "decks")
+@Table(name = "questions")
 @Entity
-public class DeckEntity extends Audit {
+public class Question extends Audit {
 
-    private String name;
-    private String description;
+    private String text;
+
+    @Enumerated(EnumType.STRING)
+    private QuestionType type;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private String metadata;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
-    @OneToMany(mappedBy = "deck", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TestSuite> testSuites;
+    @JoinColumn(name = "test_suite_id", nullable = false)
+    private TestSuite testSuite;
 }

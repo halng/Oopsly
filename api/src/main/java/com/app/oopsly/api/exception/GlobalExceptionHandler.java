@@ -46,6 +46,12 @@ public class GlobalExceptionHandler {
         return ApiRes.notFound(ex.getMessage());
     }
 
+    @ExceptionHandler(ValidationException.class)
+    public ApiRes handleValidationException(ValidationException ex) {
+        log.warn("Validation failed: {}", ex.getMessage());
+        return ApiRes.badRequest(ex.getMessage());
+    }
+
     @ExceptionHandler(UnauthenticatedException.class)
     public ApiRes handleUnauthenticatedException(UnauthenticatedException ex) {
         log.warn("Unauthenticated access attempt: {}", ex.getMessage());
