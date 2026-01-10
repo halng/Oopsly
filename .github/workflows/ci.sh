@@ -104,7 +104,8 @@ run_backend_ci() {
 
         echo "Building and Pushing Docker Image..."
         if [ -n "$IMAGE_TAG" ]; then
-            ./gradlew bootBuildImage --image=ghcr.io/oopsly/oopsly-api:"$IMAGE_TAG"
+            echo "Building Docker image with tag: $IMAGE_TAG"
+            ./gradlew bootBuildImage --imageName=ghcr.io/oopsly/oopsly-api:"$IMAGE_TAG"
             docker push ghcr.io/oopsly/oopsly-api:"$IMAGE_TAG"
 
             echo "Docker image ghcr.io/oopsly/oopsly-api:$IMAGE_TAG built and pushed successfully!"
