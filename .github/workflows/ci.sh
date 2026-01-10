@@ -254,7 +254,7 @@ main() {
     elif [[ "$REF" == "refs/heads/release" ]]; then
         export IMAGE_TAG="latest-$COMMIT_HASH"
     else
-        export IMAGE_TAG="dev-$COMMIT_HASH"
+        export IMAGE_TAG=""
         echo "Non-deployment branch detected. Building with dev tag only."
     fi
     

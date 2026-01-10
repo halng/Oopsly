@@ -127,7 +127,7 @@ public class DeckServiceImpl implements DeckService {
     }
 
     DeckRes toViewModel(DeckEntity from) {
-        return new DeckRes(from.getId(), from.getName(), from.getDescription());
+        return new DeckRes(from.getId(), from.getName(), from.getDescription(), List.of());
     }
 
     User currentUser() {
