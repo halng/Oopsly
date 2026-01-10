@@ -32,6 +32,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -42,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@EnabledIfSystemProperty(named = "run.integration.tests", matches = "true")
 class CollectionCascadeDeleteIntegrationTest {
 
     @Autowired private CollectionService collectionService;

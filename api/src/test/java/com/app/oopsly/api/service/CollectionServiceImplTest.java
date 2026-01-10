@@ -130,9 +130,6 @@ class CollectionServiceImplTest {
     void update_throwsValidationException_whenNameIsEmpty() {
         CollectionReq invalidReq = new CollectionReq("", "Description");
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-
         assertThrows(
                 ValidationException.class,
                 () -> collectionService.update(deckId, collectionId, invalidReq));
@@ -142,9 +139,6 @@ class CollectionServiceImplTest {
     @Test
     void update_throwsValidationException_whenNameIsNull() {
         CollectionReq invalidReq = new CollectionReq(null, "Description");
-
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
 
         assertThrows(
                 ValidationException.class,
