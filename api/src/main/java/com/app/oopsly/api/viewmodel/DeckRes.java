@@ -16,7 +16,7 @@
 
 package com.app.oopsly.api.viewmodel;
 
+import java.util.List;
 import java.util.UUID;
-import lombok.NonNull;
 
-public record DeckRes(@NonNull UUID id, @NonNull String name, @NonNull String description) {}
+public record DeckRes(UUID id, String name, String description, List<CardReq> cards) {}

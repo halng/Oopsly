@@ -1,0 +1,1009 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:9009/api/v1/oopsly",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Deck",
+      "description": "Deck management APIs for creating, updating, retrieving and deleting decks"
+    },
+    {
+      "name": "Card",
+      "description": "Card management APIs for creating, updating, retrieving and deleting cards within decks"
+    },
+    {
+      "name": "OTP",
+      "description": "OTP management APIs for generating and validating one-time passwords"
+    }
+  ],
+  "paths": {
+    "/decks/{id}": {
+      "get": {
+        "tags": [
+          "Deck"
+        ],
+        "summary": "Get deck by ID",
+        "description": "Retrieves a deck by its unique identifier",
+        "operationId": "getById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deck retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Deck"
+        ],
+        "summary": "Update deck",
+        "description": "Updates an existing deck by ID",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeckReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Deck updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or ID",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Deck"
+        ],
+        "summary": "Delete deck",
+        "description": "Soft deletes a deck by ID",
+        "operationId": "deleteById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deck deleted successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/decks/{deckId}/cards/{id}": {
+      "get": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Get card by ID",
+        "description": "Retrieves a specific card from a deck by its ID",
+        "operationId": "getById_1",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Card ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Card or deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Card retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Update card",
+        "description": "Updates an existing card in a specific deck",
+        "operationId": "updateCard",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Card ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardItemReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Card updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Card or deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Delete card",
+        "description": "Soft deletes a card from a specific deck",
+        "operationId": "deleteById_1",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Card ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Card deleted successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Card or deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/decks/{deckId}/cards/difficulty": {
+      "put": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Update card difficulty",
+        "description": "Updates the difficulty level for multiple cards in a deck",
+        "operationId": "updateDifficulty",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "description": "List of difficulty update requests",
+                "items": {
+                  "$ref": "#/components/schemas/UpdateDifficultyReq"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Difficulty updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/otp": {
+      "post": {
+        "tags": [
+          "OTP"
+        ],
+        "summary": "Generate OTP",
+        "description": "Generates and sends a one-time password to the specified email address",
+        "operationId": "createOTP",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Email address to send OTP",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$"
+            },
+            "example": "user@example.com"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid email format",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OTP sent successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/otp/validate": {
+      "post": {
+        "tags": [
+          "OTP"
+        ],
+        "summary": "Validate OTP",
+        "description": "Verifies the one-time password for the given email address",
+        "operationId": "validateOTP",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OTPReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid OTP or request format",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "OTP expired or incorrect",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OTP validated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/decks": {
+      "get": {
+        "tags": [
+          "Deck"
+        ],
+        "summary": "Get all decks",
+        "description": "Retrieves a paginated list of all decks",
+        "operationId": "getAll",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (starts from 1)",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid pagination parameters",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Decks retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Deck"
+        ],
+        "summary": "Create deck",
+        "description": "Creates a new deck with the provided information",
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeckReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Deck created successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/decks/{deckId}/cards": {
+      "get": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Get all cards by deck",
+        "description": "Retrieves a paginated list of all cards for a specific deck",
+        "operationId": "getAllCardsByDeck",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (starts from 0)",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid pagination parameters",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Cards retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Create cards",
+        "description": "Creates new cards for a specific deck",
+        "operationId": "create_1",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Cards created successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DeckReq": {
+        "type": "object",
+        "description": "Deck creation request",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 10
+          }
+        }
+      },
+      "Res": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object"
+          },
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CardItemReq": {
+        "type": "object",
+        "description": "Card update request",
+        "properties": {
+          "front": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1
+          },
+          "back": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "back",
+          "front"
+        ]
+      },
+      "UpdateDifficultyReq": {
+        "type": "object",
+        "properties": {
+          "cardId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "newLevel": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cardId",
+          "newLevel"
+        ]
+      },
+      "OTPReq": {
+        "type": "object",
+        "description": "OTP validation request containing email and OTP code",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "otp": {
+            "type": "string",
+            "maxLength": 2147483647,
+            "minLength": 6
+          }
+        }
+      },
+      "CardReq": {
+        "type": "object",
+        "description": "Card creation request",
+        "properties": {
+          "cards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CardItemReq"
+            }
+          }
+        },
+        "required": [
+          "cards"
+        ]
+      }
+    }
+  }
+}
+Beta
+0 / 0
+used queries
+1

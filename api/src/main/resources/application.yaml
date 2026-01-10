@@ -17,6 +17,12 @@ app:
     authWithGoogle: false
     authWithJwt: true
 
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    operationsSorter: method
+
 spring:
   threads:
     virtual:
