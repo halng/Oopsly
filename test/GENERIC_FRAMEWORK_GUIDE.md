@@ -79,12 +79,33 @@ k6 run tests/perf/k6/generic_load_test.js \
 # Run tests with JUnit XML output
 pytest tests/integration/ --junitxml=test-results.xml
 
-# Generate HTML and JSON reports
+# Generate Markdown, HTML and JSON reports
 python3 generate_report.py test-results.xml
 
-# Reports saved to reports/ folder
+# Reports saved to reports/ folder (Markdown is primary format)
 ls -la reports/
+# test_report_v1.0.0_20250110_143022.md   ← Easy to read in GitHub!
+# test_report_v1.0.0_20250110_143022.html
+# test_report_v1.0.0_20250110_143022.json
 ```
+
+**Markdown Report Example:**
+
+```markdown
+# Test Report - Release v1.0.0
+
+## 📊 Summary
+
+| Metric | Count | Percentage |
+|--------|-------|------------|
+| **Total Tests** | 44 | 100% |
+| **✅ Passed** | 42 | 95.5% |
+| **❌ Failed** | 2 | 4.5% |
+
+### 🟢 Pass Rate: 95.5%
+```
+
+Reports are version-controlled and easy to review in pull requests!
 
 ## Configuration
 
