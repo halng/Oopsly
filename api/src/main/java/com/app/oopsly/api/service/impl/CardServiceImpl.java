@@ -17,11 +17,13 @@
 package com.app.oopsly.api.service.impl;
 
 import com.app.oopsly.api.entity.CardEntity;
+import com.app.oopsly.api.entity.CollectionEntity;
 import com.app.oopsly.api.entity.DeckEntity;
 import com.app.oopsly.api.entity.DifficultyLevel;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.repository.CardRepository;
+import com.app.oopsly.api.repository.CollectionRepository;
 import com.app.oopsly.api.repository.DeckRepository;
 import com.app.oopsly.api.service.CardService;
 import com.app.oopsly.api.service.UserService;
@@ -46,21 +48,29 @@ import org.springframework.stereotype.Service;
 public class CardServiceImpl implements CardService {
 
     private final CardRepository cardRepository;
+    private final CollectionRepository collectionRepository;
     private final DeckRepository deckRepository;
     private final UserService userService;
 
     @Override
-    public ApiRes create(UUID deckId, CardReq request) {
-        log.info("Creating {} cards for deck: {}", request.cards().size(), deckId);
-        DeckEntity deck = getDeckForCurrentUser(deckId);
+    public ApiRes create(UUID deckId, UUID collectionId, CardReq request) {
+        log.info(
+                "Creating {} cards for collection: {} in deck: {}",
+                request.cards().size(),
+                collectionId,
+                deckId);
+        CollectionEntity collection = getCollectionForCurrentUser(deckId, collectionId);
 
         List<CardEntity> cards =
                 request.cards().stream()
-                        .map(cardItem -> createCardEntity(cardItem, deck))
+                        .map(cardItem -> createCardEntity(cardItem, collection))
                         .collect(Collectors.toList());
 
         List<CardEntity> savedCards = cardRepository.saveAllAndFlush(cards);
-        log.info("Successfully created {} cards for deck: {}", savedCards.size(), deckId);
+        log.info(
+                "Successfully created {} cards for collection: {}",
+                savedCards.size(),
+                collectionId);
         List<CardRes> responseCards =
                 savedCards.stream().map(this::toCardRes).collect(Collectors.toList());
 
@@ -68,12 +78,13 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public ApiRes delete(UUID deckId, UUID cardId) {
-        log.info("Deleting card: {} from deck: {}", cardId, deckId);
-        DeckEntity deck = getDeckForCurrentUser(deckId);
+    public ApiRes delete(UUID deckId, UUID collectionId, UUID cardId) {
+        log.info(
+                "Deleting card: {} from collection: {} in deck: {}", cardId, collectionId, deckId);
+        CollectionEntity collection = getCollectionForCurrentUser(deckId, collectionId);
         CardEntity existingCard =
                 cardRepository
-                        .findByIdAndDeck(cardId, deck)
+                        .findByIdAndCollection(cardId, collection)
                         .orElseThrow(
                                 () -> new NotFoundException("Card not found with id: " + cardId));
         existingCard.setDeleted(true);
@@ -83,12 +94,13 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public ApiRes getById(UUID deckId, UUID cardId) {
-        log.info("Getting card: {} from deck: {}", cardId, deckId);
-        DeckEntity deck = getDeckForCurrentUser(deckId);
+    public ApiRes getById(UUID deckId, UUID collectionId, UUID cardId) {
+        log.info(
+                "Getting card: {} from collection: {} in deck: {}", cardId, collectionId, deckId);
+        CollectionEntity collection = getCollectionForCurrentUser(deckId, collectionId);
         CardEntity card =
                 cardRepository
-                        .findByIdAndDeck(cardId, deck)
+                        .findByIdAndCollection(cardId, collection)
                         .orElseThrow(
                                 () -> new NotFoundException("Card not found with id: " + cardId));
         log.info("Successfully retrieved card: {}", cardId);
@@ -96,11 +108,16 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public ApiRes getAllCardsByDeck(UUID deckId, int page, int size) {
-        log.info("Getting all cards for deck: {} with page: {} and size: {}", deckId, page, size);
-        DeckEntity deck = getDeckForCurrentUser(deckId);
+    public ApiRes getAllCardsByCollection(UUID deckId, UUID collectionId, int page, int size) {
+        log.info(
+                "Getting all cards for collection: {} in deck: {} with page: {} and size: {}",
+                collectionId,
+                deckId,
+                page,
+                size);
+        CollectionEntity collection = getCollectionForCurrentUser(deckId, collectionId);
         Pageable pageable = PageRequest.of(page, size);
-        Page<CardEntity> pageData = cardRepository.findAllByDeck(deck, pageable);
+        Page<CardEntity> pageData = cardRepository.findAllByCollection(collection, pageable);
         List<CardRes> cards =
                 pageData.getContent().stream().map(this::toCardRes).collect(Collectors.toList());
 
@@ -111,9 +128,9 @@ public class CardServiceImpl implements CardService {
         response.put("totalPages", pageData.getTotalPages());
         response.put("hasNextPage", pageData.hasNext());
         log.info(
-                "Successfully retrieved {} cards for deck: {} (total: {})",
+                "Successfully retrieved {} cards for collection: {} (total: {})",
                 cards.size(),
-                deckId,
+                collectionId,
                 pageData.getTotalElements());
         return ApiRes.success("Fetched successfully", response);
     }
@@ -130,11 +147,11 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public ApiRes updateCard(UUID deckId, UUID cardId, CardItemReq item) {
-        DeckEntity deck = getDeckForCurrentUser(deckId);
+    public ApiRes updateCard(UUID deckId, UUID collectionId, UUID cardId, CardItemReq item) {
+        CollectionEntity collection = getCollectionForCurrentUser(deckId, collectionId);
         CardEntity existingCard =
                 cardRepository
-                        .findByIdAndDeck(cardId, deck)
+                        .findByIdAndCollection(cardId, collection)
                         .orElseThrow(
                                 () -> new NotFoundException("Card not found with id: " + cardId));
 
@@ -146,30 +163,32 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public ApiRes updateDifficulty(UUID deckId, List<UpdateDifficultyReq> reqList) {
+    public ApiRes updateDifficulty(UUID deckId, UUID collectionId, List<UpdateDifficultyReq> reqList) {
         log.info(
-                "Updating difficulty for cards in deck: {}. Total cards: {}",
+                "Updating difficulty for cards in collection: {} in deck: {}. Total cards: {}",
+                collectionId,
                 deckId,
                 reqList.size());
-        DeckEntity deck = getDeckForCurrentUser(deckId);
+        CollectionEntity collection = getCollectionForCurrentUser(deckId, collectionId);
 
         List<CardEntity> updatedList =
                 reqList.stream()
                         .map(
                                 item ->
                                         updateSingleCardDifficulty(
-                                                deck, item.cardId(), item.newLevel()))
+                                                collection, item.cardId(), item.newLevel()))
                         .collect(Collectors.toList());
         cardRepository.saveAll(updatedList);
-        log.info("Successfully updated difficulty for all cards in deck: {}", deckId);
+        log.info(
+                "Successfully updated difficulty for all cards in collection: {}", collectionId);
         return ApiRes.success("Updated successfully");
     }
 
     private CardEntity updateSingleCardDifficulty(
-            DeckEntity deck, UUID cardId, String difficultyLevel) {
+            CollectionEntity collection, UUID cardId, String difficultyLevel) {
         CardEntity existingCard =
                 cardRepository
-                        .findByIdAndDeck(cardId, deck)
+                        .findByIdAndCollection(cardId, collection)
                         .orElseThrow(
                                 () -> new NotFoundException("Card not found with id: " + cardId));
 
@@ -186,9 +205,9 @@ public class CardServiceImpl implements CardService {
         return CardEntity.builder().front(item.front()).back(item.back()).build();
     }
 
-    private CardEntity createCardEntity(CardItemReq cardItem, DeckEntity deck) {
+    private CardEntity createCardEntity(CardItemReq cardItem, CollectionEntity collection) {
         CardEntity card = toEntityFromItem(cardItem);
-        card.setDeck(deck);
+        card.setCollection(collection);
         card.setNextPracticeTime(Instant.now());
         return card;
     }
@@ -201,6 +220,16 @@ public class CardServiceImpl implements CardService {
                 entity.getDifficultyLevel(),
                 entity.getNextPracticeTime(),
                 entity.getNumberOfPractice());
+    }
+
+    private CollectionEntity getCollectionForCurrentUser(UUID deckId, UUID collectionId) {
+        DeckEntity deck = getDeckForCurrentUser(deckId);
+        return collectionRepository
+                .findByIdAndDeck(collectionId, deck)
+                .orElseThrow(
+                        () ->
+                                new NotFoundException(
+                                        "Collection not found with id: " + collectionId));
     }
 
     private DeckEntity getDeckForCurrentUser(UUID deckId) {
