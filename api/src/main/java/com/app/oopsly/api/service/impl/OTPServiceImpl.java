@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -162,7 +163,8 @@ public class OTPServiceImpl implements OTPService {
         }
     }
 
-    private void sendAsyncEmail(String email, String otpCode) {
+    @Async
+    protected void sendAsyncEmail(String email, String otpCode) {
         CompletableFuture.runAsync(
                 () -> {
                     try {

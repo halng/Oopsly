@@ -21,6 +21,9 @@ configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
+	all {
+		exclude group: 'commons-logging', module: 'commons-logging'
+	}
 }
 
 repositories {
@@ -134,7 +137,8 @@ jacocoTestCoverageVerification {
 	}
 }
 
-tasks.jacocoTestCoverageVerification.finalizedBy(jacocoTestReport)
+tasks.jacocoTestCoverageVerification.finalizedBy('jacocoTestReport')
+tasks.test.finalizedBy('jacocoTestReport')
 
 spotless {
 	java {
@@ -148,5 +152,28 @@ spotless {
 		toggleOffOn()
 		trimTrailingWhitespace()
 		endWithNewline()
+	}
+}
+
+def loadEnv() {
+	def envFile = file('.env')
+	if (envFile.exists()) {
+		envFile.readLines().each { line ->
+			if (!line.startsWith('#') && line.contains('=')) {
+				def (key, value) = line.tokenize('=')
+				if (key && value) {
+					System.setProperty(key.trim(), value.trim())
+				}
+			}
+		}
+	}
+}
+
+tasks.named('bootRun') {
+	doFirst {
+		loadEnv()
+		System.properties.each { k, v ->
+			environment k, v
+		}
 	}
 }

@@ -25,8 +25,10 @@ import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 @Slf4j
 @RestControllerAdvice
@@ -88,8 +90,13 @@ public class GlobalExceptionHandler {
     }
 
     // handle ServletException
-    @ExceptionHandler({ServletException.class, IllegalArgumentException.class})
-    public ApiRes handleServletException(ServletException ex) {
+    @ExceptionHandler({
+        ServletException.class,
+        IllegalArgumentException.class,
+        HandlerMethodValidationException.class,
+        MethodArgumentNotValidException.class
+    })
+    public ApiRes handleServletException(Exception ex) {
         log.error("Servlet error occurred: {}", ex.getMessage(), ex);
         return ApiRes.badRequest("Bad request. Please check your input and try again.");
     }

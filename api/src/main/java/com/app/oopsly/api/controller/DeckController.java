@@ -63,9 +63,6 @@ public class DeckController {
 
     @GetMapping("")
     ApiRes getAll(@RequestParam @Min(1) int page, @RequestParam @Min(1) int size) {
-        if (page <= 0 || size <= 0) {
-            throw new IllegalArgumentException("Page and size must be greater than 0");
-        }
         return this.service.getAll(page - 1, size);
     }
 }
