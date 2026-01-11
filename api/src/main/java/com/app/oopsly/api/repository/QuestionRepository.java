@@ -16,8 +16,8 @@
 
 package com.app.oopsly.api.repository;
 
-import com.app.oopsly.api.entity.Question;
-import com.app.oopsly.api.entity.TestSuite;
+import com.app.oopsly.api.entity.QuestionEntity;
+import com.app.oopsly.api.entity.TestSuiteEntity;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,10 +26,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface QuestionRepository extends JpaRepository<Question, UUID> {
-    @Query("SELECT q FROM Question q WHERE q.id = ?1 AND q.testSuite = ?2 AND q.deleted = false")
-    Optional<Question> findByIdAndTestSuite(UUID id, TestSuite testSuite);
+public interface QuestionRepository extends JpaRepository<QuestionEntity, UUID> {
+    @Query(
+            "SELECT q FROM QuestionEntity q WHERE q.id = ?1 AND q.testSuite = ?2 AND q.deleted ="
+                    + " false")
+    Optional<QuestionEntity> findByIdAndTestSuite(UUID id, TestSuiteEntity testSuite);
 
-    @Query("SELECT q FROM Question q WHERE q.testSuite = ?1 AND q.deleted = false")
-    List<Question> findAllByTestSuite(TestSuite testSuite);
+    @Query("SELECT q FROM QuestionEntity q WHERE q.testSuite = ?1 AND q.deleted = false")
+    List<QuestionEntity> findAllByTestSuite(TestSuiteEntity testSuite);
 }

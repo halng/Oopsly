@@ -18,7 +18,9 @@ package com.app.oopsly.api.util;
 
 public enum QuestionType {
     MULTIPLE_CHOICE,
-    SINGLE_CHOICE,
+    MULTIPLE_RESPONSE,
     TRUE_FALSE,
-    FILL_BLANK
+    FILL_IN_THE_BLANK,
+    MATCHING,
+    ORDERING
 }

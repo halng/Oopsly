@@ -21,7 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.entity.DeckEntity;
-import com.app.oopsly.api.entity.TestSuite;
+import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.repository.DeckRepository;
@@ -74,7 +74,7 @@ class TestSuiteServiceImplTest {
 
     @Test
     void create_savesNewTestSuite() {
-        TestSuite savedTestSuite = new TestSuite();
+        TestSuiteEntity savedTestSuite = new TestSuiteEntity();
         savedTestSuite.setId(testSuiteId);
         savedTestSuite.setTitle(testSuiteReq.title());
         savedTestSuite.setIsActive(testSuiteReq.isActive());
@@ -82,12 +82,12 @@ class TestSuiteServiceImplTest {
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(testSuiteRepository.save(any(TestSuite.class))).thenReturn(savedTestSuite);
+        when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(savedTestSuite);
 
         ApiRes result = testSuiteService.create(deckId, testSuiteReq);
 
         assertNotNull(result);
-        verify(testSuiteRepository, times(1)).save(any(TestSuite.class));
+        verify(testSuiteRepository, times(1)).save(any(TestSuiteEntity.class));
     }
 
     @Test
@@ -96,12 +96,12 @@ class TestSuiteServiceImplTest {
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> testSuiteService.create(deckId, testSuiteReq));
-        verify(testSuiteRepository, never()).save(any(TestSuite.class));
+        verify(testSuiteRepository, never()).save(any(TestSuiteEntity.class));
     }
 
     @Test
     void update_updatesExistingTestSuite() {
-        TestSuite existingTestSuite = new TestSuite();
+        TestSuiteEntity existingTestSuite = new TestSuiteEntity();
         existingTestSuite.setId(testSuiteId);
         existingTestSuite.setTitle("Old Title");
         existingTestSuite.setIsActive(false);
@@ -111,12 +111,12 @@ class TestSuiteServiceImplTest {
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
         when(testSuiteRepository.findByIdAndDeck(testSuiteId, deck))
                 .thenReturn(Optional.of(existingTestSuite));
-        when(testSuiteRepository.save(any(TestSuite.class))).thenReturn(existingTestSuite);
+        when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(existingTestSuite);
 
         ApiRes result = testSuiteService.update(deckId, testSuiteId, testSuiteReq);
 
         assertNotNull(result);
-        verify(testSuiteRepository, times(1)).save(any(TestSuite.class));
+        verify(testSuiteRepository, times(1)).save(any(TestSuiteEntity.class));
     }
 
     @Test
@@ -128,12 +128,12 @@ class TestSuiteServiceImplTest {
         assertThrows(
                 NotFoundException.class,
                 () -> testSuiteService.update(deckId, testSuiteId, testSuiteReq));
-        verify(testSuiteRepository, never()).save(any(TestSuite.class));
+        verify(testSuiteRepository, never()).save(any(TestSuiteEntity.class));
     }
 
     @Test
     void delete_softDeletesTestSuite() {
-        TestSuite existingTestSuite = new TestSuite();
+        TestSuiteEntity existingTestSuite = new TestSuiteEntity();
         existingTestSuite.setId(testSuiteId);
         existingTestSuite.setDeleted(false);
         existingTestSuite.setDeck(deck);
@@ -142,7 +142,7 @@ class TestSuiteServiceImplTest {
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
         when(testSuiteRepository.findByIdAndDeck(testSuiteId, deck))
                 .thenReturn(Optional.of(existingTestSuite));
-        when(testSuiteRepository.save(any(TestSuite.class))).thenReturn(existingTestSuite);
+        when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(existingTestSuite);
 
         ApiRes result = testSuiteService.delete(deckId, testSuiteId);
 
@@ -162,7 +162,7 @@ class TestSuiteServiceImplTest {
 
     @Test
     void getById_returnsTestSuite() {
-        TestSuite testSuite = new TestSuite();
+        TestSuiteEntity testSuite = new TestSuiteEntity();
         testSuite.setId(testSuiteId);
         testSuite.setTitle(testSuiteReq.title());
         testSuite.setIsActive(testSuiteReq.isActive());
@@ -190,9 +190,9 @@ class TestSuiteServiceImplTest {
 
     @Test
     void getAllByDeck_returnsAllTestSuites() {
-        List<TestSuite> testSuites = new ArrayList<>();
+        List<TestSuiteEntity> testSuites = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            TestSuite testSuite = new TestSuite();
+            TestSuiteEntity testSuite = new TestSuiteEntity();
             testSuite.setId(UUID.randomUUID());
             testSuite.setTitle("Test Suite " + i);
             testSuite.setIsActive(true);
@@ -213,7 +213,7 @@ class TestSuiteServiceImplTest {
     @Test
     void create_withNullIsActive_defaultsToTrue() {
         TestSuiteReq reqWithNullIsActive = new TestSuiteReq("New Test Suite", null);
-        TestSuite savedTestSuite = new TestSuite();
+        TestSuiteEntity savedTestSuite = new TestSuiteEntity();
         savedTestSuite.setId(testSuiteId);
         savedTestSuite.setTitle(reqWithNullIsActive.title());
         savedTestSuite.setIsActive(true);
@@ -221,11 +221,11 @@ class TestSuiteServiceImplTest {
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(testSuiteRepository.save(any(TestSuite.class))).thenReturn(savedTestSuite);
+        when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(savedTestSuite);
 
         ApiRes result = testSuiteService.create(deckId, reqWithNullIsActive);
 
         assertNotNull(result);
-        verify(testSuiteRepository, times(1)).save(any(TestSuite.class));
+        verify(testSuiteRepository, times(1)).save(any(TestSuiteEntity.class));
     }
 }

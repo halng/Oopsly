@@ -41,4 +41,7 @@ public class CollectionEntity extends Audit {
     @JsonIgnore
     @OneToMany(mappedBy = "collection", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<CardEntity> cards;
+
+    @ManyToMany(mappedBy = "collections")
+    private List<TestSuiteEntity> testSuites;
 }

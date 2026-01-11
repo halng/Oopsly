@@ -39,7 +39,8 @@ public class DeckEntity extends Audit {
     private User user;
 
     @OneToMany(mappedBy = "deck", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TestSuite> testSuites;
+    private List<TestSuiteEntity> testSuites;
+
     @JsonIgnore
     @OneToMany(mappedBy = "deck", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<CollectionEntity> collections;

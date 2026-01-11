@@ -16,8 +16,8 @@
 
 package com.app.oopsly.api.service.impl;
 
-import com.app.oopsly.api.entity.Question;
-import com.app.oopsly.api.entity.TestSuite;
+import com.app.oopsly.api.entity.QuestionEntity;
+import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.QuestionRepository;
@@ -48,22 +48,22 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public ApiRes create(UUID testSuiteId, QuestionReq request) {
         log.info("Creating question for test suite {}", testSuiteId);
-        TestSuite testSuite = this.findTestSuiteById(testSuiteId);
+        TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
 
         this.validateQuestionMetadata(request.type(), request.metadata());
 
-        Question question = this.toEntity(request, null);
+        QuestionEntity question = this.toEntity(request, null);
         question.setTestSuite(testSuite);
-        Question savedEntity = questionRepository.save(question);
+        QuestionEntity savedEntity = questionRepository.save(question);
 
-        return ApiRes.created("Question created successfully", this.toViewModel(savedEntity));
+        return ApiRes.created("QuestionEntity created successfully", this.toViewModel(savedEntity));
     }
 
     @Override
     public ApiRes update(UUID testSuiteId, UUID questionId, QuestionReq request) {
         log.info("Updating question {} for test suite {}", questionId, testSuiteId);
-        TestSuite testSuite = this.findTestSuiteById(testSuiteId);
-        Question existingQuestion =
+        TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
+        QuestionEntity existingQuestion =
                 questionRepository
                         .findByIdAndTestSuite(questionId, testSuite)
                         .orElseThrow(
@@ -73,7 +73,7 @@ public class QuestionServiceImpl implements QuestionService {
 
         this.validateQuestionMetadata(request.type(), request.metadata());
 
-        Question updatedQuestion = this.toEntity(request, existingQuestion);
+        QuestionEntity updatedQuestion = this.toEntity(request, existingQuestion);
         questionRepository.save(updatedQuestion);
 
         return ApiRes.success("Question updated successfully");
@@ -82,8 +82,8 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public ApiRes delete(UUID testSuiteId, UUID questionId) {
         log.info("Deleting question {} for test suite {}", questionId, testSuiteId);
-        TestSuite testSuite = this.findTestSuiteById(testSuiteId);
-        Question question =
+        TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
+        QuestionEntity question =
                 questionRepository
                         .findByIdAndTestSuite(questionId, testSuite)
                         .orElseThrow(
@@ -100,8 +100,8 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public ApiRes getById(UUID testSuiteId, UUID questionId) {
         log.info("Fetching question {} for test suite {}", questionId, testSuiteId);
-        TestSuite testSuite = this.findTestSuiteById(testSuiteId);
-        Question question =
+        TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
+        QuestionEntity question =
                 questionRepository
                         .findByIdAndTestSuite(questionId, testSuite)
                         .orElseThrow(
@@ -115,8 +115,8 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public ApiRes getAllByTestSuite(UUID testSuiteId) {
         log.info("Fetching all questions for test suite {}", testSuiteId);
-        TestSuite testSuite = this.findTestSuiteById(testSuiteId);
-        List<Question> questions = questionRepository.findAllByTestSuite(testSuite);
+        TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
+        List<QuestionEntity> questions = questionRepository.findAllByTestSuite(testSuite);
         List<QuestionRes> responses = questions.stream().map(this::toViewModel).toList();
 
         return ApiRes.success("Questions fetched successfully", responses);
@@ -127,16 +127,16 @@ public class QuestionServiceImpl implements QuestionService {
             JsonNode jsonNode = objectMapper.readTree(metadata);
 
             switch (type) {
-                case MULTIPLE_CHOICE, SINGLE_CHOICE:
+                case MULTIPLE_CHOICE, MULTIPLE_RESPONSE:
                     if (!jsonNode.has("options") || !jsonNode.get("options").isArray()) {
                         throw new ValidationException(
-                                "Multiple choice and single choice questions must have 'options'"
-                                        + " array in metadata");
+                                "Multiple choice and multiple response questions must have"
+                                        + " 'options' array in metadata");
                     }
                     if (!jsonNode.has("correct_indices")
                             || !jsonNode.get("correct_indices").isArray()) {
                         throw new ValidationException(
-                                "Multiple choice and single choice questions must have"
+                                "Multiple choice and multiple response questions must have"
                                         + " 'correct_indices' array in metadata");
                     }
                     break;
@@ -150,7 +150,7 @@ public class QuestionServiceImpl implements QuestionService {
                     }
                     break;
 
-                case FILL_BLANK:
+                case FILL_IN_THE_BLANK:
                     if (!jsonNode.has("accepted_answers")
                             || !jsonNode.get("accepted_answers").isArray()) {
                         throw new ValidationException(
@@ -163,6 +163,21 @@ public class QuestionServiceImpl implements QuestionService {
                                         + " answer");
                     }
                     break;
+
+                case MATCHING:
+                    if (!jsonNode.has("pairs") || !jsonNode.get("pairs").isArray()) {
+                        throw new ValidationException(
+                                "Matching questions must have 'pairs' array in metadata");
+                    }
+                    break;
+
+                case ORDERING:
+                    if (!jsonNode.has("correct_order")
+                            || !jsonNode.get("correct_order").isArray()) {
+                        throw new ValidationException(
+                                "Ordering questions must have 'correct_order' array in metadata");
+                    }
+                    break;
             }
         } catch (ValidationException e) {
             throw e;
@@ -171,9 +186,9 @@ public class QuestionServiceImpl implements QuestionService {
         }
     }
 
-    Question toEntity(@NonNull QuestionReq from, Question to) {
+    QuestionEntity toEntity(@NonNull QuestionReq from, QuestionEntity to) {
         if (to == null) {
-            return Question.builder()
+            return QuestionEntity.builder()
                     .text(from.text())
                     .type(from.type())
                     .metadata(from.metadata())
@@ -186,11 +201,11 @@ public class QuestionServiceImpl implements QuestionService {
         return to;
     }
 
-    QuestionRes toViewModel(Question from) {
+    QuestionRes toViewModel(QuestionEntity from) {
         return new QuestionRes(from.getId(), from.getText(), from.getType(), from.getMetadata());
     }
 
-    private TestSuite findTestSuiteById(UUID testSuiteId) {
+    private TestSuiteEntity findTestSuiteById(UUID testSuiteId) {
         return testSuiteRepository
                 .findById(testSuiteId)
                 .filter(ts -> !ts.getDeleted())

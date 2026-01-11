@@ -17,7 +17,7 @@
 package com.app.oopsly.api.repository;
 
 import com.app.oopsly.api.entity.DeckEntity;
-import com.app.oopsly.api.entity.TestSuite;
+import com.app.oopsly.api.entity.TestSuiteEntity;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,10 +26,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface TestSuiteRepository extends JpaRepository<TestSuite, UUID> {
-    @Query("SELECT t FROM TestSuite t WHERE t.id = ?1 AND t.deck = ?2 AND t.deleted = false")
-    Optional<TestSuite> findByIdAndDeck(UUID id, DeckEntity deck);
+public interface TestSuiteRepository extends JpaRepository<TestSuiteEntity, UUID> {
+    @Query(
+            "SELECT t FROM TestSuiteEntity t WHERE t.id = ?1 AND t.deck = ?2 AND t.deleted ="
+                    + " false")
+    Optional<TestSuiteEntity> findByIdAndDeck(UUID id, DeckEntity deck);
 
-    @Query("SELECT t FROM TestSuite t WHERE t.deck = ?1 AND t.deleted = false")
-    List<TestSuite> findAllByDeck(DeckEntity deck);
+    @Query("SELECT t FROM TestSuiteEntity t WHERE t.deck = ?1 AND t.deleted = false")
+    List<TestSuiteEntity> findAllByDeck(DeckEntity deck);
 }

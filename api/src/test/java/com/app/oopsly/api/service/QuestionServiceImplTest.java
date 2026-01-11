@@ -20,8 +20,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.entity.Question;
-import com.app.oopsly.api.entity.TestSuite;
+import com.app.oopsly.api.entity.QuestionEntity;
+import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.QuestionRepository;
@@ -54,7 +54,7 @@ class QuestionServiceImplTest {
 
     @InjectMocks private QuestionServiceImpl questionService;
 
-    private TestSuite testSuite;
+    private TestSuiteEntity testSuite;
     private UUID testSuiteId;
     private UUID questionId;
 
@@ -63,7 +63,7 @@ class QuestionServiceImplTest {
         testSuiteId = UUID.randomUUID();
         questionId = UUID.randomUUID();
 
-        testSuite = new TestSuite();
+        testSuite = new TestSuiteEntity();
         testSuite.setId(testSuiteId);
         testSuite.setTitle("Test Suite");
         testSuite.setIsActive(true);
@@ -76,7 +76,7 @@ class QuestionServiceImplTest {
         QuestionReq questionReq =
                 new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
 
-        Question savedQuestion = new Question();
+        QuestionEntity savedQuestion = new QuestionEntity();
         savedQuestion.setId(questionId);
         savedQuestion.setText(questionReq.text());
         savedQuestion.setType(questionReq.type());
@@ -84,12 +84,12 @@ class QuestionServiceImplTest {
         savedQuestion.setTestSuite(testSuite);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.save(any(Question.class))).thenReturn(savedQuestion);
+        when(questionRepository.save(any(QuestionEntity.class))).thenReturn(savedQuestion);
 
         ApiRes result = questionService.create(testSuiteId, questionReq);
 
         assertNotNull(result);
-        verify(questionRepository, times(1)).save(any(Question.class));
+        verify(questionRepository, times(1)).save(any(QuestionEntity.class));
     }
 
     @Test
@@ -98,7 +98,7 @@ class QuestionServiceImplTest {
         QuestionReq questionReq =
                 new QuestionReq("Is the sky blue?", QuestionType.TRUE_FALSE, metadata);
 
-        Question savedQuestion = new Question();
+        QuestionEntity savedQuestion = new QuestionEntity();
         savedQuestion.setId(questionId);
         savedQuestion.setText(questionReq.text());
         savedQuestion.setType(questionReq.type());
@@ -106,12 +106,12 @@ class QuestionServiceImplTest {
         savedQuestion.setTestSuite(testSuite);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.save(any(Question.class))).thenReturn(savedQuestion);
+        when(questionRepository.save(any(QuestionEntity.class))).thenReturn(savedQuestion);
 
         ApiRes result = questionService.create(testSuiteId, questionReq);
 
         assertNotNull(result);
-        verify(questionRepository, times(1)).save(any(Question.class));
+        verify(questionRepository, times(1)).save(any(QuestionEntity.class));
     }
 
     @Test
@@ -120,10 +120,10 @@ class QuestionServiceImplTest {
         QuestionReq questionReq =
                 new QuestionReq(
                         "What is the process by which plants make food?",
-                        QuestionType.FILL_BLANK,
+                        QuestionType.FILL_IN_THE_BLANK,
                         metadata);
 
-        Question savedQuestion = new Question();
+        QuestionEntity savedQuestion = new QuestionEntity();
         savedQuestion.setId(questionId);
         savedQuestion.setText(questionReq.text());
         savedQuestion.setType(questionReq.type());
@@ -131,12 +131,12 @@ class QuestionServiceImplTest {
         savedQuestion.setTestSuite(testSuite);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.save(any(Question.class))).thenReturn(savedQuestion);
+        when(questionRepository.save(any(QuestionEntity.class))).thenReturn(savedQuestion);
 
         ApiRes result = questionService.create(testSuiteId, questionReq);
 
         assertNotNull(result);
-        verify(questionRepository, times(1)).save(any(Question.class));
+        verify(questionRepository, times(1)).save(any(QuestionEntity.class));
     }
 
     @Test
@@ -149,7 +149,7 @@ class QuestionServiceImplTest {
 
         assertThrows(
                 ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
-        verify(questionRepository, never()).save(any(Question.class));
+        verify(questionRepository, never()).save(any(QuestionEntity.class));
     }
 
     @Test
@@ -162,33 +162,33 @@ class QuestionServiceImplTest {
 
         assertThrows(
                 ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
-        verify(questionRepository, never()).save(any(Question.class));
+        verify(questionRepository, never()).save(any(QuestionEntity.class));
     }
 
     @Test
     void create_throwsValidationException_whenFillBlankHasNoAcceptedAnswers() {
         String metadata = "{\"something\":\"else\"}";
         QuestionReq questionReq =
-                new QuestionReq("Fill in the blank", QuestionType.FILL_BLANK, metadata);
+                new QuestionReq("Fill in the blank", QuestionType.FILL_IN_THE_BLANK, metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
 
         assertThrows(
                 ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
-        verify(questionRepository, never()).save(any(Question.class));
+        verify(questionRepository, never()).save(any(QuestionEntity.class));
     }
 
     @Test
     void create_throwsValidationException_whenFillBlankHasEmptyAcceptedAnswers() {
         String metadata = "{\"accepted_answers\":[]}";
         QuestionReq questionReq =
-                new QuestionReq("Fill in the blank", QuestionType.FILL_BLANK, metadata);
+                new QuestionReq("Fill in the blank", QuestionType.FILL_IN_THE_BLANK, metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
 
         assertThrows(
                 ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
-        verify(questionRepository, never()).save(any(Question.class));
+        verify(questionRepository, never()).save(any(QuestionEntity.class));
     }
 
     @Test
@@ -201,7 +201,7 @@ class QuestionServiceImplTest {
 
         assertThrows(
                 ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
-        verify(questionRepository, never()).save(any(Question.class));
+        verify(questionRepository, never()).save(any(QuestionEntity.class));
     }
 
     @Test
@@ -214,7 +214,7 @@ class QuestionServiceImplTest {
 
         assertThrows(
                 NotFoundException.class, () -> questionService.create(testSuiteId, questionReq));
-        verify(questionRepository, never()).save(any(Question.class));
+        verify(questionRepository, never()).save(any(QuestionEntity.class));
     }
 
     @Test
@@ -223,7 +223,7 @@ class QuestionServiceImplTest {
         QuestionReq questionReq =
                 new QuestionReq("Updated question?", QuestionType.MULTIPLE_CHOICE, metadata);
 
-        Question existingQuestion = new Question();
+        QuestionEntity existingQuestion = new QuestionEntity();
         existingQuestion.setId(questionId);
         existingQuestion.setText("Old question");
         existingQuestion.setType(QuestionType.MULTIPLE_CHOICE);
@@ -233,12 +233,12 @@ class QuestionServiceImplTest {
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
         when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
                 .thenReturn(Optional.of(existingQuestion));
-        when(questionRepository.save(any(Question.class))).thenReturn(existingQuestion);
+        when(questionRepository.save(any(QuestionEntity.class))).thenReturn(existingQuestion);
 
         ApiRes result = questionService.update(testSuiteId, questionId, questionReq);
 
         assertNotNull(result);
-        verify(questionRepository, times(1)).save(any(Question.class));
+        verify(questionRepository, times(1)).save(any(QuestionEntity.class));
     }
 
     @Test
@@ -254,12 +254,12 @@ class QuestionServiceImplTest {
         assertThrows(
                 NotFoundException.class,
                 () -> questionService.update(testSuiteId, questionId, questionReq));
-        verify(questionRepository, never()).save(any(Question.class));
+        verify(questionRepository, never()).save(any(QuestionEntity.class));
     }
 
     @Test
     void delete_softDeletesQuestion() {
-        Question existingQuestion = new Question();
+        QuestionEntity existingQuestion = new QuestionEntity();
         existingQuestion.setId(questionId);
         existingQuestion.setDeleted(false);
         existingQuestion.setTestSuite(testSuite);
@@ -267,7 +267,7 @@ class QuestionServiceImplTest {
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
         when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
                 .thenReturn(Optional.of(existingQuestion));
-        when(questionRepository.save(any(Question.class))).thenReturn(existingQuestion);
+        when(questionRepository.save(any(QuestionEntity.class))).thenReturn(existingQuestion);
 
         ApiRes result = questionService.delete(testSuiteId, questionId);
 
@@ -288,7 +288,7 @@ class QuestionServiceImplTest {
 
     @Test
     void getById_returnsQuestion() {
-        Question question = new Question();
+        QuestionEntity question = new QuestionEntity();
         question.setId(questionId);
         question.setText("Test Question");
         question.setType(QuestionType.TRUE_FALSE);
@@ -317,11 +317,11 @@ class QuestionServiceImplTest {
 
     @Test
     void getAllByTestSuite_returnsAllQuestions() {
-        List<Question> questions = new ArrayList<>();
+        List<QuestionEntity> questions = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            Question question = new Question();
+            QuestionEntity question = new QuestionEntity();
             question.setId(UUID.randomUUID());
-            question.setText("Question " + i);
+            question.setText("QuestionEntity " + i);
             question.setType(QuestionType.TRUE_FALSE);
             question.setMetadata("{\"correct_value\":true}");
             question.setTestSuite(testSuite);

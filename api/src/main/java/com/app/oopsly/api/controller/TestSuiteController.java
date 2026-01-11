@@ -19,12 +19,24 @@ package com.app.oopsly.api.controller;
 import com.app.oopsly.api.service.TestSuiteService;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.TestSuiteReq;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/decks/{deckId}/test-suites")
+@Tag(
+        name = "Test Suite",
+        description =
+                "Test Suite management APIs for creating, updating, retrieving and deleting test"
+                        + " suites within decks")
 public class TestSuiteController {
     private final TestSuiteService service;
 
@@ -32,31 +44,144 @@ public class TestSuiteController {
         this.service = service;
     }
 
+    @Operation(
+            summary = "Create test suite",
+            description = "Creates a new test suite within a specific deck")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "201",
+                        description = "Test suite created successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "400", description = "Invalid request body"),
+                @ApiResponse(responseCode = "404", description = "Deck not found"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @PostMapping("")
-    ApiRes create(@PathVariable UUID deckId, @Valid @RequestBody TestSuiteReq requestBody) {
+    ApiRes create(
+            @Parameter(
+                            description = "Deck ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174000")
+                    @PathVariable
+                    UUID deckId,
+            @Parameter(description = "Test suite creation request", required = true)
+                    @Valid @RequestBody
+                    TestSuiteReq requestBody) {
         return this.service.create(deckId, requestBody);
     }
 
+    @Operation(
+            summary = "Update test suite",
+            description = "Updates an existing test suite in a specific deck")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Test suite updated successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "400", description = "Invalid request body"),
+                @ApiResponse(responseCode = "404", description = "Test suite or deck not found"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @PutMapping("/{id}")
     ApiRes update(
-            @PathVariable UUID deckId,
-            @PathVariable UUID id,
-            @Valid @RequestBody TestSuiteReq requestBody) {
+            @Parameter(
+                            description = "Deck ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174000")
+                    @PathVariable
+                    UUID deckId,
+            @Parameter(
+                            description = "Test Suite ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174001")
+                    @PathVariable
+                    UUID id,
+            @Parameter(description = "Test suite update request", required = true)
+                    @Valid @RequestBody
+                    TestSuiteReq requestBody) {
         return this.service.update(deckId, id, requestBody);
     }
 
+    @Operation(
+            summary = "Get test suite by ID",
+            description = "Retrieves a specific test suite from a deck by its ID")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Test suite retrieved successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "404", description = "Test suite or deck not found"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @GetMapping("/{id}")
-    ApiRes getById(@PathVariable UUID deckId, @PathVariable UUID id) {
+    ApiRes getById(
+            @Parameter(
+                            description = "Deck ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174000")
+                    @PathVariable
+                    UUID deckId,
+            @Parameter(
+                            description = "Test Suite ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174001")
+                    @PathVariable
+                    UUID id) {
         return this.service.getById(deckId, id);
     }
 
+    @Operation(
+            summary = "Delete test suite",
+            description = "Soft deletes a test suite and all its questions from a specific deck")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Test suite deleted successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "404", description = "Test suite or deck not found"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @DeleteMapping("/{id}")
-    ApiRes deleteById(@PathVariable UUID deckId, @PathVariable UUID id) {
+    ApiRes deleteById(
+            @Parameter(
+                            description = "Deck ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174000")
+                    @PathVariable
+                    UUID deckId,
+            @Parameter(
+                            description = "Test Suite ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174001")
+                    @PathVariable
+                    UUID id) {
         return this.service.delete(deckId, id);
     }
 
+    @Operation(
+            summary = "Get all test suites by deck",
+            description = "Retrieves a list of all test suites for a specific deck")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Test suites retrieved successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "404", description = "Deck not found"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @GetMapping("")
-    ApiRes getAllByDeck(@PathVariable UUID deckId) {
+    ApiRes getAllByDeck(
+            @Parameter(
+                            description = "Deck ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174000")
+                    @PathVariable
+                    UUID deckId) {
         return this.service.getAllByDeck(deckId);
     }
 }

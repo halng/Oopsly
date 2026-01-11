@@ -17,7 +17,7 @@
 package com.app.oopsly.api.service.impl;
 
 import com.app.oopsly.api.entity.DeckEntity;
-import com.app.oopsly.api.entity.TestSuite;
+import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.repository.DeckRepository;
@@ -48,9 +48,9 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         log.info("Creating test suite for deck {}", deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
 
-        TestSuite testSuite = this.toEntity(request, null);
+        TestSuiteEntity testSuite = this.toEntity(request, null);
         testSuite.setDeck(deck);
-        TestSuite savedEntity = testSuiteRepository.save(testSuite);
+        TestSuiteEntity savedEntity = testSuiteRepository.save(testSuite);
 
         return ApiRes.created("Test suite created successfully", this.toViewModel(savedEntity));
     }
@@ -59,7 +59,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     public ApiRes update(UUID deckId, UUID testSuiteId, TestSuiteReq request) {
         log.info("Updating test suite {} for deck {}", testSuiteId, deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
-        TestSuite existingTestSuite =
+        TestSuiteEntity existingTestSuite =
                 testSuiteRepository
                         .findByIdAndDeck(testSuiteId, deck)
                         .orElseThrow(
@@ -67,7 +67,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                                         new NotFoundException(
                                                 "Test suite not found with id: " + testSuiteId));
 
-        TestSuite updatedTestSuite = this.toEntity(request, existingTestSuite);
+        TestSuiteEntity updatedTestSuite = this.toEntity(request, existingTestSuite);
         testSuiteRepository.save(updatedTestSuite);
 
         return ApiRes.success("Test suite updated successfully");
@@ -77,7 +77,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     public ApiRes delete(UUID deckId, UUID testSuiteId) {
         log.info("Deleting test suite {} for deck {}", testSuiteId, deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
-        TestSuite testSuite =
+        TestSuiteEntity testSuite =
                 testSuiteRepository
                         .findByIdAndDeck(testSuiteId, deck)
                         .orElseThrow(
@@ -95,7 +95,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     public ApiRes getById(UUID deckId, UUID testSuiteId) {
         log.info("Fetching test suite {} for deck {}", testSuiteId, deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
-        TestSuite testSuite =
+        TestSuiteEntity testSuite =
                 testSuiteRepository
                         .findByIdAndDeck(testSuiteId, deck)
                         .orElseThrow(
@@ -110,15 +110,15 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     public ApiRes getAllByDeck(UUID deckId) {
         log.info("Fetching all test suites for deck {}", deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
-        List<TestSuite> testSuites = testSuiteRepository.findAllByDeck(deck);
+        List<TestSuiteEntity> testSuites = testSuiteRepository.findAllByDeck(deck);
         List<TestSuiteRes> responses = testSuites.stream().map(this::toViewModel).toList();
 
         return ApiRes.success("Test suites fetched successfully", responses);
     }
 
-    TestSuite toEntity(@NonNull TestSuiteReq from, TestSuite to) {
+    TestSuiteEntity toEntity(@NonNull TestSuiteReq from, TestSuiteEntity to) {
         if (to == null) {
-            return TestSuite.builder()
+            return TestSuiteEntity.builder()
                     .title(from.title())
                     .isActive(from.isActive() != null ? from.isActive() : true)
                     .build();
@@ -131,7 +131,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         return to;
     }
 
-    TestSuiteRes toViewModel(TestSuite from) {
+    TestSuiteRes toViewModel(TestSuiteEntity from) {
         return new TestSuiteRes(from.getId(), from.getTitle(), from.getIsActive());
     }
 
