@@ -16,7 +16,7 @@
 
 package com.app.oopsly.api.service;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -26,6 +26,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.never;
 
 import com.app.oopsly.api.entity.User;
+import com.app.oopsly.api.exception.SendEmailException;
 import com.app.oopsly.api.messaging.EmailSender;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.service.impl.OTPServiceImpl;
@@ -417,5 +418,120 @@ class OTPServiceImplTest {
             // Expected exception
             assertNotNull(e);
         }
+    }
+
+    // Fallback Function Tests
+    @Test
+    void sendOTPFallback_throwsRuntimeException() {
+        RuntimeException cause = new RuntimeException("OTP service unavailable");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class, () -> otpService.sendOTPFallback(email, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void sendOTPFallback_withDifferentExceptionTypes_preservesCause() {
+        // Test with various exception types
+        Exception sqlException = new java.sql.SQLException("Database connection failed");
+        Exception ioException = new java.io.IOException("Email server unreachable");
+        RuntimeException networkException = new RuntimeException("Network timeout");
+
+        RuntimeException ex1 =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> otpService.sendOTPFallback(email, sqlException));
+        RuntimeException ex2 =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> otpService.sendOTPFallback(email, ioException));
+        RuntimeException ex3 =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> otpService.sendOTPFallback(email, networkException));
+
+        assertSame(sqlException, ex1.getCause());
+        assertSame(ioException, ex2.getCause());
+        assertSame(networkException, ex3.getCause());
+    }
+
+    @Test
+    void verifyOTPFallback_throwsRuntimeException() {
+        OTPReq otpReq = mock(OTPReq.class);
+
+        Throwable cause = new Throwable("Circuit breaker triggered");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class, () -> otpService.verifyOTPFallback(otpReq, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void verifyOTPFallback_withNullCause_handlesGracefully() {
+        OTPReq otpReq = mock(OTPReq.class);
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class, () -> otpService.verifyOTPFallback(otpReq, null));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertNull(exception.getCause());
+    }
+
+    @Test
+    void fallbackMethods_provideUserFriendlyMessages() {
+        OTPReq otpReq = mock(OTPReq.class);
+
+        Throwable cause = new Throwable("Internal service error");
+
+        RuntimeException sendEx =
+                assertThrows(
+                        RuntimeException.class, () -> otpService.sendOTPFallback(email, cause));
+        RuntimeException verifyEx =
+                assertThrows(
+                        RuntimeException.class, () -> otpService.verifyOTPFallback(otpReq, cause));
+
+        assertTrue(sendEx.getMessage().contains("try again later"));
+        assertTrue(verifyEx.getMessage().contains("try again later"));
+    }
+
+    @Test
+    void fallbackMethods_preserveExceptionChain() {
+        Exception originalException = new SendEmailException("SMTP server connection failed");
+        RuntimeException wrappedException =
+                new RuntimeException("Email service error", originalException);
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> otpService.sendOTPFallback(email, wrappedException));
+
+        assertEquals(wrappedException, exception.getCause());
+        assertEquals(originalException, exception.getCause().getCause());
+    }
+
+    @Test
+    void fallbackMethods_withChainedExceptions_maintainFullStack() {
+        Exception level3 = new java.net.ConnectException("Connection refused");
+        Exception level2 = new java.io.IOException("Network error", level3);
+        RuntimeException level1 = new RuntimeException("Service error", level2);
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class, () -> otpService.sendOTPFallback(email, level1));
+
+        // Verify exception chain is preserved
+        assertSame(level1, exception.getCause());
+        assertSame(level2, exception.getCause().getCause());
+        assertSame(level3, exception.getCause().getCause().getCause());
     }
 }

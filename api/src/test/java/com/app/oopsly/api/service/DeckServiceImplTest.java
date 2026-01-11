@@ -246,4 +246,125 @@ class DeckServiceImplTest {
         assertNotNull(result);
         verify(deckRepository, times(1)).findAllByUser(eq(currentUser), any(Pageable.class));
     }
+
+    // Fallback Function Tests
+    @Test
+    void createFallback_throwsRuntimeException() {
+        DeckReq request = new DeckReq("Test Deck", "Test Description");
+        RuntimeException cause = new RuntimeException("Service unavailable");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class, () -> deckService.createFallback(request, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void updateFallback_throwsRuntimeException() {
+        DeckReq request = new DeckReq("Updated Deck", "Updated Description");
+        RuntimeException cause = new RuntimeException("Database connection failed");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> deckService.updateFallback(request, deckId, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void deleteFallback_throwsRuntimeException() {
+        Throwable cause = new Throwable("Circuit breaker open");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class, () -> deckService.deleteFallback(deckId, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void getByIdFallback_throwsRuntimeException() {
+        Throwable cause = new Throwable("Service degraded");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class, () -> deckService.getByIdFallback(deckId, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void getAllFallback_throwsRuntimeException() {
+        RuntimeException cause = new RuntimeException("Network timeout");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class, () -> deckService.getAllFallback(0, 10, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void fallbackMethods_withNullCause_handleGracefully() {
+        RuntimeException createEx =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> deckService.createFallback(new DeckReq("Test", "Desc"), null));
+
+        assertNotNull(createEx);
+        assertTrue(createEx.getMessage().contains("currently unavailable"));
+        assertNull(createEx.getCause());
+    }
+
+    @Test
+    void fallbackMethods_provideUserFriendlyMessages() {
+        Throwable cause = new Throwable("Internal error");
+
+        RuntimeException createEx =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> deckService.createFallback(new DeckReq("Test", "Desc"), cause));
+        RuntimeException updateEx =
+                assertThrows(
+                        RuntimeException.class,
+                        () ->
+                                deckService.updateFallback(
+                                        new DeckReq("Test", "Desc"), deckId, cause));
+        RuntimeException deleteEx =
+                assertThrows(
+                        RuntimeException.class, () -> deckService.deleteFallback(deckId, cause));
+
+        assertTrue(createEx.getMessage().contains("try again later"));
+        assertTrue(updateEx.getMessage().contains("try again later"));
+        assertTrue(deleteEx.getMessage().contains("try again later"));
+    }
+
+    @Test
+    void fallbackMethods_preserveExceptionChain() {
+        Exception originalException = new java.sql.SQLException("Connection timeout");
+        RuntimeException wrappedException =
+                new RuntimeException("Database error", originalException);
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () ->
+                                deckService.createFallback(
+                                        new DeckReq("Test", "Desc"), wrappedException));
+
+        assertEquals(wrappedException, exception.getCause());
+        assertEquals(originalException, exception.getCause().getCause());
+    }
 }

@@ -26,11 +26,14 @@ import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.DeckReq;
 import com.app.oopsly.api.viewmodel.DeckRes;
 import com.app.oopsly.api.viewmodel.PagingRes;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +48,7 @@ public class DeckServiceImpl implements DeckService {
     private final UserService userService;
 
     @Override
+    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(DeckReq request) {
         log.info("Creating deck for user {}", this.currentUser().getId());
         DeckEntity savedEntity = deckRepository.save(this.toEntity(request, null));
@@ -52,6 +56,8 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
+    @CacheEvict(value = "decks", key = "'deck:' + #id")
+    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(DeckReq request, UUID id) {
         log.info("Updating deck {} for user {}", id, this.currentUser().getId());
         DeckEntity existingEntity =
@@ -66,6 +72,8 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
+    @CacheEvict(value = "decks", key = "'deck:' + #id")
+    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID id) {
         log.info("Deleting deck {} for user {}", id, this.currentUser().getId());
         DeckEntity existingEntity =
@@ -80,6 +88,8 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
+    @Cacheable(value = "decks", key = "'deck:' + #id")
+    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID id) {
         log.info("Fetching deck {} for user {}", id, this.currentUser().getId());
         DeckEntity entity =
@@ -91,6 +101,12 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
+    @Cacheable(
+            value = "decks",
+            key =
+                    "'page:' + #page + ':size:' + #size + ':user:' +"
+                            + " #root.target.currentUser().getId()")
+    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "getAllFallback")
     public ApiRes getAll(int page, int size) {
         log.info(
                 "Fetching decks page {} size {} for user {}",
@@ -132,5 +148,42 @@ public class DeckServiceImpl implements DeckService {
 
     User currentUser() {
         return userService.getCurrentUser();
+    }
+
+    /** FALLBACK METHODS */
+
+    // Fallback method for create
+    public ApiRes createFallback(DeckReq request, Throwable t) {
+        log.error("Deck service unavailable during create");
+        throw new RuntimeException(
+                "Deck service is currently unavailable. Please try again later.", t);
+    }
+
+    // Fallback method for getAll
+    public ApiRes getAllFallback(int page, int size, Throwable t) {
+        log.error("Deck service unavailable during getAll: {}", t.getMessage());
+        throw new RuntimeException(
+                "Deck service is currently unavailable. Please try again later.", t);
+    }
+
+    // Fallback method for getById
+    public ApiRes getByIdFallback(UUID id, Throwable t) {
+        log.error("Deck service unavailable during getById: {}", t.getMessage());
+        throw new RuntimeException(
+                "Deck service is currently unavailable. Please try again later.", t);
+    }
+
+    // Fallback method for delete
+    public ApiRes deleteFallback(UUID id, Throwable t) {
+        log.error("Deck service unavailable during delete: {}", t.getMessage());
+        throw new RuntimeException(
+                "Deck service is currently unavailable. Please try again later.", t);
+    }
+
+    // Fallback method for update
+    public ApiRes updateFallback(DeckReq request, UUID id, Throwable t) {
+        log.error("Deck service unavailable during update: {}", t.getMessage());
+        throw new RuntimeException(
+                "Deck service is currently unavailable. Please try again later.", t);
     }
 }
