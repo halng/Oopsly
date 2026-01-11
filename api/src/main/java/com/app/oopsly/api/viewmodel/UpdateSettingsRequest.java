@@ -14,21 +14,13 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.service;
+package com.app.oopsly.api.viewmodel;
 
-import com.app.oopsly.api.entity.User;
-import com.app.oopsly.api.viewmodel.UpdateProfileRequest;
-import com.app.oopsly.api.viewmodel.UpdateSettingsRequest;
-import com.app.oopsly.api.viewmodel.UserProfileRes;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-public interface UserService {
-    String getCurrentUserId();
-
-    User getCurrentUser();
-
-    UserProfileRes getProfile();
-
-    UserProfileRes updateProfile(UpdateProfileRequest request);
-
-    UserProfileRes updateSettings(UpdateSettingsRequest request);
-}
+public record UpdateSettingsRequest(
+        @NotBlank(message = "Theme cannot be blank") String theme,
+        @NotBlank(message = "Language cannot be blank") String language,
+        @NotNull(message = "Space configuration cannot be null") @Valid SpaceConfigRequest spaceConfig) {}

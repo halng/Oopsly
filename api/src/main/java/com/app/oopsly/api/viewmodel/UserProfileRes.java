@@ -14,21 +14,11 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.service;
+package com.app.oopsly.api.viewmodel;
 
-import com.app.oopsly.api.entity.User;
-import com.app.oopsly.api.viewmodel.UpdateProfileRequest;
-import com.app.oopsly.api.viewmodel.UpdateSettingsRequest;
-import com.app.oopsly.api.viewmodel.UserProfileRes;
+import java.util.Map;
 
-public interface UserService {
-    String getCurrentUserId();
+public record UserProfileRes(String displayName, String bio, Integer age, SettingsRes settings) {
 
-    User getCurrentUser();
-
-    UserProfileRes getProfile();
-
-    UserProfileRes updateProfile(UpdateProfileRequest request);
-
-    UserProfileRes updateSettings(UpdateSettingsRequest request);
+    public record SettingsRes(String theme, String language, Map<String, Integer> spaceConfig) {}
 }

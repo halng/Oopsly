@@ -17,7 +17,6 @@
 package com.app.oopsly.api.entity;
 
 import jakarta.persistence.*;
-import java.util.List;
 import lombok.*;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -26,22 +25,19 @@ import org.springframework.data.relational.core.mapping.Table;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users")
-@Entity(name = "users")
-public class User extends Audit {
-    private String name;
+@Table(name = "user_info")
+@Entity(name = "user_info")
+public class UserInfo extends Audit {
 
-    @Column(unique = true)
-    private String hashedPassword;
+    @Column(name = "display_name", length = 50, nullable = false)
+    private String displayName;
 
-    @Column(unique = true, nullable = false)
-    private String email;
+    @Column(length = 255)
+    private String bio;
 
-    private String pictureUrl;
+    @Column private Integer age;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<DeckEntity> decks;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private UserInfo userInfo;
+    @OneToOne
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
+    private User user;
 }

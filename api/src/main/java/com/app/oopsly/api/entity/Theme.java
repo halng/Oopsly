@@ -14,21 +14,22 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.service;
+package com.app.oopsly.api.entity;
 
-import com.app.oopsly.api.entity.User;
-import com.app.oopsly.api.viewmodel.UpdateProfileRequest;
-import com.app.oopsly.api.viewmodel.UpdateSettingsRequest;
-import com.app.oopsly.api.viewmodel.UserProfileRes;
+public enum Theme {
+    LIGHT,
+    DARK,
+    SYSTEM;
 
-public interface UserService {
-    String getCurrentUserId();
-
-    User getCurrentUser();
-
-    UserProfileRes getProfile();
-
-    UserProfileRes updateProfile(UpdateProfileRequest request);
-
-    UserProfileRes updateSettings(UpdateSettingsRequest request);
+    public static Theme fromString(String theme) {
+        if (theme == null) {
+            throw new IllegalArgumentException("Theme cannot be null");
+        }
+        for (Theme t : Theme.values()) {
+            if (t.name().equalsIgnoreCase(theme)) {
+                return t;
+            }
+        }
+        throw new IllegalArgumentException("Invalid theme: " + theme);
+    }
 }
