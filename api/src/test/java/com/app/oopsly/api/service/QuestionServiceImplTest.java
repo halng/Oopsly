@@ -336,4 +336,97 @@ class QuestionServiceImplTest {
         assertNotNull(result);
         verify(questionRepository, times(1)).findAllByTestSuite(testSuite);
     }
+
+    @Test
+    void testCreateFallback() {
+        UUID testSuiteId = UUID.randomUUID();
+        QuestionReq request =
+                new QuestionReq(
+                        "Test Question",
+                        QuestionType.MULTIPLE_CHOICE,
+                        "{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}");
+        RuntimeException exception = new RuntimeException("Database connection failed");
+
+        RuntimeException thrown =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> questionService.createFallback(testSuiteId, request, exception));
+
+        assertEquals(
+                "Question service is currently unavailable. Please try again later.",
+                thrown.getMessage());
+        assertSame(exception, thrown.getCause());
+    }
+
+    @Test
+    void testUpdateFallback() {
+        UUID testSuiteId = UUID.randomUUID();
+        UUID questionId = UUID.randomUUID();
+        QuestionReq request =
+                new QuestionReq(
+                        "Updated Question", QuestionType.TRUE_FALSE, "{\"correct_value\":true}");
+        RuntimeException exception = new RuntimeException("Database connection failed");
+
+        RuntimeException thrown =
+                assertThrows(
+                        RuntimeException.class,
+                        () ->
+                                questionService.updateFallback(
+                                        testSuiteId, questionId, request, exception));
+
+        assertEquals(
+                "Question service is currently unavailable. Please try again later.",
+                thrown.getMessage());
+        assertSame(exception, thrown.getCause());
+    }
+
+    @Test
+    void testDeleteFallback() {
+        UUID testSuiteId = UUID.randomUUID();
+        UUID questionId = UUID.randomUUID();
+        RuntimeException exception = new RuntimeException("Database connection failed");
+
+        RuntimeException thrown =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> questionService.deleteFallback(testSuiteId, questionId, exception));
+
+        assertEquals(
+                "Question service is currently unavailable. Please try again later.",
+                thrown.getMessage());
+        assertSame(exception, thrown.getCause());
+    }
+
+    @Test
+    void testGetByIdFallback() {
+        UUID testSuiteId = UUID.randomUUID();
+        UUID questionId = UUID.randomUUID();
+        RuntimeException exception = new RuntimeException("Database connection failed");
+
+        RuntimeException thrown =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> questionService.getByIdFallback(testSuiteId, questionId, exception));
+
+        assertEquals(
+                "Question service is currently unavailable. Please try again later.",
+                thrown.getMessage());
+        assertSame(exception, thrown.getCause());
+    }
+
+    @Test
+    void testGetAllByTestSuiteFallback() {
+        UUID testSuiteId = UUID.randomUUID();
+        RuntimeException exception = new RuntimeException("Database connection failed");
+
+        RuntimeException thrown =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> questionService.getAllByTestSuiteFallback(testSuiteId, exception));
+
+        assertEquals(
+                "Question service is currently unavailable. Please try again later.",
+                thrown.getMessage());
+        assertSame(exception, thrown.getCause());
+    }
 }

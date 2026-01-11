@@ -228,4 +228,91 @@ class TestSuiteServiceImplTest {
         assertNotNull(result);
         verify(testSuiteRepository, times(1)).save(any(TestSuiteEntity.class));
     }
+
+    @Test
+    void testCreateFallback() {
+        UUID deckId = UUID.randomUUID();
+        TestSuiteReq request = new TestSuiteReq("Test Suite", true);
+        RuntimeException exception = new RuntimeException("Database connection failed");
+
+        RuntimeException thrown =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> testSuiteService.createFallback(deckId, request, exception));
+
+        assertEquals(
+                "Test suite service is currently unavailable. Please try again later.",
+                thrown.getMessage());
+        assertSame(exception, thrown.getCause());
+    }
+
+    @Test
+    void testUpdateFallback() {
+        UUID deckId = UUID.randomUUID();
+        UUID testSuiteId = UUID.randomUUID();
+        TestSuiteReq request = new TestSuiteReq("Updated Suite", true);
+        RuntimeException exception = new RuntimeException("Database connection failed");
+
+        RuntimeException thrown =
+                assertThrows(
+                        RuntimeException.class,
+                        () ->
+                                testSuiteService.updateFallback(
+                                        deckId, testSuiteId, request, exception));
+
+        assertEquals(
+                "Test suite service is currently unavailable. Please try again later.",
+                thrown.getMessage());
+        assertSame(exception, thrown.getCause());
+    }
+
+    @Test
+    void testDeleteFallback() {
+        UUID deckId = UUID.randomUUID();
+        UUID testSuiteId = UUID.randomUUID();
+        RuntimeException exception = new RuntimeException("Database connection failed");
+
+        RuntimeException thrown =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> testSuiteService.deleteFallback(deckId, testSuiteId, exception));
+
+        assertEquals(
+                "Test suite service is currently unavailable. Please try again later.",
+                thrown.getMessage());
+        assertSame(exception, thrown.getCause());
+    }
+
+    @Test
+    void testGetByIdFallback() {
+        UUID deckId = UUID.randomUUID();
+        UUID testSuiteId = UUID.randomUUID();
+        RuntimeException exception = new RuntimeException("Database connection failed");
+
+        RuntimeException thrown =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> testSuiteService.getByIdFallback(deckId, testSuiteId, exception));
+
+        assertEquals(
+                "Test suite service is currently unavailable. Please try again later.",
+                thrown.getMessage());
+        assertSame(exception, thrown.getCause());
+    }
+
+    @Test
+    void testGetAllByDeckFallback() {
+        UUID deckId = UUID.randomUUID();
+        RuntimeException exception = new RuntimeException("Database connection failed");
+
+        RuntimeException thrown =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> testSuiteService.getAllByDeckFallback(deckId, exception));
+
+        assertEquals(
+                "Test suite service is currently unavailable. Please try again later.",
+                thrown.getMessage());
+        assertSame(exception, thrown.getCause());
+    }
 }
