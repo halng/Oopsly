@@ -4,6 +4,7 @@ __pycache__/
 .idea/
 .vscode/
 test-results/
+
 # Generated test files
 tests/integration/generated/
 
@@ -12,3 +13,20 @@ wiremock/
 
 # Test reports
 reports/
+*.xml
+*.html
+*.json
+
+# Environment files
+.env
+.env.local
+
+# Docker volumes and data
+.docker/
+docker-compose.override.yml
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

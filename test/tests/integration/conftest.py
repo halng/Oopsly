@@ -18,12 +18,113 @@ import json
 import os
 import pytest
 import requests
+import time
+import subprocess
 from pathlib import Path
 from typing import Dict, Any
 
 
 # Optional: Enable response recording for WireMock
 ENABLE_RECORDING = os.getenv("ENABLE_RECORDING", "false").lower() == "true"
+
+# Docker integration settings
+USE_DOCKER = os.getenv("USE_DOCKER", "true").lower() == "true"
+DOCKER_STARTUP_TIMEOUT = int(os.getenv("DOCKER_STARTUP_TIMEOUT", "120"))
+
+
+def wait_for_api_health(base_url: str, timeout: int = 120) -> bool:
+    """
+    Wait for the API server to become healthy.
+    
+    Args:
+        base_url: Base URL of the API
+        timeout: Maximum time to wait in seconds
+    
+    Returns:
+        True if API is healthy, False otherwise
+    """
+    start_time = time.time()
+    health_endpoint = f"{base_url}/actuator/health"
+    
+    print(f"\nWaiting for API at {base_url} to become healthy...")
+    
+    while time.time() - start_time < timeout:
+        try:
+            response = requests.get(health_endpoint, timeout=5)
+            if response.status_code == 200:
+                print(f"✅ API is healthy!")
+                return True
+        except requests.exceptions.RequestException:
+            pass
+        
+        # Show progress
+        elapsed = int(time.time() - start_time)
+        if elapsed % 10 == 0:
+            print(f"⏳ Still waiting... ({elapsed}s elapsed)")
+        
+        time.sleep(2)
+    
+    print(f"❌ API did not become healthy within {timeout}s")
+    return False
+
+
+@pytest.fixture(scope="session", autouse=True)
+def docker_services():
+    """
+    Automatically start Docker services if USE_DOCKER=true.
+    Runs once per test session.
+    """
+    if not USE_DOCKER:
+        print("\n⚠️  Docker integration disabled (USE_DOCKER=false)")
+        print("Make sure the API server is running manually!")
+        yield
+        return
+    
+    print("\n🐳 Starting Docker services for integration tests...")
+    
+    test_dir = Path(__file__).parent.parent.parent
+    compose_file = test_dir / "docker-compose.test.yml"
+    
+    if not compose_file.exists():
+        pytest.fail(f"Docker compose file not found: {compose_file}")
+    
+    # Start services
+    try:
+        subprocess.run(
+            ["docker-compose", "-f", str(compose_file), "up", "-d", "--build"],
+            check=True,
+            cwd=str(test_dir),
+            capture_output=True
+        )
+        print("✅ Docker services started")
+        
+        # Wait for API to be healthy
+        api_url = os.getenv("API_BASE_URL", "http://localhost:9009")
+        if not wait_for_api_health(api_url, timeout=DOCKER_STARTUP_TIMEOUT):
+            # Show logs if startup failed
+            subprocess.run(
+                ["docker-compose", "-f", str(compose_file), "logs", "--tail=50"],
+                cwd=str(test_dir)
+            )
+            pytest.fail("API server did not become healthy in time")
+        
+        yield
+        
+        # Cleanup: Stop services after tests
+        print("\n🧹 Stopping Docker services...")
+        subprocess.run(
+            ["docker-compose", "-f", str(compose_file), "down"],
+            cwd=str(test_dir),
+            capture_output=True
+        )
+        print("✅ Docker services stopped")
+        
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to start Docker services: {e}")
+        print(f"Output: {e.output}")
+        pytest.fail(f"Docker setup failed: {e}")
+    except FileNotFoundError:
+        pytest.fail("docker-compose command not found. Please install Docker Compose.")
 
 
 @pytest.fixture(scope="session")
@@ -41,17 +142,30 @@ def openapi_spec() -> Dict[str, Any]:
 
 
 @pytest.fixture(scope="session")
-def api_base_url(openapi_spec) -> str:
+def api_base_url(openapi_spec, docker_services) -> str:
     """
     Extract the base URL from the OpenAPI specification.
     This ensures tests always target the correct environment.
+    Depends on docker_services to ensure services are ready.
     """
-    servers = openapi_spec.get("servers", [])
-    if not servers:
-        pytest.fail("No servers defined in OpenAPI specification")
+    # Default to Docker environment if USE_DOCKER is enabled
+    if USE_DOCKER:
+        default_url = "http://localhost:9009"
+    else:
+        servers = openapi_spec.get("servers", [])
+        default_url = servers[0]["url"] if servers else "http://localhost:9009"
     
-    # Use the first server as default, or allow override via environment variable
-    base_url = os.getenv("API_BASE_URL", servers[0]["url"])
+    # Allow override via environment variable
+    base_url = os.getenv("API_BASE_URL", default_url)
+    
+    # Verify API is reachable
+    try:
+        response = requests.get(f"{base_url}/actuator/health", timeout=5)
+        if response.status_code != 200:
+            pytest.fail(f"API health check failed: {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        pytest.fail(f"Cannot reach API at {base_url}: {e}")
+    
     return base_url
 
 

@@ -4,14 +4,47 @@
 
 This comprehensive testing suite implements a specification-driven approach to API quality assurance, based on the OpenAPI specification as the deterministic contract. The suite covers all dimensions of testing required for production-grade API systems.
 
+**✨ New: Docker Integration** - Tests now automatically start and manage Docker services (API + Database + Redis). Just run `./run_tests.sh integration` and everything is handled for you!
+
 ## Table of Contents
 
 1. [Test Structure](#test-structure)
-2. [Integration Tests](#integration-tests)
-3. [Performance Tests](#performance-tests)
-4. [Running the Tests](#running-the-tests)
-5. [Performance KPIs and Thresholds](#performance-kpis-and-thresholds)
-6. [Continuous Integration](#continuous-integration)
+2. [Quick Start with Docker](#quick-start-with-docker)
+3. [Integration Tests](#integration-tests)
+4. [Performance Tests](#performance-tests)
+5. [Running the Tests](#running-the-tests)
+6. [Performance KPIs and Thresholds](#performance-kpis-and-thresholds)
+7. [Continuous Integration](#continuous-integration)
+
+## Quick Start with Docker
+
+### Automatic Mode (Recommended)
+
+```bash
+# Just run tests - Docker auto-manages everything!
+cd test
+./run_tests.sh integration
+
+# What happens:
+# 1. Docker starts PostgreSQL, Redis, and API server
+# 2. Tests run against real API at http://localhost:9009
+# 3. Docker services automatically stop after tests
+```
+
+### Manual Mode
+
+```bash
+# Start services manually
+./setup_test_environment.sh up
+
+# Run tests (Docker won't auto-start/stop)
+USE_DOCKER=false pytest tests/integration/ -v
+
+# Stop services
+./setup_test_environment.sh down
+```
+
+**See [DOCKER_INTEGRATION_GUIDE.md](DOCKER_INTEGRATION_GUIDE.md) for complete Docker documentation.**
 
 ## Test Structure
 
@@ -22,20 +55,30 @@ test/
 │   │   ├── api/               # Endpoint-specific tests
 │   │   │   ├── test_deck_api.py
 │   │   │   ├── test_card_api.py
-│   │   │   └── test_otp_api.py
+│   │   │   ├── test_otp_api.py
+│   │   │   └── test_generic_api.py  # Runtime parameterized tests
 │   │   ├── utils/             # Test utilities
-│   │   │   └── schema_validator.py
-│   │   └── conftest.py        # Test fixtures
+│   │   │   ├── schema_validator.py
+│   │   │   ├── response_recorder.py  # WireMock integration
+│   │   │   └── test_generator.py
+│   │   └── conftest.py        # Test fixtures + Docker management
 │   ├── perf/                  # Performance Tests
 │   │   ├── k6/                # K6 load tests
 │   │   │   ├── baseline_load_test.js
 │   │   │   ├── stress_test.js
 │   │   │   ├── spike_test.js
-│   │   │   └── soak_test.js
+│   │   │   ├── soak_test.js
+│   │   │   └── generic_load_test.js  # Config-driven
+│   │   ├── config/
+│   │   │   └── endpoints_config.py   # Performance config
 │   │   └── locustfile.py      # Locust tests
 │   └── e2e/                   # End-to-end UI tests
 ├── config/
 │   └── requirement.txt        # Python dependencies
+├── docker-compose.test.yml    # Docker services for testing
+├── setup_test_environment.sh  # Docker management script
+├── generate_report.py         # Report generation (Markdown/HTML/JSON)
+├── reports/                   # Auto-generated test reports
 └── pytest.ini                 # Pytest configuration
 ```
 

@@ -124,13 +124,27 @@ run_locust_tests() {
     echo -e "${GREEN}✓ Locust tests completed${NC}"
 }
 
+# Start Docker services
+start_docker() {
+    print_header "Starting Docker Services"
+    ./setup_test_environment.sh up
+}
+
+# Stop Docker services
+stop_docker() {
+    print_header "Stopping Docker Services"
+    ./setup_test_environment.sh down
+}
+
 # Display usage
 usage() {
     cat << EOF
 Usage: $0 [COMMAND] [OPTIONS]
 
 Commands:
-    integration              Run integration tests
+    docker-up                Start Docker services (API + Database + Redis)
+    docker-down              Stop Docker services
+    integration              Run integration tests (auto-starts Docker if USE_DOCKER=true)
     performance [TYPE]       Run k6 performance tests
                             Types: baseline, stress, spike, soak, smoke
     locust [USERS] [RATE]   Run Locust performance tests
@@ -138,15 +152,29 @@ Commands:
     check                    Check if API is available
 
 Examples:
-    $0 integration                    # Run integration tests
+    $0 docker-up                      # Start Docker services
+    $0 integration                    # Run integration tests (Docker auto-managed)
     $0 performance baseline           # Run baseline load test
     $0 performance smoke              # Run quick smoke test
     $0 locust 100 10                  # Run Locust with 100 users
     $0 all                            # Run all tests
+    $0 docker-down                    # Stop Docker services
 
 Environment Variables:
     API_BASE_URL                      # API base URL (default: http://localhost:9009/api/v1/oopsly)
     TARGET_RPS                        # Target requests per second for k6 tests
+    USE_DOCKER                        # Auto-start Docker for tests (default: true)
+    DOCKER_STARTUP_TIMEOUT            # Max wait time for Docker startup (default: 120s)
+
+Docker Integration:
+    By default, integration tests automatically start Docker services.
+    Set USE_DOCKER=false to test against a manually running server.
+    
+    With Docker (automatic):
+        $0 integration
+    
+    Without Docker (manual server):
+        USE_DOCKER=false $0 integration
 
 EOF
 }
@@ -156,8 +184,14 @@ main() {
     COMMAND="${1:-help}"
     
     case "$COMMAND" in
+        docker-up)
+            start_docker
+            ;;
+        docker-down)
+            stop_docker
+            ;;
         integration)
-            check_api || true
+            # Docker is auto-managed by pytest fixtures if USE_DOCKER=true
             run_integration_tests
             ;;
         performance)
@@ -169,8 +203,8 @@ main() {
             run_locust_tests "${2:-100}" "${3:-10}" "${4:-5m}"
             ;;
         all)
-            check_api || exit 1
             run_integration_tests
+            check_api || exit 1
             run_k6_tests smoke
             ;;
         check)
