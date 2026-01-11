@@ -16,7 +16,7 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import java.util.List;
-import java.util.UUID;
+import jakarta.validation.constraints.NotBlank;
 
-public record DeckRes(UUID id, String name, String description, List<CardReq> cards) {}
+public record CollectionReq(
+        @NotBlank(message = "Name is required") String name, String description) {}

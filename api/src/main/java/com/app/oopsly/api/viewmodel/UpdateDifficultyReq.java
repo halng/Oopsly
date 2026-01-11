@@ -16,7 +16,7 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import java.util.List;
+import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
-public record DeckRes(UUID id, String name, String description, List<CardReq> cards) {}
+public record UpdateDifficultyReq(@NotNull UUID cardId, @NotNull String newLevel) {}

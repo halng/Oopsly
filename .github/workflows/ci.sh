@@ -4,135 +4,137 @@ set -e
 # CI Script - Unified CI pipeline for Oopsly
 # This script consolidates all CI steps from the existing workflows
 
-echo "====================================="
-echo "Starting Unified CI Pipeline"
-echo "====================================="
+echo "CI::====================================="
+echo "CI::Starting Unified CI Pipeline"
+echo "CI::====================================="
 
 # Validate environment by checking tool versions
 validate_environment() {
-    echo ""
-    echo "====================================="
-    echo "Validating Environment"
-    echo "====================================="
+    echo "CI::"
+    echo "CI::====================================="
+    echo "CI::Validating Environment"
+    echo "CI::====================================="
     
     local validation_failed=false
     
     # Check Java
-    echo "Checking Java..."
+    echo "CI::Checking Java..."
     if command -v java &> /dev/null; then
         java -version
     else
-        echo "ERROR: Java is not installed"
+        echo "CI::ERROR: Java is not installed"
         validation_failed=true
     fi
     
     # Check Gradle wrapper (will be checked in api directory)
-    echo "Checking Gradle..."
+    echo "CI::Checking Gradle..."
     if [ -d "api" ] && [ -f "api/gradlew" ]; then
-        echo "Gradle wrapper found in api directory"
+        echo "CI::Gradle wrapper found in api directory"
     else
-        echo "WARNING: Gradle wrapper not found in api directory"
+        echo "CI::WARNING: Gradle wrapper not found in api directory"
     fi
     
     # Check Node.js
-    echo "Checking Node.js..."
+    echo "CI::Checking Node.js..."
     if command -v node &> /dev/null; then
         node --version
     else
-        echo "ERROR: Node.js is not installed"
+        echo "CI::ERROR: Node.js is not installed"
         validation_failed=true
     fi
     
     # Check npm
-    echo "Checking npm..."
+    echo "CI::Checking npm..."
     if command -v npm &> /dev/null; then
         npm --version
     else
-        echo "ERROR: npm is not installed"
+        echo "CI::ERROR: npm is not installed"
         validation_failed=true
     fi
     
     # Check Python
-    echo "Checking Python..."
+    echo "CI::Checking Python..."
     if command -v python &> /dev/null; then
         python --version
     else
-        echo "ERROR: Python is not installed"
+        echo "CI::ERROR: Python is not installed"
         validation_failed=true
     fi
     
     # Check pip
-    echo "Checking pip..."
+    echo "CI::Checking pip..."
     if command -v pip &> /dev/null; then
         pip --version
     else
-        echo "ERROR: pip is not installed"
+        echo "CI::ERROR: pip is not installed"
         validation_failed=true
     fi
     
     if [ "$validation_failed" = true ]; then
-        echo ""
-        echo "ERROR: Environment validation failed. Please install missing dependencies."
+        echo "CI::"
+        echo "CI::ERROR: Environment validation failed. Please install missing dependencies."
         exit 1
     fi
     
-    echo ""
-    echo "Environment validation completed successfully!"
+    echo "CI::"
+    echo "CI::Environment validation completed successfully!"
 }
 
 # Backend CI (api directory)
 run_backend_ci() {
-    echo ""
-    echo "====================================="
-    echo "Running Backend CI (api)"
-    echo "====================================="
+    echo "CI::"
+    echo "CI::====================================="
+    echo "CI::Running Backend CI (api)"
+    echo "CI::====================================="
     
     if [ -d "api" ]; then
         cd api
         
-        echo "Running Spotless Check..."
+        echo "CI::Running Spotless Check..."
         ./gradlew spotlessCheck
         
-        echo "Running Unit Tests..."
+        echo "CI::Running Unit Tests..."
         ./gradlew test
         
-        echo "Running Code Coverage and Verification..."
+        echo "CI::Running Code Coverage and Verification..."
         ./gradlew jacocoTestCoverageVerification
 
-        echo "Logging to container registry..."
-        echo "$DOCKER_PASSWORD" | docker login ghcr.io -u "$DOCKER_USERNAME" --password-stdin
-
-        echo "Building and Pushing Docker Image..."
+        echo "CI::Building and Pushing Docker Image..."
         if [ -n "$IMAGE_TAG" ]; then
-            echo "Building Docker image with tag: $IMAGE_TAG"
+            echo "CI::Building Docker image with tag: $IMAGE_TAG"
             ./gradlew bootBuildImage --imageName=ghcr.io/halng/oopsly-api:"$IMAGE_TAG"
+
+            echo "CI::Logging to container registry..."
+            echo "CI::$DOCKER_PASSWORD" | docker login ghcr.io -u "$DOCKER_USERNAME" --password-stdin
+
+            echo "CI::Pushing Docker image to registry..."
             docker push ghcr.io/halng/oopsly-api:"$IMAGE_TAG"
 
-            echo "Docker image ghcr.io/halng/oopsly-api:$IMAGE_TAG built and pushed successfully!"
+            echo "CI::Docker image ghcr.io/halng/oopsly-api:$IMAGE_TAG built and pushed successfully!"
         else
-            echo "No IMAGE_TAG set; skipping Docker image build and push."
+            echo "CI::No IMAGE_TAG set; skipping Docker image build and push."
         fi
         
         cd ..
-        echo "Backend CI completed successfully!"
+        echo "CI::Backend CI completed successfully!"
     else
-        echo "Warning: api directory not found, skipping backend CI"
+        echo "CI::Warning: api directory not found, skipping backend CI"
     fi
 }
 
 # Frontend CI (ui directory)
 run_frontend_ci() {
-    echo ""
-    echo "====================================="
-    echo "Running Frontend CI (ui)"
-    echo "====================================="
+    echo "CI::"
+    echo "CI::====================================="
+    echo "CI::Running Frontend CI (ui)"
+    echo "CI::====================================="
     
     if [ -d "ui" ]; then
         cd ui
         
         # Detect package manager
         PKG_MANAGER=""
-        echo "Installing packages..."
+        echo "CI::Installing packages..."
         if [ -f pnpm-lock.yaml ]; then
             PKG_MANAGER="pnpm"
             npm install -g pnpm
@@ -150,96 +152,96 @@ run_frontend_ci() {
             npm install
         fi
         
-        echo "Running ESLint..."
+        echo "CI::Running ESLint..."
         $PKG_MANAGER run lint
         
-        echo "Running Unit Tests with coverage..."
+        echo "CI::Running Unit Tests with coverage..."
         $PKG_MANAGER run test:coverage
         
         cd ..
-        echo "Frontend CI completed successfully!"
+        echo "CI::Frontend CI completed successfully!"
     else
-        echo "Warning: ui directory not found, skipping frontend CI"
+        echo "CI::Warning: ui directory not found, skipping frontend CI"
     fi
 }
 
 # Markdown Linting
 run_markdown_lint() {
-    echo ""
-    echo "====================================="
-    echo "Running Markdown Linting"
-    echo "====================================="
+    echo "CI::"
+    echo "CI::====================================="
+    echo "CI::Running Markdown Linting"
+    echo "CI::====================================="
     
     if command -v markdownlint-cli2 &> /dev/null; then
         markdownlint-cli2 '**/*.md'
-        echo "Markdown linting completed successfully!"
+        echo "CI::Markdown linting completed successfully!"
     else
-        echo "Installing markdownlint-cli2..."
+        echo "CI::Installing markdownlint-cli2..."
         npm install -g markdownlint-cli2
         markdownlint-cli2 '**/*.md'
-        echo "Markdown linting completed successfully!"
+        echo "CI::Markdown linting completed successfully!"
     fi
 }
 
 # Python Test Style Check (test directory)
 run_test_style_check() {
-    echo ""
-    echo "====================================="
-    echo "Running Test Style Check (Python)"
-    echo "====================================="
+    echo "CI::"
+    echo "CI::====================================="
+    echo "CI::Running Test Style Check (Python)"
+    echo "CI::====================================="
     
     if [ -d "test" ]; then
-        echo "Installing Python dependencies..."
+        echo "CI::Installing Python dependencies..."
         python -m pip install --upgrade pip
         pip install -r test/config/requirement.txt
         
-        echo "Running black style check..."
+        echo "CI::Running black style check..."
         black --check test/
         
-        echo "Test style check completed successfully!"
+        echo "CI::Test style check completed successfully!"
     else
-        echo "Warning: test directory not found, skipping test style check"
+        echo "CI::Warning: test directory not found, skipping test style check"
     fi
 }
 
 # Security Scans (Snyk)
 run_security_scans() {
-    echo ""
-    echo "====================================="
-    echo "Running Security Scans (Snyk)"
-    echo "====================================="
+    echo "CI::"
+    echo "CI::====================================="
+    echo "CI::Running Security Scans (Snyk)"
+    echo "CI::====================================="
     
     if [ -z "$SNYK_TOKEN" ]; then
-        echo "Warning: SNYK_TOKEN not set, skipping security scans"
+        echo "CI::Warning: SNYK_TOKEN not set, skipping security scans"
         return 0
     fi
     
     # Snyk organization ID
     SNYK_ORG_ID="${SNYK_ORG_ID:-a8c77c31-638a-4516-ab03-0e14eb961631}"
     
-    echo "Setting up Snyk CLI..."
+    echo "CI::Setting up Snyk CLI..."
     curl -sS https://static.snyk.io/cli/latest/snyk-linux -o snyk
     chmod +x ./snyk
     mv ./snyk /usr/local/bin/
     
-    echo "Checking Snyk version..."
+    echo "CI::Checking Snyk version..."
     snyk --version
     
-    echo "Authenticating Snyk..."
+    echo "CI::Authenticating Snyk..."
     snyk auth "$SNYK_TOKEN"
     
     if [ -d "api" ]; then
-        echo "Running Snyk test for API..."
+        echo "CI::Running Snyk test for API..."
         snyk code test ./api --org="$SNYK_ORG_ID" --report --project-name="OOPSLY-API"
     fi
     
     # Temporarily disabling UI Snyk scan
     # if [ -d "ui" ]; then
-    #     echo "Running Snyk test for UI..."
+    #     echo "CI::Running Snyk test for UI..."
     #     snyk code test ./ui --org="$SNYK_ORG_ID" --report --project-name="OOPSLY-UI"
     # fi
     
-    echo "Security scans completed successfully!"
+    echo "CI::Security scans completed successfully!"
 }
 
 # Main execution
@@ -254,8 +256,8 @@ main() {
     elif [[ "$REF" == "refs/heads/release" ]]; then
         export IMAGE_TAG="latest-$COMMIT_HASH"
     else
-        export IMAGE_TAG="dev-$COMMIT_HASH"
-        echo "Non-deployment branch detected. Building with dev tag only."
+        export IMAGE_TAG=""
+        echo "CI::Non-deployment branch detected. Building with dev tag only."
     fi
     
     while [[ $# -gt 0 ]]; do
@@ -265,7 +267,7 @@ main() {
                 shift
                 ;;
             *)
-                echo "Unknown option: $1"
+                echo "CI::Unknown option: $1"
                 exit 1
                 ;;
         esac
@@ -284,10 +286,10 @@ main() {
         run_security_scans
     fi
     
-    echo ""
-    echo "====================================="
-    echo "All CI steps completed successfully!"
-    echo "====================================="
+    echo "CI::"
+    echo "CI::====================================="
+    echo "CI::All CI steps completed successfully!"
+    echo "CI::====================================="
 }
 
 main "$@"

@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ValidationException.class)
     public ApiRes handleValidationException(ValidationException ex) {
-        log.warn("Validation failed: {}", ex.getMessage());
+        log.warn("Validation error: {}", ex.getMessage());
         return ApiRes.badRequest(ex.getMessage());
     }
 

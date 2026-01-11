@@ -14,9 +14,20 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.viewmodel;
+package com.app.oopsly.api.entity;
 
-import java.util.List;
-import java.util.UUID;
+public enum DifficultyLevel {
+    HARD,
+    GOOD,
+    EASY,
+    AGAIN;
 
-public record DeckRes(UUID id, String name, String description, List<CardReq> cards) {}
+    public static DifficultyLevel fromString(String level) {
+        for (DifficultyLevel dl : DifficultyLevel.values()) {
+            if (dl.name().equalsIgnoreCase(level)) {
+                return dl;
+            }
+        }
+        throw new IllegalArgumentException("Invalid difficulty level: " + level);
+    }
+}

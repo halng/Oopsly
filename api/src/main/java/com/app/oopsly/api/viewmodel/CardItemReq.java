@@ -16,7 +16,9 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import java.util.List;
-import java.util.UUID;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
-public record DeckRes(UUID id, String name, String description, List<CardReq> cards) {}
+public record CardItemReq(
+        @NotNull @Size(min = 1, max = 500) String front,
+        @NotNull @Size(min = 1, max = 2000) String back) {}

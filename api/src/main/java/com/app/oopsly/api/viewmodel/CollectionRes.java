@@ -16,7 +16,6 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import java.util.List;
 import java.util.UUID;
 
-public record DeckRes(UUID id, String name, String description, List<CardReq> cards) {}
+public record CollectionRes(UUID id, String name, String description) {}
