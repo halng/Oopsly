@@ -105,7 +105,7 @@ run_backend_ci() {
             ./gradlew bootBuildImage --imageName=ghcr.io/halng/oopsly-api:"$IMAGE_TAG"
 
             echo "CI::Logging to container registry..."
-            echo "CI::$DOCKER_PASSWORD" | docker login ghcr.io -u "$DOCKER_USERNAME" --password-stdin
+            echo "$DOCKER_PASSWORD" | docker login ghcr.io -u "$DOCKER_USERNAME" --password-stdin
 
             echo "CI::Pushing Docker image to registry..."
             docker push ghcr.io/halng/oopsly-api:"$IMAGE_TAG"
