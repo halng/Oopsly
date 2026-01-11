@@ -24,16 +24,16 @@ class LanguageTest {
 
     @Test
     void fromString_returnsCorrectLanguage_forValidInput() {
-        assertEquals(Language.EN_US, Language.fromString("en-US"));
-        assertEquals(Language.VI_VN, Language.fromString("vi-VN"));
+        assertEquals(Language.ENGLISH, Language.fromString("en"));
+        assertEquals(Language.VIETNAMESE, Language.fromString("vi"));
     }
 
     @Test
     void fromString_isCaseInsensitive() {
-        assertEquals(Language.EN_US, Language.fromString("en-us"));
-        assertEquals(Language.VI_VN, Language.fromString("vi-vn"));
-        assertEquals(Language.EN_US, Language.fromString("EN-US"));
-        assertEquals(Language.VI_VN, Language.fromString("VI-VN"));
+        assertEquals(Language.ENGLISH, Language.fromString("en"));
+        assertEquals(Language.VIETNAMESE, Language.fromString("vi"));
+        assertEquals(Language.ENGLISH, Language.fromString("EN"));
+        assertEquals(Language.VIETNAMESE, Language.fromString("VI"));
     }
 
     @Test
@@ -52,7 +52,7 @@ class LanguageTest {
 
     @Test
     void getCode_returnsCorrectCode() {
-        assertEquals("en-US", Language.EN_US.getCode());
-        assertEquals("vi-VN", Language.VI_VN.getCode());
+        assertEquals("en", Language.ENGLISH.getCode());
+        assertEquals("vi", Language.VIETNAMESE.getCode());
     }
 }

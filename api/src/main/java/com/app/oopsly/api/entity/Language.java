@@ -17,8 +17,8 @@
 package com.app.oopsly.api.entity;
 
 public enum Language {
-    EN_US("en-US"),
-    VI_VN("vi-VN");
+    ENGLISH("en"),
+    VIETNAMESE("vi");
 
     private final String code;
 

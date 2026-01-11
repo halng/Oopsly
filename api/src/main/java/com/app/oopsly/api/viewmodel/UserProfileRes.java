@@ -16,9 +16,4 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import java.util.Map;
-
-public record UserProfileRes(String displayName, String bio, Integer age, SettingsRes settings) {
-
-    public record SettingsRes(String theme, String language, Map<String, Integer> spaceConfig) {}
-}
+public record UserProfileRes(String displayName, String bio, Integer age, SettingsRes settings) {}

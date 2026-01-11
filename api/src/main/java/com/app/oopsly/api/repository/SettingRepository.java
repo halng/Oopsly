@@ -16,13 +16,13 @@
 
 package com.app.oopsly.api.repository;
 
-import com.app.oopsly.api.entity.Setting;
+import com.app.oopsly.api.entity.SettingEntity;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SettingRepository extends JpaRepository<Setting, UUID> {
-    Optional<Setting> findByUserInfoId(UUID userInfoId);
+public interface SettingRepository extends JpaRepository<SettingEntity, UUID> {
+    Optional<SettingEntity> findByUserId(UUID userId);
 }

@@ -14,15 +14,8 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.repository;
+package com.app.oopsly.api.viewmodel;
 
-import com.app.oopsly.api.entity.UserInfo;
-import java.util.Optional;
-import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.Map;
 
-@Repository
-public interface UserInfoRepository extends JpaRepository<UserInfo, UUID> {
-    Optional<UserInfo> findByUserId(UUID userId);
-}
+public record SettingsRes(String theme, String language, Map<String, Integer> spaceConfig) {}

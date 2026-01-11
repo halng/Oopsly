@@ -30,7 +30,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @AllArgsConstructor
 @Table(name = "settings")
 @Entity(name = "settings")
-public class Setting extends Audit {
+public class SettingEntity extends Audit {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -45,6 +45,6 @@ public class Setting extends Audit {
     private Map<String, Integer> spaceConfig;
 
     @OneToOne
-    @JoinColumn(name = "user_info_id", unique = true, nullable = false)
-    private UserInfo userInfo;
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
+    private User user;
 }

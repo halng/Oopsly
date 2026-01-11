@@ -39,9 +39,17 @@ public class User extends Audit {
 
     private String pictureUrl;
 
+    @Column(name = "display_name", length = 50)
+    private String displayName;
+
+    @Column(length = 255)
+    private String bio;
+
+    @Column private Integer age;
+
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<DeckEntity> decks;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private UserInfo userInfo;
+    private SettingEntity setting;
 }

@@ -20,9 +20,9 @@ import com.app.oopsly.api.entity.*;
 import com.app.oopsly.api.exception.UnauthenticatedException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.SettingRepository;
-import com.app.oopsly.api.repository.UserInfoRepository;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.service.UserService;
+import com.app.oopsly.api.viewmodel.SettingsRes;
 import com.app.oopsly.api.viewmodel.UpdateProfileRequest;
 import com.app.oopsly.api.viewmodel.UpdateSettingsRequest;
 import com.app.oopsly.api.viewmodel.UserProfileRes;
@@ -42,7 +42,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final UserInfoRepository userInfoRepository;
     private final SettingRepository settingRepository;
 
     @Override
@@ -68,71 +67,53 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
     public UserProfileRes getProfile() {
         User user = getCurrentUser();
-        UserInfo userInfo =
-                userInfoRepository
-                        .findByUserId(user.getId())
-                        .orElseThrow(
-                                () ->
-                                        new ValidationException(
-                                                "User profile not found. Please create one"
-                                                        + " first."));
 
-        Setting setting =
+        SettingEntity setting =
                 settingRepository
-                        .findByUserInfoId(userInfo.getId())
+                        .findByUserId(user.getId())
                         .orElseThrow(() -> new ValidationException("User settings not found"));
 
-        UserProfileRes.SettingsRes settingsRes =
-                new UserProfileRes.SettingsRes(
+        SettingsRes settingsRes =
+                new SettingsRes(
                         setting.getTheme().name(),
                         setting.getLanguage().getCode(),
                         setting.getSpaceConfig());
 
-        return new UserProfileRes(
-                userInfo.getDisplayName(), userInfo.getBio(), userInfo.getAge(), settingsRes);
+        return new UserProfileRes(user.getDisplayName(), user.getBio(), user.getAge(), settingsRes);
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = "users", allEntries = true)
+    @CacheEvict(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
     public UserProfileRes updateProfile(UpdateProfileRequest request) {
         User user = getCurrentUser();
-        UserInfo userInfo = userInfoRepository.findByUserId(user.getId()).orElse(null);
 
-        if (userInfo == null) {
-            // Create default settings first
-            UserInfo newUserInfo =
-                    UserInfo.builder()
-                            .displayName(request.displayName())
-                            .bio(request.bio())
-                            .age(request.age())
-                            .user(user)
-                            .build();
-            userInfo = userInfoRepository.save(newUserInfo);
+        // Update user profile fields
+        user.setDisplayName(request.displayName());
+        user.setBio(request.bio());
+        user.setAge(request.age());
+        userRepository.save(user);
 
-            // Create default setting
+        // Create default setting if not exists
+        SettingEntity setting = settingRepository.findByUserId(user.getId()).orElse(null);
+        if (setting == null) {
             Map<String, Integer> defaultSpaceConfig = new HashMap<>();
             defaultSpaceConfig.put("AGAIN", 1);
             defaultSpaceConfig.put("HARD", 1);
             defaultSpaceConfig.put("GOOD", 5);
             defaultSpaceConfig.put("EASY", 10);
 
-            Setting setting =
-                    Setting.builder()
+            setting =
+                    SettingEntity.builder()
                             .theme(Theme.SYSTEM)
-                            .language(Language.EN_US)
+                            .language(Language.ENGLISH)
                             .spaceConfig(defaultSpaceConfig)
-                            .userInfo(userInfo)
+                            .user(user)
                             .build();
             settingRepository.save(setting);
-        } else {
-            // Update existing
-            userInfo.setDisplayName(request.displayName());
-            userInfo.setBio(request.bio());
-            userInfo.setAge(request.age());
-            userInfoRepository.save(userInfo);
         }
 
         return getProfile();
@@ -140,19 +121,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "users", allEntries = true)
+    @CacheEvict(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
     public UserProfileRes updateSettings(UpdateSettingsRequest request) {
         User user = getCurrentUser();
-        UserInfo userInfo =
-                userInfoRepository
-                        .findByUserId(user.getId())
-                        .orElseThrow(
-                                () ->
-                                        new ValidationException(
-                                                "User profile not found. Please create profile"
-                                                        + " first."));
 
-        Setting setting = settingRepository.findByUserInfoId(userInfo.getId()).orElse(null);
+        SettingEntity setting = settingRepository.findByUserId(user.getId()).orElse(null);
 
         // Validate theme and language
         Theme theme;
@@ -179,11 +152,11 @@ public class UserServiceImpl implements UserService {
         if (setting == null) {
             // Create new setting
             setting =
-                    Setting.builder()
+                    SettingEntity.builder()
                             .theme(theme)
                             .language(language)
                             .spaceConfig(spaceConfigMap)
-                            .userInfo(userInfo)
+                            .user(user)
                             .build();
         } else {
             // Update existing

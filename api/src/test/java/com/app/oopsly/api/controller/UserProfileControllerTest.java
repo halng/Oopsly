@@ -20,8 +20,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.SettingsRes;
+import com.app.oopsly.api.viewmodel.SpaceConfigRequest;
 import com.app.oopsly.api.viewmodel.UpdateProfileRequest;
 import com.app.oopsly.api.viewmodel.UpdateSettingsRequest;
 import com.app.oopsly.api.viewmodel.UserProfileRes;
@@ -52,8 +55,7 @@ class UserProfileControllerTest {
         spaceConfig.put("GOOD", 5);
         spaceConfig.put("EASY", 10);
 
-        UserProfileRes.SettingsRes settings =
-                new UserProfileRes.SettingsRes("SYSTEM", "en-US", spaceConfig);
+        SettingsRes settings = new SettingsRes("SYSTEM", "en", spaceConfig);
         mockProfile = new UserProfileRes("Test User", "Test Bio", 25, settings);
     }
 
@@ -67,6 +69,15 @@ class UserProfileControllerTest {
         assertEquals(HttpStatus.OK, result.getStatusCode());
         assertNotNull(result.getBody());
         assertTrue(result.getBody().isSuccess());
+        verify(userService, times(1)).getProfile();
+    }
+
+    @Test
+    void getProfile_throwsException_whenSettingsNotFound() {
+        when(userService.getProfile())
+                .thenThrow(new ValidationException("User settings not found"));
+
+        assertThrows(ValidationException.class, () -> userProfileController.getProfile());
         verify(userService, times(1)).getProfile();
     }
 
@@ -86,12 +97,22 @@ class UserProfileControllerTest {
     }
 
     @Test
+    void updateProfile_withNullAge_isAllowed() {
+        UpdateProfileRequest request = new UpdateProfileRequest("User", "Bio", null);
+
+        when(userService.updateProfile(any(UpdateProfileRequest.class))).thenReturn(mockProfile);
+
+        ApiRes result = userProfileController.updateProfile(request);
+
+        assertNotNull(result);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        verify(userService, times(1)).updateProfile(request);
+    }
+
+    @Test
     void updateSettings_updatesSettings_withValidData() {
         UpdateSettingsRequest request =
-                new UpdateSettingsRequest(
-                        "DARK",
-                        "vi-VN",
-                        new com.app.oopsly.api.viewmodel.SpaceConfigRequest(2, 3, 7, 14));
+                new UpdateSettingsRequest("DARK", "vi", new SpaceConfigRequest(2, 3, 7, 14));
 
         when(userService.updateSettings(any(UpdateSettingsRequest.class))).thenReturn(mockProfile);
 
@@ -102,5 +123,61 @@ class UserProfileControllerTest {
         assertNotNull(result.getBody());
         assertTrue(result.getBody().isSuccess());
         verify(userService, times(1)).updateSettings(request);
+    }
+
+    @Test
+    void updateSettings_throwsException_whenInvalidTheme() {
+        UpdateSettingsRequest request =
+                new UpdateSettingsRequest("INVALID", "en", new SpaceConfigRequest(1, 1, 5, 10));
+
+        when(userService.updateSettings(any(UpdateSettingsRequest.class)))
+                .thenThrow(new ValidationException("Invalid theme: INVALID"));
+
+        assertThrows(
+                ValidationException.class, () -> userProfileController.updateSettings(request));
+        verify(userService, times(1)).updateSettings(request);
+    }
+
+    @Test
+    void updateSettings_throwsException_whenInvalidLanguage() {
+        UpdateSettingsRequest request =
+                new UpdateSettingsRequest("LIGHT", "fr", new SpaceConfigRequest(1, 1, 5, 10));
+
+        when(userService.updateSettings(any(UpdateSettingsRequest.class)))
+                .thenThrow(new ValidationException("Invalid language: fr"));
+
+        assertThrows(
+                ValidationException.class, () -> userProfileController.updateSettings(request));
+        verify(userService, times(1)).updateSettings(request);
+    }
+
+    @Test
+    void updateSettings_withAllThemeOptions() {
+        SpaceConfigRequest spaceConfig = new SpaceConfigRequest(1, 1, 5, 10);
+
+        when(userService.updateSettings(any(UpdateSettingsRequest.class))).thenReturn(mockProfile);
+
+        // Test LIGHT theme
+        ApiRes result1 =
+                userProfileController.updateSettings(
+                        new UpdateSettingsRequest("LIGHT", "en", spaceConfig));
+        assertNotNull(result1);
+        assertEquals(HttpStatus.OK, result1.getStatusCode());
+
+        // Test DARK theme
+        ApiRes result2 =
+                userProfileController.updateSettings(
+                        new UpdateSettingsRequest("DARK", "en", spaceConfig));
+        assertNotNull(result2);
+        assertEquals(HttpStatus.OK, result2.getStatusCode());
+
+        // Test SYSTEM theme
+        ApiRes result3 =
+                userProfileController.updateSettings(
+                        new UpdateSettingsRequest("SYSTEM", "en", spaceConfig));
+        assertNotNull(result3);
+        assertEquals(HttpStatus.OK, result3.getStatusCode());
+
+        verify(userService, times(3)).updateSettings(any(UpdateSettingsRequest.class));
     }
 }

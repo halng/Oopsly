@@ -23,7 +23,6 @@ import com.app.oopsly.api.entity.*;
 import com.app.oopsly.api.exception.UnauthenticatedException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.SettingRepository;
-import com.app.oopsly.api.repository.UserInfoRepository;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.service.impl.UserServiceImpl;
 import com.app.oopsly.api.viewmodel.SpaceConfigRequest;
@@ -52,8 +51,6 @@ class UserServiceImplTest {
 
     @Mock private UserRepository userRepository;
 
-    @Mock private UserInfoRepository userInfoRepository;
-
     @Mock private SettingRepository settingRepository;
 
     @Mock private SecurityContext securityContext;
@@ -64,8 +61,7 @@ class UserServiceImplTest {
 
     private UUID userId;
     private User user;
-    private UserInfo userInfo;
-    private Setting setting;
+    private SettingEntity setting;
 
     @BeforeEach
     void setUp() {
@@ -73,13 +69,9 @@ class UserServiceImplTest {
         user = new User();
         user.setId(userId);
         user.setEmail("test@example.com");
-
-        userInfo = new UserInfo();
-        userInfo.setId(UUID.randomUUID());
-        userInfo.setDisplayName("Test User");
-        userInfo.setBio("Test Bio");
-        userInfo.setAge(25);
-        userInfo.setUser(user);
+        user.setDisplayName("Test User");
+        user.setBio("Test Bio");
+        user.setAge(25);
 
         Map<String, Integer> spaceConfig = new HashMap<>();
         spaceConfig.put("AGAIN", 1);
@@ -87,12 +79,12 @@ class UserServiceImplTest {
         spaceConfig.put("GOOD", 5);
         spaceConfig.put("EASY", 10);
 
-        setting = new Setting();
+        setting = new SettingEntity();
         setting.setId(UUID.randomUUID());
         setting.setTheme(Theme.SYSTEM);
-        setting.setLanguage(Language.EN_US);
+        setting.setLanguage(Language.ENGLISH);
         setting.setSpaceConfig(spaceConfig);
-        setting.setUserInfo(userInfo);
+        setting.setUser(user);
 
         SecurityContextHolder.setContext(securityContext);
     }
@@ -257,8 +249,7 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userInfoRepository.findByUserId(userId)).thenReturn(Optional.of(userInfo));
-        when(settingRepository.findByUserInfoId(userInfo.getId())).thenReturn(Optional.of(setting));
+        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
 
         UserProfileRes result = userService.getProfile();
 
@@ -268,88 +259,84 @@ class UserServiceImplTest {
         assertEquals(25, result.age());
         assertNotNull(result.settings());
         assertEquals("SYSTEM", result.settings().theme());
-        assertEquals("en-US", result.settings().language());
-        verify(userInfoRepository).findByUserId(userId);
-        verify(settingRepository).findByUserInfoId(userInfo.getId());
+        assertEquals("en", result.settings().language());
+        verify(settingRepository).findByUserId(userId);
     }
 
     @Test
-    void getProfile_throwsException_whenProfileNotFound() {
+    void getProfile_throwsException_whenSettingsNotFound() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userInfoRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(settingRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
         ValidationException exception =
                 assertThrows(ValidationException.class, () -> userService.getProfile());
-        assertTrue(exception.getMessage().contains("User profile not found"));
+        assertTrue(exception.getMessage().contains("User settings not found"));
     }
 
     @Test
-    void updateProfile_createsNewProfile_whenProfileDoesNotExist() {
+    void updateProfile_createsSettingsIfNotExist() {
         UpdateProfileRequest request = new UpdateProfileRequest("New User", "New Bio", 30);
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-
-        // First call returns empty (no profile), second call returns the profile after creation
-        when(userInfoRepository.findByUserId(userId))
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(settingRepository.findByUserId(userId))
                 .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(userInfo));
-        when(userInfoRepository.save(any(UserInfo.class))).thenReturn(userInfo);
-        when(settingRepository.save(any(Setting.class))).thenReturn(setting);
-        when(settingRepository.findByUserInfoId(userInfo.getId())).thenReturn(Optional.of(setting));
+                .thenReturn(Optional.of(setting));
+        when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
 
         UserProfileRes result = userService.updateProfile(request);
 
         assertNotNull(result);
-        verify(userInfoRepository, times(1)).save(any(UserInfo.class));
-        verify(settingRepository, times(1)).save(any(Setting.class));
+        verify(userRepository, times(1)).save(any(User.class));
+        verify(settingRepository, times(1)).save(any(SettingEntity.class));
     }
 
     @Test
-    void updateProfile_updatesExistingProfile_whenProfileExists() {
+    void updateProfile_updatesExistingProfile() {
         UpdateProfileRequest request = new UpdateProfileRequest("Updated User", "Updated Bio", 35);
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userInfoRepository.findByUserId(userId)).thenReturn(Optional.of(userInfo));
-        when(userInfoRepository.save(any(UserInfo.class))).thenReturn(userInfo);
-        when(settingRepository.findByUserInfoId(userInfo.getId())).thenReturn(Optional.of(setting));
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
 
         UserProfileRes result = userService.updateProfile(request);
 
         assertNotNull(result);
-        ArgumentCaptor<UserInfo> captor = ArgumentCaptor.forClass(UserInfo.class);
-        verify(userInfoRepository, times(1)).save(captor.capture());
-        UserInfo savedUserInfo = captor.getValue();
-        assertEquals("Updated User", savedUserInfo.getDisplayName());
-        assertEquals("Updated Bio", savedUserInfo.getBio());
-        assertEquals(35, savedUserInfo.getAge());
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository, times(1)).save(captor.capture());
+        User savedUser = captor.getValue();
+        assertEquals("Updated User", savedUser.getDisplayName());
+        assertEquals("Updated Bio", savedUser.getBio());
+        assertEquals(35, savedUser.getAge());
     }
 
     @Test
     void updateSettings_updatesExistingSettings() {
         SpaceConfigRequest spaceConfigReq = new SpaceConfigRequest(2, 3, 7, 14);
-        UpdateSettingsRequest request = new UpdateSettingsRequest("DARK", "vi-VN", spaceConfigReq);
+        UpdateSettingsRequest request = new UpdateSettingsRequest("DARK", "vi", spaceConfigReq);
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userInfoRepository.findByUserId(userId)).thenReturn(Optional.of(userInfo));
-        when(settingRepository.findByUserInfoId(userInfo.getId())).thenReturn(Optional.of(setting));
-        when(settingRepository.save(any(Setting.class))).thenReturn(setting);
+        when(settingRepository.findByUserId(userId))
+                .thenReturn(Optional.of(setting))
+                .thenReturn(Optional.of(setting));
+        when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
 
         UserProfileRes result = userService.updateSettings(request);
 
         assertNotNull(result);
-        ArgumentCaptor<Setting> captor = ArgumentCaptor.forClass(Setting.class);
+        ArgumentCaptor<SettingEntity> captor = ArgumentCaptor.forClass(SettingEntity.class);
         verify(settingRepository).save(captor.capture());
-        Setting savedSetting = captor.getValue();
+        SettingEntity savedSetting = captor.getValue();
         assertEquals(Theme.DARK, savedSetting.getTheme());
-        assertEquals(Language.VI_VN, savedSetting.getLanguage());
+        assertEquals(Language.VIETNAMESE, savedSetting.getLanguage());
         assertEquals(2, savedSetting.getSpaceConfig().get("AGAIN"));
         assertEquals(3, savedSetting.getSpaceConfig().get("HARD"));
         assertEquals(7, savedSetting.getSpaceConfig().get("GOOD"));
@@ -357,30 +344,15 @@ class UserServiceImplTest {
     }
 
     @Test
-    void updateSettings_throwsException_whenProfileNotFound() {
-        SpaceConfigRequest spaceConfigReq = new SpaceConfigRequest(1, 1, 5, 10);
-        UpdateSettingsRequest request = new UpdateSettingsRequest("LIGHT", "en-US", spaceConfigReq);
-
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(userId.toString());
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userInfoRepository.findByUserId(userId)).thenReturn(Optional.empty());
-
-        ValidationException exception =
-                assertThrows(ValidationException.class, () -> userService.updateSettings(request));
-        assertTrue(exception.getMessage().contains("User profile not found"));
-    }
-
-    @Test
     void updateSettings_throwsException_whenInvalidTheme() {
         SpaceConfigRequest spaceConfigReq = new SpaceConfigRequest(1, 1, 5, 10);
         UpdateSettingsRequest request =
-                new UpdateSettingsRequest("INVALID_THEME", "en-US", spaceConfigReq);
+                new UpdateSettingsRequest("INVALID_THEME", "en", spaceConfigReq);
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userInfoRepository.findByUserId(userId)).thenReturn(Optional.of(userInfo));
+        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
 
         ValidationException exception =
                 assertThrows(ValidationException.class, () -> userService.updateSettings(request));
@@ -396,7 +368,7 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userInfoRepository.findByUserId(userId)).thenReturn(Optional.of(userInfo));
+        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
 
         ValidationException exception =
                 assertThrows(ValidationException.class, () -> userService.updateSettings(request));
@@ -406,22 +378,19 @@ class UserServiceImplTest {
     @Test
     void updateSettings_createsNewSettings_whenSettingsDoNotExist() {
         SpaceConfigRequest spaceConfigReq = new SpaceConfigRequest(1, 2, 5, 10);
-        UpdateSettingsRequest request = new UpdateSettingsRequest("LIGHT", "en-US", spaceConfigReq);
+        UpdateSettingsRequest request = new UpdateSettingsRequest("LIGHT", "en", spaceConfigReq);
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userInfoRepository.findByUserId(userId)).thenReturn(Optional.of(userInfo));
-
-        // First call returns empty, second call returns setting after creation
-        when(settingRepository.findByUserInfoId(userInfo.getId()))
+        when(settingRepository.findByUserId(userId))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(setting));
-        when(settingRepository.save(any(Setting.class))).thenReturn(setting);
+        when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
 
         UserProfileRes result = userService.updateSettings(request);
 
         assertNotNull(result);
-        verify(settingRepository, times(1)).save(any(Setting.class));
+        verify(settingRepository, times(1)).save(any(SettingEntity.class));
     }
 }
