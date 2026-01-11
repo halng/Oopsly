@@ -37,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -57,7 +58,7 @@ public class QuestionServiceImpl implements QuestionService {
     private final ObjectMapper objectMapper;
 
     @Override
-    @CacheEvict(value = "questions", allEntries = true)
+    @CacheEvict(value = "questions", key = "#testSuiteId + ':all'")
     @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID testSuiteId, QuestionReq request) {
         log.info("Creating question for test suite {}", testSuiteId);
@@ -73,7 +74,11 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    @CacheEvict(value = "questions", allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(value = "questions", key = "#testSuiteId + ':' + #questionId"),
+                @CacheEvict(value = "questions", key = "#testSuiteId + ':all'")
+            })
     @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(UUID testSuiteId, UUID questionId, QuestionReq request) {
         log.info("Updating question {} for test suite {}", questionId, testSuiteId);
@@ -95,7 +100,11 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    @CacheEvict(value = "questions", allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(value = "questions", key = "#testSuiteId + ':' + #questionId"),
+                @CacheEvict(value = "questions", key = "#testSuiteId + ':all'")
+            })
     @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID testSuiteId, UUID questionId) {
         log.info("Deleting question {} for test suite {}", questionId, testSuiteId);

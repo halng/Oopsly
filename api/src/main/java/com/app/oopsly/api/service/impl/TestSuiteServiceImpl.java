@@ -35,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -47,7 +48,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     private final UserService userService;
 
     @Override
-    @CacheEvict(value = "testSuites", allEntries = true)
+    @CacheEvict(value = "testSuites", key = "#deckId + ':all'")
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID deckId, TestSuiteReq request) {
         log.info("Creating test suite for deck {}", deckId);
@@ -61,7 +62,11 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
-    @CacheEvict(value = "testSuites", allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(value = "testSuites", key = "#deckId + ':' + #testSuiteId"),
+                @CacheEvict(value = "testSuites", key = "#deckId + ':all'")
+            })
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(UUID deckId, UUID testSuiteId, TestSuiteReq request) {
         log.info("Updating test suite {} for deck {}", testSuiteId, deckId);
@@ -81,7 +86,11 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
-    @CacheEvict(value = "testSuites", allEntries = true)
+    @Caching(
+            evict = {
+                @CacheEvict(value = "testSuites", key = "#deckId + ':' + #testSuiteId"),
+                @CacheEvict(value = "testSuites", key = "#deckId + ':all'")
+            })
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID deckId, UUID testSuiteId) {
         log.info("Deleting test suite {} for deck {}", testSuiteId, deckId);
