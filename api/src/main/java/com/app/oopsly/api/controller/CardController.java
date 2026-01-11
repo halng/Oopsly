@@ -39,19 +39,21 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/decks/{deckId}/cards")
+@RequestMapping("/decks/{deckId}/collections/{collectionId}/cards")
 @RequiredArgsConstructor
 @Validated
 @Tag(
         name = "Card",
         description =
                 "Card management APIs for creating, updating, retrieving and deleting cards within"
-                        + " decks")
+                        + " collections")
 public class CardController {
 
     private final CardService cardService;
 
-    @Operation(summary = "Create cards", description = "Creates new cards for a specific deck")
+    @Operation(
+            summary = "Create cards",
+            description = "Creates new cards for a specific collection")
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -59,7 +61,7 @@ public class CardController {
                         description = "Cards created successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(responseCode = "400", description = "Invalid request body"),
-                @ApiResponse(responseCode = "404", description = "Deck not found"),
+                @ApiResponse(responseCode = "404", description = "Collection not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("")
@@ -70,15 +72,21 @@ public class CardController {
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
                     UUID deckId,
+            @Parameter(
+                            description = "Collection ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174001")
+                    @PathVariable
+                    UUID collectionId,
             @Parameter(description = "Card creation request", required = true) @Valid @RequestBody
                     CardReq requestBody) {
-        log.info("Creating cards for deck: {}", deckId);
-        return cardService.create(deckId, requestBody);
+        log.info("Creating cards for collection: {} in deck: {}", collectionId, deckId);
+        return cardService.create(deckId, collectionId, requestBody);
     }
 
     @Operation(
-            summary = "Get all cards by deck",
-            description = "Retrieves a paginated list of all cards for a specific deck")
+            summary = "Get all cards by collection",
+            description = "Retrieves a paginated list of all cards for a specific collection")
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -86,28 +94,41 @@ public class CardController {
                         description = "Cards retrieved successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(responseCode = "400", description = "Invalid pagination parameters"),
-                @ApiResponse(responseCode = "404", description = "Deck not found"),
+                @ApiResponse(responseCode = "404", description = "Collection not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("")
-    ApiRes getAllCardsByDeck(
+    ApiRes getAllCardsByCollection(
             @Parameter(
                             description = "Deck ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
                     UUID deckId,
+            @Parameter(
+                            description = "Collection ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174001")
+                    @PathVariable
+                    UUID collectionId,
             @Parameter(description = "Page number (starts from 0)", required = true, example = "0")
                     @RequestParam
                     @Min(value = 0, message = "Page must be greater than or equal to 0") int page,
             @Parameter(description = "Page size", required = true, example = "10")
                     @RequestParam
                     @Min(value = 1, message = "Size must be greater than 0") int size) {
-        log.info("Getting all cards for deck: {} with page: {} and size: {}", deckId, page, size);
-        return cardService.getAllCardsByDeck(deckId, page, size);
+        log.info(
+                "Getting all cards for collection: {} in deck: {} with page: {} and size: {}",
+                collectionId,
+                deckId,
+                page,
+                size);
+        return cardService.getAllCardsByCollection(deckId, collectionId, page, size);
     }
 
-    @Operation(summary = "Update card", description = "Updates an existing card in a specific deck")
+    @Operation(
+            summary = "Update card",
+            description = "Updates an existing card in a specific collection")
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -115,7 +136,7 @@ public class CardController {
                         description = "Card updated successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(responseCode = "400", description = "Invalid request body"),
-                @ApiResponse(responseCode = "404", description = "Card or deck not found"),
+                @ApiResponse(responseCode = "404", description = "Card or collection not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PutMapping("/{id}")
@@ -127,27 +148,33 @@ public class CardController {
                     @PathVariable
                     UUID deckId,
             @Parameter(
-                            description = "Card ID",
+                            description = "Collection ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
+                    @PathVariable
+                    UUID collectionId,
+            @Parameter(
+                            description = "Card ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174002")
                     @PathVariable
                     UUID id,
             @Parameter(description = "Card update request", required = true) @Valid @RequestBody
                     CardItemReq requestBody) {
-        log.info("Updating card: {} in deck: {}", id, deckId);
-        return cardService.updateCard(deckId, id, requestBody);
+        log.info("Updating card: {} in collection: {} in deck: {}", id, collectionId, deckId);
+        return cardService.updateCard(deckId, collectionId, id, requestBody);
     }
 
     @Operation(
             summary = "Get card by ID",
-            description = "Retrieves a specific card from a deck by its ID")
+            description = "Retrieves a specific card from a collection by its ID")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
                         description = "Card retrieved successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(responseCode = "404", description = "Card or deck not found"),
+                @ApiResponse(responseCode = "404", description = "Card or collection not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/{id}")
@@ -159,18 +186,24 @@ public class CardController {
                     @PathVariable
                     UUID deckId,
             @Parameter(
-                            description = "Card ID",
+                            description = "Collection ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
+                    UUID collectionId,
+            @Parameter(
+                            description = "Card ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174002")
+                    @PathVariable
                     UUID id) {
-        log.info("Getting card: {} from deck: {}", id, deckId);
-        return cardService.getById(deckId, id);
+        log.info("Getting card: {} from collection: {} in deck: {}", id, collectionId, deckId);
+        return cardService.getById(deckId, collectionId, id);
     }
 
     @Operation(
             summary = "Update card difficulty",
-            description = "Updates the difficulty level for multiple cards in a deck")
+            description = "Updates the difficulty level for multiple cards in a collection")
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -178,7 +211,7 @@ public class CardController {
                         description = "Difficulty updated successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(responseCode = "400", description = "Invalid request body"),
-                @ApiResponse(responseCode = "404", description = "Deck not found"),
+                @ApiResponse(responseCode = "404", description = "Collection not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PutMapping("/difficulty")
@@ -189,21 +222,32 @@ public class CardController {
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
                     UUID deckId,
+            @Parameter(
+                            description = "Collection ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174001")
+                    @PathVariable
+                    UUID collectionId,
             @Parameter(description = "List of difficulty update requests", required = true)
                     @Valid @RequestBody
                     List<UpdateDifficultyReq> requestBody) {
-        log.info("Updating difficulty for cards in deck: {}", deckId);
-        return cardService.updateDifficulty(deckId, requestBody);
+        log.info(
+                "Updating difficulty for cards in collection: {} in deck: {}",
+                collectionId,
+                deckId);
+        return cardService.updateDifficulty(deckId, collectionId, requestBody);
     }
 
-    @Operation(summary = "Delete card", description = "Soft deletes a card from a specific deck")
+    @Operation(
+            summary = "Delete card",
+            description = "Soft deletes a card from a specific collection")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
                         description = "Card deleted successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(responseCode = "404", description = "Card or deck not found"),
+                @ApiResponse(responseCode = "404", description = "Card or collection not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PatchMapping("/{id}")
@@ -215,12 +259,18 @@ public class CardController {
                     @PathVariable
                     UUID deckId,
             @Parameter(
-                            description = "Card ID",
+                            description = "Collection ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
+                    UUID collectionId,
+            @Parameter(
+                            description = "Card ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174002")
+                    @PathVariable
                     UUID id) {
-        log.info("Deleting card: {} from deck: {}", id, deckId);
-        return cardService.delete(deckId, id);
+        log.info("Deleting card: {} from collection: {} in deck: {}", id, collectionId, deckId);
+        return cardService.delete(deckId, collectionId, id);
     }
 }

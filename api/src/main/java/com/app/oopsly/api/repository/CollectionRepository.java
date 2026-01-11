@@ -16,8 +16,8 @@
 
 package com.app.oopsly.api.repository;
 
-import com.app.oopsly.api.entity.CardEntity;
 import com.app.oopsly.api.entity.CollectionEntity;
+import com.app.oopsly.api.entity.DeckEntity;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -27,10 +27,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface CardRepository extends JpaRepository<CardEntity, UUID> {
-    @Query("SELECT c FROM cards c WHERE c.id = ?1 AND c.collection = ?2 AND c.deleted = false")
-    Optional<CardEntity> findByIdAndCollection(UUID id, CollectionEntity collection);
+public interface CollectionRepository extends JpaRepository<CollectionEntity, UUID> {
+    @Query(
+            "SELECT c FROM CollectionEntity c WHERE c.id = ?1 AND c.deck = ?2 AND c.deleted ="
+                    + " false")
+    Optional<CollectionEntity> findByIdAndDeck(UUID id, DeckEntity deck);
 
-    @Query("SELECT c FROM cards c WHERE c.collection = ?1 AND c.deleted = false")
-    Page<CardEntity> findAllByCollection(CollectionEntity collection, Pageable pageable);
+    @Query("SELECT c FROM CollectionEntity c WHERE c.deck = ?1 AND c.deleted = false")
+    Page<CollectionEntity> findAllByDeck(DeckEntity deck, Pageable pageable);
 }
