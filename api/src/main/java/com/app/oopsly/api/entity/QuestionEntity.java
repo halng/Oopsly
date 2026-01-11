@@ -16,7 +16,6 @@
 
 package com.app.oopsly.api.entity;
 
-import com.app.oopsly.api.util.QuestionType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;

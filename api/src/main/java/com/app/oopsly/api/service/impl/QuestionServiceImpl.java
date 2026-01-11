@@ -17,13 +17,13 @@
 package com.app.oopsly.api.service.impl;
 
 import com.app.oopsly.api.entity.QuestionEntity;
+import com.app.oopsly.api.entity.QuestionType;
 import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.QuestionRepository;
 import com.app.oopsly.api.repository.TestSuiteRepository;
 import com.app.oopsly.api.service.QuestionService;
-import com.app.oopsly.api.util.QuestionType;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.QuestionReq;
 import com.app.oopsly.api.viewmodel.QuestionRes;
@@ -40,6 +40,14 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class QuestionServiceImpl implements QuestionService {
+
+    // Metadata property name constants
+    private static final String METADATA_OPTIONS = "options";
+    private static final String METADATA_CORRECT_INDICES = "correct_indices";
+    private static final String METADATA_CORRECT_VALUE = "correct_value";
+    private static final String METADATA_ACCEPTED_ANSWERS = "accepted_answers";
+    private static final String METADATA_PAIRS = "pairs";
+    private static final String METADATA_CORRECT_ORDER = "correct_order";
 
     private final QuestionRepository questionRepository;
     private final TestSuiteRepository testSuiteRepository;
@@ -128,13 +136,14 @@ public class QuestionServiceImpl implements QuestionService {
 
             switch (type) {
                 case MULTIPLE_CHOICE, MULTIPLE_RESPONSE:
-                    if (!jsonNode.has("options") || !jsonNode.get("options").isArray()) {
+                    if (!jsonNode.has(METADATA_OPTIONS)
+                            || !jsonNode.get(METADATA_OPTIONS).isArray()) {
                         throw new ValidationException(
                                 "Multiple choice and multiple response questions must have"
                                         + " 'options' array in metadata");
                     }
-                    if (!jsonNode.has("correct_indices")
-                            || !jsonNode.get("correct_indices").isArray()) {
+                    if (!jsonNode.has(METADATA_CORRECT_INDICES)
+                            || !jsonNode.get(METADATA_CORRECT_INDICES).isArray()) {
                         throw new ValidationException(
                                 "Multiple choice and multiple response questions must have"
                                         + " 'correct_indices' array in metadata");
@@ -142,8 +151,8 @@ public class QuestionServiceImpl implements QuestionService {
                     break;
 
                 case TRUE_FALSE:
-                    if (!jsonNode.has("correct_value")
-                            || !jsonNode.get("correct_value").isBoolean()) {
+                    if (!jsonNode.has(METADATA_CORRECT_VALUE)
+                            || !jsonNode.get(METADATA_CORRECT_VALUE).isBoolean()) {
                         throw new ValidationException(
                                 "True/False questions must have 'correct_value' boolean in"
                                         + " metadata");
@@ -151,13 +160,13 @@ public class QuestionServiceImpl implements QuestionService {
                     break;
 
                 case FILL_IN_THE_BLANK:
-                    if (!jsonNode.has("accepted_answers")
-                            || !jsonNode.get("accepted_answers").isArray()) {
+                    if (!jsonNode.has(METADATA_ACCEPTED_ANSWERS)
+                            || !jsonNode.get(METADATA_ACCEPTED_ANSWERS).isArray()) {
                         throw new ValidationException(
                                 "Fill in the blank questions must have 'accepted_answers' array in"
                                         + " metadata");
                     }
-                    if (jsonNode.get("accepted_answers").size() == 0) {
+                    if (jsonNode.get(METADATA_ACCEPTED_ANSWERS).size() == 0) {
                         throw new ValidationException(
                                 "Fill in the blank questions must have at least one accepted"
                                         + " answer");
@@ -165,15 +174,15 @@ public class QuestionServiceImpl implements QuestionService {
                     break;
 
                 case MATCHING:
-                    if (!jsonNode.has("pairs") || !jsonNode.get("pairs").isArray()) {
+                    if (!jsonNode.has(METADATA_PAIRS) || !jsonNode.get(METADATA_PAIRS).isArray()) {
                         throw new ValidationException(
                                 "Matching questions must have 'pairs' array in metadata");
                     }
                     break;
 
                 case ORDERING:
-                    if (!jsonNode.has("correct_order")
-                            || !jsonNode.get("correct_order").isArray()) {
+                    if (!jsonNode.has(METADATA_CORRECT_ORDER)
+                            || !jsonNode.get(METADATA_CORRECT_ORDER).isArray()) {
                         throw new ValidationException(
                                 "Ordering questions must have 'correct_order' array in metadata");
                     }

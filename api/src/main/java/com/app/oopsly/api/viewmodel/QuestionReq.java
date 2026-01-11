@@ -16,7 +16,7 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import com.app.oopsly.api.util.QuestionType;
+import com.app.oopsly.api.entity.QuestionType;
 import jakarta.validation.constraints.NotNull;
 import lombok.NonNull;
 

@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.util;
+package com.app.oopsly.api.entity;
 
 public enum QuestionType {
     MULTIPLE_CHOICE,

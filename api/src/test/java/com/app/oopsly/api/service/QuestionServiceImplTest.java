@@ -21,13 +21,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.entity.QuestionEntity;
+import com.app.oopsly.api.entity.QuestionType;
 import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.QuestionRepository;
 import com.app.oopsly.api.repository.TestSuiteRepository;
 import com.app.oopsly.api.service.impl.QuestionServiceImpl;
-import com.app.oopsly.api.util.QuestionType;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.QuestionReq;
 import com.fasterxml.jackson.databind.ObjectMapper;

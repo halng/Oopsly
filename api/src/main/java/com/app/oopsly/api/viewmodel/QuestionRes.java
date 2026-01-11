@@ -16,7 +16,7 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import com.app.oopsly.api.util.QuestionType;
+import com.app.oopsly.api.entity.QuestionType;
 import java.util.UUID;
 
 public record QuestionRes(UUID id, String text, QuestionType type, String metadata) {}

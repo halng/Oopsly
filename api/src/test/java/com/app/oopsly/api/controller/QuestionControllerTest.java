@@ -19,8 +19,8 @@ package com.app.oopsly.api.controller;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.app.oopsly.api.entity.QuestionType;
 import com.app.oopsly.api.service.QuestionService;
-import com.app.oopsly.api.util.QuestionType;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.QuestionReq;
 import java.util.UUID;
