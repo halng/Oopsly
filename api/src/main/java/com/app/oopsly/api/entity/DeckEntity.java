@@ -40,5 +40,5 @@ public class DeckEntity extends Audit {
 
     @JsonIgnore
     @OneToMany(mappedBy = "deck", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<CardEntity> cards;
+    private List<CollectionEntity> collections;
 }

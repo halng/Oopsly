@@ -26,17 +26,17 @@ import java.util.List;
 import java.util.UUID;
 
 public interface CardService {
-    ApiRes create(UUID deckId, CardReq request);
+    ApiRes create(UUID deckId, UUID collectionId, CardReq request);
 
-    ApiRes updateDifficulty(UUID deckId, List<UpdateDifficultyReq> reqList);
+    ApiRes updateDifficulty(UUID deckId, UUID collectionId, List<UpdateDifficultyReq> reqList);
 
-    ApiRes delete(UUID deckId, UUID cardId);
+    ApiRes delete(UUID deckId, UUID collectionId, UUID cardId);
 
-    ApiRes getById(UUID deckId, UUID cardId);
+    ApiRes getById(UUID deckId, UUID collectionId, UUID cardId);
 
-    ApiRes getAllCardsByDeck(UUID deckId, int page, int size);
+    ApiRes getAllCardsByCollection(UUID deckId, UUID collectionId, int page, int size);
 
     Instant calculateNextPracticeTime(DifficultyLevel difficultyLevel);
 
-    ApiRes updateCard(UUID deckId, UUID cardId, CardItemReq request);
+    ApiRes updateCard(UUID deckId, UUID collectionId, UUID cardId, CardItemReq request);
 }
