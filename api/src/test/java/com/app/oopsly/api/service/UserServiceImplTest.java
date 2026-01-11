@@ -292,7 +292,7 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        
+
         // First call returns empty (no profile), second call returns the profile after creation
         when(userInfoRepository.findByUserId(userId))
                 .thenReturn(Optional.empty())
@@ -412,7 +412,7 @@ class UserServiceImplTest {
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userInfoRepository.findByUserId(userId)).thenReturn(Optional.of(userInfo));
-        
+
         // First call returns empty, second call returns setting after creation
         when(settingRepository.findByUserInfoId(userInfo.getId()))
                 .thenReturn(Optional.empty())

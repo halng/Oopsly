@@ -89,7 +89,9 @@ class UserProfileControllerTest {
     void updateSettings_updatesSettings_withValidData() {
         UpdateSettingsRequest request =
                 new UpdateSettingsRequest(
-                        "DARK", "vi-VN", new com.app.oopsly.api.viewmodel.SpaceConfigRequest(2, 3, 7, 14));
+                        "DARK",
+                        "vi-VN",
+                        new com.app.oopsly.api.viewmodel.SpaceConfigRequest(2, 3, 7, 14));
 
         when(userService.updateSettings(any(UpdateSettingsRequest.class))).thenReturn(mockProfile);
 
