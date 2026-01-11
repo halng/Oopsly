@@ -54,7 +54,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnauthenticatedException.class)
     public ApiRes handleUnauthenticatedException(UnauthenticatedException ex) {
-        log.warn("Unauthenticated access attempt: {}", ex.getMessage());
+        log.error(
+                "Unauthenticated access attempt: {} with causes: {}",
+                ex.getMessage(),
+                ex.getStackTrace());
         return ApiRes.unauthorized("You must be logged in to access this resource.");
     }
 

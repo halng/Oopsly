@@ -157,4 +157,60 @@ class UserServiceImplTest {
 
         verify(userRepository, times(3)).findById(userId);
     }
+
+    // Fallback Function Tests
+    @Test
+    void getCurrentUserFallback_throwsUnauthenticatedException() {
+        RuntimeException cause = new RuntimeException("Database connection failed");
+
+        UnauthenticatedException exception =
+                assertThrows(
+                        UnauthenticatedException.class,
+                        () -> userService.getCurrentUserFallback(cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("User service is currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void getCurrentUserFallback_withDatabaseException_preservesCauseChain() {
+        Exception originalCause = new java.sql.SQLException("Connection timeout");
+        RuntimeException wrappedCause = new RuntimeException("Database error", originalCause);
+
+        UnauthenticatedException exception =
+                assertThrows(
+                        UnauthenticatedException.class,
+                        () -> userService.getCurrentUserFallback(wrappedCause));
+
+        assertNotNull(exception.getCause());
+        assertEquals(wrappedCause, exception.getCause());
+        assertEquals(originalCause, exception.getCause().getCause());
+    }
+
+    @Test
+    void getCurrentUserFallback_withNullThrowable_handlesGracefully() {
+        UnauthenticatedException exception =
+                assertThrows(
+                        UnauthenticatedException.class,
+                        () -> userService.getCurrentUserFallback(null));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("User service is currently unavailable"));
+        assertNull(exception.getCause());
+    }
+
+    @Test
+    void getCurrentUserFallback_providesUserFriendlyMessage() {
+        Throwable cause = new Throwable("Internal circuit breaker error");
+
+        UnauthenticatedException exception =
+                assertThrows(
+                        UnauthenticatedException.class,
+                        () -> userService.getCurrentUserFallback(cause));
+
+        String message = exception.getMessage();
+        assertTrue(message.contains("currently unavailable"));
+        assertTrue(message.contains("try again later"));
+    }
 }
