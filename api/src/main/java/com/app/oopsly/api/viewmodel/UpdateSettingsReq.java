@@ -20,7 +20,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record UpdateSettingsRequest(
+public record UpdateSettingsReq(
         @NotBlank(message = "Theme cannot be blank") String theme,
         @NotBlank(message = "Language cannot be blank") String language,
-        @NotNull(message = "Space configuration cannot be null") @Valid SpaceConfigRequest spaceConfig) {}
+        @NotNull(message = "Space configuration cannot be null") @Valid SpaceConfigReq spaceConfig) {}

@@ -22,9 +22,10 @@ import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.SettingRepository;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.service.UserService;
+import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.SettingsRes;
-import com.app.oopsly.api.viewmodel.UpdateProfileRequest;
-import com.app.oopsly.api.viewmodel.UpdateSettingsRequest;
+import com.app.oopsly.api.viewmodel.UpdateProfileReq;
+import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
 import com.app.oopsly.api.viewmodel.UserProfileRes;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.HashMap;
@@ -68,7 +69,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
-    public UserProfileRes getProfile() {
+    public ApiRes getProfile() {
         User user = getCurrentUser();
 
         SettingEntity setting =
@@ -82,13 +83,17 @@ public class UserServiceImpl implements UserService {
                         setting.getLanguage().getCode(),
                         setting.getSpaceConfig());
 
-        return new UserProfileRes(user.getDisplayName(), user.getBio(), user.getAge(), settingsRes);
+        UserProfileRes profileRes =
+                new UserProfileRes(
+                        user.getDisplayName(), user.getBio(), user.getAge(), settingsRes);
+
+        return ApiRes.ok("Profile retrieved successfully", profileRes);
     }
 
     @Override
     @Transactional
     @CacheEvict(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
-    public UserProfileRes updateProfile(UpdateProfileRequest request) {
+    public ApiRes updateProfile(UpdateProfileReq request) {
         User user = getCurrentUser();
 
         // Update user profile fields
@@ -122,7 +127,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @CacheEvict(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
-    public UserProfileRes updateSettings(UpdateSettingsRequest request) {
+    public ApiRes updateSettings(UpdateSettingsReq request) {
         User user = getCurrentUser();
 
         SettingEntity setting = settingRepository.findByUserId(user.getId()).orElse(null);
@@ -142,7 +147,7 @@ public class UserServiceImpl implements UserService {
             throw new ValidationException("Invalid language: " + request.language());
         }
 
-        // Convert SpaceConfigRequest to Map
+        // Convert SpaceConfigReq to Map
         Map<String, Integer> spaceConfigMap = new HashMap<>();
         spaceConfigMap.put("AGAIN", request.spaceConfig().AGAIN());
         spaceConfigMap.put("HARD", request.spaceConfig().HARD());

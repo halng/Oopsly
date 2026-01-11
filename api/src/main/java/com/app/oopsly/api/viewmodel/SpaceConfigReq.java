@@ -20,7 +20,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-public record SpaceConfigRequest(
+public record SpaceConfigReq(
         @NotNull(message = "AGAIN interval cannot be null") @Min(value = 0, message = "AGAIN interval cannot be negative") @Max(value = 365, message = "AGAIN interval cannot exceed 365 days") Integer AGAIN,
         @NotNull(message = "HARD interval cannot be null") @Min(value = 0, message = "HARD interval cannot be negative") @Max(value = 365, message = "HARD interval cannot exceed 365 days") Integer HARD,
         @NotNull(message = "GOOD interval cannot be null") @Min(value = 0, message = "GOOD interval cannot be negative") @Max(value = 365, message = "GOOD interval cannot exceed 365 days") Integer GOOD,

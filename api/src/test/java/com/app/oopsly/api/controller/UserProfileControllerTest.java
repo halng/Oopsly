@@ -24,9 +24,9 @@ import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.SettingsRes;
-import com.app.oopsly.api.viewmodel.SpaceConfigRequest;
-import com.app.oopsly.api.viewmodel.UpdateProfileRequest;
-import com.app.oopsly.api.viewmodel.UpdateSettingsRequest;
+import com.app.oopsly.api.viewmodel.SpaceConfigReq;
+import com.app.oopsly.api.viewmodel.UpdateProfileReq;
+import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
 import com.app.oopsly.api.viewmodel.UserProfileRes;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +45,7 @@ class UserProfileControllerTest {
 
     @InjectMocks private UserProfileController userProfileController;
 
-    private UserProfileRes mockProfile;
+    private ApiRes mockApiRes;
 
     @BeforeEach
     void setUp() {
@@ -56,12 +56,13 @@ class UserProfileControllerTest {
         spaceConfig.put("EASY", 10);
 
         SettingsRes settings = new SettingsRes("SYSTEM", "en", spaceConfig);
-        mockProfile = new UserProfileRes("Test User", "Test Bio", 25, settings);
+        UserProfileRes mockProfile = new UserProfileRes("Test User", "Test Bio", 25, settings);
+        mockApiRes = ApiRes.ok("Profile retrieved successfully", mockProfile);
     }
 
     @Test
     void getProfile_returnsProfile_whenSuccessful() {
-        when(userService.getProfile()).thenReturn(mockProfile);
+        when(userService.getProfile()).thenReturn(mockApiRes);
 
         ApiRes result = userProfileController.getProfile();
 
@@ -83,9 +84,9 @@ class UserProfileControllerTest {
 
     @Test
     void updateProfile_updatesProfile_withValidData() {
-        UpdateProfileRequest request = new UpdateProfileRequest("Updated User", "Updated Bio", 30);
+        UpdateProfileReq request = new UpdateProfileReq("Updated User", "Updated Bio", 30);
 
-        when(userService.updateProfile(any(UpdateProfileRequest.class))).thenReturn(mockProfile);
+        when(userService.updateProfile(any(UpdateProfileReq.class))).thenReturn(mockApiRes);
 
         ApiRes result = userProfileController.updateProfile(request);
 
@@ -98,9 +99,9 @@ class UserProfileControllerTest {
 
     @Test
     void updateProfile_withNullAge_isAllowed() {
-        UpdateProfileRequest request = new UpdateProfileRequest("User", "Bio", null);
+        UpdateProfileReq request = new UpdateProfileReq("User", "Bio", null);
 
-        when(userService.updateProfile(any(UpdateProfileRequest.class))).thenReturn(mockProfile);
+        when(userService.updateProfile(any(UpdateProfileReq.class))).thenReturn(mockApiRes);
 
         ApiRes result = userProfileController.updateProfile(request);
 
@@ -111,10 +112,10 @@ class UserProfileControllerTest {
 
     @Test
     void updateSettings_updatesSettings_withValidData() {
-        UpdateSettingsRequest request =
-                new UpdateSettingsRequest("DARK", "vi", new SpaceConfigRequest(2, 3, 7, 14));
+        UpdateSettingsReq request =
+                new UpdateSettingsReq("DARK", "vi", new SpaceConfigReq(2, 3, 7, 14));
 
-        when(userService.updateSettings(any(UpdateSettingsRequest.class))).thenReturn(mockProfile);
+        when(userService.updateSettings(any(UpdateSettingsReq.class))).thenReturn(mockApiRes);
 
         ApiRes result = userProfileController.updateSettings(request);
 
@@ -127,10 +128,10 @@ class UserProfileControllerTest {
 
     @Test
     void updateSettings_throwsException_whenInvalidTheme() {
-        UpdateSettingsRequest request =
-                new UpdateSettingsRequest("INVALID", "en", new SpaceConfigRequest(1, 1, 5, 10));
+        UpdateSettingsReq request =
+                new UpdateSettingsReq("INVALID", "en", new SpaceConfigReq(1, 1, 5, 10));
 
-        when(userService.updateSettings(any(UpdateSettingsRequest.class)))
+        when(userService.updateSettings(any(UpdateSettingsReq.class)))
                 .thenThrow(new ValidationException("Invalid theme: INVALID"));
 
         assertThrows(
@@ -140,10 +141,10 @@ class UserProfileControllerTest {
 
     @Test
     void updateSettings_throwsException_whenInvalidLanguage() {
-        UpdateSettingsRequest request =
-                new UpdateSettingsRequest("LIGHT", "fr", new SpaceConfigRequest(1, 1, 5, 10));
+        UpdateSettingsReq request =
+                new UpdateSettingsReq("LIGHT", "fr", new SpaceConfigReq(1, 1, 5, 10));
 
-        when(userService.updateSettings(any(UpdateSettingsRequest.class)))
+        when(userService.updateSettings(any(UpdateSettingsReq.class)))
                 .thenThrow(new ValidationException("Invalid language: fr"));
 
         assertThrows(
@@ -153,31 +154,31 @@ class UserProfileControllerTest {
 
     @Test
     void updateSettings_withAllThemeOptions() {
-        SpaceConfigRequest spaceConfig = new SpaceConfigRequest(1, 1, 5, 10);
+        SpaceConfigReq spaceConfig = new SpaceConfigReq(1, 1, 5, 10);
 
-        when(userService.updateSettings(any(UpdateSettingsRequest.class))).thenReturn(mockProfile);
+        when(userService.updateSettings(any(UpdateSettingsReq.class))).thenReturn(mockApiRes);
 
         // Test LIGHT theme
         ApiRes result1 =
                 userProfileController.updateSettings(
-                        new UpdateSettingsRequest("LIGHT", "en", spaceConfig));
+                        new UpdateSettingsReq("LIGHT", "en", spaceConfig));
         assertNotNull(result1);
         assertEquals(HttpStatus.OK, result1.getStatusCode());
 
         // Test DARK theme
         ApiRes result2 =
                 userProfileController.updateSettings(
-                        new UpdateSettingsRequest("DARK", "en", spaceConfig));
+                        new UpdateSettingsReq("DARK", "en", spaceConfig));
         assertNotNull(result2);
         assertEquals(HttpStatus.OK, result2.getStatusCode());
 
         // Test SYSTEM theme
         ApiRes result3 =
                 userProfileController.updateSettings(
-                        new UpdateSettingsRequest("SYSTEM", "en", spaceConfig));
+                        new UpdateSettingsReq("SYSTEM", "en", spaceConfig));
         assertNotNull(result3);
         assertEquals(HttpStatus.OK, result3.getStatusCode());
 
-        verify(userService, times(3)).updateSettings(any(UpdateSettingsRequest.class));
+        verify(userService, times(3)).updateSettings(any(UpdateSettingsReq.class));
     }
 }

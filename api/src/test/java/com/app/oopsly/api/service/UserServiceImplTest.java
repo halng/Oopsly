@@ -25,9 +25,10 @@ import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.SettingRepository;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.service.impl.UserServiceImpl;
-import com.app.oopsly.api.viewmodel.SpaceConfigRequest;
-import com.app.oopsly.api.viewmodel.UpdateProfileRequest;
-import com.app.oopsly.api.viewmodel.UpdateSettingsRequest;
+import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.SpaceConfigReq;
+import com.app.oopsly.api.viewmodel.UpdateProfileReq;
+import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
 import com.app.oopsly.api.viewmodel.UserProfileRes;
 import java.util.HashMap;
 import java.util.Map;
@@ -251,15 +252,18 @@ class UserServiceImplTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
 
-        UserProfileRes result = userService.getProfile();
+        ApiRes result = userService.getProfile();
 
         assertNotNull(result);
-        assertEquals("Test User", result.displayName());
-        assertEquals("Test Bio", result.bio());
-        assertEquals(25, result.age());
-        assertNotNull(result.settings());
-        assertEquals("SYSTEM", result.settings().theme());
-        assertEquals("en", result.settings().language());
+        assertNotNull(result.getBody());
+        assertTrue(result.getBody().isSuccess());
+        UserProfileRes profile = (UserProfileRes) result.getBody().data();
+        assertEquals("Test User", profile.displayName());
+        assertEquals("Test Bio", profile.bio());
+        assertEquals(25, profile.age());
+        assertNotNull(profile.settings());
+        assertEquals("SYSTEM", profile.settings().theme());
+        assertEquals("en", profile.settings().language());
         verify(settingRepository).findByUserId(userId);
     }
 
@@ -277,7 +281,7 @@ class UserServiceImplTest {
 
     @Test
     void updateProfile_createsSettingsIfNotExist() {
-        UpdateProfileRequest request = new UpdateProfileRequest("New User", "New Bio", 30);
+        UpdateProfileReq request = new UpdateProfileReq("New User", "New Bio", 30);
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -288,16 +292,17 @@ class UserServiceImplTest {
                 .thenReturn(Optional.of(setting));
         when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
 
-        UserProfileRes result = userService.updateProfile(request);
+        ApiRes result = userService.updateProfile(request);
 
         assertNotNull(result);
+        assertTrue(result.getBody().isSuccess());
         verify(userRepository, times(1)).save(any(User.class));
         verify(settingRepository, times(1)).save(any(SettingEntity.class));
     }
 
     @Test
     void updateProfile_updatesExistingProfile() {
-        UpdateProfileRequest request = new UpdateProfileRequest("Updated User", "Updated Bio", 35);
+        UpdateProfileReq request = new UpdateProfileReq("Updated User", "Updated Bio", 35);
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -305,9 +310,10 @@ class UserServiceImplTest {
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
 
-        UserProfileRes result = userService.updateProfile(request);
+        ApiRes result = userService.updateProfile(request);
 
         assertNotNull(result);
+        assertTrue(result.getBody().isSuccess());
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository, times(1)).save(captor.capture());
         User savedUser = captor.getValue();
@@ -318,8 +324,8 @@ class UserServiceImplTest {
 
     @Test
     void updateSettings_updatesExistingSettings() {
-        SpaceConfigRequest spaceConfigReq = new SpaceConfigRequest(2, 3, 7, 14);
-        UpdateSettingsRequest request = new UpdateSettingsRequest("DARK", "vi", spaceConfigReq);
+        SpaceConfigReq spaceConfigReq = new SpaceConfigReq(2, 3, 7, 14);
+        UpdateSettingsReq request = new UpdateSettingsReq("DARK", "vi", spaceConfigReq);
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -329,9 +335,10 @@ class UserServiceImplTest {
                 .thenReturn(Optional.of(setting));
         when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
 
-        UserProfileRes result = userService.updateSettings(request);
+        ApiRes result = userService.updateSettings(request);
 
         assertNotNull(result);
+        assertTrue(result.getBody().isSuccess());
         ArgumentCaptor<SettingEntity> captor = ArgumentCaptor.forClass(SettingEntity.class);
         verify(settingRepository).save(captor.capture());
         SettingEntity savedSetting = captor.getValue();
@@ -345,9 +352,8 @@ class UserServiceImplTest {
 
     @Test
     void updateSettings_throwsException_whenInvalidTheme() {
-        SpaceConfigRequest spaceConfigReq = new SpaceConfigRequest(1, 1, 5, 10);
-        UpdateSettingsRequest request =
-                new UpdateSettingsRequest("INVALID_THEME", "en", spaceConfigReq);
+        SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 1, 5, 10);
+        UpdateSettingsReq request = new UpdateSettingsReq("INVALID_THEME", "en", spaceConfigReq);
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -361,9 +367,8 @@ class UserServiceImplTest {
 
     @Test
     void updateSettings_throwsException_whenInvalidLanguage() {
-        SpaceConfigRequest spaceConfigReq = new SpaceConfigRequest(1, 1, 5, 10);
-        UpdateSettingsRequest request =
-                new UpdateSettingsRequest("LIGHT", "invalid-lang", spaceConfigReq);
+        SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 1, 5, 10);
+        UpdateSettingsReq request = new UpdateSettingsReq("LIGHT", "invalid-lang", spaceConfigReq);
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -377,8 +382,8 @@ class UserServiceImplTest {
 
     @Test
     void updateSettings_createsNewSettings_whenSettingsDoNotExist() {
-        SpaceConfigRequest spaceConfigReq = new SpaceConfigRequest(1, 2, 5, 10);
-        UpdateSettingsRequest request = new UpdateSettingsRequest("LIGHT", "en", spaceConfigReq);
+        SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 2, 5, 10);
+        UpdateSettingsReq request = new UpdateSettingsReq("LIGHT", "en", spaceConfigReq);
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -388,9 +393,10 @@ class UserServiceImplTest {
                 .thenReturn(Optional.of(setting));
         when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
 
-        UserProfileRes result = userService.updateSettings(request);
+        ApiRes result = userService.updateSettings(request);
 
         assertNotNull(result);
+        assertTrue(result.getBody().isSuccess());
         verify(settingRepository, times(1)).save(any(SettingEntity.class));
     }
 }

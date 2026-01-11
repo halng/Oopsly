@@ -18,8 +18,8 @@ package com.app.oopsly.api.controller;
 
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.UpdateProfileRequest;
-import com.app.oopsly.api.viewmodel.UpdateSettingsRequest;
+import com.app.oopsly.api.viewmodel.UpdateProfileReq;
+import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/user")
+@RequestMapping("/user")
 @RequiredArgsConstructor
 @Tag(name = "User Profile", description = "User profile and settings management APIs")
 public class UserProfileController {
@@ -54,7 +54,7 @@ public class UserProfileController {
             })
     @GetMapping("/profile")
     ApiRes getProfile() {
-        return ApiRes.ok("Profile retrieved successfully", userService.getProfile());
+        return userService.getProfile();
     }
 
     @Operation(
@@ -73,8 +73,8 @@ public class UserProfileController {
     @PatchMapping("/profile")
     ApiRes updateProfile(
             @Parameter(description = "Profile update request", required = true) @Valid @RequestBody
-                    UpdateProfileRequest request) {
-        return ApiRes.ok("Profile updated successfully", userService.updateProfile(request));
+                    UpdateProfileReq request) {
+        return userService.updateProfile(request);
     }
 
     @Operation(
@@ -93,7 +93,7 @@ public class UserProfileController {
     @PatchMapping("/settings")
     ApiRes updateSettings(
             @Parameter(description = "Settings update request", required = true) @Valid @RequestBody
-                    UpdateSettingsRequest request) {
-        return ApiRes.ok("Settings updated successfully", userService.updateSettings(request));
+                    UpdateSettingsReq request) {
+        return userService.updateSettings(request);
     }
 }

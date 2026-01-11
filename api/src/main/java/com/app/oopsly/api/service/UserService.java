@@ -17,18 +17,18 @@
 package com.app.oopsly.api.service;
 
 import com.app.oopsly.api.entity.User;
-import com.app.oopsly.api.viewmodel.UpdateProfileRequest;
-import com.app.oopsly.api.viewmodel.UpdateSettingsRequest;
-import com.app.oopsly.api.viewmodel.UserProfileRes;
+import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.UpdateProfileReq;
+import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
 
 public interface UserService {
     String getCurrentUserId();
 
     User getCurrentUser();
 
-    UserProfileRes getProfile();
+    ApiRes getProfile();
 
-    UserProfileRes updateProfile(UpdateProfileRequest request);
+    ApiRes updateProfile(UpdateProfileReq request);
 
-    UserProfileRes updateSettings(UpdateSettingsRequest request);
+    ApiRes updateSettings(UpdateSettingsReq request);
 }
