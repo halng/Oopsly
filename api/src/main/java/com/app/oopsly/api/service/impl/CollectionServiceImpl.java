@@ -29,8 +29,8 @@ import com.app.oopsly.api.util.StringUtils;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CollectionReq;
 import com.app.oopsly.api.viewmodel.CollectionRes;
+import com.app.oopsly.api.viewmodel.PagingRes;
 import jakarta.transaction.Transactional;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -147,19 +147,20 @@ public class CollectionServiceImpl implements CollectionService {
                         .map(this::toCollectionRes)
                         .collect(Collectors.toList());
 
-        HashMap<String, Object> response = new HashMap<>();
-        response.put("entities", collections);
-        response.put("currentPage", pageable.getPageNumber());
-        response.put("totalItems", pageData.getTotalElements());
-        response.put("totalPages", pageData.getTotalPages());
-        response.put("hasNextPage", pageData.hasNext());
+        PagingRes<CollectionRes> pagingRes =
+                new PagingRes<>(
+                        collections,
+                        pageable.getPageNumber(),
+                        pageData.getTotalElements(),
+                        pageData.getTotalPages(),
+                        pageData.hasNext());
 
         log.info(
                 "Successfully retrieved {} collections for deck: {} (total: {})",
                 collections.size(),
                 deckId,
                 pageData.getTotalElements());
-        return ApiRes.success("Fetched successfully", response);
+        return ApiRes.success("Fetched successfully", pagingRes);
     }
 
     private CollectionRes toCollectionRes(CollectionEntity entity) {

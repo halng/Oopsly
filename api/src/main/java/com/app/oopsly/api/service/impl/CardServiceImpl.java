@@ -31,7 +31,6 @@ import com.app.oopsly.api.util.StringUtils;
 import com.app.oopsly.api.viewmodel.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -119,18 +118,19 @@ public class CardServiceImpl implements CardService {
         List<CardRes> cards =
                 pageData.getContent().stream().map(this::toCardRes).collect(Collectors.toList());
 
-        HashMap<String, Object> response = new HashMap<>();
-        response.put("entities", cards);
-        response.put("currentPage", pageable.getPageNumber());
-        response.put("totalItems", pageData.getTotalElements());
-        response.put("totalPages", pageData.getTotalPages());
-        response.put("hasNextPage", pageData.hasNext());
+        PagingRes<CardRes> pagingRes =
+                new PagingRes<>(
+                        cards,
+                        pageable.getPageNumber(),
+                        pageData.getTotalElements(),
+                        pageData.getTotalPages(),
+                        pageData.hasNext());
         log.info(
                 "Successfully retrieved {} cards for collection: {} (total: {})",
                 cards.size(),
                 collectionId,
                 pageData.getTotalElements());
-        return ApiRes.success("Fetched successfully", response);
+        return ApiRes.success("Fetched successfully", pagingRes);
     }
 
     @Override

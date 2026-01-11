@@ -150,12 +150,12 @@ public class DeckController {
             })
     @GetMapping("")
     ApiRes getAll(
-            @Parameter(description = "Page number (starts from 1)", required = true, example = "1")
+            @Parameter(description = "Page number", required = true, example = "0")
                     @RequestParam
-                    @Min(1) int page,
+                    @Min(value = 0, message = "Page must be greater or equal 0") int page,
             @Parameter(description = "Page size", required = true, example = "10")
                     @RequestParam
-                    @Min(1) int size) {
-        return this.service.getAll(page - 1, size);
+                    @Min(value = 1, message = "Size must be greater than 0") int size) {
+        return this.service.getAll(page, size);
     }
 }
