@@ -30,12 +30,15 @@ import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CollectionReq;
 import com.app.oopsly.api.viewmodel.CollectionRes;
 import com.app.oopsly.api.viewmodel.PagingRes;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -51,6 +54,8 @@ public class CollectionServiceImpl implements CollectionService {
     private final UserService userService;
 
     @Override
+    @CacheEvict(value = "collections", allEntries = true)
+    @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID deckId, CollectionReq request) {
         log.info("Creating collection for deck: {}", deckId);
         DeckEntity deck = getDeckForCurrentUser(deckId);
@@ -69,6 +74,8 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
+    @CacheEvict(value = "collections", allEntries = true)
+    @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(UUID deckId, UUID collectionId, CollectionReq request) {
         log.info("Updating collection: {} in deck: {}", collectionId, deckId);
 
@@ -95,6 +102,8 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "collections", allEntries = true)
+    @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID deckId, UUID collectionId) {
         log.info("Deleting collection: {} from deck: {}", collectionId, deckId);
         DeckEntity deck = getDeckForCurrentUser(deckId);
@@ -117,6 +126,8 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
+    @Cacheable(value = "collections", key = "#deckId + ':' + #collectionId")
+    @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID deckId, UUID collectionId) {
         log.info("Getting collection: {} from deck: {}", collectionId, deckId);
         DeckEntity deck = getDeckForCurrentUser(deckId);
@@ -133,6 +144,10 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
+    @Cacheable(value = "collections", key = "#deckId + ':page:' + #page + ':size:' + #size")
+    @CircuitBreaker(
+            name = "collectionServiceCircuitBreaker",
+            fallbackMethod = "getAllByDeckFallback")
     public ApiRes getAllByDeck(UUID deckId, int page, int size) {
         log.info(
                 "Getting all collections for deck: {} with page: {} and size: {}",
@@ -176,5 +191,42 @@ public class CollectionServiceImpl implements CollectionService {
         return deckRepository
                 .findByIdAndUser(deckId, currentUser)
                 .orElseThrow(() -> new NotFoundException("Deck not found with id: " + deckId));
+    }
+
+    // Fallback methods for Circuit Breaker
+    // Fallback method for getAllByDeck
+    public ApiRes getAllByDeckFallback(UUID deckId, int page, int size, Throwable t) {
+        log.error("Collection service unavailable during getAllByDeck: {}", t.getMessage());
+        throw new RuntimeException(
+                "Collection service is currently unavailable. Please try again later.", t);
+    }
+
+    // Fallback method for getById
+    public ApiRes getByIdFallback(UUID deckId, UUID collectionId, Throwable t) {
+        log.error("Collection service unavailable during getById: {}", t.getMessage());
+        throw new RuntimeException(
+                "Collection service is currently unavailable. Please try again later.", t);
+    }
+
+    // Fallback method for delete
+    public ApiRes deleteFallback(UUID deckId, UUID collectionId, Throwable t) {
+        log.error("Collection service unavailable during delete: {}", t.getMessage());
+        throw new RuntimeException(
+                "Collection service is currently unavailable. Please try again later.", t);
+    }
+
+    // Fallback method for update
+    public ApiRes updateFallback(
+            UUID deckId, UUID collectionId, CollectionReq request, Throwable t) {
+        log.error("Collection service unavailable during update: {}", t.getMessage());
+        throw new RuntimeException(
+                "Collection service is currently unavailable. Please try again later.", t);
+    }
+
+    // Fallback method for create
+    public ApiRes createFallback(UUID deckId, CollectionReq request, Throwable t) {
+        log.error("Collection service unavailable during create: {}", t.getMessage());
+        throw new RuntimeException(
+                "Collection service is currently unavailable. Please try again later.", t);
     }
 }

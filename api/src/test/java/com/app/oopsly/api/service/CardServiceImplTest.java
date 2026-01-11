@@ -445,4 +445,139 @@ class CardServiceImplTest {
             assertNotNull(existingCard.getNextPracticeTime());
         }
     }
+
+    // Fallback Function Tests
+    @Test
+    void createFallback_throwsRuntimeException() {
+        CardReq request = new CardReq(List.of(new CardItemReq("Front", "Back")));
+        RuntimeException cause = new RuntimeException("Service unavailable");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> cardService.createFallback(deckId, collectionId, request, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void deleteFallback_throwsRuntimeException() {
+        RuntimeException cause = new RuntimeException("Database connection lost");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> cardService.deleteFallback(deckId, collectionId, cardId, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void getByIdFallback_throwsRuntimeException() {
+        Throwable cause = new Throwable("Circuit breaker triggered");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> cardService.getByIdFallback(deckId, collectionId, cardId, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void getAllCardsByCollectionFallback_throwsRuntimeException() {
+        Throwable cause = new Throwable("Service degraded");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () ->
+                                cardService.getAllCardsByCollectionFallback(
+                                        deckId, collectionId, 0, 10, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void updateCardFallback_throwsRuntimeException() {
+        CardItemReq item = new CardItemReq("Updated Front", "Updated Back");
+        RuntimeException cause = new RuntimeException("Network error");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () ->
+                                cardService.updateCardFallback(
+                                        deckId, collectionId, cardId, item, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void updateDifficultyFallback_throwsRuntimeException() {
+        List<UpdateDifficultyReq> reqList =
+                List.of(new UpdateDifficultyReq(cardId, DifficultyLevel.GOOD.name()));
+        Throwable cause = new Throwable("Timeout");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () ->
+                                cardService.updateDifficultyFallback(
+                                        deckId, collectionId, reqList, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void fallbackMethods_preserveExceptionChain() {
+        Exception originalException = new java.sql.SQLException("Connection timeout");
+        RuntimeException wrappedException =
+                new RuntimeException("Database error", originalException);
+        CardReq request = new CardReq(List.of(new CardItemReq("Front", "Back")));
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () ->
+                                cardService.createFallback(
+                                        deckId, collectionId, request, wrappedException));
+
+        assertEquals(wrappedException, exception.getCause());
+        assertEquals(originalException, exception.getCause().getCause());
+    }
+
+    @Test
+    void fallbackMethods_provideConsistentUserFriendlyMessages() {
+        Throwable cause = new Throwable("Internal error");
+
+        RuntimeException createEx =
+                assertThrows(
+                        RuntimeException.class,
+                        () ->
+                                cardService.createFallback(
+                                        deckId,
+                                        collectionId,
+                                        new CardReq(List.of(new CardItemReq("F", "B"))),
+                                        cause));
+        RuntimeException deleteEx =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> cardService.deleteFallback(deckId, collectionId, cardId, cause));
+
+        assertTrue(createEx.getMessage().contains("try again later"));
+        assertTrue(deleteEx.getMessage().contains("try again later"));
+    }
 }
