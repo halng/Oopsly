@@ -85,3 +85,7 @@ resilience4j:
             baseConfig: default
           otpServiceCircuitBreaker:
             baseConfig: default
+          testSuiteServiceCircuitBreaker:
+            baseConfig: default
+          questionServiceCircuitBreaker:
+            baseConfig: default

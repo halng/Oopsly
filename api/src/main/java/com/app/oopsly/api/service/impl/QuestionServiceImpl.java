@@ -29,11 +29,14 @@ import com.app.oopsly.api.viewmodel.QuestionReq;
 import com.app.oopsly.api.viewmodel.QuestionRes;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -54,6 +57,8 @@ public class QuestionServiceImpl implements QuestionService {
     private final ObjectMapper objectMapper;
 
     @Override
+    @CacheEvict(value = "questions", allEntries = true)
+    @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID testSuiteId, QuestionReq request) {
         log.info("Creating question for test suite {}", testSuiteId);
         TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
@@ -64,10 +69,12 @@ public class QuestionServiceImpl implements QuestionService {
         question.setTestSuite(testSuite);
         QuestionEntity savedEntity = questionRepository.save(question);
 
-        return ApiRes.created("QuestionEntity created successfully", this.toViewModel(savedEntity));
+        return ApiRes.created("Question created successfully", this.toViewModel(savedEntity));
     }
 
     @Override
+    @CacheEvict(value = "questions", allEntries = true)
+    @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(UUID testSuiteId, UUID questionId, QuestionReq request) {
         log.info("Updating question {} for test suite {}", questionId, testSuiteId);
         TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
@@ -88,6 +95,8 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
+    @CacheEvict(value = "questions", allEntries = true)
+    @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID testSuiteId, UUID questionId) {
         log.info("Deleting question {} for test suite {}", questionId, testSuiteId);
         TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
@@ -106,6 +115,8 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
+    @Cacheable(value = "questions", key = "#testSuiteId + ':' + #questionId")
+    @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID testSuiteId, UUID questionId) {
         log.info("Fetching question {} for test suite {}", questionId, testSuiteId);
         TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
@@ -121,6 +132,10 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
+    @Cacheable(value = "questions", key = "#testSuiteId + ':all'")
+    @CircuitBreaker(
+            name = "questionServiceCircuitBreaker",
+            fallbackMethod = "getAllByTestSuiteFallback")
     public ApiRes getAllByTestSuite(UUID testSuiteId) {
         log.info("Fetching all questions for test suite {}", testSuiteId);
         TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
@@ -222,5 +237,37 @@ public class QuestionServiceImpl implements QuestionService {
                         () ->
                                 new NotFoundException(
                                         "Test suite not found with id: " + testSuiteId));
+    }
+
+    // Fallback methods for Circuit Breaker
+    public ApiRes createFallback(UUID testSuiteId, QuestionReq request, Throwable t) {
+        log.error("Question service unavailable during create: {}", t.getMessage());
+        throw new RuntimeException(
+                "Question service is currently unavailable. Please try again later.", t);
+    }
+
+    public ApiRes updateFallback(
+            UUID testSuiteId, UUID questionId, QuestionReq request, Throwable t) {
+        log.error("Question service unavailable during update: {}", t.getMessage());
+        throw new RuntimeException(
+                "Question service is currently unavailable. Please try again later.", t);
+    }
+
+    public ApiRes deleteFallback(UUID testSuiteId, UUID questionId, Throwable t) {
+        log.error("Question service unavailable during delete: {}", t.getMessage());
+        throw new RuntimeException(
+                "Question service is currently unavailable. Please try again later.", t);
+    }
+
+    public ApiRes getByIdFallback(UUID testSuiteId, UUID questionId, Throwable t) {
+        log.error("Question service unavailable during getById: {}", t.getMessage());
+        throw new RuntimeException(
+                "Question service is currently unavailable. Please try again later.", t);
+    }
+
+    public ApiRes getAllByTestSuiteFallback(UUID testSuiteId, Throwable t) {
+        log.error("Question service unavailable during getAllByTestSuite: {}", t.getMessage());
+        throw new RuntimeException(
+                "Question service is currently unavailable. Please try again later.", t);
     }
 }

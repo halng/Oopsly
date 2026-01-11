@@ -27,11 +27,14 @@ import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.TestSuiteReq;
 import com.app.oopsly.api.viewmodel.TestSuiteRes;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -44,6 +47,8 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     private final UserService userService;
 
     @Override
+    @CacheEvict(value = "testSuites", allEntries = true)
+    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID deckId, TestSuiteReq request) {
         log.info("Creating test suite for deck {}", deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
@@ -56,6 +61,8 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
+    @CacheEvict(value = "testSuites", allEntries = true)
+    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(UUID deckId, UUID testSuiteId, TestSuiteReq request) {
         log.info("Updating test suite {} for deck {}", testSuiteId, deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
@@ -74,6 +81,8 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
+    @CacheEvict(value = "testSuites", allEntries = true)
+    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID deckId, UUID testSuiteId) {
         log.info("Deleting test suite {} for deck {}", testSuiteId, deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
@@ -92,6 +101,8 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
+    @Cacheable(value = "testSuites", key = "#deckId + ':' + #testSuiteId")
+    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID deckId, UUID testSuiteId) {
         log.info("Fetching test suite {} for deck {}", testSuiteId, deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
@@ -107,6 +118,10 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
+    @Cacheable(value = "testSuites", key = "#deckId + ':all'")
+    @CircuitBreaker(
+            name = "testSuiteServiceCircuitBreaker",
+            fallbackMethod = "getAllByDeckFallback")
     public ApiRes getAllByDeck(UUID deckId) {
         log.info("Fetching all test suites for deck {}", deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
@@ -140,5 +155,36 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         return deckRepository
                 .findByIdAndUser(deckId, currentUser)
                 .orElseThrow(() -> new NotFoundException("Deck not found with id: " + deckId));
+    }
+
+    // Fallback methods for Circuit Breaker
+    public ApiRes createFallback(UUID deckId, TestSuiteReq request, Throwable t) {
+        log.error("Test suite service unavailable during create: {}", t.getMessage());
+        throw new RuntimeException(
+                "Test suite service is currently unavailable. Please try again later.", t);
+    }
+
+    public ApiRes updateFallback(UUID deckId, UUID testSuiteId, TestSuiteReq request, Throwable t) {
+        log.error("Test suite service unavailable during update: {}", t.getMessage());
+        throw new RuntimeException(
+                "Test suite service is currently unavailable. Please try again later.", t);
+    }
+
+    public ApiRes deleteFallback(UUID deckId, UUID testSuiteId, Throwable t) {
+        log.error("Test suite service unavailable during delete: {}", t.getMessage());
+        throw new RuntimeException(
+                "Test suite service is currently unavailable. Please try again later.", t);
+    }
+
+    public ApiRes getByIdFallback(UUID deckId, UUID testSuiteId, Throwable t) {
+        log.error("Test suite service unavailable during getById: {}", t.getMessage());
+        throw new RuntimeException(
+                "Test suite service is currently unavailable. Please try again later.", t);
+    }
+
+    public ApiRes getAllByDeckFallback(UUID deckId, Throwable t) {
+        log.error("Test suite service unavailable during getAllByDeck: {}", t.getMessage());
+        throw new RuntimeException(
+                "Test suite service is currently unavailable. Please try again later.", t);
     }
 }
