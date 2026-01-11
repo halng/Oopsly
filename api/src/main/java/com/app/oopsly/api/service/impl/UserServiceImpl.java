@@ -69,6 +69,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
+    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "getProfileFallback")
     public ApiRes getProfile() {
         User user = getCurrentUser();
 
@@ -90,9 +91,16 @@ public class UserServiceImpl implements UserService {
         return ApiRes.ok("Profile retrieved successfully", profileRes);
     }
 
+    // Fallback method for getProfile Circuit Breaker
+    public ApiRes getProfileFallback(Throwable t) {
+        throw new ValidationException(
+                "Profile service is currently unavailable. Please try again later.");
+    }
+
     @Override
     @Transactional
     @CacheEvict(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
+    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "updateProfileFallback")
     public ApiRes updateProfile(UpdateProfileReq request) {
         User user = getCurrentUser();
 
@@ -124,9 +132,16 @@ public class UserServiceImpl implements UserService {
         return getProfile();
     }
 
+    // Fallback method for updateProfile Circuit Breaker
+    public ApiRes updateProfileFallback(UpdateProfileReq request, Throwable t) {
+        throw new ValidationException(
+                "Profile update service is currently unavailable. Please try again later.");
+    }
+
     @Override
     @Transactional
     @CacheEvict(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
+    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "updateSettingsFallback")
     public ApiRes updateSettings(UpdateSettingsReq request) {
         User user = getCurrentUser();
 
@@ -172,5 +187,11 @@ public class UserServiceImpl implements UserService {
 
         settingRepository.save(setting);
         return getProfile();
+    }
+
+    // Fallback method for updateSettings Circuit Breaker
+    public ApiRes updateSettingsFallback(UpdateSettingsReq request, Throwable t) {
+        throw new ValidationException(
+                "Settings update service is currently unavailable. Please try again later.");
     }
 }

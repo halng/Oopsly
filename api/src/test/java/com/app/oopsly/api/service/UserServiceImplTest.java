@@ -244,6 +244,53 @@ class UserServiceImplTest {
         assertTrue(message.contains("try again later"));
     }
 
+    @Test
+    void getProfileFallback_providesUserFriendlyMessage() {
+        Throwable cause = new Throwable("Internal circuit breaker error");
+
+        ValidationException exception =
+                assertThrows(
+                        ValidationException.class, () -> userService.getProfileFallback(cause));
+
+        String message = exception.getMessage();
+        assertTrue(message.contains("Profile service"));
+        assertTrue(message.contains("currently unavailable"));
+        assertTrue(message.contains("try again later"));
+    }
+
+    @Test
+    void updateProfileFallback_providesUserFriendlyMessage() {
+        UpdateProfileReq request = new UpdateProfileReq("Test User", "Test Bio", 25);
+        Throwable cause = new Throwable("Internal circuit breaker error");
+
+        ValidationException exception =
+                assertThrows(
+                        ValidationException.class,
+                        () -> userService.updateProfileFallback(request, cause));
+
+        String message = exception.getMessage();
+        assertTrue(message.contains("Profile update service"));
+        assertTrue(message.contains("currently unavailable"));
+        assertTrue(message.contains("try again later"));
+    }
+
+    @Test
+    void updateSettingsFallback_providesUserFriendlyMessage() {
+        SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 1, 5, 10);
+        UpdateSettingsReq request = new UpdateSettingsReq("LIGHT", "en", spaceConfigReq);
+        Throwable cause = new Throwable("Internal circuit breaker error");
+
+        ValidationException exception =
+                assertThrows(
+                        ValidationException.class,
+                        () -> userService.updateSettingsFallback(request, cause));
+
+        String message = exception.getMessage();
+        assertTrue(message.contains("Settings update service"));
+        assertTrue(message.contains("currently unavailable"));
+        assertTrue(message.contains("try again later"));
+    }
+
     // Profile Management Tests
     @Test
     void getProfile_returnsUserProfile_whenProfileExists() {
