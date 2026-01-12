@@ -23,8 +23,13 @@ import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.UnauthenticatedException;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.service.impl.UserServiceImpl;
+import com.app.oopsly.api.util.Constant;
+import com.app.oopsly.api.util.JwtUtils;
+import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.RefreshTokenReq;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +37,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -45,6 +53,12 @@ class UserServiceImplTest {
     @Mock private SecurityContext securityContext;
 
     @Mock private Authentication authentication;
+
+    @Mock private JwtUtils jwtUtils;
+
+    @Mock private StringRedisTemplate stringRedisTemplate;
+
+    @Mock private ValueOperations<String, String> valueOps;
 
     @InjectMocks private UserServiceImpl userService;
 
@@ -103,7 +117,6 @@ class UserServiceImplTest {
 
     @Test
     void getCurrentUser_withRealAuthentication_works() {
-        // Setup real authentication
         Authentication realAuth =
                 new UsernamePasswordAuthenticationToken(userId.toString(), null, null);
         SecurityContext realContext = SecurityContextHolder.createEmptyContext();
@@ -158,7 +171,6 @@ class UserServiceImplTest {
         verify(userRepository, times(3)).findById(userId);
     }
 
-    // Fallback Function Tests
     @Test
     void getCurrentUserFallback_throwsUnauthenticatedException() {
         RuntimeException cause = new RuntimeException("Database connection failed");
@@ -212,5 +224,187 @@ class UserServiceImplTest {
         String message = exception.getMessage();
         assertTrue(message.contains("currently unavailable"));
         assertTrue(message.contains("try again later"));
+    }
+
+    @Test
+    void refreshToken_success_returnsNewTokens() {
+        String email = "test@example.com";
+        String refreshToken = "valid-refresh-token";
+        String storedRefreshToken = "valid-refresh-token";
+        String newAccessToken = "new-access-token";
+        String newRefreshToken = "new-refresh-token";
+
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId.toString());
+
+        when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(true);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + userId))
+                .thenReturn(storedRefreshToken);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(jwtUtils.generateTokenWithClaims(anyMap(), eq(email))).thenReturn(newAccessToken);
+        when(jwtUtils.generateRefreshToken(email)).thenReturn(newRefreshToken);
+
+        ApiRes response = userService.refreshToken(req);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(jwtUtils, times(1)).isTokenValid(refreshToken, email);
+        verify(valueOps, times(1)).get(Constant.REFRESH_TOKEN_REDIS_KEY + userId);
+        verify(userRepository, times(1)).findById(userId);
+        verify(jwtUtils, times(1)).generateTokenWithClaims(anyMap(), eq(email));
+        verify(jwtUtils, times(1)).generateRefreshToken(email);
+        verify(valueOps, times(1))
+                .set(
+                        eq(Constant.REFRESH_TOKEN_REDIS_KEY + userId),
+                        eq(newRefreshToken),
+                        eq(Long.valueOf(Constant.REFRESH_TOKEN_EXPIRATION_DAYS)),
+                        eq(TimeUnit.DAYS));
+    }
+
+    @Test
+    void refreshToken_invalidToken_returnsUnauthorized() {
+        String email = "test@example.com";
+        String refreshToken = "invalid-token";
+
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId.toString());
+
+        when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(false);
+
+        ApiRes response = userService.refreshToken(req);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        verify(jwtUtils, times(1)).isTokenValid(refreshToken, email);
+        verify(stringRedisTemplate, never()).opsForValue();
+    }
+
+    @Test
+    void refreshToken_tokenMismatch_returnsUnauthorized() {
+        String email = "test@example.com";
+        String refreshToken = "token1";
+        String storedToken = "token2";
+
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId.toString());
+
+        when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(true);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + userId)).thenReturn(storedToken);
+
+        ApiRes response = userService.refreshToken(req);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void refreshToken_noStoredToken_returnsUnauthorized() {
+        String email = "test@example.com";
+        String refreshToken = "valid-token";
+
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId.toString());
+
+        when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(true);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + userId)).thenReturn(null);
+
+        ApiRes response = userService.refreshToken(req);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void refreshToken_userNotFound_returnsUnauthorized() {
+        String email = "test@example.com";
+        String refreshToken = "valid-token";
+
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId.toString());
+
+        when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(true);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + userId)).thenReturn(refreshToken);
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        ApiRes response = userService.refreshToken(req);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void refreshToken_emailMismatch_returnsUnauthorized() {
+        String email = "test@example.com";
+        String refreshToken = "valid-token";
+        User differentUser = new User();
+        differentUser.setId(userId);
+        differentUser.setEmail("different@example.com");
+
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId.toString());
+
+        when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(true);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + userId)).thenReturn(refreshToken);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(differentUser));
+
+        ApiRes response = userService.refreshToken(req);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void refreshToken_withNullEmail_handlesGracefully() {
+        String refreshToken = "valid-token";
+
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, null, userId.toString());
+
+        when(jwtUtils.isTokenValid(refreshToken, null)).thenReturn(false);
+
+        ApiRes response = userService.refreshToken(req);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void refreshToken_withInvalidUserId_throwsException() {
+        String email = "test@example.com";
+        String refreshToken = "valid-token";
+        String invalidUserId = "not-a-uuid";
+
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, invalidUserId);
+
+        when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(true);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + invalidUserId))
+                .thenReturn(refreshToken);
+
+        assertThrows(RuntimeException.class, () -> userService.refreshToken(req));
+    }
+
+    @Test
+    void refreshTokenFallback_throwsRuntimeException() {
+        RefreshTokenReq req = new RefreshTokenReq("token", "test@example.com", userId.toString());
+        RuntimeException cause = new RuntimeException("Service unavailable");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class, () -> userService.refreshTokenFallback(req, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void refreshTokenFallback_withNullThrowable_handlesGracefully() {
+        RefreshTokenReq req = new RefreshTokenReq("token", "test@example.com", userId.toString());
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class, () -> userService.refreshTokenFallback(req, null));
+
+        assertNotNull(exception);
+        assertNotNull(exception.getMessage());
     }
 }

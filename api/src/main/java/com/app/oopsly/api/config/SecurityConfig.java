@@ -47,7 +47,10 @@ public class SecurityConfig {
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(
                         req ->
-                                req.requestMatchers("/otp/**", "/health")
+                                req.requestMatchers(
+                                                "/otp/**",
+                                                "/health",
+                                                "/api/v1/oopsly/users/refresh-token")
                                         .permitAll()
                                         .anyRequest()
                                         .authenticated())

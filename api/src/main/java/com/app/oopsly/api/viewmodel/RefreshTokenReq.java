@@ -14,16 +14,13 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.service;
+package com.app.oopsly.api.viewmodel;
 
-import com.app.oopsly.api.entity.User;
-import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.RefreshTokenReq;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 
-public interface UserService {
-    String getCurrentUserId();
-
-    User getCurrentUser();
-
-    ApiRes refreshToken(RefreshTokenReq refreshTokenReq);
-}
+public record RefreshTokenReq(
+        @JsonProperty("refresh_token") @NotBlank(message = "Refresh token is required") String refreshToken,
+        @JsonProperty("user_email") @Email(message = "Invalid email format") @NotBlank String userEmail,
+        @JsonProperty("user_id") @NotBlank(message = "User ID is required") String userId) {}
