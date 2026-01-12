@@ -24,6 +24,10 @@ springdoc:
     operationsSorter: method
 
 spring:
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterAccess=10m
   threads:
     virtual:
       enabled: true
@@ -60,3 +64,24 @@ spring:
           starttls:
             enable: true
 
+
+resilience4j:
+    circuitbreaker:
+        configs:
+          default:
+            registerHealthIndicator: true
+            slidingWindowSize: 100
+            minimumNumberOfCalls: 10
+            failureRateThreshold: 50
+            waitDurationInOpenState: 5s
+        instances:
+          userServiceCircuitBreaker:
+            baseConfig: default
+          collectionServiceCircuitBreaker:
+            baseConfig: default
+          cardServiceCircuitBreaker:
+            baseConfig: default
+          deckServiceCircuitBreaker:
+            baseConfig: default
+          otpServiceCircuitBreaker:
+            baseConfig: default

@@ -28,6 +28,7 @@ import com.app.oopsly.api.util.ValidateStatus;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.AuthRes;
 import com.app.oopsly.api.viewmodel.OTPReq;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.mail.MessagingException;
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -54,6 +55,7 @@ public class OTPServiceImpl implements OTPService {
     private static final SecureRandom random = new SecureRandom();
 
     @Override
+    @CircuitBreaker(name = "otpServiceCircuitBreaker", fallbackMethod = "sendOTPFallback")
     public ApiRes sendOTP(String email) {
         log.info("Sending OTP email to {}", StringUtils.masked(email));
         String user = email.split("@")[0];
@@ -85,6 +87,7 @@ public class OTPServiceImpl implements OTPService {
     }
 
     @Override
+    @CircuitBreaker(name = "otpServiceCircuitBreaker", fallbackMethod = "verifyOTPFallback")
     public ApiRes verifyOTP(OTPReq otpReq) {
         return switch (check(otpReq.email().split("@")[0], otpReq.otp())) {
             case VALID -> handleAuthSuccess(otpReq.email());
@@ -190,5 +193,20 @@ public class OTPServiceImpl implements OTPService {
                         throw e;
                     }
                 });
+    }
+
+    // Fallback method for sendOTP
+    // Fallback method for sendOTP
+    public ApiRes sendOTPFallback(String email, Throwable t) {
+        log.error("OTP service unavailable during sendOTP: {}", t.getMessage());
+        throw new RuntimeException(
+                "OTP service is currently unavailable. Please try again later.", t);
+    }
+
+    // Fallback method for verifyOTP
+    public ApiRes verifyOTPFallback(OTPReq otpReq, Throwable t) {
+        log.error("OTP service unavailable during verifyOTP");
+        throw new RuntimeException(
+                "OTP service is currently unavailable. Please try again later.", t);
     }
 }

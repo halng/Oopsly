@@ -285,4 +285,91 @@ class CollectionServiceImplTest {
         assertThrows(NotFoundException.class, () -> collectionService.getAllByDeck(deckId, 0, 10));
         verify(collectionRepository, never()).findAllByDeck(any(), any());
     }
+
+    // Fallback Function Tests
+    @Test
+    void createFallback_throwsRuntimeException() {
+        CollectionReq request = new CollectionReq("Test", "Description");
+        RuntimeException cause = new RuntimeException("Service unavailable");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> collectionService.createFallback(deckId, request, cause));
+
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void updateFallback_throwsRuntimeException() {
+        CollectionReq request = new CollectionReq("Updated", "New Description");
+        RuntimeException cause = new RuntimeException("Database error");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () ->
+                                collectionService.updateFallback(
+                                        deckId, collectionId, request, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void deleteFallback_throwsRuntimeException() {
+        RuntimeException cause = new RuntimeException("Network timeout");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> collectionService.deleteFallback(deckId, collectionId, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void getByIdFallback_throwsRuntimeException() {
+        Throwable cause = new Throwable("Circuit breaker open");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> collectionService.getByIdFallback(deckId, collectionId, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void getAllByDeckFallback_throwsRuntimeException() {
+        Throwable cause = new Throwable("Service degraded");
+
+        RuntimeException exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> collectionService.getAllByDeckFallback(deckId, 0, 10, cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void fallbackMethods_provideUserFriendlyMessages() {
+        Throwable cause = new Throwable("Internal error");
+
+        RuntimeException createEx =
+                assertThrows(
+                        RuntimeException.class,
+                        () ->
+                                collectionService.createFallback(
+                                        deckId, new CollectionReq("Test", "Desc"), cause));
+        assertTrue(createEx.getMessage().contains("try again later"));
+    }
 }
