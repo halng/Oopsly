@@ -32,8 +32,6 @@ import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -56,7 +54,6 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
-    @CacheEvict(value = "decks", key = "'deck:' + #id")
     @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(DeckReq request, UUID id) {
         log.info("Updating deck {} for user {}", id, this.currentUser().getId());
@@ -72,7 +69,6 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
-    @CacheEvict(value = "decks", key = "'deck:' + #id")
     @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID id) {
         log.info("Deleting deck {} for user {}", id, this.currentUser().getId());
@@ -88,7 +84,6 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
-    @Cacheable(value = "decks", key = "'deck:' + #id")
     @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID id) {
         log.info("Fetching deck {} for user {}", id, this.currentUser().getId());
@@ -101,11 +96,6 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
-    @Cacheable(
-            value = "decks",
-            key =
-                    "'page:' + #page + ':size:' + #size + ':user:' +"
-                            + " #root.target.currentUser().getId()")
     @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "getAllFallback")
     public ApiRes getAll(int page, int size) {
         log.info(
