@@ -22,5 +22,4 @@ import jakarta.validation.constraints.NotBlank;
 
 public record RefreshTokenReq(
         @JsonProperty("refresh_token") @NotBlank(message = "Refresh token is required") String refreshToken,
-        @JsonProperty("user_email") @Email(message = "Invalid email format") @NotBlank String userEmail,
-        @JsonProperty("user_id") @NotBlank(message = "User ID is required") String userId) {}
+        @JsonProperty("user_email") @Email(message = "Invalid email format") @NotBlank String userEmail) {}

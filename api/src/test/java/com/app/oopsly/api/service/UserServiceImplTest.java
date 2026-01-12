@@ -29,7 +29,6 @@ import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.RefreshTokenReq;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -235,15 +234,16 @@ class UserServiceImplTest {
         String newAccessToken = "new-access-token";
         String newRefreshToken = "new-refresh-token";
 
-        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId.toString());
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email);
 
         when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(true);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+
         when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
         when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + userId))
                 .thenReturn(storedRefreshToken);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
         when(jwtUtils.generateTokenWithClaims(anyMap(), eq(email))).thenReturn(newAccessToken);
-        when(jwtUtils.generateRefreshToken(email)).thenReturn(newRefreshToken);
 
         ApiRes response = userService.refreshToken(req);
 
@@ -251,15 +251,8 @@ class UserServiceImplTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(jwtUtils, times(1)).isTokenValid(refreshToken, email);
         verify(valueOps, times(1)).get(Constant.REFRESH_TOKEN_REDIS_KEY + userId);
-        verify(userRepository, times(1)).findById(userId);
+        verify(userRepository, times(1)).findByEmail(email);
         verify(jwtUtils, times(1)).generateTokenWithClaims(anyMap(), eq(email));
-        verify(jwtUtils, times(1)).generateRefreshToken(email);
-        verify(valueOps, times(1))
-                .set(
-                        eq(Constant.REFRESH_TOKEN_REDIS_KEY + userId),
-                        eq(newRefreshToken),
-                        eq(Long.valueOf(Constant.REFRESH_TOKEN_EXPIRATION_DAYS)),
-                        eq(TimeUnit.DAYS));
     }
 
     @Test
@@ -267,7 +260,7 @@ class UserServiceImplTest {
         String email = "test@example.com";
         String refreshToken = "invalid-token";
 
-        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId.toString());
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email);
 
         when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(false);
 
@@ -285,9 +278,10 @@ class UserServiceImplTest {
         String refreshToken = "token1";
         String storedToken = "token2";
 
-        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId.toString());
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email);
 
         when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(true);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
         when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + userId)).thenReturn(storedToken);
 
@@ -302,9 +296,10 @@ class UserServiceImplTest {
         String email = "test@example.com";
         String refreshToken = "valid-token";
 
-        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId.toString());
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email);
 
         when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(true);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
         when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + userId)).thenReturn(null);
 
@@ -319,12 +314,10 @@ class UserServiceImplTest {
         String email = "test@example.com";
         String refreshToken = "valid-token";
 
-        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId.toString());
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email);
 
         when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(true);
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + userId)).thenReturn(refreshToken);
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
         assertThrows(UnauthenticatedException.class, () -> userService.refreshToken(req));
     }
@@ -337,24 +330,24 @@ class UserServiceImplTest {
         differentUser.setId(userId);
         differentUser.setEmail("different@example.com");
 
-        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId.toString());
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email);
 
         when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(true);
         when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
         when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + userId)).thenReturn(refreshToken);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(differentUser));
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(differentUser));
 
         ApiRes response = userService.refreshToken(req);
 
         assertNotNull(response);
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
     void refreshToken_withNullEmail_handlesGracefully() {
         String refreshToken = "valid-token";
 
-        RefreshTokenReq req = new RefreshTokenReq(refreshToken, null, userId.toString());
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, null);
 
         when(jwtUtils.isTokenValid(refreshToken, null)).thenReturn(false);
 
@@ -364,26 +357,10 @@ class UserServiceImplTest {
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
 
-    @Test
-    void refreshToken_withInvalidUserId_throwsException() {
-        String email = "test@example.com";
-        String refreshToken = "valid-token";
-        String invalidUserId = "not-a-uuid";
-
-        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, invalidUserId);
-
-        when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(true);
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + invalidUserId))
-                .thenReturn(refreshToken);
-
-        assertThrows(RuntimeException.class, () -> userService.refreshToken(req));
-    }
-
     // Fallback Method Tests
     @Test
     void refreshTokenFallback_throwsRuntimeException() {
-        RefreshTokenReq req = new RefreshTokenReq("token", "test@example.com", userId.toString());
+        RefreshTokenReq req = new RefreshTokenReq("token", "test@example.com");
         RuntimeException cause = new RuntimeException("Service unavailable");
 
         RuntimeException exception =
@@ -397,7 +374,7 @@ class UserServiceImplTest {
 
     @Test
     void refreshTokenFallback_withNullThrowable_handlesGracefully() {
-        RefreshTokenReq req = new RefreshTokenReq("token", "test@example.com", userId.toString());
+        RefreshTokenReq req = new RefreshTokenReq("token", "test@example.com");
 
         RuntimeException exception =
                 assertThrows(

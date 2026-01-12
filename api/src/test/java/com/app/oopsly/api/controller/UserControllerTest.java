@@ -50,7 +50,7 @@ class UserControllerTest {
 
     @Test
     void refreshToken_delegatesToService_and_returnsServiceResponse() {
-        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId);
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email);
         ApiRes expected = mock(ApiRes.class);
 
         when(userService.refreshToken(req)).thenReturn(expected);
@@ -63,7 +63,7 @@ class UserControllerTest {
 
     @Test
     void refreshToken_withValidRequest_callsService() {
-        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId);
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email);
         ApiRes mockResponse = mock(ApiRes.class);
 
         when(userService.refreshToken(req)).thenReturn(mockResponse);
@@ -79,8 +79,8 @@ class UserControllerTest {
         String email1 = "user1@example.com";
         String email2 = "user2@example.com";
 
-        RefreshTokenReq req1 = new RefreshTokenReq(refreshToken, email1, userId);
-        RefreshTokenReq req2 = new RefreshTokenReq(refreshToken, email2, userId);
+        RefreshTokenReq req1 = new RefreshTokenReq(refreshToken, email1);
+        RefreshTokenReq req2 = new RefreshTokenReq(refreshToken, email2);
 
         ApiRes response1 = mock(ApiRes.class);
         ApiRes response2 = mock(ApiRes.class);
@@ -99,7 +99,7 @@ class UserControllerTest {
 
     @Test
     void refreshToken_multipleCallsSameRequest_callsServiceEachTime() {
-        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId);
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email);
         ApiRes mockResponse = mock(ApiRes.class);
 
         when(userService.refreshToken(req)).thenReturn(mockResponse);
@@ -113,7 +113,7 @@ class UserControllerTest {
 
     @Test
     void refreshToken_serviceThrowsException_propagatesException() {
-        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email, userId);
+        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email);
 
         when(userService.refreshToken(req)).thenThrow(new RuntimeException("Service error"));
 

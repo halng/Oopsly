@@ -30,7 +30,6 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -70,7 +69,6 @@ public class UserServiceImpl implements UserService {
                 StringUtils.masked(refreshTokenReq.userEmail()));
 
         String email = refreshTokenReq.userEmail();
-        String userId = refreshTokenReq.userId();
         String providedRefreshToken = refreshTokenReq.refreshToken();
 
         if (!jwtUtils.isTokenValid(providedRefreshToken, email)) {
@@ -80,8 +78,18 @@ public class UserServiceImpl implements UserService {
             return ApiRes.unauthorized("Invalid or expired refresh token");
         }
 
+        User user =
+                userRepository
+                        .findByEmail(email)
+                        .orElseThrow(
+                                () ->
+                                        new UnauthenticatedException(
+                                                "User not found with email: " + email));
+
         String storedRefreshToken =
-                stringRedisTemplate.opsForValue().get(Constant.REFRESH_TOKEN_REDIS_KEY + userId);
+                stringRedisTemplate
+                        .opsForValue()
+                        .get(Constant.REFRESH_TOKEN_REDIS_KEY + user.getId());
 
         if (storedRefreshToken == null || !storedRefreshToken.equals(providedRefreshToken)) {
             log.warn(
@@ -90,38 +98,16 @@ public class UserServiceImpl implements UserService {
             return ApiRes.unauthorized("Invalid refresh token");
         }
 
-        User user =
-                userRepository
-                        .findById(UUID.fromString(userId))
-                        .orElseThrow(
-                                () ->
-                                        new UnauthenticatedException(
-                                                "User not found with ID: " + userId));
-
-        if (!user.getEmail().equals(email)) {
-            log.warn("Email mismatch for user ID {}", userId);
-            return ApiRes.unauthorized("Invalid user credentials");
-        }
-
         Map<String, Object> claims = new HashMap<>();
         claims.put("id", user.getId());
         claims.put("role", "USER");
 
         String newAccessToken = jwtUtils.generateTokenWithClaims(claims, email);
-        String newRefreshToken = jwtUtils.generateRefreshToken(email);
-
-        String refreshTokenKey = Constant.REFRESH_TOKEN_REDIS_KEY + userId;
-        stringRedisTemplate
-                .opsForValue()
-                .set(
-                        refreshTokenKey,
-                        newRefreshToken,
-                        Constant.REFRESH_TOKEN_EXPIRATION_DAYS,
-                        TimeUnit.DAYS);
 
         log.info("Successfully refreshed tokens for user {}", StringUtils.masked(email));
 
-        AuthRes authRes = new AuthRes(newAccessToken, newRefreshToken, Constant.TOKEN_TYPE_BEARER);
+        AuthRes authRes =
+                new AuthRes(newAccessToken, providedRefreshToken, Constant.TOKEN_TYPE_BEARER);
         return ApiRes.ok("Token refreshed successfully", authRes);
     }
 
@@ -148,13 +134,11 @@ public class UserServiceImpl implements UserService {
         String refreshTokenKey = Constant.REFRESH_TOKEN_REDIS_KEY + userId;
         Boolean deleted = stringRedisTemplate.delete(refreshTokenKey);
 
-        if (Boolean.TRUE.equals(deleted)) {
-            log.info("Successfully logged out user: {}", userId);
-            return ApiRes.ok("Logged out successfully");
-        } else {
-            log.warn("No refresh token found for user: {}", userId);
-            return ApiRes.ok("Logged out successfully");
-        }
+        SecurityContextHolder.clearContext();
+
+        log.info("Cleared security context for user ID: {} success {}", userId, deleted);
+
+        return ApiRes.ok("Logged out successfully");
     }
 
     public ApiRes logoutFallback(Throwable t) {
