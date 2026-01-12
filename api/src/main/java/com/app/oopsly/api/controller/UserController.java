@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/oopsly/users")
+@RequestMapping("/users")
 @Tag(name = "Users", description = "User management APIs")
 public class UserController {
 

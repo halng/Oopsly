@@ -69,72 +69,60 @@ public class UserServiceImpl implements UserService {
                 "Processing refresh token request for user {}",
                 StringUtils.masked(refreshTokenReq.userEmail()));
 
-        try {
-            String email = refreshTokenReq.userEmail();
-            String userId = refreshTokenReq.userId();
-            String providedRefreshToken = refreshTokenReq.refreshToken();
+        String email = refreshTokenReq.userEmail();
+        String userId = refreshTokenReq.userId();
+        String providedRefreshToken = refreshTokenReq.refreshToken();
 
-            if (!jwtUtils.isTokenValid(providedRefreshToken, email)) {
-                log.warn(
-                        "Invalid refresh token for user {}",
-                        StringUtils.masked(refreshTokenReq.userEmail()));
-                return ApiRes.unauthorized("Invalid or expired refresh token");
-            }
-
-            String storedRefreshToken =
-                    stringRedisTemplate
-                            .opsForValue()
-                            .get(Constant.REFRESH_TOKEN_REDIS_KEY + userId);
-
-            if (storedRefreshToken == null || !storedRefreshToken.equals(providedRefreshToken)) {
-                log.warn(
-                        "Refresh token mismatch for user {}",
-                        StringUtils.masked(refreshTokenReq.userEmail()));
-                return ApiRes.unauthorized("Invalid refresh token");
-            }
-
-            User user =
-                    userRepository
-                            .findById(UUID.fromString(userId))
-                            .orElseThrow(
-                                    () ->
-                                            new UnauthenticatedException(
-                                                    "User not found with ID: " + userId));
-
-            if (!user.getEmail().equals(email)) {
-                log.warn("Email mismatch for user ID {}", userId);
-                return ApiRes.unauthorized("Invalid user credentials");
-            }
-
-            Map<String, Object> claims = new HashMap<>();
-            claims.put("id", user.getId());
-            claims.put("role", "USER");
-
-            String newAccessToken = jwtUtils.generateTokenWithClaims(claims, email);
-            String newRefreshToken = jwtUtils.generateRefreshToken(email);
-
-            String refreshTokenKey = Constant.REFRESH_TOKEN_REDIS_KEY + userId;
-            stringRedisTemplate
-                    .opsForValue()
-                    .set(
-                            refreshTokenKey,
-                            newRefreshToken,
-                            Constant.REFRESH_TOKEN_EXPIRATION_DAYS,
-                            TimeUnit.DAYS);
-
-            log.info("Successfully refreshed tokens for user {}", StringUtils.masked(email));
-
-            AuthRes authRes =
-                    new AuthRes(newAccessToken, newRefreshToken, Constant.TOKEN_TYPE_BEARER);
-            return ApiRes.ok("Token refreshed successfully", authRes);
-
-        } catch (UnauthenticatedException e) {
-            log.error("Authentication error during token refresh: {}", e.getMessage());
-            return ApiRes.unauthorized(e.getMessage());
-        } catch (Exception e) {
-            log.error("Unexpected error during token refresh: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to refresh token", e);
+        if (!jwtUtils.isTokenValid(providedRefreshToken, email)) {
+            log.warn(
+                    "Invalid refresh token for user {}",
+                    StringUtils.masked(refreshTokenReq.userEmail()));
+            return ApiRes.unauthorized("Invalid or expired refresh token");
         }
+
+        String storedRefreshToken =
+                stringRedisTemplate.opsForValue().get(Constant.REFRESH_TOKEN_REDIS_KEY + userId);
+
+        if (storedRefreshToken == null || !storedRefreshToken.equals(providedRefreshToken)) {
+            log.warn(
+                    "Refresh token mismatch for user {}",
+                    StringUtils.masked(refreshTokenReq.userEmail()));
+            return ApiRes.unauthorized("Invalid refresh token");
+        }
+
+        User user =
+                userRepository
+                        .findById(UUID.fromString(userId))
+                        .orElseThrow(
+                                () ->
+                                        new UnauthenticatedException(
+                                                "User not found with ID: " + userId));
+
+        if (!user.getEmail().equals(email)) {
+            log.warn("Email mismatch for user ID {}", userId);
+            return ApiRes.unauthorized("Invalid user credentials");
+        }
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("id", user.getId());
+        claims.put("role", "USER");
+
+        String newAccessToken = jwtUtils.generateTokenWithClaims(claims, email);
+        String newRefreshToken = jwtUtils.generateRefreshToken(email);
+
+        String refreshTokenKey = Constant.REFRESH_TOKEN_REDIS_KEY + userId;
+        stringRedisTemplate
+                .opsForValue()
+                .set(
+                        refreshTokenKey,
+                        newRefreshToken,
+                        Constant.REFRESH_TOKEN_EXPIRATION_DAYS,
+                        TimeUnit.DAYS);
+
+        log.info("Successfully refreshed tokens for user {}", StringUtils.masked(email));
+
+        AuthRes authRes = new AuthRes(newAccessToken, newRefreshToken, Constant.TOKEN_TYPE_BEARER);
+        return ApiRes.ok("Token refreshed successfully", authRes);
     }
 
     public User getCurrentUserFallback(Throwable t) {
@@ -154,23 +142,18 @@ public class UserServiceImpl implements UserService {
     @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "logoutFallback")
     @Override
     public ApiRes logout() {
-        try {
-            String userId = getCurrentUserId();
-            log.info("Processing logout request for user ID: {}", userId);
+        String userId = getCurrentUserId();
+        log.info("Processing logout request for user ID: {}", userId);
 
-            String refreshTokenKey = Constant.REFRESH_TOKEN_REDIS_KEY + userId;
-            Boolean deleted = stringRedisTemplate.delete(refreshTokenKey);
+        String refreshTokenKey = Constant.REFRESH_TOKEN_REDIS_KEY + userId;
+        Boolean deleted = stringRedisTemplate.delete(refreshTokenKey);
 
-            if (Boolean.TRUE.equals(deleted)) {
-                log.info("Successfully logged out user: {}", userId);
-                return ApiRes.ok("Logged out successfully");
-            } else {
-                log.warn("No refresh token found for user: {}", userId);
-                return ApiRes.ok("Logged out successfully");
-            }
-        } catch (Exception e) {
-            log.error("Error during logout: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to logout", e);
+        if (Boolean.TRUE.equals(deleted)) {
+            log.info("Successfully logged out user: {}", userId);
+            return ApiRes.ok("Logged out successfully");
+        } else {
+            log.warn("No refresh token found for user: {}", userId);
+            return ApiRes.ok("Logged out successfully");
         }
     }
 

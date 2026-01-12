@@ -315,7 +315,7 @@ class UserServiceImplTest {
     }
 
     @Test
-    void refreshToken_userNotFound_returnsUnauthorized() {
+    void refreshToken_userNotFound_throwsException() {
         String email = "test@example.com";
         String refreshToken = "valid-token";
 
@@ -326,10 +326,7 @@ class UserServiceImplTest {
         when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + userId)).thenReturn(refreshToken);
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        ApiRes response = userService.refreshToken(req);
-
-        assertNotNull(response);
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertThrows(UnauthenticatedException.class, () -> userService.refreshToken(req));
     }
 
     @Test
