@@ -9,7 +9,7 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate } from 'k6/metrics';
-import { generateReport } from './report_generator.js';
+
 
 const errorRate = new Rate('errors');
 const BASE_URL = __ENV.API_BASE_URL || 'http://localhost:9009/api/v1/oopsly';
@@ -56,7 +56,14 @@ export function teardown() {
     console.log('Stress test complete - review error rates and latency at each stage');
 }
 
-// Generate reports at the end of the test
+// Export test results as JSON for Python report processor
 export function handleSummary(data) {
-    return generateReport(data);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const testType = __ENV.TEST_TYPE || 'stress';
+    const reportDir = __ENV.REPORT_DIR || '../../../reports';
+    
+    return {
+        [`${reportDir}/k6_${testType}_report_${timestamp}.json`]: JSON.stringify(data, null, 2),
+        stdout: JSON.stringify(data, null, 2),
+    };
 }

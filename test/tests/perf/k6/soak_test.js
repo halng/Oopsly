@@ -9,7 +9,7 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate, Counter } from 'k6/metrics';
-import { generateReport } from './report_generator.js';
+
 
 const errorRate = new Rate('errors');
 const totalRequests = new Counter('total_requests');
@@ -69,7 +69,14 @@ export function teardown() {
     console.log('Soak test complete - check for memory leaks and degradation');
 }
 
-// Generate reports at the end of the test
+// Export test results as JSON for Python report processor
 export function handleSummary(data) {
-    return generateReport(data);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const testType = __ENV.TEST_TYPE || 'soak';
+    const reportDir = __ENV.REPORT_DIR || '../../../reports';
+    
+    return {
+        [`${reportDir}/k6_${testType}_report_${timestamp}.json`]: JSON.stringify(data, null, 2),
+        stdout: JSON.stringify(data, null, 2),
+    };
 }

@@ -9,7 +9,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
-import { generateReport } from './report_generator.js';
 
 const errorRate = new Rate('errors');
 const deckCreationTrend = new Trend('deck_creation_duration');
@@ -99,7 +98,14 @@ function addCardsToDeck(deckId) {
     check(response, { 'add cards status 200': (r) => r.status === 200 });
 }
 
-// Generate reports at the end of the test
+// Export test results as JSON for Python report processor
 export function handleSummary(data) {
-    return generateReport(data);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const testType = __ENV.TEST_TYPE || 'baseline';
+    const reportDir = __ENV.REPORT_DIR || '../../../reports';
+    
+    return {
+        [`${reportDir}/k6_${testType}_report_${timestamp}.json`]: JSON.stringify(data, null, 2),
+        stdout: JSON.stringify(data, null, 2),
+    };
 }

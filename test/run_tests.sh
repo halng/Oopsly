@@ -73,22 +73,27 @@ run_k6_tests() {
         baseline)
             echo "Running baseline load test (30 minutes)..."
             k6 run tests/perf/k6/baseline_load_test.js
+            process_k6_reports "baseline"
             ;;
         stress)
             echo "Running stress test (32 minutes)..."
             k6 run tests/perf/k6/stress_test.js
+            process_k6_reports "stress"
             ;;
         spike)
             echo "Running spike test (7 minutes)..."
             k6 run tests/perf/k6/spike_test.js
+            process_k6_reports "spike"
             ;;
         soak)
             echo "Running soak test (4 hours)..."
             k6 run tests/perf/k6/soak_test.js
+            process_k6_reports "soak"
             ;;
         smoke)
             echo "Running smoke test (1 minute)..."
             k6 run tests/perf/k6/baseline_load_test.js --duration 1m --vus 10
+            process_k6_reports "baseline"
             ;;
         *)
             print_error "Unknown test type: $TEST_TYPE"
@@ -98,6 +103,36 @@ run_k6_tests() {
     esac
     
     echo -e "${GREEN}✓ Performance tests completed${NC}"
+}
+
+# Process k6 JSON reports with Python
+process_k6_reports() {
+    local TEST_TYPE="$1"
+    echo "Processing k6 reports with Python..."
+    
+    # Find the most recent JSON report for this test type
+    JSON_FILE=$(ls -t reports/k6_${TEST_TYPE}_report_*.json 2>/dev/null | head -n 1)
+    
+    if [ -z "$JSON_FILE" ]; then
+        print_error "No k6 JSON output found for test type: $TEST_TYPE"
+        return 1
+    fi
+    
+    echo "Found JSON report: $JSON_FILE"
+    
+    # Generate reports with Python
+    python3 tests/perf/k6_report_processor.py \
+        "$JSON_FILE" \
+        --test-type "$TEST_TYPE" \
+        --output-dir reports \
+        --environment "${ENVIRONMENT:-local}"
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Reports generated successfully${NC}"
+    else
+        print_error "Report generation failed"
+        return 1
+    fi
 }
 
 # Run Locust tests
