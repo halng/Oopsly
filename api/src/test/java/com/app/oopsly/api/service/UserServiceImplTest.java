@@ -226,6 +226,7 @@ class UserServiceImplTest {
         assertTrue(message.contains("try again later"));
     }
 
+    // Refresh Token Tests
     @Test
     void refreshToken_success_returnsNewTokens() {
         String email = "test@example.com";
@@ -382,6 +383,7 @@ class UserServiceImplTest {
         assertThrows(RuntimeException.class, () -> userService.refreshToken(req));
     }
 
+    // Fallback Method Tests
     @Test
     void refreshTokenFallback_throwsRuntimeException() {
         RefreshTokenReq req = new RefreshTokenReq("token", "test@example.com", userId.toString());
