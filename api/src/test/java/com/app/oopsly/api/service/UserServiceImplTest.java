@@ -409,4 +409,66 @@ class UserServiceImplTest {
         assertNotNull(exception);
         assertNotNull(exception.getMessage());
     }
+
+    // Logout Tests
+    @Test
+    void logout_success_deletesRefreshToken() {
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(stringRedisTemplate.delete(Constant.REFRESH_TOKEN_REDIS_KEY + userId))
+                .thenReturn(true);
+
+        ApiRes response = userService.logout();
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(stringRedisTemplate, times(1))
+                .delete(Constant.REFRESH_TOKEN_REDIS_KEY + userId.toString());
+    }
+
+    @Test
+    void logout_noTokenFound_returnsSuccess() {
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(stringRedisTemplate.delete(Constant.REFRESH_TOKEN_REDIS_KEY + userId))
+                .thenReturn(false);
+
+        ApiRes response = userService.logout();
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(stringRedisTemplate, times(1))
+                .delete(Constant.REFRESH_TOKEN_REDIS_KEY + userId.toString());
+    }
+
+    @Test
+    void logout_redisException_throwsRuntimeException() {
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(stringRedisTemplate.delete(anyString()))
+                .thenThrow(new RuntimeException("Redis connection failed"));
+
+        assertThrows(RuntimeException.class, () -> userService.logout());
+    }
+
+    @Test
+    void logoutFallback_throwsRuntimeException() {
+        RuntimeException cause = new RuntimeException("Service unavailable");
+
+        RuntimeException exception =
+                assertThrows(RuntimeException.class, () -> userService.logoutFallback(cause));
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("currently unavailable"));
+        assertSame(cause, exception.getCause());
+    }
+
+    @Test
+    void logoutFallback_withNullThrowable_handlesGracefully() {
+        RuntimeException exception =
+                assertThrows(RuntimeException.class, () -> userService.logoutFallback(null));
+
+        assertNotNull(exception);
+        assertNotNull(exception.getMessage());
+    }
 }

@@ -26,4 +26,6 @@ public interface UserService {
     User getCurrentUser();
 
     ApiRes refreshToken(RefreshTokenReq refreshTokenReq);
+
+    ApiRes logout();
 }

@@ -120,4 +120,36 @@ class UserControllerTest {
         assertThrows(RuntimeException.class, () -> userController.refreshToken(req));
         verify(userService, times(1)).refreshToken(req);
     }
+
+    @Test
+    void logout_delegatesToService_and_returnsServiceResponse() {
+        ApiRes expected = mock(ApiRes.class);
+
+        when(userService.logout()).thenReturn(expected);
+
+        ApiRes actual = userController.logout();
+
+        verify(userService, times(1)).logout();
+        assertSame(expected, actual);
+    }
+
+    @Test
+    void logout_callsServiceSuccessfully() {
+        ApiRes mockResponse = mock(ApiRes.class);
+
+        when(userService.logout()).thenReturn(mockResponse);
+
+        ApiRes response = userController.logout();
+
+        assertNotNull(response);
+        verify(userService, times(1)).logout();
+    }
+
+    @Test
+    void logout_serviceThrowsException_propagatesException() {
+        when(userService.logout()).thenThrow(new RuntimeException("Service error"));
+
+        assertThrows(RuntimeException.class, () -> userController.logout());
+        verify(userService, times(1)).logout();
+    }
 }

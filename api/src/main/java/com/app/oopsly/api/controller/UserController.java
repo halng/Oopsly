@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/oopsly/users")
-@Tag(name = "User", description = "User management APIs")
+@Tag(name = "Users", description = "User management APIs")
 public class UserController {
 
     private final UserService userService;
@@ -72,5 +72,25 @@ public class UserController {
                     RefreshTokenReq refreshTokenReq) {
         log.debug("Received refresh token request for user: {}", refreshTokenReq.userEmail());
         return userService.refreshToken(refreshTokenReq);
+    }
+
+    @Operation(
+            summary = "Logout",
+            description = "Logs out the current user by invalidating their refresh token")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Logged out successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(
+                        responseCode = "401",
+                        description = "Unauthorized - user not authenticated"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
+    @PostMapping("/logout")
+    public ApiRes logout() {
+        log.debug("Received logout request");
+        return userService.logout();
     }
 }

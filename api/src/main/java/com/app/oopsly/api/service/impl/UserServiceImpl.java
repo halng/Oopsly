@@ -150,4 +150,33 @@ public class UserServiceImpl implements UserService {
         throw new RuntimeException(
                 "Refresh token service is currently unavailable. Please try again later.", t);
     }
+
+    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "logoutFallback")
+    @Override
+    public ApiRes logout() {
+        try {
+            String userId = getCurrentUserId();
+            log.info("Processing logout request for user ID: {}", userId);
+
+            String refreshTokenKey = Constant.REFRESH_TOKEN_REDIS_KEY + userId;
+            Boolean deleted = stringRedisTemplate.delete(refreshTokenKey);
+
+            if (Boolean.TRUE.equals(deleted)) {
+                log.info("Successfully logged out user: {}", userId);
+                return ApiRes.ok("Logged out successfully");
+            } else {
+                log.warn("No refresh token found for user: {}", userId);
+                return ApiRes.ok("Logged out successfully");
+            }
+        } catch (Exception e) {
+            log.error("Error during logout: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to logout", e);
+        }
+    }
+
+    public ApiRes logoutFallback(Throwable t) {
+        log.error("Logout service unavailable: {}", t.getMessage());
+        throw new RuntimeException(
+                "Logout service is currently unavailable. Please try again later.", t);
+    }
 }
