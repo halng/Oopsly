@@ -9,6 +9,7 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate } from 'k6/metrics';
+import { generateReport } from './report_generator.js';
 
 const errorRate = new Rate('errors');
 const BASE_URL = __ENV.API_BASE_URL || 'http://localhost:9009/api/v1/oopsly';
@@ -46,4 +47,9 @@ export default function () {
 
 export function setup() {
     console.log('Starting spike test - simulating sudden traffic surge');
+}
+
+// Generate reports at the end of the test
+export function handleSummary(data) {
+    return generateReport(data);
 }

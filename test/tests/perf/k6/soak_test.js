@@ -9,6 +9,7 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate, Counter } from 'k6/metrics';
+import { generateReport } from './report_generator.js';
 
 const errorRate = new Rate('errors');
 const totalRequests = new Counter('total_requests');
@@ -66,4 +67,9 @@ export function setup() {
 
 export function teardown() {
     console.log('Soak test complete - check for memory leaks and degradation');
+}
+
+// Generate reports at the end of the test
+export function handleSummary(data) {
+    return generateReport(data);
 }

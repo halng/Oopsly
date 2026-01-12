@@ -68,7 +68,8 @@ test/
 │   │   │   ├── stress_test.js
 │   │   │   ├── spike_test.js
 │   │   │   ├── soak_test.js
-│   │   │   └── generic_load_test.js  # Config-driven
+│   │   │   ├── generic_load_test.js  # Config-driven
+│   │   │   └── report_generator.js   # K6-reporter integration
 │   │   ├── config/
 │   │   │   └── endpoints_config.py   # Performance config
 │   │   └── locustfile.py      # Locust tests
@@ -79,6 +80,7 @@ test/
 ├── setup_test_environment.sh  # Docker management script
 ├── generate_report.py         # Report generation (Markdown/HTML/JSON)
 ├── reports/                   # Auto-generated test reports
+├── K6_REPORTER_GUIDE.md       # K6 reporter documentation
 └── pytest.ini                 # Pytest configuration
 ```
 
@@ -248,6 +250,29 @@ k6 run tests/perf/k6/soak_test.js \
 | **Connection Reuse** | > 90% | > 80% | All tests |
 
 ### Performance Test Reports
+
+**✨ K6-Reporter Integration**: All k6 tests now automatically generate comprehensive reports in three formats:
+
+```bash
+# Run any k6 test - reports generated automatically!
+k6 run tests/perf/k6/baseline_load_test.js
+
+# Output files in reports/ directory:
+# - k6_baseline_report_*.html   (Beautiful visual report)
+# - k6_baseline_report_*.md     (GitHub-friendly Markdown)
+# - k6_baseline_report_*.json   (Machine-readable data)
+```
+
+**Report Features:**
+- 📊 **HTML**: Interactive charts, color-coded metrics, visual timeline
+- 📄 **Markdown**: GitHub-rendered tables with status indicators (✅❌🟢🔴)
+- 📋 **JSON**: Complete test data for CI/CD integration
+- ✅ **Threshold Compliance**: Automatic pass/fail determination
+- 💡 **Recommendations**: Automated suggestions based on results
+
+**See [K6_REPORTER_GUIDE.md](K6_REPORTER_GUIDE.md) for complete k6-reporter documentation.**
+
+### Integration Test Reports
 
 k6 generates detailed reports including:
 - Request rate (RPS)

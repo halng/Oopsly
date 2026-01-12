@@ -10,6 +10,7 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
 import { SharedArray } from 'k6/data';
+import { generateReport } from './report_generator.js';
 
 // Custom metrics
 const errorRate = new Rate('errors');
@@ -198,4 +199,9 @@ function executeEndpoint(endpoint, setupData) {
 
 export function teardown(data) {
     console.log(`${TEST_TYPE} test complete`);
+}
+
+// Generate reports at the end of the test
+export function handleSummary(data) {
+    return generateReport(data);
 }

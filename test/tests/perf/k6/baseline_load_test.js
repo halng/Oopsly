@@ -9,6 +9,7 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
+import { generateReport } from './report_generator.js';
 
 const errorRate = new Rate('errors');
 const deckCreationTrend = new Trend('deck_creation_duration');
@@ -96,4 +97,9 @@ function addCardsToDeck(deckId) {
     });
     
     check(response, { 'add cards status 200': (r) => r.status === 200 });
+}
+
+// Generate reports at the end of the test
+export function handleSummary(data) {
+    return generateReport(data);
 }
