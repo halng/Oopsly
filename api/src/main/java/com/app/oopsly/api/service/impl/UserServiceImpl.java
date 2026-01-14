@@ -20,18 +20,31 @@ import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.UnauthenticatedException;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.service.UserService;
+import com.app.oopsly.api.util.Constant;
+import com.app.oopsly.api.util.JwtUtils;
+import com.app.oopsly.api.util.StringUtils;
+import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.AuthRes;
+import com.app.oopsly.api.viewmodel.RefreshTokenReq;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final JwtUtils jwtUtils;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Override
     public String getCurrentUserId() {
@@ -48,9 +61,89 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UnauthenticatedException("User not found"));
     }
 
-    // Fallback method for Circuit Breaker
+    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "refreshTokenFallback")
+    @Override
+    public ApiRes refreshToken(RefreshTokenReq refreshTokenReq) {
+        log.info(
+                "Processing refresh token request for user {}",
+                StringUtils.masked(refreshTokenReq.userEmail()));
+
+        String email = refreshTokenReq.userEmail();
+        String providedRefreshToken = refreshTokenReq.refreshToken();
+
+        if (!jwtUtils.isTokenValid(providedRefreshToken, email)) {
+            log.warn(
+                    "Invalid refresh token for user {}",
+                    StringUtils.masked(refreshTokenReq.userEmail()));
+            return ApiRes.unauthorized("Invalid or expired refresh token");
+        }
+
+        User user =
+                userRepository
+                        .findByEmail(email)
+                        .orElseThrow(
+                                () ->
+                                        new UnauthenticatedException(
+                                                "User not found with email: " + email));
+
+        String storedRefreshToken =
+                stringRedisTemplate
+                        .opsForValue()
+                        .get(Constant.REFRESH_TOKEN_REDIS_KEY + user.getId());
+
+        if (storedRefreshToken == null || !storedRefreshToken.equals(providedRefreshToken)) {
+            log.warn(
+                    "Refresh token mismatch for user {}",
+                    StringUtils.masked(refreshTokenReq.userEmail()));
+            return ApiRes.unauthorized("Invalid refresh token");
+        }
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("id", user.getId());
+        claims.put("role", "USER");
+
+        String newAccessToken = jwtUtils.generateTokenWithClaims(claims, email);
+
+        log.info("Successfully refreshed tokens for user {}", StringUtils.masked(email));
+
+        AuthRes authRes =
+                new AuthRes(newAccessToken, providedRefreshToken, Constant.TOKEN_TYPE_BEARER);
+        return ApiRes.ok("Token refreshed successfully", authRes);
+    }
+
     public User getCurrentUserFallback(Throwable t) {
         throw new UnauthenticatedException(
                 "User service is currently unavailable. Please try again later.", t);
+    }
+
+    public ApiRes refreshTokenFallback(RefreshTokenReq refreshTokenReq, Throwable t) {
+        log.error(
+                "Refresh token service unavailable for user {}: {}",
+                StringUtils.masked(refreshTokenReq.userEmail()),
+                t.getMessage());
+        throw new RuntimeException(
+                "Refresh token service is currently unavailable. Please try again later.", t);
+    }
+
+    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "logoutFallback")
+    @Override
+    public ApiRes logout() {
+        String userId = getCurrentUserId();
+        log.info("Processing logout request for user ID: {}", userId);
+
+        String refreshTokenKey = Constant.REFRESH_TOKEN_REDIS_KEY + userId;
+        Boolean deleted = stringRedisTemplate.delete(refreshTokenKey);
+
+        SecurityContextHolder.clearContext();
+
+        log.info("Cleared security context for user ID: {} success {}", userId, deleted);
+
+        return ApiRes.ok("Logged out successfully");
+    }
+
+    public ApiRes logoutFallback(Throwable t) {
+        log.error("Logout service unavailable: {}", t.getMessage());
+        throw new RuntimeException(
+                "Logout service is currently unavailable. Please try again later.", t);
     }
 }
