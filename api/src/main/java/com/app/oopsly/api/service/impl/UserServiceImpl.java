@@ -22,24 +22,23 @@ import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.SettingRepository;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.service.UserService;
-import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.SettingsRes;
-import com.app.oopsly.api.viewmodel.UpdateProfileReq;
-import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
-import com.app.oopsly.api.viewmodel.UserProfileRes;
 import com.app.oopsly.api.util.Constant;
 import com.app.oopsly.api.util.JwtUtils;
 import com.app.oopsly.api.util.StringUtils;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.AuthRes;
 import com.app.oopsly.api.viewmodel.RefreshTokenReq;
+import com.app.oopsly.api.viewmodel.SettingsRes;
+import com.app.oopsly.api.viewmodel.UpdateProfileReq;
+import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
+import com.app.oopsly.api.viewmodel.UserProfileRes;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -253,6 +252,8 @@ public class UserServiceImpl implements UserService {
     public ApiRes updateSettingsFallback(UpdateSettingsReq request, Throwable t) {
         throw new ValidationException(
                 "Settings update service is currently unavailable. Please try again later.");
+    }
+
     public ApiRes refreshTokenFallback(RefreshTokenReq refreshTokenReq, Throwable t) {
         log.error(
                 "Refresh token service unavailable for user {}: {}",

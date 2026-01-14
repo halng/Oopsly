@@ -18,9 +18,9 @@ package com.app.oopsly.api.service;
 
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.RefreshTokenReq;
 import com.app.oopsly.api.viewmodel.UpdateProfileReq;
 import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
-import com.app.oopsly.api.viewmodel.RefreshTokenReq;
 
 public interface UserService {
     String getCurrentUserId();
@@ -32,6 +32,7 @@ public interface UserService {
     ApiRes updateProfile(UpdateProfileReq request);
 
     ApiRes updateSettings(UpdateSettingsReq request);
+
     ApiRes refreshToken(RefreshTokenReq refreshTokenReq);
 
     ApiRes logout();

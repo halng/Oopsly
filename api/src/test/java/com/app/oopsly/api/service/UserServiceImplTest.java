@@ -25,17 +25,16 @@ import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.SettingRepository;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.service.impl.UserServiceImpl;
+import com.app.oopsly.api.util.Constant;
+import com.app.oopsly.api.util.JwtUtils;
 import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.RefreshTokenReq;
 import com.app.oopsly.api.viewmodel.SpaceConfigReq;
 import com.app.oopsly.api.viewmodel.UpdateProfileReq;
 import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
 import com.app.oopsly.api.viewmodel.UserProfileRes;
 import java.util.HashMap;
 import java.util.Map;
-import com.app.oopsly.api.util.Constant;
-import com.app.oopsly.api.util.JwtUtils;
-import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.RefreshTokenReq;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -456,6 +455,8 @@ class UserServiceImplTest {
         assertNotNull(result);
         assertTrue(result.getBody().isSuccess());
         verify(settingRepository, times(1)).save(any(SettingEntity.class));
+    }
+
     // Refresh Token Tests
     @Test
     void refreshToken_success_returnsNewTokens() {
