@@ -171,7 +171,7 @@ def send_api_request(request_data: dict) -> Optional[requests.Response]:
         method = request_data.pop("method")
         url = request_data.pop("url")
 
-        logger.info(f"📡 Sending {method} {url}")
+        logger.info(f"      📡 Sending {method} {url}")
 
         # requests.request handles json, headers, params kwargs automatically
         response = requests.request(method, url, **request_data)
@@ -444,7 +444,7 @@ def run(env: dict, apis: dict) -> bool:
             flow_name = integrate_flow.get("flow", "Unnamed Flow")
             flow_description = integrate_flow.get("description", "")
             
-            logger.info(f"\n🔸 Flow: {flow_name}")
+            logger.info(f"🔸 Flow: {flow_name}")
             if flow_description:
                 logger.info(f"   {flow_description}")
             
@@ -452,7 +452,7 @@ def run(env: dict, apis: dict) -> bool:
 
             before_all_hook = integrate_flow.get("before-all")
             if before_all_hook:
-                logger.info(f"\n   📋 Setup ({len(before_all_hook)} steps)")
+                logger.info(f"   📋 Setup ({len(before_all_hook)} steps)")
                 for hook_case in before_all_hook:
                     total_steps += 1
                     passed, env = _run(env, apis, hook_case)
