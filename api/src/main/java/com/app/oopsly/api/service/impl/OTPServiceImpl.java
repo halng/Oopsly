@@ -96,9 +96,9 @@ public class OTPServiceImpl implements OTPService {
     @Override
     @CircuitBreaker(name = "otpServiceCircuitBreaker", fallbackMethod = "verifyOTPFallback")
     public ApiRes verifyOTP(OTPReq otpReq) {
-        if (otpReq.email().equals(appConfig.getTestEmail())
-                && otpReq.otp().equals("000000")) {
-            log.info("Test email and OTP detected. Skipping OTP verification for {}",
+        if (otpReq.email().equals(appConfig.getTestEmail()) && otpReq.otp().equals("000000")) {
+            log.info(
+                    "Test email and OTP detected. Skipping OTP verification for {}",
                     StringUtils.masked(otpReq.email()));
             return handleAuthSuccess(otpReq.email());
         }

@@ -29,17 +29,17 @@ from tests.integration import runner
 # from test_runner import Runner
 
 # --- CONFIGURATION ---
-DOCKER_COMPOSE_CMD = ["docker", "compose"] # or ["docker-compose"] depending on version
-REQUIRED_SERVICES = ["postgres", "redis", "app"] # Services we must wait for
+DOCKER_COMPOSE_CMD = ["docker", "compose"]  # or ["docker-compose"] depending on version
+REQUIRED_SERVICES = ["postgres", "redis", "app"]  # Services we must wait for
 MAX_RETRIES = 30  # Wait up to 30 seconds
-SLEEP_INTERVAL = 1 # Check every 1 second
+SLEEP_INTERVAL = 1  # Check every 1 second
 
 # --- LOGGING SETUP ---
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%H:%M:%S",
-    handlers=[logging.StreamHandler(sys.stdout)]
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 
@@ -60,8 +60,16 @@ def check_container_health(service_name: str) -> bool:
             return False
 
         # Inspect the container's health status
-        cmd_inspect = ["docker", "inspect", "--format", "{{json .State.Health.Status}}", container_id]
-        status = subprocess.check_output(cmd_inspect, text=True).strip().replace('"', '')
+        cmd_inspect = [
+            "docker",
+            "inspect",
+            "--format",
+            "{{json .State.Health.Status}}",
+            container_id,
+        ]
+        status = (
+            subprocess.check_output(cmd_inspect, text=True).strip().replace('"', "")
+        )
 
         # If no HEALTHCHECK is defined in Dockerfile, status might be 'null' or empty.
         # In that case, we fallback to checking if it is 'running'.
@@ -73,12 +81,21 @@ def check_container_health(service_name: str) -> bool:
             return False
         else:
             # Fallback: Check if running (for containers without explicit healthchecks)
-            cmd_state = ["docker", "inspect", "--format", "{{json .State.Status}}", container_id]
-            state = subprocess.check_output(cmd_state, text=True).strip().replace('"', '')
+            cmd_state = [
+                "docker",
+                "inspect",
+                "--format",
+                "{{json .State.Status}}",
+                container_id,
+            ]
+            state = (
+                subprocess.check_output(cmd_state, text=True).strip().replace('"', "")
+            )
             return state == "running"
 
     except subprocess.CalledProcessError:
         return False
+
 
 def setup_docker() -> bool:
     """
@@ -121,10 +138,12 @@ def setup_docker() -> bool:
         logger.warning("\n⚠️ Setup interrupted by user.")
         return False
 
+
 def tear_down_docker():
 
     logger.info("🧹 Tearing down Docker environment...")
     subprocess.run(DOCKER_COMPOSE_CMD + ["down"], check=False)
+
 
 def load_file(file_path: str) -> Any:
     """
@@ -134,19 +153,20 @@ def load_file(file_path: str) -> Any:
         return None
 
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             config = yaml.safe_load(f)
             return config
     except (FileNotFoundError, json.JSONDecodeError) as e:
         logger.error(f"❌ Error loading expected response file '{file_path}': {e}")
         return None
 
+
 def get_api_definitions() -> (Dict[str, str], Dict[str, any]):
     """
     Load API definitions from a YAML file.
     """
     # Use absolute path based on the main.py location
-    config_path = os.path.join(os.path.dirname(__file__), '../config/api.yaml')
+    config_path = os.path.join(os.path.dirname(__file__), "../config/api.yaml")
     api_data = load_file(config_path)
     if not api_data:
         logger.error("❌ API definitions could not be loaded.")
@@ -158,7 +178,7 @@ def get_api_definitions() -> (Dict[str, str], Dict[str, any]):
         exit(1)
 
     enviroments = {}
-    if "environments" in  configs:
+    if "environments" in configs:
         for k, v in configs["environments"].items():
             enviroments[k] = v
 
@@ -173,7 +193,7 @@ def get_api_definitions() -> (Dict[str, str], Dict[str, any]):
 def main() -> None:
     """Main entry point for running integration tests."""
     try:
-        setup_success =  True#setup_docker()
+        setup_success = True  # setup_docker()
 
         if not setup_success:
             logger.error("🛑 Aborting tests due to environment setup failure.")
@@ -197,6 +217,7 @@ def main() -> None:
 
     finally:
         tear_down_docker()
+
 
 if __name__ == "__main__":
     main()
