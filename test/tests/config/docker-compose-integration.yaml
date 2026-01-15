@@ -35,6 +35,7 @@ services:
   oopsly-server:
     image: ghcr.io/halng/oopsly-api:latest
     environment:
+      - SPRING_PROFILES_ACTIVE=test
       - GOOGLE_CLIENT_ID=change_this.apps.googleusercontent.com
       - GOOGLE_CLIENT_SECRET=change_this
       - DB_HOST=postgres

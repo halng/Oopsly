@@ -213,8 +213,14 @@ def get_api_definitions() -> (Dict[str, str], Dict[str, any]):
 
 def main() -> None:
     """Main entry point for running integration tests."""
+    skip_docker = os.getenv("SKIP_DOCKER_SETUP", "false").lower() == "true"
+
     try:
-        setup_success = setup_docker()
+        if skip_docker:
+            logger.info("🐳 Skipping Docker setup (managed externally)")
+            setup_success = True
+        else:
+            setup_success = setup_docker()
 
         if not setup_success:
             logger.error("🛑 Aborting tests due to environment setup failure.")
@@ -237,7 +243,10 @@ def main() -> None:
         sys.exit(1)
 
     finally:
-        tear_down_docker()
+        if not skip_docker:
+            tear_down_docker()
+        else:
+            logger.info("🐳 Skipping Docker teardown (managed externally)")
 
 
 if __name__ == "__main__":
