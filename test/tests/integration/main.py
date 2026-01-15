@@ -198,17 +198,17 @@ def get_api_definitions() -> (Dict[str, str], Dict[str, any]):
         logger.error("❌ 'configs' section missing in API definitions.")
         exit(1)
 
-    enviroments = {}
+    environments = {}
     if "environments" in configs:
         for k, v in configs["environments"].items():
-            enviroments[k] = v
+            environments[k] = v
 
     apis = {}
     if "apis" in configs:
         for api in configs["apis"]:
             apis[api["name"]] = api
 
-    return enviroments, apis
+    return environments, apis
 
 
 def main() -> None:
