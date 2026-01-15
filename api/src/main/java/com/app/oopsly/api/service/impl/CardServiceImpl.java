@@ -40,7 +40,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,7 +56,9 @@ public class CardServiceImpl implements CardService {
     private final UserService userService;
 
     @Override
-    @CacheEvict(value = "cards", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId + ':all'")
+    @CacheEvict(
+            value = "cards",
+            key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId + ':all'")
     @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID deckId, UUID collectionId, CardReq request) {
         log.info(
@@ -84,11 +85,11 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    @Caching(
-            evict = {
-                @CacheEvict(value = "cards", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId + ':' + #cardId"),
-                @CacheEvict(value = "cards", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId + ':all'")
-            })
+    @CacheEvict(
+            value = "cards",
+            key =
+                    "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId + ':' +"
+                            + " #cardId")
     @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID deckId, UUID collectionId, UUID cardId) {
         log.info("Deleting card: {} from collection: {} in deck: {}", cardId, collectionId, deckId);
@@ -105,7 +106,11 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    @Cacheable(value = "cards", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId + ':' + #cardId")
+    @Cacheable(
+            value = "cards",
+            key =
+                    "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId + ':' +"
+                            + " #cardId")
     @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID deckId, UUID collectionId, UUID cardId) {
         log.info("Getting card: {} from collection: {} in deck: {}", cardId, collectionId, deckId);
@@ -120,7 +125,9 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    @Cacheable(value = "cards", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId + ':all'")
+    @Cacheable(
+            value = "cards",
+            key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId + ':all'")
     @CircuitBreaker(
             name = "cardServiceCircuitBreaker",
             fallbackMethod = "getAllCardsByCollectionFallback")
@@ -164,11 +171,11 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    @Caching(
-            evict = {
-                @CacheEvict(value = "cards", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId + ':' + #cardId"),
-                @CacheEvict(value = "cards", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId + ':all'")
-            })
+    @CacheEvict(
+            value = "cards",
+            key =
+                    "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId + ':' +"
+                            + " #cardId")
     @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "updateCardFallback")
     public ApiRes updateCard(UUID deckId, UUID collectionId, UUID cardId, CardItemReq item) {
         CollectionEntity collection = getCollectionForCurrentUser(deckId, collectionId);
@@ -186,7 +193,6 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    @CacheEvict(value = "cards", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId + ':all'")
     @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "updateDifficultyFallback")
     public ApiRes updateDifficulty(
             UUID deckId, UUID collectionId, List<UpdateDifficultyReq> reqList) {

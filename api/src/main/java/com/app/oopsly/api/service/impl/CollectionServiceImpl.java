@@ -40,7 +40,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -56,7 +55,9 @@ public class CollectionServiceImpl implements CollectionService {
     private final UserService userService;
 
     @Override
-    @CacheEvict(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':all'")
+    @CacheEvict(
+            value = "collections",
+            key = "#root.target.getCurrentUserId() + ':' + #deckId + ':all'")
     @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID deckId, CollectionReq request) {
         log.info("Creating collection for deck: {}", deckId);
@@ -76,11 +77,9 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
-    @Caching(
-            evict = {
-                @CacheEvict(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId"),
-                @CacheEvict(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':all'")
-            })
+    @CacheEvict(
+            value = "collections",
+            key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId")
     @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(UUID deckId, UUID collectionId, CollectionReq request) {
         log.info("Updating collection: {} in deck: {}", collectionId, deckId);
@@ -108,11 +107,9 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                @CacheEvict(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId"),
-                @CacheEvict(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':all'")
-            })
+    @CacheEvict(
+            value = "collections",
+            key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId")
     @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID deckId, UUID collectionId) {
         log.info("Deleting collection: {} from deck: {}", collectionId, deckId);
@@ -136,7 +133,9 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
-    @Cacheable(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId")
+    @Cacheable(
+            value = "collections",
+            key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId")
     @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID deckId, UUID collectionId) {
         log.info("Getting collection: {} from deck: {}", collectionId, deckId);
@@ -154,7 +153,9 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
-    @Cacheable(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':all'")
+    @Cacheable(
+            value = "collections",
+            key = "#root.target.getCurrentUserId() + ':' + #deckId + ':all'")
     @CircuitBreaker(
             name = "collectionServiceCircuitBreaker",
             fallbackMethod = "getAllByDeckFallback")

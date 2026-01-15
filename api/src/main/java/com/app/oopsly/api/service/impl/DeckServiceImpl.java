@@ -35,7 +35,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -59,11 +58,7 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
-    @Caching(
-            evict = {
-                @CacheEvict(value = "decks", key = "#root.target.getCurrentUserId() + ':' + #id"),
-                @CacheEvict(value = "decks", key = "#root.target.getCurrentUserId() + ':all'")
-            })
+    @CacheEvict(value = "decks", key = "#root.target.getCurrentUserId() + ':' + #id")
     @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(DeckReq request, UUID id) {
         log.info("Updating deck {} for user {}", id, this.currentUser().getId());
@@ -79,11 +74,7 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
-    @Caching(
-            evict = {
-                @CacheEvict(value = "decks", key = "#root.target.getCurrentUserId() + ':' + #id"),
-                @CacheEvict(value = "decks", key = "#root.target.getCurrentUserId() + ':all'")
-            })
+    @CacheEvict(value = "decks", key = "#root.target.getCurrentUserId() + ':' + #id")
     @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID id) {
         log.info("Deleting deck {} for user {}", id, this.currentUser().getId());

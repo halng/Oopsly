@@ -54,9 +54,7 @@ class DeckServiceCacheTest {
         public CacheManager cacheManager() {
             CaffeineCacheManager cacheManager = new CaffeineCacheManager();
             cacheManager.setCaffeine(
-                    Caffeine.newBuilder()
-                            .maximumSize(100)
-                            .expireAfterAccess(10, TimeUnit.MINUTES));
+                    Caffeine.newBuilder().maximumSize(100).expireAfterAccess(10, TimeUnit.MINUTES));
             return cacheManager;
         }
     }
