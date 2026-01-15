@@ -204,6 +204,67 @@ run_test_style_check() {
     fi
 }
 
+# Integration Tests (test directory)
+run_integration_tests() {
+    echo "CI::"
+    echo "CI::====================================="
+    echo "CI::Running Integration Tests"
+    echo "CI::====================================="
+    
+    if [ ! -d "test" ]; then
+        echo "CI::Warning: test directory not found, skipping integration tests"
+        return 0
+    fi
+    
+    # Build the native image for integration testing
+    echo "CI::Building native image for integration tests..."
+    if [ -d "api" ]; then
+        cd api
+        
+        # Create a minimal .env file if it doesn't exist
+        if [ ! -f ".env" ]; then
+            echo "CI::Creating minimal .env file for build..."
+            cp .env.example .env 2>/dev/null || cat > .env << 'EOF'
+GOOGLE_CLIENT_ID=dummy.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=dummy
+DB_HOST=localhost
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_NAME=oopsly
+EMAIL_USERNAME=test@example.com
+EMAIL_PASSWORD=dummy
+JWT_SECRET=dummysecretkey
+REDIS_HOST=localhost
+REDIS_PORT=6379
+EOF
+        fi
+        
+        echo "CI::Building native image with Gradle..."
+        ./gradlew bootBuildImage --imageName=ghcr.io/halng/oopsly-api:latest --no-daemon
+        
+        cd ..
+        echo "CI::Native image built successfully!"
+    else
+        echo "CI::ERROR: api directory not found"
+        return 1
+    fi
+    
+    # Run integration tests
+    echo "CI::Executing integration tests..."
+    cd test
+    python -m tests.integration.main
+    TEST_EXIT_CODE=$?
+    cd ..
+    
+    if [ $TEST_EXIT_CODE -eq 0 ]; then
+        echo "CI::Integration tests completed successfully!"
+        return 0
+    else
+        echo "CI::ERROR: Integration tests failed with exit code $TEST_EXIT_CODE"
+        return 1
+    fi
+}
+
 # Security Scans (Snyk)
 run_security_scans() {
     echo "CI::"
@@ -281,6 +342,7 @@ main() {
     run_markdown_lint
     # run_frontend_ci # Temporarily disabled
     run_test_style_check
+    run_integration_tests
     
     if [ "$SKIP_SECURITY" = false ]; then
         run_security_scans
