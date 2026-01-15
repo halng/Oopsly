@@ -19,21 +19,33 @@ package com.app.oopsly.api.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.app.oopsly.api.entity.Language;
+import com.app.oopsly.api.entity.SettingEntity;
+import com.app.oopsly.api.entity.Theme;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.UnauthenticatedException;
+import com.app.oopsly.api.exception.ValidationException;
+import com.app.oopsly.api.repository.SettingRepository;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.service.impl.UserServiceImpl;
 import com.app.oopsly.api.util.Constant;
 import com.app.oopsly.api.util.JwtUtils;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.RefreshTokenReq;
+import com.app.oopsly.api.viewmodel.SpaceConfigReq;
+import com.app.oopsly.api.viewmodel.UpdateProfileReq;
+import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
+import com.app.oopsly.api.viewmodel.UserProfileRes;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -50,6 +62,8 @@ class UserServiceImplTest {
 
     @Mock private UserRepository userRepository;
 
+    @Mock private SettingRepository settingRepository;
+
     @Mock private SecurityContext securityContext;
 
     @Mock private Authentication authentication;
@@ -64,6 +78,7 @@ class UserServiceImplTest {
 
     private UUID userId;
     private User user;
+    private SettingEntity setting;
 
     @BeforeEach
     void setUp() {
@@ -71,6 +86,23 @@ class UserServiceImplTest {
         user = new User();
         user.setId(userId);
         user.setEmail("test@example.com");
+        user.setDisplayName("Test User");
+        user.setBio("Test Bio");
+        user.setAge(25);
+
+        Map<String, Integer> spaceConfig = new HashMap<>();
+        spaceConfig.put("AGAIN", 1);
+        spaceConfig.put("HARD", 1);
+        spaceConfig.put("GOOD", 5);
+        spaceConfig.put("EASY", 10);
+
+        setting = new SettingEntity();
+        setting.setId(UUID.randomUUID());
+        setting.setTheme(Theme.SYSTEM);
+        setting.setLanguage(Language.ENGLISH);
+        setting.setSpaceConfig(spaceConfig);
+        setting.setUser(user);
+
         SecurityContextHolder.setContext(securityContext);
     }
 
@@ -224,6 +256,209 @@ class UserServiceImplTest {
         String message = exception.getMessage();
         assertTrue(message.contains("currently unavailable"));
         assertTrue(message.contains("try again later"));
+    }
+
+    @Test
+    void getProfileFallback_providesUserFriendlyMessage() {
+        Throwable cause = new Throwable("Internal circuit breaker error");
+
+        ValidationException exception =
+                assertThrows(
+                        ValidationException.class, () -> userService.getProfileFallback(cause));
+
+        String message = exception.getMessage();
+        assertTrue(message.contains("Profile service"));
+        assertTrue(message.contains("currently unavailable"));
+        assertTrue(message.contains("try again later"));
+    }
+
+    @Test
+    void updateProfileFallback_providesUserFriendlyMessage() {
+        UpdateProfileReq request = new UpdateProfileReq("Test User", "Test Bio", 25);
+        Throwable cause = new Throwable("Internal circuit breaker error");
+
+        ValidationException exception =
+                assertThrows(
+                        ValidationException.class,
+                        () -> userService.updateProfileFallback(request, cause));
+
+        String message = exception.getMessage();
+        assertTrue(message.contains("Profile update service"));
+        assertTrue(message.contains("currently unavailable"));
+        assertTrue(message.contains("try again later"));
+    }
+
+    @Test
+    void updateSettingsFallback_providesUserFriendlyMessage() {
+        SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 1, 5, 10);
+        UpdateSettingsReq request = new UpdateSettingsReq("LIGHT", "en", spaceConfigReq);
+        Throwable cause = new Throwable("Internal circuit breaker error");
+
+        ValidationException exception =
+                assertThrows(
+                        ValidationException.class,
+                        () -> userService.updateSettingsFallback(request, cause));
+
+        String message = exception.getMessage();
+        assertTrue(message.contains("Settings update service"));
+        assertTrue(message.contains("currently unavailable"));
+        assertTrue(message.contains("try again later"));
+    }
+
+    // Profile Management Tests
+    @Test
+    void getProfile_returnsUserProfile_whenProfileExists() {
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
+
+        ApiRes result = userService.getProfile();
+
+        assertNotNull(result);
+        assertNotNull(result.getBody());
+        assertTrue(result.getBody().isSuccess());
+        UserProfileRes profile = (UserProfileRes) result.getBody().data();
+        assertEquals("Test User", profile.displayName());
+        assertEquals("Test Bio", profile.bio());
+        assertEquals(25, profile.age());
+        assertNotNull(profile.settings());
+        assertEquals("SYSTEM", profile.settings().theme());
+        assertEquals("en", profile.settings().language());
+        verify(settingRepository).findByUserId(userId);
+    }
+
+    @Test
+    void getProfile_throwsException_whenSettingsNotFound() {
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(settingRepository.findByUserId(userId)).thenReturn(Optional.empty());
+
+        ValidationException exception =
+                assertThrows(ValidationException.class, () -> userService.getProfile());
+        assertTrue(exception.getMessage().contains("User settings not found"));
+    }
+
+    @Test
+    void updateProfile_createsSettingsIfNotExist() {
+        UpdateProfileReq request = new UpdateProfileReq("New User", "New Bio", 30);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(settingRepository.findByUserId(userId))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(setting));
+        when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
+
+        ApiRes result = userService.updateProfile(request);
+
+        assertNotNull(result);
+        assertTrue(result.getBody().isSuccess());
+        verify(userRepository, times(1)).save(any(User.class));
+        verify(settingRepository, times(1)).save(any(SettingEntity.class));
+    }
+
+    @Test
+    void updateProfile_updatesExistingProfile() {
+        UpdateProfileReq request = new UpdateProfileReq("Updated User", "Updated Bio", 35);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
+
+        ApiRes result = userService.updateProfile(request);
+
+        assertNotNull(result);
+        assertTrue(result.getBody().isSuccess());
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository, times(1)).save(captor.capture());
+        User savedUser = captor.getValue();
+        assertEquals("Updated User", savedUser.getDisplayName());
+        assertEquals("Updated Bio", savedUser.getBio());
+        assertEquals(35, savedUser.getAge());
+    }
+
+    @Test
+    void updateSettings_updatesExistingSettings() {
+        SpaceConfigReq spaceConfigReq = new SpaceConfigReq(2, 3, 7, 14);
+        UpdateSettingsReq request = new UpdateSettingsReq("DARK", "vi", spaceConfigReq);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(settingRepository.findByUserId(userId))
+                .thenReturn(Optional.of(setting))
+                .thenReturn(Optional.of(setting));
+        when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
+
+        ApiRes result = userService.updateSettings(request);
+
+        assertNotNull(result);
+        assertTrue(result.getBody().isSuccess());
+        ArgumentCaptor<SettingEntity> captor = ArgumentCaptor.forClass(SettingEntity.class);
+        verify(settingRepository).save(captor.capture());
+        SettingEntity savedSetting = captor.getValue();
+        assertEquals(Theme.DARK, savedSetting.getTheme());
+        assertEquals(Language.VIETNAMESE, savedSetting.getLanguage());
+        assertEquals(2, savedSetting.getSpaceConfig().get("AGAIN"));
+        assertEquals(3, savedSetting.getSpaceConfig().get("HARD"));
+        assertEquals(7, savedSetting.getSpaceConfig().get("GOOD"));
+        assertEquals(14, savedSetting.getSpaceConfig().get("EASY"));
+    }
+
+    @Test
+    void updateSettings_throwsException_whenInvalidTheme() {
+        SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 1, 5, 10);
+        UpdateSettingsReq request = new UpdateSettingsReq("INVALID_THEME", "en", spaceConfigReq);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
+
+        ValidationException exception =
+                assertThrows(ValidationException.class, () -> userService.updateSettings(request));
+        assertTrue(exception.getMessage().contains("Invalid theme"));
+    }
+
+    @Test
+    void updateSettings_throwsException_whenInvalidLanguage() {
+        SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 1, 5, 10);
+        UpdateSettingsReq request = new UpdateSettingsReq("LIGHT", "invalid-lang", spaceConfigReq);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
+
+        ValidationException exception =
+                assertThrows(ValidationException.class, () -> userService.updateSettings(request));
+        assertTrue(exception.getMessage().contains("Invalid language"));
+    }
+
+    @Test
+    void updateSettings_createsNewSettings_whenSettingsDoNotExist() {
+        SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 2, 5, 10);
+        UpdateSettingsReq request = new UpdateSettingsReq("LIGHT", "en", spaceConfigReq);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(settingRepository.findByUserId(userId))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(setting));
+        when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
+
+        ApiRes result = userService.updateSettings(request);
+
+        assertNotNull(result);
+        assertTrue(result.getBody().isSuccess());
+        verify(settingRepository, times(1)).save(any(SettingEntity.class));
     }
 
     // Refresh Token Tests

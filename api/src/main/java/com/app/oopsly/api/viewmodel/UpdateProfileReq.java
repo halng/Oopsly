@@ -14,26 +14,14 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.service;
+package com.app.oopsly.api.viewmodel;
 
-import com.app.oopsly.api.entity.User;
-import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.RefreshTokenReq;
-import com.app.oopsly.api.viewmodel.UpdateProfileReq;
-import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-public interface UserService {
-    String getCurrentUserId();
-
-    User getCurrentUser();
-
-    ApiRes getProfile();
-
-    ApiRes updateProfile(UpdateProfileReq request);
-
-    ApiRes updateSettings(UpdateSettingsReq request);
-
-    ApiRes refreshToken(RefreshTokenReq refreshTokenReq);
-
-    ApiRes logout();
-}
+public record UpdateProfileReq(
+        @NotBlank(message = "Display name cannot be blank") @Size(max = 50, message = "Display name must not exceed 50 characters") String displayName,
+        @Size(max = 255, message = "Bio must not exceed 255 characters") String bio,
+        @Min(value = 1, message = "Age must be at least 1") @Max(value = 120, message = "Age must not exceed 120") Integer age) {}
