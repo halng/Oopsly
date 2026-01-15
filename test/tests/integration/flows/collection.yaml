@@ -1,0 +1,222 @@
+flows:
+  - flow: Collection Management Flow
+    description: "This flow tests collection CRUD operations including create, read, update, and delete operations"
+    before-all:
+      - name: Generate OTP
+        api: GENERATE_OTP
+        with:
+          EMAIL: test@oopsly.com
+        assertions:
+          - path: $.status
+            type: equals
+            value: 200
+      - name: Verify OTP and Obtain Tokens
+        api: VERIFY_OTP
+        with:
+          EMAIL: test@oopsly.com
+          OTP_CODE: "000000"
+        assertions:
+          - path: $.status
+            type: equals
+            value: 200
+          - path: $.data.access_token
+            type: not-null
+        env-vars:
+          AUTH_TOKEN: $.data.access_token
+      - name: Create Test Deck
+        api: DECK_CREATION
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          DECK_NAME: "Test Deck for Collections"
+          DECK_DESCRIPTION: "Deck created for collection testing"
+        assertions:
+          - path: $.status
+            type: equals
+            value: 201
+          - path: $.data.id
+            type: not-null
+        env-vars:
+          DECK_ID: $.data.id
+    steps:
+      - name: "1. Create a New Collection"
+        api: COLLECTION_CREATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          DECK_ID: ${DECK_ID}
+          COLLECTION_NAME: "Test Collection"
+          COLLECTION_DESCRIPTION: "Collection for testing"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 200
+          - path: $.data.id
+            type: not-null
+          - path: $.data.name
+            type: equals
+            value: "Test Collection"
+        env-vars:
+          COLLECTION_ID: $.data.id
+      
+      - name: "2. Get Collection by ID"
+        api: COLLECTION_GET_BY_ID
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          DECK_ID: ${DECK_ID}
+          COLLECTION_ID: ${COLLECTION_ID}
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 200
+          - path: $.data.id
+            type: equals
+            value: ${COLLECTION_ID}
+          - path: $.data.name
+            type: equals
+            value: "Test Collection"
+      
+      - name: "3. Update Collection"
+        api: COLLECTION_UPDATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          DECK_ID: ${DECK_ID}
+          COLLECTION_ID: ${COLLECTION_ID}
+          COLLECTION_NAME: "Updated Collection"
+          COLLECTION_DESCRIPTION: "Updated description"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 200
+          - path: $.data.name
+            type: equals
+            value: "Updated Collection"
+      
+      - name: "4. Get All Collections with Pagination"
+        api: COLLECTION_GET_ALL_BY_DECK
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          DECK_ID: ${DECK_ID}
+          PAGE_NUM: "0"
+          PAGE_SIZE: "10"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 200
+          - path: $.data
+            type: not-null
+      
+      - name: "5. Delete Collection"
+        api: COLLECTION_DELETE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          DECK_ID: ${DECK_ID}
+          COLLECTION_ID: ${COLLECTION_ID}
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 200
+      
+      - name: "6. Verify Collection is Deleted (Get by ID should fail)"
+        api: COLLECTION_GET_BY_ID
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          DECK_ID: ${DECK_ID}
+          COLLECTION_ID: ${COLLECTION_ID}
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+
+  - flow: Collection Edge Cases
+    description: "Test edge cases for collection operations"
+    before-all:
+      - name: Generate OTP
+        api: GENERATE_OTP
+        with:
+          EMAIL: test@oopsly.com
+        assertions:
+          - path: $.status
+            type: equals
+            value: 200
+      - name: Verify OTP and Obtain Tokens
+        api: VERIFY_OTP
+        with:
+          EMAIL: test@oopsly.com
+          OTP_CODE: "000000"
+        assertions:
+          - path: $.data.access_token
+            type: not-null
+        env-vars:
+          AUTH_TOKEN: $.data.access_token
+      - name: Create Test Deck
+        api: DECK_CREATION
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          DECK_NAME: "Edge Case Deck"
+          DECK_DESCRIPTION: "Deck for edge case testing"
+        assertions:
+          - path: $.data.id
+            type: not-null
+        env-vars:
+          DECK_ID: $.data.id
+    steps:
+      - name: "1. Get Collection with Invalid ID"
+        api: COLLECTION_GET_BY_ID
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          DECK_ID: ${DECK_ID}
+          COLLECTION_ID: "00000000-0000-0000-0000-000000000000"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+      
+      - name: "2. Update Non-existent Collection"
+        api: COLLECTION_UPDATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          DECK_ID: ${DECK_ID}
+          COLLECTION_ID: "00000000-0000-0000-0000-000000000000"
+          COLLECTION_NAME: "Should Fail"
+          COLLECTION_DESCRIPTION: "Should not work"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+      
+      - name: "3. Delete Non-existent Collection"
+        api: COLLECTION_DELETE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          DECK_ID: ${DECK_ID}
+          COLLECTION_ID: "00000000-0000-0000-0000-000000000000"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
