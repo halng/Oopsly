@@ -104,12 +104,14 @@ def setup_docker() -> bool:
     Returns True if successful, False otherwise.
     """
     global COMPOSE_FILE
-    
+
     logger.info("🚀 Starting Docker environment...")
-    
+
     # Use absolute path based on the main.py location
-    COMPOSE_FILE = os.path.join(os.path.dirname(__file__), "../config/docker-compose-integration.yaml")
-    
+    COMPOSE_FILE = os.path.join(
+        os.path.dirname(__file__), "../config/docker-compose-integration.yaml"
+    )
+
     if not os.path.exists(COMPOSE_FILE):
         logger.error(f"❌ Docker Compose file not found: {COMPOSE_FILE}")
         return False
@@ -117,7 +119,9 @@ def setup_docker() -> bool:
     try:
         # 1. Bring up containers (detached)
         # --wait implies waiting for healthy state, but strictly manual checking is often more reliable/debuggable
-        subprocess.run(DOCKER_COMPOSE_CMD + ["-f", COMPOSE_FILE, "up", "-d", "--build"], check=True)
+        subprocess.run(
+            DOCKER_COMPOSE_CMD + ["-f", COMPOSE_FILE, "up", "-d", "--build"], check=True
+        )
 
         # 2. Health Check Loop
         logger.info(f"⏳ Waiting for services: {', '.join(REQUIRED_SERVICES)}...")
@@ -152,11 +156,13 @@ def setup_docker() -> bool:
 def tear_down_docker():
 
     logger.info("🧹 Tearing down Docker environment...")
-    
+
     if COMPOSE_FILE and os.path.exists(COMPOSE_FILE):
         subprocess.run(DOCKER_COMPOSE_CMD + ["-f", COMPOSE_FILE, "down"], check=False)
     else:
-        logger.warning("⚠️ Compose file not found for teardown, attempting default teardown")
+        logger.warning(
+            "⚠️ Compose file not found for teardown, attempting default teardown"
+        )
         subprocess.run(DOCKER_COMPOSE_CMD + ["down"], check=False)
 
 
