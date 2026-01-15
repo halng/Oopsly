@@ -277,9 +277,9 @@ EOF
     echo "CI::.env file contents:"
     cat .env
     
-    # Run bootRun - the doFirst block in build.gradle will load .env and set environment variables
+    # Run bootRun with explicit spring profile argument
     echo "CI::Starting Spring Boot application (logs will be shown below)..."
-    ./gradlew bootRun > /tmp/spring-boot.log 2>&1 &
+    ./gradlew bootRun --args='--spring.profiles.active=test' > /tmp/spring-boot.log 2>&1 &
     BOOT_PID=$!
     echo "CI::Spring Boot started with PID $BOOT_PID"
     
