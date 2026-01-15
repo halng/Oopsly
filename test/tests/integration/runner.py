@@ -396,11 +396,21 @@ def run(env: dict, apis: dict) -> bool:
     flows_dir = os.path.join(os.path.dirname(__file__), "flows")
     test_flows = list_all_flow(flows_dir)
     logger.info(f"🚀 Starting Test Runner: {len(test_flows)} flows found.")
+    
+    # Statistics tracking
+    total_flows = 0
+    passed_flows = 0
+    failed_flows = 0
+    total_steps = 0
+    passed_steps = 0
+    failed_steps = 0
+    failed_step_details = []
+    
     all_passed = True
 
-    for flow in test_flows:
-        logger.info(f"🔹 Running Flow: {flow.name}")
-        config_path = str(flow)
+    for flow_file in test_flows:
+        logger.info(f"🔹 Running Flow: {flow_file.name}")
+        config_path = str(flow_file)
         test_definition = load_test_definition(config_path)
         if not test_definition:
             logger.error("🚫 No test cases found.")
@@ -408,12 +418,16 @@ def run(env: dict, apis: dict) -> bool:
 
         logger.info(f"🧪 Loaded flow from {config_path}")
         flows = test_definition.get("flows", [])
+        
         for integrate_flow in flows:
+            total_flows += 1
             flow_name = integrate_flow.get("flow", "Unnamed Flow")
             flow_description = integrate_flow.get("description", "Unnamed Flow")
             logger.info(
                 f"🔸 Starting Flow: {flow_name}, Description: {flow_description}"
             )
+            
+            flow_passed = True
 
             before_all_hook = integrate_flow.get("before-all")
             if before_all_hook:
@@ -421,9 +435,20 @@ def run(env: dict, apis: dict) -> bool:
                     f"🔸 Executing Before-All Hook for Flow: {flow_name}. Including {len(before_all_hook)} steps"
                 )
                 for hook_case in before_all_hook:
+                    total_steps += 1
                     passed, env = _run(env, apis, hook_case)
-                    if not passed:
+                    if passed:
+                        passed_steps += 1
+                    else:
+                        failed_steps += 1
                         all_passed = False
+                        flow_passed = False
+                        failed_step_details.append({
+                            'flow_file': flow_file.name,
+                            'flow_name': flow_name,
+                            'step_name': hook_case.get('name'),
+                            'step_type': 'before-all'
+                        })
                     logger.info(
                         f"   🔹 Completed Step: {hook_case.get('name')} with status: {'Passed' if passed else 'Failed'}"
                     )
@@ -433,16 +458,58 @@ def run(env: dict, apis: dict) -> bool:
                 f"🔸 Executing Main Steps for Flow: {flow_name}. Including {len(main_steps)} steps"
             )
             for step_case in main_steps:
+                total_steps += 1
                 passed, env = _run(env, apis, step_case)
-                if not passed:
+                if passed:
+                    passed_steps += 1
+                else:
+                    failed_steps += 1
                     all_passed = False
+                    flow_passed = False
+                    failed_step_details.append({
+                        'flow_file': flow_file.name,
+                        'flow_name': flow_name,
+                        'step_name': step_case.get('name'),
+                        'step_type': 'main'
+                    })
                 logger.info(
                     f"   🔹 Completed Step: {step_case.get('name')} with status: {'Passed' if passed else 'Failed'}"
                 )
+            
+            if flow_passed:
+                passed_flows += 1
+            else:
+                failed_flows += 1
 
+    # Print summary statistics
+    logger.info("")
+    logger.info("=" * 80)
+    logger.info("📊 TEST EXECUTION SUMMARY")
+    logger.info("=" * 80)
+    logger.info(f"Total Flow Suites: {total_flows}")
+    logger.info(f"  ✅ Passed: {passed_flows}")
+    logger.info(f"  ❌ Failed: {failed_flows}")
+    logger.info("")
+    logger.info(f"Total Steps: {total_steps}")
+    logger.info(f"  ✅ Passed: {passed_steps}")
+    logger.info(f"  ❌ Failed: {failed_steps}")
+    logger.info("")
+    
+    if failed_step_details:
+        logger.info("❌ FAILED STEPS DETAILS:")
+        logger.info("-" * 80)
+        for idx, failure in enumerate(failed_step_details, 1):
+            logger.info(f"{idx}. Flow File: {failure['flow_file']}")
+            logger.info(f"   Flow Name: {failure['flow_name']}")
+            logger.info(f"   Step Name: {failure['step_name']}")
+            logger.info(f"   Step Type: {failure['step_type']}")
+            logger.info("")
+    
+    logger.info("=" * 80)
+    
     if all_passed:
         logger.info("🎉 All tests passed successfully!")
         return True
     else:
-        logger.error("💥 Some tests failed.")
+        logger.error(f"💥 {failed_steps} out of {total_steps} steps failed across {failed_flows} flow suite(s).")
         return False
