@@ -278,9 +278,14 @@ EOF
     cat .env
     
     # Run bootRun - the doFirst block in build.gradle will load .env and set environment variables
+    echo "CI::Starting Spring Boot application (logs will be shown below)..."
     ./gradlew bootRun > /tmp/spring-boot.log 2>&1 &
     BOOT_PID=$!
     echo "CI::Spring Boot started with PID $BOOT_PID"
+    
+    # Tail logs in background
+    tail -f /tmp/spring-boot.log &
+    TAIL_PID=$!
     
     # Wait for application to be ready
     echo "CI::Waiting for application to start (checking health endpoint)..."
@@ -297,7 +302,6 @@ EOF
         # Check if process is still running
         if ! kill -0 $BOOT_PID 2>/dev/null; then
             echo "CI::ERROR: Spring Boot process died"
-            cat /tmp/spring-boot.log
             break
         fi
         
@@ -305,10 +309,11 @@ EOF
         elapsed=$((elapsed + 2))
     done
     
+    # Stop tailing logs
+    kill $TAIL_PID 2>/dev/null || true
+    
     if [ "$app_ready" = false ]; then
         echo "CI::ERROR: Application failed to start within timeout"
-        echo "CI::Last 50 lines of application log:"
-        tail -50 /tmp/spring-boot.log
         kill $BOOT_PID 2>/dev/null || true
         cd ../test/tests/config
         docker compose -f docker-compose-integration.yaml down
