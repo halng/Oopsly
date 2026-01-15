@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.never;
 
+import com.app.oopsly.api.config.AppConfig;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.SendEmailException;
@@ -62,6 +63,8 @@ class OTPServiceImplTest {
 
     @Mock JwtUtils jwtUtils;
 
+    @Mock AppConfig appConfig;
+
     @InjectMocks OTPServiceImpl otpService;
 
     @Captor ArgumentCaptor<Map<String, Object>> claimsCaptor;
@@ -70,7 +73,9 @@ class OTPServiceImplTest {
     private final String userKey = "user";
 
     @BeforeEach
-    void setUp() {}
+    void setUp() {
+        lenient().when(appConfig.getTestEmail()).thenReturn("test@oopsly.com");
+    }
 
     @Test
     void sendOTP_success_storesOtpAndAttempts_and_sendsEmail() throws Exception {
