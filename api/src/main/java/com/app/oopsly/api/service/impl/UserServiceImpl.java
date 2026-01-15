@@ -16,7 +16,8 @@
 
 package com.app.oopsly.api.service.impl;
 
-import com.app.oopsly.api.entity.*;
+import com.app.oopsly.api.entity.User;
+import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.UnauthenticatedException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.SettingRepository;
@@ -256,10 +257,9 @@ public class UserServiceImpl implements UserService {
 
     public ApiRes refreshTokenFallback(RefreshTokenReq refreshTokenReq, Throwable t) {
         log.error(
-                "Refresh token service unavailable for user {}: {}",
-                StringUtils.masked(refreshTokenReq.userEmail()),
-                t.getMessage());
-        throw new RuntimeException(
+                "Refresh token service unavailable for user {}",
+                StringUtils.masked(refreshTokenReq.userEmail()));
+        throw new RetryLaterException(
                 "Refresh token service is currently unavailable. Please try again later.", t);
     }
 
@@ -280,8 +280,8 @@ public class UserServiceImpl implements UserService {
     }
 
     public ApiRes logoutFallback(Throwable t) {
-        log.error("Logout service unavailable: {}", t.getMessage());
-        throw new RuntimeException(
+        log.error("Logout service unavailable");
+        throw new RetryLaterException(
                 "Logout service is currently unavailable. Please try again later.", t);
     }
 }

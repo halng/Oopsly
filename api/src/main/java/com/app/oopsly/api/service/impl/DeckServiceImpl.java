@@ -19,6 +19,7 @@ package com.app.oopsly.api.service.impl;
 import com.app.oopsly.api.entity.DeckEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
+import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.repository.DeckRepository;
 import com.app.oopsly.api.service.DeckService;
 import com.app.oopsly.api.service.UserService;
@@ -145,35 +146,35 @@ public class DeckServiceImpl implements DeckService {
     // Fallback method for create
     public ApiRes createFallback(DeckReq request, Throwable t) {
         log.error("Deck service unavailable during create");
-        throw new RuntimeException(
+        throw new RetryLaterException(
                 "Deck service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for getAll
     public ApiRes getAllFallback(int page, int size, Throwable t) {
         log.error("Deck service unavailable during getAll: {}", t.getMessage());
-        throw new RuntimeException(
+        throw new RetryLaterException(
                 "Deck service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for getById
     public ApiRes getByIdFallback(UUID id, Throwable t) {
         log.error("Deck service unavailable during getById: {}", t.getMessage());
-        throw new RuntimeException(
+        throw new RetryLaterException(
                 "Deck service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for delete
     public ApiRes deleteFallback(UUID id, Throwable t) {
         log.error("Deck service unavailable during delete: {}", t.getMessage());
-        throw new RuntimeException(
+        throw new RetryLaterException(
                 "Deck service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for update
     public ApiRes updateFallback(DeckReq request, UUID id, Throwable t) {
         log.error("Deck service unavailable during update: {}", t.getMessage());
-        throw new RuntimeException(
+        throw new RetryLaterException(
                 "Deck service is currently unavailable. Please try again later.", t);
     }
 }

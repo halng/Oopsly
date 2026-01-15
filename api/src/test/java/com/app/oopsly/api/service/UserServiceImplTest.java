@@ -19,7 +19,8 @@ package com.app.oopsly.api.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.entity.*;
+import com.app.oopsly.api.entity.User;
+import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.UnauthenticatedException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.SettingRepository;
@@ -595,9 +596,10 @@ class UserServiceImplTest {
         RefreshTokenReq req = new RefreshTokenReq("token", "test@example.com");
         RuntimeException cause = new RuntimeException("Service unavailable");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class, () -> userService.refreshTokenFallback(req, cause));
+                        RetryLaterException.class,
+                        () -> userService.refreshTokenFallback(req, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -608,9 +610,10 @@ class UserServiceImplTest {
     void refreshTokenFallback_withNullThrowable_handlesGracefully() {
         RefreshTokenReq req = new RefreshTokenReq("token", "test@example.com");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class, () -> userService.refreshTokenFallback(req, null));
+                        RetryLaterException.class,
+                        () -> userService.refreshTokenFallback(req, null));
 
         assertNotNull(exception);
         assertNotNull(exception.getMessage());
@@ -661,8 +664,8 @@ class UserServiceImplTest {
     void logoutFallback_throwsRuntimeException() {
         RuntimeException cause = new RuntimeException("Service unavailable");
 
-        RuntimeException exception =
-                assertThrows(RuntimeException.class, () -> userService.logoutFallback(cause));
+        RetryLaterException exception =
+                assertThrows(RetryLaterException.class, () -> userService.logoutFallback(cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -671,8 +674,8 @@ class UserServiceImplTest {
 
     @Test
     void logoutFallback_withNullThrowable_handlesGracefully() {
-        RuntimeException exception =
-                assertThrows(RuntimeException.class, () -> userService.logoutFallback(null));
+        RetryLaterException exception =
+                assertThrows(RetryLaterException.class, () -> userService.logoutFallback(null));
 
         assertNotNull(exception);
         assertNotNull(exception.getMessage());

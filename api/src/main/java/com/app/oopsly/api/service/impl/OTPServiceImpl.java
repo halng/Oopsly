@@ -17,6 +17,7 @@
 package com.app.oopsly.api.service.impl;
 
 import com.app.oopsly.api.entity.User;
+import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.SendEmailException;
 import com.app.oopsly.api.messaging.EmailSender;
 import com.app.oopsly.api.repository.UserRepository;
@@ -199,14 +200,14 @@ public class OTPServiceImpl implements OTPService {
     // Fallback method for sendOTP
     public ApiRes sendOTPFallback(String email, Throwable t) {
         log.error("OTP service unavailable during sendOTP: {}", t.getMessage());
-        throw new RuntimeException(
+        throw new RetryLaterException(
                 "OTP service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for verifyOTP
     public ApiRes verifyOTPFallback(OTPReq otpReq, Throwable t) {
         log.error("OTP service unavailable during verifyOTP");
-        throw new RuntimeException(
+        throw new RetryLaterException(
                 "OTP service is currently unavailable. Please try again later.", t);
     }
 }

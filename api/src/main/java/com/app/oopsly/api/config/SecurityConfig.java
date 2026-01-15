@@ -47,7 +47,12 @@ public class SecurityConfig {
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(
                         req ->
-                                req.requestMatchers("/otp/**", "/health", "**/refresh-token")
+                                req.requestMatchers(
+                                                "/otp/**",
+                                                "/health",
+                                                "**/refresh-token",
+                                                "/swagger-ui/**",
+                                                "/api-docs/**")
                                         .permitAll()
                                         .anyRequest()
                                         .authenticated())

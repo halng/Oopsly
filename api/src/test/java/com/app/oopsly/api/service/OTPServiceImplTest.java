@@ -26,6 +26,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.never;
 
 import com.app.oopsly.api.entity.User;
+import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.SendEmailException;
 import com.app.oopsly.api.messaging.EmailSender;
 import com.app.oopsly.api.repository.UserRepository;
@@ -441,17 +442,17 @@ class OTPServiceImplTest {
         Exception ioException = new java.io.IOException("Email server unreachable");
         RuntimeException networkException = new RuntimeException("Network timeout");
 
-        RuntimeException ex1 =
+        RetryLaterException ex1 =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> otpService.sendOTPFallback(email, sqlException));
-        RuntimeException ex2 =
+        RetryLaterException ex2 =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> otpService.sendOTPFallback(email, ioException));
-        RuntimeException ex3 =
+        RetryLaterException ex3 =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> otpService.sendOTPFallback(email, networkException));
 
         assertSame(sqlException, ex1.getCause());
@@ -465,9 +466,10 @@ class OTPServiceImplTest {
 
         Throwable cause = new Throwable("Circuit breaker triggered");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class, () -> otpService.verifyOTPFallback(otpReq, cause));
+                        RetryLaterException.class,
+                        () -> otpService.verifyOTPFallback(otpReq, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -478,9 +480,10 @@ class OTPServiceImplTest {
     void verifyOTPFallback_withNullCause_handlesGracefully() {
         OTPReq otpReq = mock(OTPReq.class);
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class, () -> otpService.verifyOTPFallback(otpReq, null));
+                        RetryLaterException.class,
+                        () -> otpService.verifyOTPFallback(otpReq, null));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -493,12 +496,13 @@ class OTPServiceImplTest {
 
         Throwable cause = new Throwable("Internal service error");
 
-        RuntimeException sendEx =
+        RetryLaterException sendEx =
                 assertThrows(
-                        RuntimeException.class, () -> otpService.sendOTPFallback(email, cause));
-        RuntimeException verifyEx =
+                        RetryLaterException.class, () -> otpService.sendOTPFallback(email, cause));
+        RetryLaterException verifyEx =
                 assertThrows(
-                        RuntimeException.class, () -> otpService.verifyOTPFallback(otpReq, cause));
+                        RetryLaterException.class,
+                        () -> otpService.verifyOTPFallback(otpReq, cause));
 
         assertTrue(sendEx.getMessage().contains("try again later"));
         assertTrue(verifyEx.getMessage().contains("try again later"));
@@ -510,9 +514,9 @@ class OTPServiceImplTest {
         RuntimeException wrappedException =
                 new RuntimeException("Email service error", originalException);
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> otpService.sendOTPFallback(email, wrappedException));
 
         assertEquals(wrappedException, exception.getCause());
@@ -525,9 +529,9 @@ class OTPServiceImplTest {
         Exception level2 = new java.io.IOException("Network error", level3);
         RuntimeException level1 = new RuntimeException("Service error", level2);
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class, () -> otpService.sendOTPFallback(email, level1));
+                        RetryLaterException.class, () -> otpService.sendOTPFallback(email, level1));
 
         // Verify exception chain is preserved
         assertSame(level1, exception.getCause());
