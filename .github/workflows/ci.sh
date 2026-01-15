@@ -255,10 +255,9 @@ run_integration_tests() {
     echo "CI::Starting Spring Boot application with test profile..."
     cd api
     
-    # Create a minimal .env file if it doesn't exist
-    if [ ! -f ".env" ]; then
-        echo "CI::Creating minimal .env file..."
-        cp .env.example .env 2>/dev/null || cat > .env << 'EOF'
+    # Always create .env file with correct test values
+    echo "CI::Creating .env file with test configuration..."
+    cat > .env << 'EOF'
 GOOGLE_CLIENT_ID=dummy.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=dummy
 DB_HOST=localhost
@@ -271,7 +270,6 @@ JWT_SECRET=dummysecretkey
 REDIS_HOST=localhost
 REDIS_PORT=6379
 EOF
-    fi
     
     # Export environment variables for Spring Boot
     export GOOGLE_CLIENT_ID=dummy.apps.googleusercontent.com
