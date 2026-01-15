@@ -330,9 +330,9 @@ def list_all_flow(directory_path):
 
 
 def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
-    step_name = case.get('name', 'Unnamed Step')
+    step_name = case.get("name", "Unnamed Step")
     logger.info(f"   🔹 {step_name}")
-    
+
     if not case:
         logger.error(f"      ❌ Step configuration is empty")
         return False, env
@@ -351,30 +351,30 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
     step_vars = case.get("with", {})
 
     req_data = build_api_request(api_info, step_vars)
-    
+
     # Log request details (compact format)
-    method = req_data.get('method', 'GET')
-    url = req_data.get('url', '')
+    method = req_data.get("method", "GET")
+    url = req_data.get("url", "")
     logger.info(f"      ▶ {method} {url}")
-    
+
     # Log request body if present (truncated)
-    if 'json' in req_data and req_data['json']:
-        body_str = str(req_data['json'])
+    if "json" in req_data and req_data["json"]:
+        body_str = str(req_data["json"])
         if len(body_str) > 100:
-            body_str = body_str[:100] + '...'
+            body_str = body_str[:100] + "..."
         logger.info(f"        Body: {body_str}")
-    
+
     response = send_api_request(req_data)
 
     if response is not None:
         # Log response status (compact format)
         status_icon = "✓" if 200 <= response.status_code < 300 else "✗"
         logger.info(f"      ◀ {status_icon} Status {response.status_code}")
-        
+
         # Log response body (truncated)
         response_text = response.text
         if len(response_text) > 200:
-            response_text = response_text[:200] + '...'
+            response_text = response_text[:200] + "..."
         logger.debug(f"        Response: {response_text}")
     else:
         logger.error(f"      ◀ ✗ No response received")
@@ -389,7 +389,7 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
             if key in CONTEXT:
                 env[key] = CONTEXT[key]
                 captured_vars.append(key)
-        
+
         if captured_vars:
             logger.info(f"      💾 Captured: {', '.join(captured_vars)}")
 
@@ -414,7 +414,7 @@ def run(env: dict, apis: dict) -> bool:
     flows_dir = os.path.join(os.path.dirname(__file__), "flows")
     test_flows = list_all_flow(flows_dir)
     logger.info(f"🚀 Starting Test Runner: {len(test_flows)} flow files found\n")
-    
+
     # Statistics tracking
     total_flows = 0
     passed_flows = 0
@@ -423,14 +423,14 @@ def run(env: dict, apis: dict) -> bool:
     passed_steps = 0
     failed_steps = 0
     failed_step_details = []
-    
+
     all_passed = True
 
     for flow_file in test_flows:
         logger.info(f"{'='*80}")
         logger.info(f"📁 Flow File: {flow_file.name}")
         logger.info(f"{'='*80}")
-        
+
         config_path = str(flow_file)
         test_definition = load_test_definition(config_path)
         if not test_definition:
@@ -438,16 +438,16 @@ def run(env: dict, apis: dict) -> bool:
             continue
 
         flows = test_definition.get("flows", [])
-        
+
         for integrate_flow in flows:
             total_flows += 1
             flow_name = integrate_flow.get("flow", "Unnamed Flow")
             flow_description = integrate_flow.get("description", "")
-            
+
             logger.info(f"🔸 Flow: {flow_name}")
             if flow_description:
                 logger.info(f"   {flow_description}")
-            
+
             flow_passed = True
 
             before_all_hook = integrate_flow.get("before-all")
@@ -456,22 +456,24 @@ def run(env: dict, apis: dict) -> bool:
                 for hook_case in before_all_hook:
                     total_steps += 1
                     passed, env = _run(env, apis, hook_case)
-                    
+
                     status = "✅ Passed" if passed else "❌ Failed"
                     logger.info(f"      → {status}\n")
-                    
+
                     if passed:
                         passed_steps += 1
                     else:
                         failed_steps += 1
                         all_passed = False
                         flow_passed = False
-                        failed_step_details.append({
-                            'flow_file': flow_file.name,
-                            'flow_name': flow_name,
-                            'step_name': hook_case.get('name'),
-                            'step_type': 'setup'
-                        })
+                        failed_step_details.append(
+                            {
+                                "flow_file": flow_file.name,
+                                "flow_name": flow_name,
+                                "step_name": hook_case.get("name"),
+                                "step_type": "setup",
+                            }
+                        )
 
             main_steps = integrate_flow.get("steps", [])
             if main_steps:
@@ -479,23 +481,25 @@ def run(env: dict, apis: dict) -> bool:
                 for step_case in main_steps:
                     total_steps += 1
                     passed, env = _run(env, apis, step_case)
-                    
+
                     status = "✅ Passed" if passed else "❌ Failed"
                     logger.info(f"      → {status}\n")
-                    
+
                     if passed:
                         passed_steps += 1
                     else:
                         failed_steps += 1
                         all_passed = False
                         flow_passed = False
-                        failed_step_details.append({
-                            'flow_file': flow_file.name,
-                            'flow_name': flow_name,
-                            'step_name': step_case.get('name'),
-                            'step_type': 'test'
-                        })
-            
+                        failed_step_details.append(
+                            {
+                                "flow_file": flow_file.name,
+                                "flow_name": flow_name,
+                                "step_name": step_case.get("name"),
+                                "step_type": "test",
+                            }
+                        )
+
             if flow_passed:
                 passed_flows += 1
                 logger.info(f"   ✅ Flow Passed: {flow_name}\n")
@@ -504,33 +508,35 @@ def run(env: dict, apis: dict) -> bool:
                 logger.info(f"   ❌ Flow Failed: {flow_name}\n")
 
     # Print summary statistics
-    logger.info("\n" + "="*80)
+    logger.info("\n" + "=" * 80)
     logger.info("📊 TEST EXECUTION SUMMARY")
-    logger.info("="*80)
+    logger.info("=" * 80)
     logger.info(f"\n📦 Flow Suites: {total_flows} total")
     logger.info(f"   ✅ Passed: {passed_flows}")
     logger.info(f"   ❌ Failed: {failed_flows}")
-    
+
     logger.info(f"\n🔧 Test Steps: {total_steps} total")
     logger.info(f"   ✅ Passed: {passed_steps}")
     logger.info(f"   ❌ Failed: {failed_steps}")
-    
+
     if failed_step_details:
         logger.info(f"\n{'='*80}")
         logger.info(f"❌ FAILED STEPS ({len(failed_step_details)} failures)")
-        logger.info("="*80)
+        logger.info("=" * 80)
         for idx, failure in enumerate(failed_step_details, 1):
             logger.info(f"\n{idx}. 📁 {failure['flow_file']} → {failure['flow_name']}")
             logger.info(f"   🔹 Step: {failure['step_name']}")
             logger.info(f"   📍 Type: {failure['step_type']}")
-    
-    logger.info("\n" + "="*80)
-    
+
+    logger.info("\n" + "=" * 80)
+
     if all_passed:
         logger.info("🎉 ALL TESTS PASSED!")
-        logger.info("="*80 + "\n")
+        logger.info("=" * 80 + "\n")
         return True
     else:
-        logger.error(f"💥 TEST FAILURES: {failed_steps}/{total_steps} steps failed in {failed_flows}/{total_flows} flow(s)")
-        logger.info("="*80 + "\n")
+        logger.error(
+            f"💥 TEST FAILURES: {failed_steps}/{total_steps} steps failed in {failed_flows}/{total_flows} flow(s)"
+        )
+        logger.info("=" * 80 + "\n")
         return False
