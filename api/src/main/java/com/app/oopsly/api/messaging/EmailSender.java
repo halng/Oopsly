@@ -22,6 +22,7 @@ import jakarta.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -29,7 +30,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 
 @Component
-public class EmailSender {
+@Profile("!test")
+public class EmailSender implements EmailSenderInterface {
     private final JavaMailSender mailSender;
 
     @Value("classpath:template/email-otp.html")
@@ -42,6 +44,7 @@ public class EmailSender {
         this.mailSender = mailSender;
     }
 
+    @Override
     public void sendEmail(String to, String otp) throws IOException, MessagingException {
         // TODO: make this function generic for other email types
         String htmlContent =

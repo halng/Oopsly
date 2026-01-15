@@ -1,6 +1,11 @@
 app:
   test-email: test@oopsly.com
 
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+
 management:
   health:
     mail:
