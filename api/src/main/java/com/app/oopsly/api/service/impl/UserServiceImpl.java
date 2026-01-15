@@ -16,7 +16,10 @@
 
 package com.app.oopsly.api.service.impl;
 
+import com.app.oopsly.api.entity.Language;
+import com.app.oopsly.api.entity.SettingEntity;
 import com.app.oopsly.api.entity.User;
+import com.app.oopsly.api.entity.Theme;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.UnauthenticatedException;
 import com.app.oopsly.api.exception.ValidationException;
