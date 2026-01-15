@@ -61,7 +61,7 @@ public class DeckServiceImpl implements DeckService {
     @Override
     @Caching(
             evict = {
-                @CacheEvict(value = "decks", key = "#id"),
+                @CacheEvict(value = "decks", key = "#root.target.getCurrentUserId() + ':' + #id"),
                 @CacheEvict(value = "decks", key = "#root.target.getCurrentUserId() + ':all'")
             })
     @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "updateFallback")
@@ -81,7 +81,7 @@ public class DeckServiceImpl implements DeckService {
     @Override
     @Caching(
             evict = {
-                @CacheEvict(value = "decks", key = "#id"),
+                @CacheEvict(value = "decks", key = "#root.target.getCurrentUserId() + ':' + #id"),
                 @CacheEvict(value = "decks", key = "#root.target.getCurrentUserId() + ':all'")
             })
     @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "deleteFallback")
@@ -99,7 +99,7 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
-    @Cacheable(value = "decks", key = "#id")
+    @Cacheable(value = "decks", key = "#root.target.getCurrentUserId() + ':' + #id")
     @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID id) {
         log.info("Fetching deck {} for user {}", id, this.currentUser().getId());

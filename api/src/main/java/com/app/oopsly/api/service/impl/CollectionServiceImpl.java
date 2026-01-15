@@ -56,7 +56,7 @@ public class CollectionServiceImpl implements CollectionService {
     private final UserService userService;
 
     @Override
-    @CacheEvict(value = "collections", key = "#deckId + ':all'")
+    @CacheEvict(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':all'")
     @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID deckId, CollectionReq request) {
         log.info("Creating collection for deck: {}", deckId);
@@ -78,8 +78,8 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     @Caching(
             evict = {
-                @CacheEvict(value = "collections", key = "#deckId + ':' + #collectionId"),
-                @CacheEvict(value = "collections", key = "#deckId + ':all'")
+                @CacheEvict(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId"),
+                @CacheEvict(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':all'")
             })
     @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(UUID deckId, UUID collectionId, CollectionReq request) {
@@ -110,8 +110,8 @@ public class CollectionServiceImpl implements CollectionService {
     @Transactional
     @Caching(
             evict = {
-                @CacheEvict(value = "collections", key = "#deckId + ':' + #collectionId"),
-                @CacheEvict(value = "collections", key = "#deckId + ':all'")
+                @CacheEvict(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId"),
+                @CacheEvict(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':all'")
             })
     @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID deckId, UUID collectionId) {
@@ -136,7 +136,7 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
-    @Cacheable(value = "collections", key = "#deckId + ':' + #collectionId")
+    @Cacheable(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':' + #collectionId")
     @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID deckId, UUID collectionId) {
         log.info("Getting collection: {} from deck: {}", collectionId, deckId);
@@ -154,7 +154,7 @@ public class CollectionServiceImpl implements CollectionService {
     }
 
     @Override
-    @Cacheable(value = "collections", key = "#deckId + ':all'")
+    @Cacheable(value = "collections", key = "#root.target.getCurrentUserId() + ':' + #deckId + ':all'")
     @CircuitBreaker(
             name = "collectionServiceCircuitBreaker",
             fallbackMethod = "getAllByDeckFallback")
@@ -201,6 +201,10 @@ public class CollectionServiceImpl implements CollectionService {
         return deckRepository
                 .findByIdAndUser(deckId, currentUser)
                 .orElseThrow(() -> new NotFoundException("Deck not found with id: " + deckId));
+    }
+
+    public UUID getCurrentUserId() {
+        return userService.getCurrentUser().getId();
     }
 
     // Fallback methods for Circuit Breaker
