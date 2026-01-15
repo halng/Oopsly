@@ -18,6 +18,7 @@ import subprocess
 import time
 import sys
 import json
+import os
 from typing import List, Dict, Any
 
 import yaml
@@ -142,9 +143,11 @@ def load_file(file_path: str) -> Any:
 
 def get_api_definitions() -> (Dict[str, str], Dict[str, any]):
     """
-    Load API definitions from a JSON file.
+    Load API definitions from a YAML file.
     """
-    api_data = load_file('./../config/api.yaml')
+    # Use absolute path based on the main.py location
+    config_path = os.path.join(os.path.dirname(__file__), '../config/api.yaml')
+    api_data = load_file(config_path)
     if not api_data:
         logger.error("❌ API definitions could not be loaded.")
         exit(1)
