@@ -31,7 +31,7 @@ from tests.integration import runner
 # --- CONFIGURATION ---
 DOCKER_COMPOSE_CMD = ["docker", "compose"]  # or ["docker-compose"] depending on version
 REQUIRED_SERVICES = ["postgres", "redis", "oopsly-server"]  # Services we must wait for
-MAX_RETRIES = 30  # Wait up to 30 seconds
+MAX_RETRIES = 120  # Wait up to 120 seconds (2 minutes) for services to be healthy
 SLEEP_INTERVAL = 1  # Check every 1 second
 COMPOSE_FILE = None  # Will be set in setup_docker()
 
