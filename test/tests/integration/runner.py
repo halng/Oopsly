@@ -246,8 +246,7 @@ def validate_api_response(
     try:
         actual_json = response.json() if response.content else None
     except json.JSONDecodeError:
-        logger.error("❌ Response is not valid JSON")
-        logger.error(f"Response body: {response.text}")
+        logger.error("      ❌ Invalid JSON response")
         return False
 
     # 2. Validate Assertions
@@ -262,11 +261,11 @@ def validate_api_response(
                 actual_value = get_value_from_jsonpath(actual_json, json_path)
                 if actual_value != expected_value:
                     logger.error(
-                        f"❌ Assertion Failed: {json_path} expected {expected_value}, got {actual_value}"
+                        f"      ❌ Assertion failed: {json_path} = {actual_value}, expected {expected_value}"
                     )
                     return False
             else:
-                logger.error(f"❌ Assertion 'equals' requires 'path' field")
+                logger.error(f"      ❌ Assertion 'equals' requires 'path' field")
                 return False
 
         elif assertion_type == "contains":
@@ -274,14 +273,14 @@ def validate_api_response(
                 actual_value = get_value_from_jsonpath(actual_json, json_path)
                 if expected_value not in str(actual_value):
                     logger.error(
-                        f"❌ Assertion Failed: {json_path} does not contain '{expected_value}'"
+                        f"      ❌ Assertion failed: {json_path} does not contain '{expected_value}'"
                     )
                     return False
             else:
                 # Check if value is in the entire response
                 if expected_value not in response.text:
                     logger.error(
-                        f"❌ Assertion Failed: Response does not contain '{expected_value}'"
+                        f"      ❌ Assertion failed: Response does not contain '{expected_value}'"
                     )
                     return False
 
@@ -289,13 +288,13 @@ def validate_api_response(
             if json_path:
                 actual_value = get_value_from_jsonpath(actual_json, json_path)
                 if actual_value is None:
-                    logger.error(f"❌ Assertion Failed: {json_path} is null")
+                    logger.error(f"      ❌ Assertion failed: {json_path} is null")
                     return False
 
         elif assertion_type == "status-code":
             if response.status_code != expected_value:
                 logger.error(
-                    f"❌ Status Code Mismatch! Expected {expected_value}, Got {response.status_code}"
+                    f"      ❌ Status code mismatch: got {response.status_code}, expected {expected_value}"
                 )
                 return False
 
@@ -312,7 +311,6 @@ def validate_api_response(
 
         if val is not None:
             CONTEXT[context_key] = val
-            logger.info(f"💾 Captured variable: {context_key} = {val}")
 
     # Old capture format support
     captures = step_config.get("capture", {})
@@ -320,9 +318,7 @@ def validate_api_response(
         val = actual_json.get(json_key) if actual_json else None
         if val:
             CONTEXT[context_key] = val
-            logger.info(f"💾 Captured variable: {context_key} = {val}")
 
-    logger.info(f"✅ Test Passed: {step_config.get('name')}")
     return True
 
 
@@ -334,46 +330,68 @@ def list_all_flow(directory_path):
 
 
 def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
-    logger.info(f"   🔹 Step: {case.get('name')}")
+    step_name = case.get('name', 'Unnamed Step')
+    logger.info(f"   🔹 {step_name}")
+    
     if not case:
-        logger.error(f"❌ Step configuration is empty")
+        logger.error(f"      ❌ Step configuration is empty")
         return False, env
 
     api_name = case.get("api")
     if not api_name:
-        logger.error(f"❌ API name not specified for step '{case.get('name')}'")
+        logger.error(f"      ❌ API name not specified")
         return False, env
 
     api_info = apis.get(api_name)
     if not api_info:
-        logger.error(f"❌ API '{api_name}' not found for step '{case.get('name')}'")
+        logger.error(f"      ❌ API '{api_name}' not found")
         return False, env
 
     # Get step-specific variables from 'with' key
     step_vars = case.get("with", {})
 
     req_data = build_api_request(api_info, step_vars)
+    
+    # Log request details (compact format)
+    method = req_data.get('method', 'GET')
+    url = req_data.get('url', '')
+    logger.info(f"      ▶ {method} {url}")
+    
+    # Log request body if present (truncated)
+    if 'json' in req_data and req_data['json']:
+        body_str = str(req_data['json'])
+        if len(body_str) > 100:
+            body_str = body_str[:100] + '...'
+        logger.info(f"        Body: {body_str}")
+    
     response = send_api_request(req_data)
 
-    # log two objects
-    logger.info(f"     ▶ Request Data: {req_data}")
     if response is not None:
-        logger.info(
-            f"     ◀ Response Status: {response.status_code}, Body: {response.text}"
-        )
+        # Log response status (compact format)
+        status_icon = "✓" if 200 <= response.status_code < 300 else "✗"
+        logger.info(f"      ◀ {status_icon} Status {response.status_code}")
+        
+        # Log response body (truncated)
+        response_text = response.text
+        if len(response_text) > 200:
+            response_text = response_text[:200] + '...'
+        logger.debug(f"        Response: {response_text}")
     else:
-        logger.error(f"     ◀ No response received.")
-
-    if response is None:
+        logger.error(f"      ◀ ✗ No response received")
         return False, env
 
     isPassed = validate_api_response(response, case, is_recording_response=False)
 
     if isPassed:
         # Update env with any captured variables from CONTEXT
+        captured_vars = []
         for key, value in case.get("env-vars", {}).items():
             if key in CONTEXT:
                 env[key] = CONTEXT[key]
+                captured_vars.append(key)
+        
+        if captured_vars:
+            logger.info(f"      💾 Captured: {', '.join(captured_vars)}")
 
     return isPassed, env
 
@@ -395,7 +413,7 @@ def run(env: dict, apis: dict) -> bool:
     # Get flows directory path relative to this file
     flows_dir = os.path.join(os.path.dirname(__file__), "flows")
     test_flows = list_all_flow(flows_dir)
-    logger.info(f"🚀 Starting Test Runner: {len(test_flows)} flows found.")
+    logger.info(f"🚀 Starting Test Runner: {len(test_flows)} flow files found\n")
     
     # Statistics tracking
     total_flows = 0
@@ -409,34 +427,39 @@ def run(env: dict, apis: dict) -> bool:
     all_passed = True
 
     for flow_file in test_flows:
-        logger.info(f"🔹 Running Flow: {flow_file.name}")
+        logger.info(f"{'='*80}")
+        logger.info(f"📁 Flow File: {flow_file.name}")
+        logger.info(f"{'='*80}")
+        
         config_path = str(flow_file)
         test_definition = load_test_definition(config_path)
         if not test_definition:
-            logger.error("🚫 No test cases found.")
+            logger.error("🚫 No test cases found.\n")
             continue
 
-        logger.info(f"🧪 Loaded flow from {config_path}")
         flows = test_definition.get("flows", [])
         
         for integrate_flow in flows:
             total_flows += 1
             flow_name = integrate_flow.get("flow", "Unnamed Flow")
-            flow_description = integrate_flow.get("description", "Unnamed Flow")
-            logger.info(
-                f"🔸 Starting Flow: {flow_name}, Description: {flow_description}"
-            )
+            flow_description = integrate_flow.get("description", "")
+            
+            logger.info(f"\n🔸 Flow: {flow_name}")
+            if flow_description:
+                logger.info(f"   {flow_description}")
             
             flow_passed = True
 
             before_all_hook = integrate_flow.get("before-all")
             if before_all_hook:
-                logger.info(
-                    f"🔸 Executing Before-All Hook for Flow: {flow_name}. Including {len(before_all_hook)} steps"
-                )
+                logger.info(f"\n   📋 Setup ({len(before_all_hook)} steps)")
                 for hook_case in before_all_hook:
                     total_steps += 1
                     passed, env = _run(env, apis, hook_case)
+                    
+                    status = "✅ Passed" if passed else "❌ Failed"
+                    logger.info(f"      → {status}\n")
+                    
                     if passed:
                         passed_steps += 1
                     else:
@@ -447,69 +470,67 @@ def run(env: dict, apis: dict) -> bool:
                             'flow_file': flow_file.name,
                             'flow_name': flow_name,
                             'step_name': hook_case.get('name'),
-                            'step_type': 'before-all'
+                            'step_type': 'setup'
                         })
-                    logger.info(
-                        f"   🔹 Completed Step: {hook_case.get('name')} with status: {'Passed' if passed else 'Failed'}"
-                    )
 
             main_steps = integrate_flow.get("steps", [])
-            logger.info(
-                f"🔸 Executing Main Steps for Flow: {flow_name}. Including {len(main_steps)} steps"
-            )
-            for step_case in main_steps:
-                total_steps += 1
-                passed, env = _run(env, apis, step_case)
-                if passed:
-                    passed_steps += 1
-                else:
-                    failed_steps += 1
-                    all_passed = False
-                    flow_passed = False
-                    failed_step_details.append({
-                        'flow_file': flow_file.name,
-                        'flow_name': flow_name,
-                        'step_name': step_case.get('name'),
-                        'step_type': 'main'
-                    })
-                logger.info(
-                    f"   🔹 Completed Step: {step_case.get('name')} with status: {'Passed' if passed else 'Failed'}"
-                )
+            if main_steps:
+                logger.info(f"   📋 Test Steps ({len(main_steps)} steps)")
+                for step_case in main_steps:
+                    total_steps += 1
+                    passed, env = _run(env, apis, step_case)
+                    
+                    status = "✅ Passed" if passed else "❌ Failed"
+                    logger.info(f"      → {status}\n")
+                    
+                    if passed:
+                        passed_steps += 1
+                    else:
+                        failed_steps += 1
+                        all_passed = False
+                        flow_passed = False
+                        failed_step_details.append({
+                            'flow_file': flow_file.name,
+                            'flow_name': flow_name,
+                            'step_name': step_case.get('name'),
+                            'step_type': 'test'
+                        })
             
             if flow_passed:
                 passed_flows += 1
+                logger.info(f"   ✅ Flow Passed: {flow_name}\n")
             else:
                 failed_flows += 1
+                logger.info(f"   ❌ Flow Failed: {flow_name}\n")
 
     # Print summary statistics
-    logger.info("")
-    logger.info("=" * 80)
+    logger.info("\n" + "="*80)
     logger.info("📊 TEST EXECUTION SUMMARY")
-    logger.info("=" * 80)
-    logger.info(f"Total Flow Suites: {total_flows}")
-    logger.info(f"  ✅ Passed: {passed_flows}")
-    logger.info(f"  ❌ Failed: {failed_flows}")
-    logger.info("")
-    logger.info(f"Total Steps: {total_steps}")
-    logger.info(f"  ✅ Passed: {passed_steps}")
-    logger.info(f"  ❌ Failed: {failed_steps}")
-    logger.info("")
+    logger.info("="*80)
+    logger.info(f"\n📦 Flow Suites: {total_flows} total")
+    logger.info(f"   ✅ Passed: {passed_flows}")
+    logger.info(f"   ❌ Failed: {failed_flows}")
+    
+    logger.info(f"\n🔧 Test Steps: {total_steps} total")
+    logger.info(f"   ✅ Passed: {passed_steps}")
+    logger.info(f"   ❌ Failed: {failed_steps}")
     
     if failed_step_details:
-        logger.info("❌ FAILED STEPS DETAILS:")
-        logger.info("-" * 80)
+        logger.info(f"\n{'='*80}")
+        logger.info(f"❌ FAILED STEPS ({len(failed_step_details)} failures)")
+        logger.info("="*80)
         for idx, failure in enumerate(failed_step_details, 1):
-            logger.info(f"{idx}. Flow File: {failure['flow_file']}")
-            logger.info(f"   Flow Name: {failure['flow_name']}")
-            logger.info(f"   Step Name: {failure['step_name']}")
-            logger.info(f"   Step Type: {failure['step_type']}")
-            logger.info("")
+            logger.info(f"\n{idx}. 📁 {failure['flow_file']} → {failure['flow_name']}")
+            logger.info(f"   🔹 Step: {failure['step_name']}")
+            logger.info(f"   📍 Type: {failure['step_type']}")
     
-    logger.info("=" * 80)
+    logger.info("\n" + "="*80)
     
     if all_passed:
-        logger.info("🎉 All tests passed successfully!")
+        logger.info("🎉 ALL TESTS PASSED!")
+        logger.info("="*80 + "\n")
         return True
     else:
-        logger.error(f"💥 {failed_steps} out of {total_steps} steps failed across {failed_flows} flow suite(s).")
+        logger.error(f"💥 TEST FAILURES: {failed_steps}/{total_steps} steps failed in {failed_flows}/{total_flows} flow(s)")
+        logger.info("="*80 + "\n")
         return False
