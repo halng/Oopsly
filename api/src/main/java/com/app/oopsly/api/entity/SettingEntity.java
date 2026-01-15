@@ -16,32 +16,35 @@
 
 package com.app.oopsly.api.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import java.util.List;
+import java.util.Map;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Getter
 @Setter
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "decks")
-@Entity
-public class DeckEntity extends Audit {
+@AllArgsConstructor
+@Table(name = "settings")
+@Entity(name = "settings")
+public class SettingEntity extends Audit {
 
-    private String name;
-    private String description;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Theme theme;
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Language language;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "space_config", columnDefinition = "jsonb", nullable = false)
+    private Map<String, Integer> spaceConfig;
+
+    @OneToOne
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
     private User user;
-
-    @OneToMany(mappedBy = "deck", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TestSuiteEntity> testSuites;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "deck", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<CollectionEntity> collections;
 }

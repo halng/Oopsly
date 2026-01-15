@@ -26,22 +26,28 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "decks")
+@Table(name = "test_suites")
 @Entity
-public class DeckEntity extends Audit {
+public class TestSuiteEntity extends Audit {
 
-    private String name;
-    private String description;
+    private String title;
+
+    private Boolean isActive;
+
+    private Integer highestScore;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "deck_id", nullable = false)
+    private DeckEntity deck;
 
-    @OneToMany(mappedBy = "deck", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TestSuiteEntity> testSuites;
+    @OneToMany(mappedBy = "testSuite", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<QuestionEntity> questions;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "deck", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToMany
+    @JoinTable(
+            name = "test_suite_collections",
+            joinColumns = @JoinColumn(name = "test_suite_id"),
+            inverseJoinColumns = @JoinColumn(name = "collection_id"))
     private List<CollectionEntity> collections;
 }

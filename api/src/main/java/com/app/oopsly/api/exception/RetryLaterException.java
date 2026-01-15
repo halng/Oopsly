@@ -14,26 +14,14 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.service;
+package com.app.oopsly.api.exception;
 
-import com.app.oopsly.api.entity.User;
-import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.RefreshTokenReq;
-import com.app.oopsly.api.viewmodel.UpdateProfileReq;
-import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
+public class RetryLaterException extends RuntimeException {
+    public RetryLaterException(String message) {
+        super(message);
+    }
 
-public interface UserService {
-    String getCurrentUserId();
-
-    User getCurrentUser();
-
-    ApiRes getProfile();
-
-    ApiRes updateProfile(UpdateProfileReq request);
-
-    ApiRes updateSettings(UpdateSettingsReq request);
-
-    ApiRes refreshToken(RefreshTokenReq refreshTokenReq);
-
-    ApiRes logout();
+    public RetryLaterException(String message, Throwable t) {
+        super(message, t);
+    }
 }

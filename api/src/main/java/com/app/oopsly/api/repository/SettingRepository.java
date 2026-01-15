@@ -14,26 +14,15 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.service;
+package com.app.oopsly.api.repository;
 
-import com.app.oopsly.api.entity.User;
-import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.RefreshTokenReq;
-import com.app.oopsly.api.viewmodel.UpdateProfileReq;
-import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
+import com.app.oopsly.api.entity.SettingEntity;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface UserService {
-    String getCurrentUserId();
-
-    User getCurrentUser();
-
-    ApiRes getProfile();
-
-    ApiRes updateProfile(UpdateProfileReq request);
-
-    ApiRes updateSettings(UpdateSettingsReq request);
-
-    ApiRes refreshToken(RefreshTokenReq refreshTokenReq);
-
-    ApiRes logout();
+@Repository
+public interface SettingRepository extends JpaRepository<SettingEntity, UUID> {
+    Optional<SettingEntity> findByUserId(UUID userId);
 }

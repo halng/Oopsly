@@ -24,6 +24,7 @@ import static org.mockito.Mockito.*;
 import com.app.oopsly.api.entity.DeckEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
+import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.repository.DeckRepository;
 import com.app.oopsly.api.service.impl.DeckServiceImpl;
 import com.app.oopsly.api.viewmodel.ApiRes;
@@ -253,9 +254,10 @@ class DeckServiceImplTest {
         DeckReq request = new DeckReq("Test Deck", "Test Description");
         RuntimeException cause = new RuntimeException("Service unavailable");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class, () -> deckService.createFallback(request, cause));
+                        RetryLaterException.class,
+                        () -> deckService.createFallback(request, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -267,9 +269,9 @@ class DeckServiceImplTest {
         DeckReq request = new DeckReq("Updated Deck", "Updated Description");
         RuntimeException cause = new RuntimeException("Database connection failed");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> deckService.updateFallback(request, deckId, cause));
 
         assertNotNull(exception);
@@ -281,9 +283,9 @@ class DeckServiceImplTest {
     void deleteFallback_throwsRuntimeException() {
         Throwable cause = new Throwable("Circuit breaker open");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class, () -> deckService.deleteFallback(deckId, cause));
+                        RetryLaterException.class, () -> deckService.deleteFallback(deckId, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -294,9 +296,10 @@ class DeckServiceImplTest {
     void getByIdFallback_throwsRuntimeException() {
         Throwable cause = new Throwable("Service degraded");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class, () -> deckService.getByIdFallback(deckId, cause));
+                        RetryLaterException.class,
+                        () -> deckService.getByIdFallback(deckId, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -307,9 +310,9 @@ class DeckServiceImplTest {
     void getAllFallback_throwsRuntimeException() {
         RuntimeException cause = new RuntimeException("Network timeout");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class, () -> deckService.getAllFallback(0, 10, cause));
+                        RetryLaterException.class, () -> deckService.getAllFallback(0, 10, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -318,9 +321,9 @@ class DeckServiceImplTest {
 
     @Test
     void fallbackMethods_withNullCause_handleGracefully() {
-        RuntimeException createEx =
+        RetryLaterException createEx =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> deckService.createFallback(new DeckReq("Test", "Desc"), null));
 
         assertNotNull(createEx);
@@ -332,19 +335,19 @@ class DeckServiceImplTest {
     void fallbackMethods_provideUserFriendlyMessages() {
         Throwable cause = new Throwable("Internal error");
 
-        RuntimeException createEx =
+        RetryLaterException createEx =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> deckService.createFallback(new DeckReq("Test", "Desc"), cause));
-        RuntimeException updateEx =
+        RetryLaterException updateEx =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () ->
                                 deckService.updateFallback(
                                         new DeckReq("Test", "Desc"), deckId, cause));
-        RuntimeException deleteEx =
+        RetryLaterException deleteEx =
                 assertThrows(
-                        RuntimeException.class, () -> deckService.deleteFallback(deckId, cause));
+                        RetryLaterException.class, () -> deckService.deleteFallback(deckId, cause));
 
         assertTrue(createEx.getMessage().contains("try again later"));
         assertTrue(updateEx.getMessage().contains("try again later"));
@@ -357,9 +360,9 @@ class DeckServiceImplTest {
         RuntimeException wrappedException =
                 new RuntimeException("Database error", originalException);
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () ->
                                 deckService.createFallback(
                                         new DeckReq("Test", "Desc"), wrappedException));

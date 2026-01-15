@@ -14,26 +14,8 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.service;
+package com.app.oopsly.api.viewmodel;
 
-import com.app.oopsly.api.entity.User;
-import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.RefreshTokenReq;
-import com.app.oopsly.api.viewmodel.UpdateProfileReq;
-import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
+import java.util.UUID;
 
-public interface UserService {
-    String getCurrentUserId();
-
-    User getCurrentUser();
-
-    ApiRes getProfile();
-
-    ApiRes updateProfile(UpdateProfileReq request);
-
-    ApiRes updateSettings(UpdateSettingsReq request);
-
-    ApiRes refreshToken(RefreshTokenReq refreshTokenReq);
-
-    ApiRes logout();
-}
+public record TestSuiteRes(UUID id, String title, Boolean isActive) {}

@@ -22,6 +22,7 @@ import com.app.oopsly.api.entity.DeckEntity;
 import com.app.oopsly.api.entity.DifficultyLevel;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
+import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.CollectionRepository;
 import com.app.oopsly.api.repository.DeckRepository;
@@ -254,46 +255,78 @@ public class CardServiceImpl implements CardService {
 
     // Fallback method for create
     public ApiRes createFallback(UUID deckId, UUID collectionId, CardReq request, Throwable t) {
-        log.error("Card service unavailable during create: {}", t.getMessage());
-        throw new RuntimeException(
+        log.error(
+                "Card service unavailable during create: {}, deckId={}, collectionId={}",
+                t.getMessage(),
+                deckId,
+                collectionId);
+        throw new RetryLaterException(
                 "Card service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for updateDifficulty
     public ApiRes updateDifficultyFallback(
             UUID deckId, UUID collectionId, List<UpdateDifficultyReq> reqList, Throwable t) {
-        log.error("Card service unavailable during updateDifficulty: {}", t.getMessage());
-        throw new RuntimeException(
+        log.error(
+                "Card service unavailable during updateDifficulty: {}, deckId={}, collectionId={}",
+                t.getMessage(),
+                deckId,
+                collectionId);
+        throw new RetryLaterException(
                 "Card service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for updateCard
     public ApiRes updateCardFallback(
             UUID deckId, UUID collectionId, UUID cardId, CardItemReq item, Throwable t) {
-        log.error("Card service unavailable during updateCard: {}", t.getMessage());
-        throw new RuntimeException(
+        log.error(
+                "Card service unavailable during updateCard: {}, deckId={}, collectionId={},"
+                        + " cardId={}",
+                t.getMessage(),
+                deckId,
+                collectionId,
+                cardId);
+        throw new RetryLaterException(
                 "Card service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for getAllCardsByCollection
     public ApiRes getAllCardsByCollectionFallback(
             UUID deckId, UUID collectionId, int page, int size, Throwable t) {
-        log.error("Card service unavailable during getAllCardsByCollection: {}", t.getMessage());
-        throw new RuntimeException(
+        log.error(
+                "Card service unavailable during getAllCardsByCollection: {}, deckId={},"
+                        + " collectionId={}, page={}, size={}",
+                t.getMessage(),
+                deckId,
+                collectionId,
+                page,
+                size);
+        throw new RetryLaterException(
                 "Card service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for delete
     public ApiRes deleteFallback(UUID deckId, UUID collectionId, UUID cardId, Throwable t) {
-        log.error("Card service unavailable during delete: {}", t.getMessage());
-        throw new RuntimeException(
+        log.error(
+                "Card service unavailable during delete: {}, deckId={}, collectionId={}, cardId={}",
+                t.getMessage(),
+                deckId,
+                collectionId,
+                cardId);
+        throw new RetryLaterException(
                 "Card service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for getById
     public ApiRes getByIdFallback(UUID deckId, UUID collectionId, UUID cardId, Throwable t) {
-        log.error("Card service unavailable during getById: {}", t.getMessage());
-        throw new RuntimeException(
+        log.error(
+                "Card service unavailable during getById: {}, deckId={}, collectionId={},"
+                        + " cardId={}",
+                t.getMessage(),
+                deckId,
+                collectionId,
+                cardId);
+        throw new RetryLaterException(
                 "Card service is currently unavailable. Please try again later.", t);
     }
 }

@@ -49,7 +49,7 @@ spring:
       port: ${REDIS_PORT:6379}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     generate-ddl: false
     show-sql: false
   mail:
@@ -74,6 +74,20 @@ resilience4j:
             minimumNumberOfCalls: 10
             failureRateThreshold: 50
             waitDurationInOpenState: 5s
+            record-exceptions:
+              - java.io.IOException                       # Network/File IO issues
+              - java.util.concurrent.TimeoutException     # Processing took too long
+              - org.springframework.dao.DataAccessException # Covers most DB/JDBC errors (Spring)
+              - org.springframework.data.redis.RedisConnectionFailureException # Redis down
+              - org.springframework.web.client.HttpServerErrorException # Downstream service returned 500
+              - com.app.oopsly.api.exception.SendEmailException # Custom email sending failure
+            ignore-exceptions:
+              - org.springframework.web.client.HttpClientErrorException # Downstream returned 400-404
+              - com.app.oopsly.api.exception.NotFoundException   # Your custom input validation
+              - com.app.oopsly.api.exception.UnauthenticatedException
+              - com.app.oopsly.api.exception.ValidationException
+              - com.app.oopsly.api.exception.RetryLaterException
+              - java.lang.IllegalArgumentException        # Basic Java argument errors
         instances:
           userServiceCircuitBreaker:
             baseConfig: default
@@ -84,4 +98,8 @@ resilience4j:
           deckServiceCircuitBreaker:
             baseConfig: default
           otpServiceCircuitBreaker:
+            baseConfig: default
+          testSuiteServiceCircuitBreaker:
+            baseConfig: default
+          questionServiceCircuitBreaker:
             baseConfig: default

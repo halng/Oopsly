@@ -28,6 +28,7 @@ import com.app.oopsly.api.entity.DeckEntity;
 import com.app.oopsly.api.entity.DifficultyLevel;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
+import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.CollectionRepository;
 import com.app.oopsly.api.repository.DeckRepository;
@@ -452,9 +453,9 @@ class CardServiceImplTest {
         CardReq request = new CardReq(List.of(new CardItemReq("Front", "Back")));
         RuntimeException cause = new RuntimeException("Service unavailable");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> cardService.createFallback(deckId, collectionId, request, cause));
 
         assertNotNull(exception);
@@ -466,9 +467,9 @@ class CardServiceImplTest {
     void deleteFallback_throwsRuntimeException() {
         RuntimeException cause = new RuntimeException("Database connection lost");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> cardService.deleteFallback(deckId, collectionId, cardId, cause));
 
         assertNotNull(exception);
@@ -480,9 +481,9 @@ class CardServiceImplTest {
     void getByIdFallback_throwsRuntimeException() {
         Throwable cause = new Throwable("Circuit breaker triggered");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> cardService.getByIdFallback(deckId, collectionId, cardId, cause));
 
         assertNotNull(exception);
@@ -494,9 +495,9 @@ class CardServiceImplTest {
     void getAllCardsByCollectionFallback_throwsRuntimeException() {
         Throwable cause = new Throwable("Service degraded");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () ->
                                 cardService.getAllCardsByCollectionFallback(
                                         deckId, collectionId, 0, 10, cause));
@@ -511,9 +512,9 @@ class CardServiceImplTest {
         CardItemReq item = new CardItemReq("Updated Front", "Updated Back");
         RuntimeException cause = new RuntimeException("Network error");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () ->
                                 cardService.updateCardFallback(
                                         deckId, collectionId, cardId, item, cause));
@@ -529,9 +530,9 @@ class CardServiceImplTest {
                 List.of(new UpdateDifficultyReq(cardId, DifficultyLevel.GOOD.name()));
         Throwable cause = new Throwable("Timeout");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () ->
                                 cardService.updateDifficultyFallback(
                                         deckId, collectionId, reqList, cause));
@@ -548,9 +549,9 @@ class CardServiceImplTest {
                 new RuntimeException("Database error", originalException);
         CardReq request = new CardReq(List.of(new CardItemReq("Front", "Back")));
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () ->
                                 cardService.createFallback(
                                         deckId, collectionId, request, wrappedException));
@@ -572,9 +573,9 @@ class CardServiceImplTest {
                                         collectionId,
                                         new CardReq(List.of(new CardItemReq("F", "B"))),
                                         cause));
-        RuntimeException deleteEx =
+        RetryLaterException deleteEx =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> cardService.deleteFallback(deckId, collectionId, cardId, cause));
 
         assertTrue(createEx.getMessage().contains("try again later"));

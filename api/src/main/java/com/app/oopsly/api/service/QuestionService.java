@@ -16,24 +16,18 @@
 
 package com.app.oopsly.api.service;
 
-import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.RefreshTokenReq;
-import com.app.oopsly.api.viewmodel.UpdateProfileReq;
-import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
+import com.app.oopsly.api.viewmodel.QuestionReq;
+import java.util.UUID;
 
-public interface UserService {
-    String getCurrentUserId();
+public interface QuestionService {
+    ApiRes create(UUID testSuiteId, QuestionReq request);
 
-    User getCurrentUser();
+    ApiRes update(UUID testSuiteId, UUID questionId, QuestionReq request);
 
-    ApiRes getProfile();
+    ApiRes delete(UUID testSuiteId, UUID questionId);
 
-    ApiRes updateProfile(UpdateProfileReq request);
+    ApiRes getById(UUID testSuiteId, UUID questionId);
 
-    ApiRes updateSettings(UpdateSettingsReq request);
-
-    ApiRes refreshToken(RefreshTokenReq refreshTokenReq);
-
-    ApiRes logout();
+    ApiRes getAllByTestSuite(UUID testSuiteId);
 }
