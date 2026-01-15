@@ -110,6 +110,13 @@ public class GlobalExceptionHandler {
         return ApiRes.badRequest("Bad request. Please check your input and try again.");
     }
 
+    @ExceptionHandler(RetryLaterException.class)
+    public ApiRes handleRetryLaterException(RetryLaterException ex) {
+        log.warn("Service busy, retry later: {}", ex.getMessage());
+        return ApiRes.retryLater(
+                "Service is busy or something went wrong. Please try again later.");
+    }
+
     // Generic Exception Handler - must be the last one
     @Order(1000)
     @ExceptionHandler(Exception.class)
