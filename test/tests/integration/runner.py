@@ -102,7 +102,17 @@ def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
     # Temporarily add step vars to context for substitution
     original_context = CONTEXT.copy()
     try:
-        CONTEXT.update(step_vars)
+        # First, substitute any variables in step_vars values using current CONTEXT
+        # This handles cases like: with: { AUTH_TOKEN: ${AUTH_TOKEN} }
+        resolved_step_vars = {}
+        for key, value in step_vars.items():
+            if isinstance(value, str):
+                resolved_step_vars[key] = _substitute_variables(value)
+            else:
+                resolved_step_vars[key] = value
+        
+        # Now update CONTEXT with the resolved values
+        CONTEXT.update(resolved_step_vars)
         
         # 1. Build URL: base_url + endpoint with variable substitution
         endpoint = _substitute_variables(api_info.get('endpoint', ''))
