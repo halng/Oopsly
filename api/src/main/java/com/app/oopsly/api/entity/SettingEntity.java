@@ -17,8 +17,10 @@
 package com.app.oopsly.api.entity;
 
 import jakarta.persistence.*;
-import java.util.List;
+import java.util.Map;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Getter
@@ -26,30 +28,23 @@ import org.springframework.data.relational.core.mapping.Table;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users")
-@Entity(name = "users")
-public class User extends Audit {
-    private String name;
+@Table(name = "settings")
+@Entity(name = "settings")
+public class SettingEntity extends Audit {
 
-    @Column(unique = true)
-    private String hashedPassword;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Theme theme;
 
-    @Column(unique = true, nullable = false)
-    private String email;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Language language;
 
-    private String pictureUrl;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "space_config", columnDefinition = "jsonb", nullable = false)
+    private Map<String, Integer> spaceConfig;
 
-    @Column(name = "display_name", length = 50)
-    private String displayName;
-
-    @Column(length = 255)
-    private String bio;
-
-    @Column private Integer age;
-
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<DeckEntity> decks;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private SettingEntity setting;
+    @OneToOne
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
+    private User user;
 }
