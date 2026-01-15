@@ -258,6 +258,7 @@ run_integration_tests() {
     # Always create .env file with correct test values
     echo "CI::Creating .env file with test configuration..."
     cat > .env << 'EOF'
+SPRING_PROFILES_ACTIVE=test
 GOOGLE_CLIENT_ID=dummy.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=dummy
 DB_HOST=localhost
@@ -275,20 +276,8 @@ EOF
     echo "CI::.env file contents:"
     cat .env
     
-    # Run bootRun with system properties to ensure they're passed
-    ./gradlew bootRun \
-        -DDB_HOST=localhost \
-        -DDB_USERNAME=postgres \
-        -DDB_PASSWORD=postgres \
-        -DDB_NAME=oopsly \
-        -DGOOGLE_CLIENT_ID=dummy.apps.googleusercontent.com \
-        -DGOOGLE_CLIENT_SECRET=dummy \
-        -DEMAIL_USERNAME=test@example.com \
-        -DEMAIL_PASSWORD=dummy \
-        -DJWT_SECRET=dummysecretkey \
-        -DREDIS_HOST=localhost \
-        -DREDIS_PORT=6379 \
-        --args='--spring.profiles.active=test' > /tmp/spring-boot.log 2>&1 &
+    # Run bootRun - the doFirst block in build.gradle will load .env and set environment variables
+    ./gradlew bootRun > /tmp/spring-boot.log 2>&1 &
     BOOT_PID=$!
     echo "CI::Spring Boot started with PID $BOOT_PID"
     
