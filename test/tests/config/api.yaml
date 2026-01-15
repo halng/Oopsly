@@ -1,0 +1,114 @@
+configs:
+  environments:
+    base_url: "http://localhost:9009/api/v1/oopsly"
+  apis:
+    # OTP AUTHENTICATION APIS
+    - name: GENERATE_OTP
+      method: POST
+      endpoint: /otp
+      headers:
+        Content-Type: "application/json"
+      query-params:
+        email:
+         value: $EMAIL
+         constraints:
+           nullable: false
+    - name: VERIFY_OTP
+      method: POST
+      endpoint: /otp/validate
+      headers:
+          Content-Type: "application/json"
+      body:
+        email:
+          value: $EMAIL
+          constraints:
+            nullable: false
+        otp:
+          value: $OTP_CODE
+          constraints:
+            length: 6
+            nullable: false
+    - name: REFRESH_AUTH_TOKEN
+      method: POST
+      endpoint: /auth/refresh-token
+      headers:
+        Content-Type: "application/json"
+      body:
+        refresh_token:
+          value: $REFRESH_TOKEN
+          constraints:
+            nullable: false
+#    USER AUTHENTICATION AND PROFILE APIS
+    - name: TOKEN_REFRESH
+      method: POST
+      endpoint: /users/refresh-token
+      headers:
+        Content-Type: "application/json"
+      body:
+        refresh_token:
+          value: $REFRESH_TOKEN
+          constraints:
+            nullable: false
+        user_email:
+          value: $EMAIL
+          constraints:
+              nullable: false
+
+    # DECK MANAGEMENT APIS
+    - name: DECK_CREATION
+      method: POST
+      endpoint: /decks
+      headers:
+        Authorization: "Bearer $AUTH_TOKEN"
+        Content-Type: "application/json"
+      body:
+        name:
+          value: $DECK_NAME
+          constraints:
+            nullable: false
+        description:
+          value: $DECK_DESCRIPTION
+          constraints:
+            length: [10, 100]
+            nullable: false
+    - name: DECK_UPDATE
+      method: PUT
+      endpoint: /decks/$DECK_ID
+      headers:
+        Authorization: "Bearer $AUTH_TOKEN"
+        Content-Type: "application/json"
+      body:
+        name:
+          value: $DECK_NAME
+          constraints:
+            nullable: false
+        description:
+          value: $DECK_DESCRIPTION
+          constraints:
+            length: [10, 100]
+            nullable: false
+    - name: DECK_GET_BY_ID
+      method: GET
+      endpoint: /decks/$DECK_ID
+      headers:
+        Authorization: "Bearer $AUTH_TOKEN"
+    - name: DECK_GET_ALL_WITH_PAGINATION
+      method: GET
+      endpoint: /decks
+      headers:
+        Authorization: "Bearer $AUTH_TOKEN"
+      query-params:
+        page:
+            value: $PAGE_NUM
+            constraints:
+                min: 1
+        size:
+            value: $PAGE_SIZE
+            constraints:
+                min: 1
+                max: 100
+    - name: DECK_DELETE
+      method: PATCH
+      endpoint: /decks/$DECK_ID
+      headers:
+          Authorization: "Bearer $AUTH_TOKEN"

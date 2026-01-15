@@ -16,15 +16,249 @@
       "description": "Deck management APIs for creating, updating, retrieving and deleting decks"
     },
     {
-      "name": "Card",
-      "description": "Card management APIs for creating, updating, retrieving and deleting cards within decks"
+      "name": "Question",
+      "description": "Question management APIs for creating, updating, retrieving and deleting questions within test suites"
+    },
+    {
+      "name": "User Profile",
+      "description": "User profile and settings management APIs"
+    },
+    {
+      "name": "Collection",
+      "description": "Collection management APIs for creating, updating, retrieving and deleting collections within decks"
+    },
+    {
+      "name": "Users",
+      "description": "User management APIs"
     },
     {
       "name": "OTP",
       "description": "OTP management APIs for generating and validating one-time passwords"
+    },
+    {
+      "name": "Test Suite",
+      "description": "Test Suite management APIs for creating, updating, retrieving and deleting test suites within decks"
+    },
+    {
+      "name": "Card",
+      "description": "Card management APIs for creating, updating, retrieving and deleting cards within collections"
     }
   ],
   "paths": {
+    "/test-suites/{testSuiteId}/questions/{id}": {
+      "get": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Get question by ID",
+        "description": "Retrieves a specific question from a test suite by its ID",
+        "operationId": "getById",
+        "parameters": [
+          {
+            "name": "testSuiteId",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Question ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Question retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Question or test suite not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Update question",
+        "description": "Updates an existing question in a specific test suite",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "testSuiteId",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Question ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Question updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or metadata validation failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Question or test suite not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Delete question",
+        "description": "Soft deletes a question from a specific test suite",
+        "operationId": "deleteById",
+        "parameters": [
+          {
+            "name": "testSuiteId",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Question ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Question deleted successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Question or test suite not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/decks/{id}": {
       "get": {
         "tags": [
@@ -32,7 +266,7 @@
         ],
         "summary": "Get deck by ID",
         "description": "Retrieves a deck by its unique identifier",
-        "operationId": "getById",
+        "operationId": "getById_1",
         "parameters": [
           {
             "name": "id",
@@ -47,16 +281,6 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Deck retrieved successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Res"
-                }
-              }
-            }
-          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -76,6 +300,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "Deck retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
           }
         }
       },
@@ -85,7 +319,7 @@
         ],
         "summary": "Update deck",
         "description": "Updates an existing deck by ID",
-        "operationId": "update",
+        "operationId": "update_1",
         "parameters": [
           {
             "name": "id",
@@ -110,16 +344,6 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Deck updated successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Res"
-                }
-              }
-            }
-          },
           "400": {
             "description": "Invalid request body or ID",
             "content": {
@@ -149,6 +373,16 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "Deck updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
           }
         }
       },
@@ -158,7 +392,7 @@
         ],
         "summary": "Delete deck",
         "description": "Soft deletes a deck by ID",
-        "operationId": "deleteById",
+        "operationId": "deleteById_1",
         "parameters": [
           {
             "name": "id",
@@ -206,14 +440,14 @@
         }
       }
     },
-    "/decks/{deckId}/cards/{id}": {
+    "/decks/{deckId}/test-suites/{id}": {
       "get": {
         "tags": [
-          "Card"
+          "Test Suite"
         ],
-        "summary": "Get card by ID",
-        "description": "Retrieves a specific card from a deck by its ID",
-        "operationId": "getById_1",
+        "summary": "Get test suite by ID",
+        "description": "Retrieves a specific test suite from a deck by its ID",
+        "operationId": "getById_2",
         "parameters": [
           {
             "name": "deckId",
@@ -229,7 +463,221 @@
           {
             "name": "id",
             "in": "path",
-            "description": "Card ID",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Test suite retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Test suite or deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Test Suite"
+        ],
+        "summary": "Update test suite",
+        "description": "Updates an existing test suite in a specific deck",
+        "operationId": "update_2",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestSuiteReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Test suite updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Test suite or deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Test Suite"
+        ],
+        "summary": "Delete test suite",
+        "description": "Soft deletes a test suite and all its questions from a specific deck",
+        "operationId": "deleteById_2",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test suite deleted successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Test suite or deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/decks/{deckId}/collections/{id}": {
+      "get": {
+        "tags": [
+          "Collection"
+        ],
+        "summary": "Get collection by ID",
+        "description": "Retrieves a specific collection from a deck by its ID",
+        "operationId": "getById_3",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Collection ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -250,7 +698,222 @@
             }
           },
           "404": {
-            "description": "Card or deck not found",
+            "description": "Collection or deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Collection retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Collection"
+        ],
+        "summary": "Update collection",
+        "description": "Updates an existing collection in a specific deck",
+        "operationId": "update_3",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Collection ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectionReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Collection updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection or deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Collection"
+        ],
+        "summary": "Delete collection",
+        "description": "Soft deletes a collection and all its cards from a specific deck",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Collection ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Collection deleted successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection or deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/decks/{deckId}/collections/{collectionId}/cards/{id}": {
+      "get": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Get card by ID",
+        "description": "Retrieves a specific card from a collection by its ID",
+        "operationId": "getById_4",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "collectionId",
+            "in": "path",
+            "description": "Collection ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Card ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174002"
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Card or collection not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -268,6 +931,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
           }
         }
       },
@@ -276,7 +949,7 @@
           "Card"
         ],
         "summary": "Update card",
-        "description": "Updates an existing card in a specific deck",
+        "description": "Updates an existing card in a specific collection",
         "operationId": "updateCard",
         "parameters": [
           {
@@ -291,6 +964,17 @@
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
           {
+            "name": "collectionId",
+            "in": "path",
+            "description": "Collection ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          },
+          {
             "name": "id",
             "in": "path",
             "description": "Card ID",
@@ -299,7 +983,7 @@
               "type": "string",
               "format": "uuid"
             },
-            "example": "123e4567-e89b-12d3-a456-426614174001"
+            "example": "123e4567-e89b-12d3-a456-426614174002"
           }
         ],
         "requestBody": {
@@ -315,6 +999,16 @@
         "responses": {
           "400": {
             "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Card or collection not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -342,16 +1036,6 @@
                 }
               }
             }
-          },
-          "404": {
-            "description": "Card or deck not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Res"
-                }
-              }
-            }
           }
         }
       },
@@ -360,8 +1044,8 @@
           "Card"
         ],
         "summary": "Delete card",
-        "description": "Soft deletes a card from a specific deck",
-        "operationId": "deleteById_1",
+        "description": "Soft deletes a card from a specific collection",
+        "operationId": "deleteById_3",
         "parameters": [
           {
             "name": "deckId",
@@ -375,6 +1059,17 @@
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
           {
+            "name": "collectionId",
+            "in": "path",
+            "description": "Collection ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          },
+          {
             "name": "id",
             "in": "path",
             "description": "Card ID",
@@ -383,10 +1078,20 @@
               "type": "string",
               "format": "uuid"
             },
-            "example": "123e4567-e89b-12d3-a456-426614174001"
+            "example": "123e4567-e89b-12d3-a456-426614174002"
           }
         ],
         "responses": {
+          "404": {
+            "description": "Card or collection not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
           "200": {
             "description": "Card deleted successfully",
             "content": {
@@ -406,27 +1111,17 @@
                 }
               }
             }
-          },
-          "404": {
-            "description": "Card or deck not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Res"
-                }
-              }
-            }
           }
         }
       }
     },
-    "/decks/{deckId}/cards/difficulty": {
+    "/decks/{deckId}/collections/{collectionId}/cards/difficulty": {
       "put": {
         "tags": [
           "Card"
         ],
         "summary": "Update card difficulty",
-        "description": "Updates the difficulty level for multiple cards in a deck",
+        "description": "Updates the difficulty level for multiple cards in a collection",
         "operationId": "updateDifficulty",
         "parameters": [
           {
@@ -439,6 +1134,17 @@
               "format": "uuid"
             },
             "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "collectionId",
+            "in": "path",
+            "description": "Collection ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
           }
         ],
         "requestBody": {
@@ -487,7 +1193,239 @@
             }
           },
           "404": {
-            "description": "Deck not found",
+            "description": "Collection not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/refresh-token": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Refresh Access Token",
+        "description": "Generates a new access token and refresh token using a valid refresh token",
+        "operationId": "refreshToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid input - validation failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Token refreshed successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or expired refresh token",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/logout": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Logout",
+        "description": "Logs out the current user by invalidating their refresh token",
+        "operationId": "logout",
+        "responses": {
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Logged out successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - user not authenticated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/test-suites/{testSuiteId}/questions": {
+      "get": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Get all questions by test suite",
+        "description": "Retrieves a list of all questions for a specific test suite",
+        "operationId": "getAllByTestSuite",
+        "parameters": [
+          {
+            "name": "testSuiteId",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Questions retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Test suite not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Create question",
+        "description": "Creates a new question within a specific test suite with type-specific metadata validation",
+        "operationId": "create",
+        "parameters": [
+          {
+            "name": "testSuiteId",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Test suite not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or metadata validation failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Question created successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -531,8 +1469,8 @@
               }
             }
           },
-          "500": {
-            "description": "Internal server error",
+          "200": {
+            "description": "OTP sent successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -541,8 +1479,8 @@
               }
             }
           },
-          "200": {
-            "description": "OTP sent successfully",
+          "500": {
+            "description": "Internal server error",
             "content": {
               "*/*": {
                 "schema": {
@@ -628,14 +1566,14 @@
           {
             "name": "page",
             "in": "query",
-            "description": "Page number (starts from 1)",
+            "description": "Page number",
             "required": true,
             "schema": {
               "type": "integer",
               "format": "int32",
-              "minimum": 1
+              "minimum": 0
             },
-            "example": 1
+            "example": 0
           },
           {
             "name": "size",
@@ -689,7 +1627,7 @@
         ],
         "summary": "Create deck",
         "description": "Creates a new deck with the provided information",
-        "operationId": "create",
+        "operationId": "create_1",
         "requestBody": {
           "content": {
             "application/json": {
@@ -734,14 +1672,142 @@
         }
       }
     },
-    "/decks/{deckId}/cards": {
+    "/decks/{deckId}/test-suites": {
       "get": {
         "tags": [
-          "Card"
+          "Test Suite"
         ],
-        "summary": "Get all cards by deck",
-        "description": "Retrieves a paginated list of all cards for a specific deck",
-        "operationId": "getAllCardsByDeck",
+        "summary": "Get all test suites by deck",
+        "description": "Retrieves a list of all test suites for a specific deck",
+        "operationId": "getAllByDeck",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test suites retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Test Suite"
+        ],
+        "summary": "Create test suite",
+        "description": "Creates a new test suite within a specific deck",
+        "operationId": "create_2",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestSuiteReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Test suite created successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/decks/{deckId}/collections": {
+      "get": {
+        "tags": [
+          "Collection"
+        ],
+        "summary": "Get all collections by deck",
+        "description": "Retrieves a paginated list of all collections for a specific deck",
+        "operationId": "getAllByDeck_1",
         "parameters": [
           {
             "name": "deckId",
@@ -811,7 +1877,7 @@
             }
           },
           "200": {
-            "description": "Cards retrieved successfully",
+            "description": "Collections retrieved successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -824,11 +1890,11 @@
       },
       "post": {
         "tags": [
-          "Card"
+          "Collection"
         ],
-        "summary": "Create cards",
-        "description": "Creates new cards for a specific deck",
-        "operationId": "create_1",
+        "summary": "Create collection",
+        "description": "Creates a new collection within a specific deck",
+        "operationId": "create_3",
         "parameters": [
           {
             "name": "deckId",
@@ -846,7 +1912,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CardReq"
+                "$ref": "#/components/schemas/CollectionReq"
               }
             }
           },
@@ -864,7 +1930,7 @@
             }
           },
           "200": {
-            "description": "Cards created successfully",
+            "description": "Collection created successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -895,23 +1961,395 @@
           }
         }
       }
+    },
+    "/decks/{deckId}/collections/{collectionId}/cards": {
+      "get": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Get all cards by collection",
+        "description": "Retrieves a paginated list of all cards for a specific collection",
+        "operationId": "getAllCardsByCollection",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "collectionId",
+            "in": "path",
+            "description": "Collection ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (starts from 0)",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cards retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Create cards",
+        "description": "Creates new cards for a specific collection",
+        "operationId": "create_4",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "collectionId",
+            "in": "path",
+            "description": "Collection ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Cards created successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Collection not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/settings": {
+      "patch": {
+        "tags": [
+          "User Profile"
+        ],
+        "summary": "Update user settings",
+        "description": "Updates the current user's application settings",
+        "operationId": "updateSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingsReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Settings updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/profile": {
+      "get": {
+        "tags": [
+          "User Profile"
+        ],
+        "summary": "Get user profile",
+        "description": "Retrieves the current user's profile and settings",
+        "operationId": "getProfile",
+        "responses": {
+          "200": {
+            "description": "Profile retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profile not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "User Profile"
+        ],
+        "summary": "Update user profile",
+        "description": "Updates the current user's profile information",
+        "operationId": "updateProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Profile updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
-      "DeckReq": {
+      "QuestionReq": {
         "type": "object",
-        "description": "Deck creation request",
+        "description": "Question creation request",
         "properties": {
-          "name": {
+          "text": {
             "type": "string"
           },
-          "description": {
+          "type": {
             "type": "string",
-            "maxLength": 100,
-            "minLength": 10
+            "enum": [
+              "MULTIPLE_CHOICE",
+              "MULTIPLE_RESPONSE",
+              "TRUE_FALSE",
+              "FILL_IN_THE_BLANK",
+              "MATCHING",
+              "ORDERING"
+            ]
+          },
+          "metadata": {
+            "type": "string"
           }
-        }
+        },
+        "required": [
+          "metadata",
+          "text",
+          "type"
+        ]
       },
       "Res": {
         "type": "object",
@@ -934,6 +2372,50 @@
             "format": "date-time"
           }
         }
+      },
+      "DeckReq": {
+        "type": "object",
+        "description": "Deck creation request",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 10
+          }
+        }
+      },
+      "TestSuiteReq": {
+        "type": "object",
+        "description": "Test suite creation request",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "CollectionReq": {
+        "type": "object",
+        "description": "Collection creation request",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
       },
       "CardItemReq": {
         "type": "object",
@@ -971,6 +2453,22 @@
           "newLevel"
         ]
       },
+      "RefreshTokenReq": {
+        "type": "object",
+        "description": "Refresh token request containing refresh token, user email, and user ID",
+        "properties": {
+          "refresh_token": {
+            "type": "string"
+          },
+          "user_email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token",
+          "user_email"
+        ]
+      },
       "OTPReq": {
         "type": "object",
         "description": "OTP validation request containing email and OTP code",
@@ -998,6 +2496,86 @@
         },
         "required": [
           "cards"
+        ]
+      },
+      "SpaceConfigReq": {
+        "type": "object",
+        "properties": {
+          "AGAIN": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 365,
+            "minimum": 0
+          },
+          "HARD": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 365,
+            "minimum": 0
+          },
+          "GOOD": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 365,
+            "minimum": 0
+          },
+          "EASY": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 365,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "AGAIN",
+          "EASY",
+          "GOOD",
+          "HARD"
+        ]
+      },
+      "UpdateSettingsReq": {
+        "type": "object",
+        "description": "Settings update request",
+        "properties": {
+          "theme": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "spaceConfig": {
+            "$ref": "#/components/schemas/SpaceConfigReq"
+          }
+        },
+        "required": [
+          "language",
+          "spaceConfig",
+          "theme"
+        ]
+      },
+      "UpdateProfileReq": {
+        "type": "object",
+        "description": "Profile update request",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "bio": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 120,
+            "minimum": 1
+          }
+        },
+        "required": [
+          "displayName"
         ]
       }
     }

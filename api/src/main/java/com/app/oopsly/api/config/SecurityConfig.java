@@ -49,7 +49,7 @@ public class SecurityConfig {
                         req ->
                                 req.requestMatchers(
                                                 "/otp/**",
-                                                "/health",
+                                                "/actuator/health",
                                                 "**/refresh-token",
                                                 "/swagger-ui/**",
                                                 "/api-docs/**")

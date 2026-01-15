@@ -16,6 +16,7 @@
 
 package com.app.oopsly.api.service.impl;
 
+import com.app.oopsly.api.config.AppConfig;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.SendEmailException;
@@ -54,10 +55,15 @@ public class OTPServiceImpl implements OTPService {
     private final StringRedisTemplate stringRedisTemplate;
     private final JwtUtils jwtUtils;
     private static final SecureRandom random = new SecureRandom();
+    private final AppConfig appConfig;
 
     @Override
     @CircuitBreaker(name = "otpServiceCircuitBreaker", fallbackMethod = "sendOTPFallback")
     public ApiRes sendOTP(String email) {
+        if (email.equals(appConfig.getTestEmail())) {
+            log.info("Test email detected. Skipping OTP send for {}", StringUtils.masked(email));
+            return ApiRes.ok("OTP sent successfully to " + email);
+        }
         log.info("Sending OTP email to {}", StringUtils.masked(email));
         String user = email.split("@")[0];
         int otpCode = random.nextInt(900000) + 100000;
@@ -90,6 +96,12 @@ public class OTPServiceImpl implements OTPService {
     @Override
     @CircuitBreaker(name = "otpServiceCircuitBreaker", fallbackMethod = "verifyOTPFallback")
     public ApiRes verifyOTP(OTPReq otpReq) {
+        if (otpReq.email().equals(appConfig.getTestEmail())
+                && otpReq.otp().equals("000000")) {
+            log.info("Test email and OTP detected. Skipping OTP verification for {}",
+                    StringUtils.masked(otpReq.email()));
+            return handleAuthSuccess(otpReq.email());
+        }
         return switch (check(otpReq.email().split("@")[0], otpReq.otp())) {
             case VALID -> handleAuthSuccess(otpReq.email());
             case INVALID -> ApiRes.badRequest("OTP is invalid. Please try again.");
