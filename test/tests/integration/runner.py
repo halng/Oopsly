@@ -19,7 +19,7 @@ import re
 import os
 import requests
 import yaml
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from deepdiff import DeepDiff
 from pathlib import Path
 import jsonpath_ng
@@ -58,7 +58,7 @@ def _substitute_variables(text: str) -> str:
     if not isinstance(text, str):
         return text
 
-    # First, handle ${variable_name} format
+    # First, handle ${variable_name} format (e.g., ${AUTH_TOKEN})
     pattern = re.compile(r'\$\{(\w+)\}')
     
     def replacer(match):
@@ -69,14 +69,15 @@ def _substitute_variables(text: str) -> str:
     
     text = pattern.sub(replacer, text)
     
-    # Then handle $variable_name format (not followed by {)
-    pattern2 = re.compile(r'\$(?!\{)(\w+)')
+    # Then handle $variable_name format (e.g., $EMAIL)
+    # Pattern uses negative lookahead (?!\{) to avoid matching ${...} which was already handled
+    simple_var_pattern = re.compile(r'\$(?!\{)(\w+)')
     
     def replacer2(match):
         key = match.group(1)
         return str(CONTEXT.get(key, f"${key}"))
     
-    return pattern2.sub(replacer2, text)
+    return simple_var_pattern.sub(replacer2, text)
 
 def _process_data_with_context(data: Any) -> Any:
     """
@@ -100,51 +101,52 @@ def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
     
     # Temporarily add step vars to context for substitution
     original_context = CONTEXT.copy()
-    CONTEXT.update(step_vars)
-    
-    # 1. Build URL: base_url + endpoint with variable substitution
-    endpoint = _substitute_variables(api_info.get('endpoint', ''))
-    url = BASE_URL + endpoint
-    
-    # 2. Substitute variables in Headers
-    headers = {}
-    for key, value in api_info.get('headers', {}).items():
-        headers[key] = _substitute_variables(value)
-    
-    # 3. Build Body with variable substitution
-    body = None
-    if 'body' in api_info:
-        body = {}
-        for key, field_def in api_info['body'].items():
-            if isinstance(field_def, dict) and 'value' in field_def:
-                body[key] = _substitute_variables(field_def['value'])
-            else:
-                body[key] = _substitute_variables(field_def)
-    
-    # 4. Build Query Params with variable substitution
-    params = {}
-    if 'query-params' in api_info:
-        for key, param_def in api_info['query-params'].items():
-            if isinstance(param_def, dict) and 'value' in param_def:
-                params[key] = _substitute_variables(param_def['value'])
-            else:
-                params[key] = _substitute_variables(param_def)
-    
-    # Restore original context
-    CONTEXT.clear()
-    CONTEXT.update(original_context)
-    
-    result = {
-        "method": api_info.get('method', 'GET').upper(),
-        "url": url,
-        "headers": headers,
-        "params": params
-    }
-    
-    if body:
-        result["json"] = body
-    
-    return result
+    try:
+        CONTEXT.update(step_vars)
+        
+        # 1. Build URL: base_url + endpoint with variable substitution
+        endpoint = _substitute_variables(api_info.get('endpoint', ''))
+        url = BASE_URL + endpoint
+        
+        # 2. Substitute variables in Headers
+        headers = {}
+        for key, value in api_info.get('headers', {}).items():
+            headers[key] = _substitute_variables(value)
+        
+        # 3. Build Body with variable substitution
+        body = None
+        if 'body' in api_info:
+            body = {}
+            for key, field_def in api_info['body'].items():
+                if isinstance(field_def, dict) and 'value' in field_def:
+                    body[key] = _substitute_variables(field_def['value'])
+                else:
+                    body[key] = _substitute_variables(field_def)
+        
+        # 4. Build Query Params with variable substitution
+        params = {}
+        if 'query-params' in api_info:
+            for key, param_def in api_info['query-params'].items():
+                if isinstance(param_def, dict) and 'value' in param_def:
+                    params[key] = _substitute_variables(param_def['value'])
+                else:
+                    params[key] = _substitute_variables(param_def)
+        
+        result = {
+            "method": api_info.get('method', 'GET').upper(),
+            "url": url,
+            "headers": headers,
+            "params": params
+        }
+        
+        if body:
+            result["json"] = body
+        
+        return result
+    finally:
+        # Always restore original context
+        CONTEXT.clear()
+        CONTEXT.update(original_context)
 
 def send_api_request(request_data: dict) -> Optional[requests.Response]:
     """
@@ -306,7 +308,7 @@ def list_all_flow(directory_path):
     files = [entry for entry in p.iterdir() if entry.is_file()]
     return files
 
-def _run(env: dict, apis: dict, case: dict) -> (bool, dict):
+def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
     logger.info(f"   🔹 Step: {case.get('name')}")
     if not case:
         logger.error(f"❌ Step configuration is empty")
