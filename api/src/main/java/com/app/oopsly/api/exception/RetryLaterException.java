@@ -17,7 +17,11 @@
 package com.app.oopsly.api.exception;
 
 public class RetryLaterException extends RuntimeException {
-  public RetryLaterException(String message) {
-    super(message);
-  }
+    public RetryLaterException(String message) {
+        super(message);
+    }
+
+    public RetryLaterException(String message, Throwable t) {
+        super(message, t);
+    }
 }

@@ -26,6 +26,7 @@ import com.app.oopsly.api.entity.CollectionEntity;
 import com.app.oopsly.api.entity.DeckEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
+import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.CollectionRepository;
 import com.app.oopsly.api.repository.DeckRepository;
@@ -292,9 +293,9 @@ class CollectionServiceImplTest {
         CollectionReq request = new CollectionReq("Test", "Description");
         RuntimeException cause = new RuntimeException("Service unavailable");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> collectionService.createFallback(deckId, request, cause));
 
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -306,9 +307,9 @@ class CollectionServiceImplTest {
         CollectionReq request = new CollectionReq("Updated", "New Description");
         RuntimeException cause = new RuntimeException("Database error");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () ->
                                 collectionService.updateFallback(
                                         deckId, collectionId, request, cause));
@@ -322,9 +323,9 @@ class CollectionServiceImplTest {
     void deleteFallback_throwsRuntimeException() {
         RuntimeException cause = new RuntimeException("Network timeout");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> collectionService.deleteFallback(deckId, collectionId, cause));
 
         assertNotNull(exception);
@@ -336,9 +337,9 @@ class CollectionServiceImplTest {
     void getByIdFallback_throwsRuntimeException() {
         Throwable cause = new Throwable("Circuit breaker open");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> collectionService.getByIdFallback(deckId, collectionId, cause));
 
         assertNotNull(exception);
@@ -350,9 +351,9 @@ class CollectionServiceImplTest {
     void getAllByDeckFallback_throwsRuntimeException() {
         Throwable cause = new Throwable("Service degraded");
 
-        RuntimeException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> collectionService.getAllByDeckFallback(deckId, 0, 10, cause));
 
         assertNotNull(exception);
@@ -364,9 +365,9 @@ class CollectionServiceImplTest {
     void fallbackMethods_provideUserFriendlyMessages() {
         Throwable cause = new Throwable("Internal error");
 
-        RuntimeException createEx =
+        RetryLaterException createEx =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () ->
                                 collectionService.createFallback(
                                         deckId, new CollectionReq("Test", "Desc"), cause));

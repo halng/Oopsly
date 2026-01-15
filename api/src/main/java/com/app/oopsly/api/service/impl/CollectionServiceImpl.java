@@ -20,6 +20,7 @@ import com.app.oopsly.api.entity.CollectionEntity;
 import com.app.oopsly.api.entity.DeckEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
+import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.CollectionRepository;
 import com.app.oopsly.api.repository.DeckRepository;
@@ -190,21 +191,21 @@ public class CollectionServiceImpl implements CollectionService {
     // Fallback method for getAllByDeck
     public ApiRes getAllByDeckFallback(UUID deckId, int page, int size, Throwable t) {
         log.error("Collection service unavailable during getAllByDeck: {}", t.getMessage());
-        throw new RuntimeException(
+        throw new RetryLaterException(
                 "Collection service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for getById
     public ApiRes getByIdFallback(UUID deckId, UUID collectionId, Throwable t) {
         log.error("Collection service unavailable during getById: {}", t.getMessage());
-        throw new RuntimeException(
+        throw new RetryLaterException(
                 "Collection service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for delete
     public ApiRes deleteFallback(UUID deckId, UUID collectionId, Throwable t) {
         log.error("Collection service unavailable during delete: {}", t.getMessage());
-        throw new RuntimeException(
+        throw new RetryLaterException(
                 "Collection service is currently unavailable. Please try again later.", t);
     }
 
@@ -212,14 +213,14 @@ public class CollectionServiceImpl implements CollectionService {
     public ApiRes updateFallback(
             UUID deckId, UUID collectionId, CollectionReq request, Throwable t) {
         log.error("Collection service unavailable during update: {}", t.getMessage());
-        throw new RuntimeException(
+        throw new RetryLaterException(
                 "Collection service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for create
     public ApiRes createFallback(UUID deckId, CollectionReq request, Throwable t) {
         log.error("Collection service unavailable during create: {}", t.getMessage());
-        throw new RuntimeException(
+        throw new RetryLaterException(
                 "Collection service is currently unavailable. Please try again later.", t);
     }
 }

@@ -24,6 +24,7 @@ import com.app.oopsly.api.entity.QuestionEntity;
 import com.app.oopsly.api.entity.QuestionType;
 import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.exception.NotFoundException;
+import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.QuestionRepository;
 import com.app.oopsly.api.repository.TestSuiteRepository;
@@ -347,9 +348,9 @@ class QuestionServiceImplTest {
                         "{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}");
         RuntimeException exception = new RuntimeException("Database connection failed");
 
-        RuntimeException thrown =
+        RetryLaterException thrown =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> questionService.createFallback(testSuiteId, request, exception));
 
         assertEquals(
@@ -367,9 +368,9 @@ class QuestionServiceImplTest {
                         "Updated Question", QuestionType.TRUE_FALSE, "{\"correct_value\":true}");
         RuntimeException exception = new RuntimeException("Database connection failed");
 
-        RuntimeException thrown =
+        RetryLaterException thrown =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () ->
                                 questionService.updateFallback(
                                         testSuiteId, questionId, request, exception));
@@ -386,9 +387,9 @@ class QuestionServiceImplTest {
         UUID questionId = UUID.randomUUID();
         RuntimeException exception = new RuntimeException("Database connection failed");
 
-        RuntimeException thrown =
+        RetryLaterException thrown =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> questionService.deleteFallback(testSuiteId, questionId, exception));
 
         assertEquals(
@@ -403,9 +404,9 @@ class QuestionServiceImplTest {
         UUID questionId = UUID.randomUUID();
         RuntimeException exception = new RuntimeException("Database connection failed");
 
-        RuntimeException thrown =
+        RetryLaterException thrown =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> questionService.getByIdFallback(testSuiteId, questionId, exception));
 
         assertEquals(
@@ -419,9 +420,9 @@ class QuestionServiceImplTest {
         UUID testSuiteId = UUID.randomUUID();
         RuntimeException exception = new RuntimeException("Database connection failed");
 
-        RuntimeException thrown =
+        RetryLaterException thrown =
                 assertThrows(
-                        RuntimeException.class,
+                        RetryLaterException.class,
                         () -> questionService.getAllByTestSuiteFallback(testSuiteId, exception));
 
         assertEquals(

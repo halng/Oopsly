@@ -113,4 +113,9 @@ public class ApiRes extends ResponseEntity<Res> {
     public static ApiRes forbidden(String message, Object data) {
         return new ApiRes(new Res(403, message, data, false, Instant.now()), HttpStatus.FORBIDDEN);
     }
+
+    public static ApiRes retryLater(String message) {
+        return new ApiRes(
+                new Res(503, message, null, false, Instant.now()), HttpStatus.SERVICE_UNAVAILABLE);
+    }
 }
