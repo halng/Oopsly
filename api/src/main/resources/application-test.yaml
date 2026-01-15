@@ -1,2 +1,7 @@
 app:
   test-email: test@oopsly.com
+
+management:
+  health:
+    mail:
+      enabled: false
