@@ -273,6 +273,19 @@ REDIS_PORT=6379
 EOF
     fi
     
+    # Export environment variables for Spring Boot
+    export GOOGLE_CLIENT_ID=dummy.apps.googleusercontent.com
+    export GOOGLE_CLIENT_SECRET=dummy
+    export DB_HOST=localhost
+    export DB_USERNAME=postgres
+    export DB_PASSWORD=postgres
+    export DB_NAME=oopsly
+    export EMAIL_USERNAME=test@example.com
+    export EMAIL_PASSWORD=dummy
+    export JWT_SECRET=dummysecretkey
+    export REDIS_HOST=localhost
+    export REDIS_PORT=6379
+    
     # Run bootRun in background with test profile
     ./gradlew bootRun --args='--spring.profiles.active=test' > /tmp/spring-boot.log 2>&1 &
     BOOT_PID=$!
