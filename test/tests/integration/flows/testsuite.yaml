@@ -38,7 +38,7 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DECK_ID: ${DECK_ID}
           TESTSUITE_NAME: "Unit Test Suite"
-          TESTSUITE_DESCRIPTION: "Test suite for unit testing"
+          TESTSUITE_IS_ACTIVE: true
         assertions:
           - path: $.isSuccess
             type: equals
@@ -48,9 +48,12 @@ flows:
             value: 201
           - path: $.data.id
             type: not-null
-          - path: $.data.name
+          - path: $.data.title
             type: equals
             value: "Unit Test Suite"
+          - path: $.data.isActive
+            type: equals
+            value: true
         env-vars:
           TESTSUITE_ID: $.data.id
       
@@ -70,7 +73,7 @@ flows:
           - path: $.data.id
             type: equals
             value: ${TESTSUITE_ID}
-          - path: $.data.name
+          - path: $.data.title
             type: equals
             value: "Unit Test Suite"
       
@@ -81,7 +84,7 @@ flows:
           DECK_ID: ${DECK_ID}
           TESTSUITE_ID: ${TESTSUITE_ID}
           TESTSUITE_NAME: "Updated Test Suite"
-          TESTSUITE_DESCRIPTION: "Updated description"
+          TESTSUITE_IS_ACTIVE: true
         assertions:
           - path: $.isSuccess
             type: equals
@@ -89,9 +92,9 @@ flows:
           - path: $.status
             type: equals
             value: 200
-          - path: $.data.name
+          - path: $.message
             type: equals
-            value: "Updated Test Suite"
+            value: "Test suite updated successfully"
       
       - name: "4. Get All Test Suites by Deck"
         api: TESTSUITE_GET_ALL_BY_DECK
@@ -190,7 +193,7 @@ flows:
           DECK_ID: ${DECK_ID}
           TESTSUITE_ID: "00000000-0000-0000-0000-000000000000"
           TESTSUITE_NAME: "Should Fail"
-          TESTSUITE_DESCRIPTION: "Should not work"
+          TESTSUITE_IS_ACTIVE: true
         assertions:
           - path: $.isSuccess
             type: equals
@@ -219,7 +222,7 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DECK_ID: "00000000-0000-0000-0000-000000000000"
           TESTSUITE_NAME: "Should Fail"
-          TESTSUITE_DESCRIPTION: "Should not work"
+          TESTSUITE_IS_ACTIVE: false
         assertions:
           - path: $.isSuccess
             type: equals

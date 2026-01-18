@@ -1,0 +1,11 @@
+{
+    "status": 201,
+    "message": "Test suite created successfully",
+    "data": {
+        "id": "7f000101-9bcf-15b7-819b-cf85f18e0013",
+        "title": "Edge Case Test Suite",
+        "isActive": true
+    },
+    "isSuccess": true,
+    "timestamp": "2026-01-18T05:13:40.498605540Z"
+}

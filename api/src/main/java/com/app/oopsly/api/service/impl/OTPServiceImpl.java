@@ -34,6 +34,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.mail.MessagingException;
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -60,7 +61,7 @@ public class OTPServiceImpl implements OTPService {
     @Override
     @CircuitBreaker(name = "otpServiceCircuitBreaker", fallbackMethod = "sendOTPFallback")
     public ApiRes sendOTP(String email) {
-        if (email.equals(appConfig.getTestEmail())) {
+        if (Arrays.asList(appConfig.getTestEmail()).contains(email)) {
             log.info("Test email detected. Skipping OTP send for {}", StringUtils.masked(email));
             return ApiRes.ok("OTP sent successfully to " + email);
         }
@@ -96,7 +97,8 @@ public class OTPServiceImpl implements OTPService {
     @Override
     @CircuitBreaker(name = "otpServiceCircuitBreaker", fallbackMethod = "verifyOTPFallback")
     public ApiRes verifyOTP(OTPReq otpReq) {
-        if (otpReq.email().equals(appConfig.getTestEmail()) && otpReq.otp().equals("000000")) {
+        if (Arrays.asList(appConfig.getTestEmail()).contains(otpReq.email())
+                && otpReq.otp().equals("000000")) {
             log.info(
                     "Test email and OTP detected. Skipping OTP verification for {}",
                     StringUtils.masked(otpReq.email()));

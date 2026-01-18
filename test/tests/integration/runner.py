@@ -24,6 +24,7 @@ from deepdiff import DeepDiff
 from pathlib import Path
 import jsonpath_ng
 from jsonpath_ng import parse
+import ast
 
 
 # --- CONFIGURATION ---
@@ -33,6 +34,7 @@ logger = logging.getLogger(__name__)
 # (e.g. {"user_id": 123, "token": "abc"})
 CONTEXT: Dict[str, Any] = {}
 BASE_URL: str = ""
+RECORD_RESPONSE: bool = False
 
 
 def load_test_definition(file_path: str = "tests/config.yaml") -> Dict[str, Any]:
@@ -134,6 +136,11 @@ def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
             for key, field_def in api_info["body"].items():
                 if isinstance(field_def, dict) and "value" in field_def:
                     body[key] = _substitute_variables(field_def["value"])
+                    constraints = field_def.get("constraints")
+                    if "type" in constraints and constraints.get("type") == "array" or constraints.get("type") == "object":
+                        body[key] = ast.literal_eval(body[key])
+                    if "type" in constraints and constraints.get("type") == "string-json":
+                        body[key] = json.dumps(ast.literal_eval(body[key]))
                 else:
                     body[key] = _substitute_variables(field_def)
 
@@ -253,7 +260,7 @@ def validate_api_response(
     assertions = step_config.get("assertions", [])
     for assertion in assertions:
         assertion_type = assertion.get("type")
-        expected_value = assertion.get("value")
+        expected_value = _substitute_variables(assertion.get("value"))
         json_path = assertion.get("path")
 
         if assertion_type == "equals":
@@ -328,6 +335,24 @@ def list_all_flow(directory_path):
     files = [entry for entry in p.iterdir() if entry.is_file()]
     return files
 
+def record_response(response: requests.Response, api_name: str):
+    """
+    Record the API response to a file if RECORD_RESPONSE is enabled.
+    """
+    if not RECORD_RESPONSE:
+        return
+    sub_folder = api_name.split("_")[0].lower()
+    output_dir = os.path.join("wiremock", "__files", sub_folder)
+    os.makedirs(output_dir, exist_ok=True)
+    file_path = os.path.join(output_dir, f"{api_name}_{response.status_code}.json")
+
+    try:
+        with open(file_path, "w", encoding='utf-8') as f:
+            json.dump(response.json(), f, ensure_ascii=False, indent=4)
+        logger.info(f"      💾 Recorded response to {file_path}")
+    except IOError as e:
+        logger.error(f"❌ Error recording response to file: {e}")
+
 
 def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
     step_name = case.get("name", "Unnamed Step")
@@ -376,6 +401,8 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
         if len(response_text) > 200:
             response_text = response_text[:200] + "..."
         logger.debug(f"        Response: {response_text}")
+
+        record_response(response, api_name)
     else:
         logger.error(f"      ◀ ✗ No response received")
         return False, env
@@ -401,9 +428,10 @@ def run(env: dict, apis: dict) -> bool:
     Main execution loop.
     """
     global BASE_URL
-
+    global RECORD_RESPONSE
     # Set BASE_URL from environment
     BASE_URL = env.get("base_url", "")
+    RECORD_RESPONSE = env.get("record_response", False)
     if not BASE_URL:
         logger.error("❌ base_url not found in environment configuration")
         return False

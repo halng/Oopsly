@@ -1,0 +1,11 @@
+{
+    "status": 200,
+    "message": "Updated successfully",
+    "data": {
+        "id": "7f000101-9bcf-15b7-819b-cf85ea32000a",
+        "name": "Updated Collection",
+        "description": "Updated description"
+    },
+    "isSuccess": true,
+    "timestamp": "2026-01-18T05:13:38.684281252Z"
+}

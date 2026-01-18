@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 
 @Component
-@Profile("!test")
+@Profile("!itest")
 public class EmailSender implements EmailSenderInterface {
     private final JavaMailSender mailSender;
 

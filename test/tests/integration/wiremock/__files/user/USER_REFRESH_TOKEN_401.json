@@ -1,0 +1,7 @@
+{
+    "status": 401,
+    "message": "Invalid token format",
+    "data": null,
+    "isSuccess": false,
+    "timestamp": "2026-01-18T05:13:39.167114554Z"
+}

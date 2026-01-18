@@ -74,7 +74,7 @@ class OTPServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(appConfig.getTestEmail()).thenReturn("test@oopsly.com");
+        lenient().when(appConfig.getTestEmail()).thenReturn(new String[] {"test@oopsly.com"});
     }
 
     @Test

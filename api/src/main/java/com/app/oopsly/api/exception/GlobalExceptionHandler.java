@@ -21,6 +21,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.ServletException;
+import jakarta.validation.ConstraintViolationException;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
@@ -103,7 +104,8 @@ public class GlobalExceptionHandler {
         ServletException.class,
         IllegalArgumentException.class,
         HandlerMethodValidationException.class,
-        MethodArgumentNotValidException.class
+        MethodArgumentNotValidException.class,
+        ConstraintViolationException.class,
     })
     public ApiRes handleServletException(Exception ex) {
         log.error("Servlet error occurred: {}", ex.getMessage(), ex);

@@ -1,0 +1,16 @@
+{
+    "status": 201,
+    "message": "Created successfully",
+    "data": [
+        {
+            "id": "7f000101-9bcf-15b7-819b-cf85e5f10003",
+            "front": "What is the capital of France?",
+            "back": "Paris",
+            "difficultyLevel": null,
+            "nextPracticeTime": "2026-01-18T05:13:37.520394931Z",
+            "numberOfPractice": 0
+        }
+    ],
+    "isSuccess": true,
+    "timestamp": "2026-01-18T05:13:37.528541590Z"
+}

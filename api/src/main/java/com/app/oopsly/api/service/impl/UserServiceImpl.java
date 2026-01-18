@@ -36,9 +36,9 @@ import com.app.oopsly.api.viewmodel.SettingsRes;
 import com.app.oopsly.api.viewmodel.UpdateProfileReq;
 import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
 import com.app.oopsly.api.viewmodel.UserProfileRes;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +65,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Cacheable(value = "users", key = "#root.methodName + ':' + #root.target.getCurrentUserId()")
-    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "getCurrentUserFallback")
+    //    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod =
+    // "getCurrentUserFallback")
     @Override
     public User getCurrentUser() {
         String currentUserId = getCurrentUserId();
@@ -74,7 +75,8 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UnauthenticatedException("User not found"));
     }
 
-    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "refreshTokenFallback")
+    //    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod =
+    // "refreshTokenFallback")
     @Override
     public ApiRes refreshToken(RefreshTokenReq refreshTokenReq) {
         log.info(
@@ -132,20 +134,20 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
-    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "getProfileFallback")
+    //    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "getProfileFallback")
     public ApiRes getProfile() {
         User user = getCurrentUser();
 
-        SettingEntity setting =
-                settingRepository
-                        .findByUserId(user.getId())
-                        .orElseThrow(() -> new ValidationException("User settings not found"));
+        Optional<SettingEntity> setting = settingRepository.findByUserId(user.getId());
+        SettingsRes settingsRes = null;
 
-        SettingsRes settingsRes =
-                new SettingsRes(
-                        setting.getTheme().name(),
-                        setting.getLanguage().getCode(),
-                        setting.getSpaceConfig());
+        if (setting.isPresent()) {
+            settingsRes =
+                    new SettingsRes(
+                            setting.get().getTheme().name(),
+                            setting.get().getLanguage().getCode(),
+                            setting.get().getSpaceConfig());
+        }
 
         UserProfileRes profileRes =
                 new UserProfileRes(
@@ -163,7 +165,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @CacheEvict(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
-    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "updateProfileFallback")
+    //    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod =
+    // "updateProfileFallback")
     public ApiRes updateProfile(UpdateProfileReq request) {
         User user = getCurrentUser();
 
@@ -204,7 +207,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @CacheEvict(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
-    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "updateSettingsFallback")
+    //    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod =
+    // "updateSettingsFallback")
     public ApiRes updateSettings(UpdateSettingsReq request) {
         User user = getCurrentUser();
 
@@ -266,7 +270,7 @@ public class UserServiceImpl implements UserService {
                 "Refresh token service is currently unavailable. Please try again later.", t);
     }
 
-    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "logoutFallback")
+    //    @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "logoutFallback")
     @Override
     public ApiRes logout() {
         String userId = getCurrentUserId();

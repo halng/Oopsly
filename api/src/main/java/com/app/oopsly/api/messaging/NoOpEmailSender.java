@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("test")
+@Profile("itest")
 @Slf4j
 public class NoOpEmailSender implements EmailSenderInterface {
 

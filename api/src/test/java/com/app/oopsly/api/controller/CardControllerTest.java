@@ -56,7 +56,7 @@ class CardControllerTest {
         deckId = UUID.randomUUID();
         collectionId = UUID.randomUUID();
         cardId = UUID.randomUUID();
-        expectedResponse = ApiRes.success("Success");
+        expectedResponse = ApiRes.ok("Success");
     }
 
     @Test

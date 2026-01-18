@@ -47,7 +47,7 @@ class TestSuiteControllerTest {
         testSuiteReq = new TestSuiteReq("Chapter 1 Review", true);
         deckId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
-        expectedResponse = ApiRes.success("Success");
+        expectedResponse = ApiRes.ok("Success");
     }
 
     @Test

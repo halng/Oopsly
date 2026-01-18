@@ -47,7 +47,7 @@ class CollectionControllerTest {
         collectionReq = new CollectionReq("Test Collection", "Test Description");
         deckId = UUID.randomUUID();
         collectionId = UUID.randomUUID();
-        expectedResponse = ApiRes.success("Success");
+        expectedResponse = ApiRes.ok("Success");
     }
 
     @Test

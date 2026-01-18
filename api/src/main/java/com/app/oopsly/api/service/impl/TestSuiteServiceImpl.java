@@ -28,7 +28,6 @@ import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.TestSuiteReq;
 import com.app.oopsly.api.viewmodel.TestSuiteRes;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
@@ -50,7 +49,8 @@ public class TestSuiteServiceImpl implements TestSuiteService {
 
     @Override
     @CacheEvict(value = "testSuites", key = "#deckId + ':all'")
-    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "createFallback")
+    //    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod =
+    // "createFallback")
     public ApiRes create(UUID deckId, TestSuiteReq request) {
         log.info("Creating test suite for deck {}", deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
@@ -68,7 +68,8 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                 @CacheEvict(value = "testSuites", key = "#deckId + ':' + #testSuiteId"),
                 @CacheEvict(value = "testSuites", key = "#deckId + ':all'")
             })
-    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "updateFallback")
+    //    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod =
+    // "updateFallback")
     public ApiRes update(UUID deckId, UUID testSuiteId, TestSuiteReq request) {
         log.info("Updating test suite {} for deck {}", testSuiteId, deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
@@ -83,7 +84,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         TestSuiteEntity updatedTestSuite = this.toEntity(request, existingTestSuite);
         testSuiteRepository.save(updatedTestSuite);
 
-        return ApiRes.success("Test suite updated successfully");
+        return ApiRes.ok("Test suite updated successfully");
     }
 
     @Override
@@ -92,7 +93,8 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                 @CacheEvict(value = "testSuites", key = "#deckId + ':' + #testSuiteId"),
                 @CacheEvict(value = "testSuites", key = "#deckId + ':all'")
             })
-    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "deleteFallback")
+    //    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod =
+    // "deleteFallback")
     public ApiRes delete(UUID deckId, UUID testSuiteId) {
         log.info("Deleting test suite {} for deck {}", testSuiteId, deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
@@ -107,12 +109,13 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         testSuite.setDeleted(true);
         testSuiteRepository.save(testSuite);
 
-        return ApiRes.success("Test suite deleted successfully");
+        return ApiRes.ok("Test suite deleted successfully");
     }
 
     @Override
     @Cacheable(value = "testSuites", key = "#deckId + ':' + #testSuiteId")
-    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
+    //    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod =
+    // "getByIdFallback")
     public ApiRes getById(UUID deckId, UUID testSuiteId) {
         log.info("Fetching test suite {} for deck {}", testSuiteId, deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
@@ -124,21 +127,21 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                                         new NotFoundException(
                                                 "Test suite not found with id: " + testSuiteId));
 
-        return ApiRes.success("Test suite fetched successfully", this.toViewModel(testSuite));
+        return ApiRes.ok("Test suite fetched successfully", this.toViewModel(testSuite));
     }
 
     @Override
     @Cacheable(value = "testSuites", key = "#deckId + ':all'")
-    @CircuitBreaker(
-            name = "testSuiteServiceCircuitBreaker",
-            fallbackMethod = "getAllByDeckFallback")
+    //    @CircuitBreaker(
+    //            name = "testSuiteServiceCircuitBreaker",
+    //            fallbackMethod = "getAllByDeckFallback")
     public ApiRes getAllByDeck(UUID deckId) {
         log.info("Fetching all test suites for deck {}", deckId);
         DeckEntity deck = this.findDeckByIdAndUser(deckId);
         List<TestSuiteEntity> testSuites = testSuiteRepository.findAllByDeck(deck);
         List<TestSuiteRes> responses = testSuites.stream().map(this::toViewModel).toList();
 
-        return ApiRes.success("Test suites fetched successfully", responses);
+        return ApiRes.ok("Test suites fetched successfully", responses);
     }
 
     TestSuiteEntity toEntity(@NonNull TestSuiteReq from, TestSuiteEntity to) {

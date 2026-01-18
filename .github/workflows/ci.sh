@@ -252,13 +252,13 @@ run_integration_tests() {
     cd ../../..
     
     # Start Spring Boot application with test profile
-    echo "CI::Starting Spring Boot application with test profile..."
+    echo "CI::Starting Spring Boot application with itest profile..."
     cd api
     
     # Always create .env file with correct test values
     echo "CI::Creating .env file with test configuration..."
     cat > .env << 'EOF'
-SPRING_PROFILES_ACTIVE=test
+SPRING_PROFILES_ACTIVE=itest
 GOOGLE_CLIENT_ID=dummy.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=dummy
 DB_HOST=localhost
@@ -279,7 +279,7 @@ EOF
     
     # Run bootRun with explicit spring profile argument
     echo "CI::Starting Spring Boot application (logs will be shown below)..."
-    ./gradlew bootRun --args='--spring.profiles.active=test' > /tmp/spring-boot.log 2>&1 &
+    ./gradlew bootRun --args='--spring.profiles.active=itest' > /tmp/spring-boot.log 2>&1 &
     BOOT_PID=$!
     echo "CI::Spring Boot started with PID $BOOT_PID"
     

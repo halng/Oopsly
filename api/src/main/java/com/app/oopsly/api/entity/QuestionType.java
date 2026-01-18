@@ -16,11 +16,23 @@
 
 package com.app.oopsly.api.entity;
 
+import jakarta.validation.constraints.NotNull;
+import lombok.NonNull;
+
 public enum QuestionType {
     MULTIPLE_CHOICE,
     MULTIPLE_RESPONSE,
     TRUE_FALSE,
     FILL_IN_THE_BLANK,
     MATCHING,
-    ORDERING
+    ORDERING;
+
+    public static QuestionType fromString(@NonNull @NotNull String type) {
+        for (QuestionType qt : QuestionType.values()) {
+            if (qt.name().equalsIgnoreCase(type)) {
+                return qt;
+            }
+        }
+        throw new IllegalArgumentException("Unknown QuestionType: " + type);
+    }
 }

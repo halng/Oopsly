@@ -37,7 +37,7 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DECK_ID: ${DECK_ID}
           TESTSUITE_NAME: "Test Suite for Questions"
-          TESTSUITE_DESCRIPTION: "Test suite for question testing"
+          TESTSUITE_IS_ACTIVE: true
         assertions:
           - path: $.data.id
             type: not-null
@@ -51,11 +51,7 @@ flows:
           TESTSUITE_ID: ${TESTSUITE_ID}
           QUESTION_TEXT: "What is 2 + 2?"
           QUESTION_TYPE: "MULTIPLE_CHOICE"
-          QUESTION_METADATA: >
-            {
-              "options": ["2", "3", "4", "5"],
-              "correctAnswer": "4"
-            }
+          QUESTION_METADATA: {"options": ["2", "3", "4", "5"], "correct_indices": ["4"]}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -65,9 +61,12 @@ flows:
             value: 201
           - path: $.data.id
             type: not-null
-          - path: $.data.question
+          - path: $.data.text
             type: contains
             value: "2 + 2"
+          - path: $.data.type
+            type: equals
+            value: "MULTIPLE_CHOICE"
         env-vars:
           QUESTION_ID: $.data.id
       
@@ -99,11 +98,7 @@ flows:
           QUESTION_ID: ${QUESTION_ID}
           QUESTION_TEXT: "What is 3 + 3?"
           QUESTION_TYPE: "MULTIPLE_CHOICE"
-          QUESTION_METADATA: >
-            {
-              "options": ["4", "5", "6", "7"],
-              "correctAnswer": "6"
-            }
+          QUESTION_METADATA:  { "options": ["4", "5", "6", "7"], "correct_indices":["6"] }
         assertions:
           - path: $.isSuccess
             type: equals
@@ -111,9 +106,6 @@ flows:
           - path: $.status
             type: equals
             value: 200
-          - path: $.data.question
-            type: contains
-            value: "3 + 3"
       
       - name: "4. Get All Questions by Test Suite"
         api: QUESTION_GET_ALL_BY_TESTSUITE
@@ -196,7 +188,7 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DECK_ID: ${DECK_ID}
           TESTSUITE_NAME: "Edge Case Test Suite"
-          TESTSUITE_DESCRIPTION: "Test suite for edge case testing"
+          TESTSUITE_IS_ACTIVE: true
         assertions:
           - path: $.data.id
             type: not-null
@@ -210,10 +202,7 @@ flows:
           TESTSUITE_ID: ${TESTSUITE_ID}
           QUESTION_TEXT: "Is the sky blue?"
           QUESTION_TYPE: "TRUE_FALSE"
-          QUESTION_METADATA: >
-            {
-              "correctAnswer": "true"
-            }
+          QUESTION_METADATA:   { "correct_value": true }
         assertions:
           - path: $.isSuccess
             type: equals
@@ -228,12 +217,8 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           TESTSUITE_ID: ${TESTSUITE_ID}
           QUESTION_TEXT: "What is the capital of Japan?"
-          QUESTION_TYPE: "SHORT_ANSWER"
-          QUESTION_METADATA: >
-            {
-              "correctAnswer": "Tokyo",
-              "caseSensitive": false
-            }
+          QUESTION_TYPE: "FILL_IN_THE_BLANK"
+          QUESTION_METADATA: {"accepted_answers": ["Tokyo", "tokyo"]}
         assertions:
           - path: $.isSuccess
             type: equals

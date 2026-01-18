@@ -1,0 +1,11 @@
+{
+    "status": 200,
+    "message": "Token refreshed successfully",
+    "data": {
+        "access_token": "eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiVVNFUiIsImlkIjoiN2YwMDAxMDEtOWJjZi0xNWI3LTgxOWItY2Y4NWUyYmEwMDAwIiwic3ViIjoidGVzdEBvb3BzbHkuY29tIiwiaWF0IjoxNzY4NzEzMjE5LCJleHAiOjE3Njg3OTk2MTl9.yrNdr3Pw3_kJM01Z0MN7yapjgPp5c0uLZTXOeYjkLcT-zU07D5SYrNvUB6orHhzNOZzG2oIaT-kF8l44lQMO6w",
+        "refresh_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZXN0QG9vcHNseS5jb20iLCJpYXQiOjE3Njg3MTMyMTgsImV4cCI6MTc2OTMxODAxOH0.VEzgDuXMfiQNYnU8K4rdY0K8kQOfWSFwO7aNL5dCR9vdReQzGO28QOm7V5ltctv4WKtsSMH-5ciYvS8J_H_gPw",
+        "type": "Bearer"
+    },
+    "isSuccess": true,
+    "timestamp": "2026-01-18T05:13:39.050332925Z"
+}

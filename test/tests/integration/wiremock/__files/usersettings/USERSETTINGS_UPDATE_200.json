@@ -1,0 +1,21 @@
+{
+    "status": 200,
+    "message": "Profile retrieved successfully",
+    "data": {
+        "displayName": "Integration Tester",
+        "bio": "Testing profile and settings integration",
+        "age": null,
+        "settings": {
+            "theme": "DARK",
+            "language": "en",
+            "spaceConfig": {
+                "EASY": 5,
+                "AGAIN": 1,
+                "HARD": 1,
+                "GOOD": 5
+            }
+        }
+    },
+    "isSuccess": true,
+    "timestamp": "2026-01-18T05:13:40.030177024Z"
+}

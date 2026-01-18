@@ -31,7 +31,6 @@ import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CollectionReq;
 import com.app.oopsly.api.viewmodel.CollectionRes;
 import com.app.oopsly.api.viewmodel.PagingRes;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
@@ -53,7 +52,8 @@ public class CollectionServiceImpl implements CollectionService {
     private final UserService userService;
 
     @Override
-    @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "createFallback")
+    //    @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod =
+    // "createFallback")
     public ApiRes create(UUID deckId, CollectionReq request) {
         log.info("Creating collection for deck: {}", deckId);
         DeckEntity deck = getDeckForCurrentUser(deckId);
@@ -68,11 +68,12 @@ public class CollectionServiceImpl implements CollectionService {
         CollectionEntity savedCollection = collectionRepository.save(collection);
         log.info("Successfully created collection: {}", savedCollection.getId());
 
-        return ApiRes.success("Created successfully", toCollectionRes(savedCollection));
+        return ApiRes.created("Created successfully", toCollectionRes(savedCollection));
     }
 
     @Override
-    @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "updateFallback")
+    //    @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod =
+    // "updateFallback")
     public ApiRes update(UUID deckId, UUID collectionId, CollectionReq request) {
         log.info("Updating collection: {} in deck: {}", collectionId, deckId);
 
@@ -94,12 +95,13 @@ public class CollectionServiceImpl implements CollectionService {
         CollectionEntity updatedCollection = collectionRepository.save(existingCollection);
 
         log.info("Successfully updated collection: {}", collectionId);
-        return ApiRes.success("Updated successfully", toCollectionRes(updatedCollection));
+        return ApiRes.ok("Updated successfully", toCollectionRes(updatedCollection));
     }
 
     @Override
     @Transactional
-    @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "deleteFallback")
+    //    @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod =
+    // "deleteFallback")
     public ApiRes delete(UUID deckId, UUID collectionId) {
         log.info("Deleting collection: {} from deck: {}", collectionId, deckId);
         DeckEntity deck = getDeckForCurrentUser(deckId);
@@ -118,11 +120,10 @@ public class CollectionServiceImpl implements CollectionService {
         collectionRepository.save(existingCollection);
 
         log.info("Successfully deleted collection: {} and associated cards", collectionId);
-        return ApiRes.success("Deleted successfully");
+        return ApiRes.ok("Deleted successfully");
     }
 
     @Override
-    @CircuitBreaker(name = "collectionServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID deckId, UUID collectionId) {
         log.info("Getting collection: {} from deck: {}", collectionId, deckId);
         DeckEntity deck = getDeckForCurrentUser(deckId);
@@ -135,13 +136,13 @@ public class CollectionServiceImpl implements CollectionService {
                                                 "Collection not found with id: " + collectionId));
 
         log.info("Successfully retrieved collection: {}", collectionId);
-        return ApiRes.success("Fetched successfully", toCollectionRes(collection));
+        return ApiRes.ok("Fetched successfully", toCollectionRes(collection));
     }
 
     @Override
-    @CircuitBreaker(
-            name = "collectionServiceCircuitBreaker",
-            fallbackMethod = "getAllByDeckFallback")
+    //    @CircuitBreaker(
+    //            name = "collectionServiceCircuitBreaker",
+    //            fallbackMethod = "getAllByDeckFallback")
     public ApiRes getAllByDeck(UUID deckId, int page, int size) {
         log.info(
                 "Getting all collections for deck: {} with page: {} and size: {}",
@@ -169,7 +170,7 @@ public class CollectionServiceImpl implements CollectionService {
                 collections.size(),
                 deckId,
                 pageData.getTotalElements());
-        return ApiRes.success("Fetched successfully", pagingRes);
+        return ApiRes.ok("Fetched successfully", pagingRes);
     }
 
     private CollectionRes toCollectionRes(CollectionEntity entity) {

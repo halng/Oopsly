@@ -1,0 +1,12 @@
+{
+    "status": 200,
+    "message": "Question fetched successfully",
+    "data": {
+        "id": "7f000101-9bcf-15b7-819b-cf85f0830011",
+        "text": "What is 2 + 2?",
+        "type": "MULTIPLE_CHOICE",
+        "metadata": "{\"options\": [\"2\", \"3\", \"4\", \"5\"], \"correct_indices\": [\"4\"]}"
+    },
+    "isSuccess": true,
+    "timestamp": "2026-01-18T05:13:40.291245864Z"
+}

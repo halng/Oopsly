@@ -48,7 +48,7 @@ class DeckControllerTest {
                         "Test Deck",
                         "Test description with sufficient length to meet validation requirements");
         deckId = UUID.randomUUID();
-        expectedResponse = ApiRes.success("Success");
+        expectedResponse = ApiRes.ok("Success");
     }
 
     @Test

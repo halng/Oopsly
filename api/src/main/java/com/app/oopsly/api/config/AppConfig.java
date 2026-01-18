@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 public class AppConfig {
 
     private String allowedOrigins;
-    private String testEmail;
+    private String[] testEmail;
 
     public GsonFactory getJsonFactory() {
         return new GsonFactory();

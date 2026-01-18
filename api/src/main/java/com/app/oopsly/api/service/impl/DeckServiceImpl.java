@@ -27,7 +27,6 @@ import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.DeckReq;
 import com.app.oopsly.api.viewmodel.DeckRes;
 import com.app.oopsly.api.viewmodel.PagingRes;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
@@ -47,15 +46,15 @@ public class DeckServiceImpl implements DeckService {
     private final UserService userService;
 
     @Override
-    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "createFallback")
+    //    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(DeckReq request) {
         log.info("Creating deck for user {}", this.currentUser().getId());
         DeckEntity savedEntity = deckRepository.save(this.toEntity(request, null));
-        return ApiRes.success("Created successfully", this.toViewModel(savedEntity));
+        return ApiRes.created("Created successfully", this.toViewModel(savedEntity));
     }
 
     @Override
-    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "updateFallback")
+    //    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(DeckReq request, UUID id) {
         log.info("Updating deck {} for user {}", id, this.currentUser().getId());
         DeckEntity existingEntity =
@@ -66,11 +65,11 @@ public class DeckServiceImpl implements DeckService {
 
         DeckEntity newEntity = this.toEntity(request, existingEntity);
         deckRepository.save(newEntity);
-        return ApiRes.success("Updated successfully");
+        return ApiRes.ok("Updated successfully");
     }
 
     @Override
-    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "deleteFallback")
+    //    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID id) {
         log.info("Deleting deck {} for user {}", id, this.currentUser().getId());
         DeckEntity existingEntity =
@@ -81,11 +80,11 @@ public class DeckServiceImpl implements DeckService {
 
         existingEntity.setDeleted(true);
         deckRepository.save(existingEntity);
-        return ApiRes.success("Deleted successfully");
+        return ApiRes.ok("Deleted successfully");
     }
 
     @Override
-    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
+    //    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID id) {
         log.info("Fetching deck {} for user {}", id, this.currentUser().getId());
         DeckEntity entity =
@@ -93,11 +92,11 @@ public class DeckServiceImpl implements DeckService {
                         .findByIdAndUser(id, this.currentUser())
                         .orElseThrow(
                                 () -> new NotFoundException("Entity not found with id: " + id));
-        return ApiRes.success("Fetched successfully", this.toViewModel(entity));
+        return ApiRes.ok("Fetched successfully", this.toViewModel(entity));
     }
 
     @Override
-    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "getAllFallback")
+    //    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "getAllFallback")
     public ApiRes getAll(int page, int size) {
         log.info(
                 "Fetching decks page {} size {} for user {}",
@@ -115,7 +114,7 @@ public class DeckServiceImpl implements DeckService {
                         pageData.getTotalElements(),
                         pageData.getTotalPages(),
                         pageData.hasNext());
-        return ApiRes.success("Fetched successfully", response);
+        return ApiRes.ok("Fetched successfully", response);
     }
 
     DeckEntity toEntity(@NonNull DeckReq from, DeckEntity to) {

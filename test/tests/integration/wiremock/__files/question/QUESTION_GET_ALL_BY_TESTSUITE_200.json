@@ -1,0 +1,14 @@
+{
+    "status": 200,
+    "message": "Questions fetched successfully",
+    "data": [
+        {
+            "id": "7f000101-9bcf-15b7-819b-cf85f0830011",
+            "text": "What is 3 + 3?",
+            "type": "MULTIPLE_CHOICE",
+            "metadata": "{\"options\": [\"4\", \"5\", \"6\", \"7\"], \"correct_indices\": [\"6\"]}"
+        }
+    ],
+    "isSuccess": true,
+    "timestamp": "2026-01-18T05:13:40.351524507Z"
+}

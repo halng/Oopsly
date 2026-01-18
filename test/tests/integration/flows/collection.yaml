@@ -51,7 +51,7 @@ flows:
             value: true
           - path: $.status
             type: equals
-            value: 200
+            value: 201
           - path: $.data.id
             type: not-null
           - path: $.data.name

@@ -50,21 +50,14 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DECK_ID: ${DECK_ID}
           COLLECTION_ID: ${COLLECTION_ID}
-          CARDS_ARRAY: >
-            [
-              {
-                "question": "What is the capital of France?",
-                "answer": "Paris",
-                "hint": "City of lights"
-              }
-            ]
+          CARDS_ARRAY: [{"front": "What is the capital of France?","back": "Paris"}]
         assertions:
           - path: $.isSuccess
             type: equals
             value: true
           - path: $.status
             type: equals
-            value: 200
+            value: 201
           - path: $.data
             type: not-null
       
@@ -83,10 +76,10 @@ flows:
           - path: $.status
             type: equals
             value: 200
-          - path: $.data.content
+          - path: $.data.entities
             type: not-null
         env-vars:
-          CARD_ID: $.data.content[0].id
+          CARD_ID: $.data.entities[0].id
       
       - name: "3. Get Card by ID"
         api: CARD_GET_BY_ID
@@ -105,9 +98,12 @@ flows:
           - path: $.data.id
             type: equals
             value: ${CARD_ID}
-          - path: $.data.question
-            type: contains
-            value: "France"
+          - path: $.data.back
+            type: equals
+            value: "Paris"
+          - path: $.data.front
+            type: equals
+            value: "What is the capital of France?"
       
       - name: "4. Update Card"
         api: CARD_UPDATE
@@ -118,7 +114,6 @@ flows:
           CARD_ID: ${CARD_ID}
           CARD_QUESTION: "What is the capital of Germany?"
           CARD_ANSWER: "Berlin"
-          CARD_HINT: "German capital"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -126,9 +121,9 @@ flows:
           - path: $.status
             type: equals
             value: 200
-          - path: $.data.question
+          - path: $.data.back
             type: contains
-            value: "Germany"
+            value: "Berlin"
       
       - name: "5. Delete Card"
         api: CARD_DELETE

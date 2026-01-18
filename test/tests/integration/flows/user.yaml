@@ -33,15 +33,12 @@ flows:
         env-vars:
           AUTH_TOKEN: $.data.access_token
           REFRESH_TOKEN: $.data.refresh_token
-          USER_EMAIL: $.data.user.email
-          USER_ID: $.data.user.id
       
       - name: "3. Refresh Access Token"
         api: USER_REFRESH_TOKEN
         with:
           REFRESH_TOKEN: ${REFRESH_TOKEN}
-          USER_EMAIL: ${USER_EMAIL}
-          USER_ID: ${USER_ID}
+          USER_EMAIL: test@oopsly.com
         assertions:
           - path: $.isSuccess
             type: equals
@@ -99,7 +96,6 @@ flows:
         with:
           REFRESH_TOKEN: "invalid-token-string"
           USER_EMAIL: test@oopsly.com
-          USER_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess
             type: equals

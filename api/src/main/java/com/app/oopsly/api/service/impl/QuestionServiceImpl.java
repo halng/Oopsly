@@ -30,7 +30,6 @@ import com.app.oopsly.api.viewmodel.QuestionReq;
 import com.app.oopsly.api.viewmodel.QuestionRes;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
@@ -60,12 +59,12 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     @CacheEvict(value = "questions", key = "#testSuiteId + ':all'")
-    @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "createFallback")
+    //    @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID testSuiteId, QuestionReq request) {
         log.info("Creating question for test suite {}", testSuiteId);
         TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
 
-        this.validateQuestionMetadata(request.type(), request.metadata());
+        this.validateQuestionMetadata(QuestionType.fromString(request.type()), request.metadata());
 
         QuestionEntity question = this.toEntity(request, null);
         question.setTestSuite(testSuite);
@@ -80,7 +79,7 @@ public class QuestionServiceImpl implements QuestionService {
                 @CacheEvict(value = "questions", key = "#testSuiteId + ':' + #questionId"),
                 @CacheEvict(value = "questions", key = "#testSuiteId + ':all'")
             })
-    @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "updateFallback")
+    //    @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(UUID testSuiteId, UUID questionId, QuestionReq request) {
         log.info("Updating question {} for test suite {}", questionId, testSuiteId);
         TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
@@ -92,12 +91,12 @@ public class QuestionServiceImpl implements QuestionService {
                                         new NotFoundException(
                                                 "Question not found with id: " + questionId));
 
-        this.validateQuestionMetadata(request.type(), request.metadata());
+        this.validateQuestionMetadata(QuestionType.fromString(request.type()), request.metadata());
 
         QuestionEntity updatedQuestion = this.toEntity(request, existingQuestion);
         questionRepository.save(updatedQuestion);
 
-        return ApiRes.success("Question updated successfully");
+        return ApiRes.ok("Question updated successfully");
     }
 
     @Override
@@ -106,7 +105,7 @@ public class QuestionServiceImpl implements QuestionService {
                 @CacheEvict(value = "questions", key = "#testSuiteId + ':' + #questionId"),
                 @CacheEvict(value = "questions", key = "#testSuiteId + ':all'")
             })
-    @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "deleteFallback")
+    //    @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID testSuiteId, UUID questionId) {
         log.info("Deleting question {} for test suite {}", questionId, testSuiteId);
         TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
@@ -121,12 +120,13 @@ public class QuestionServiceImpl implements QuestionService {
         question.setDeleted(true);
         questionRepository.save(question);
 
-        return ApiRes.success("Question deleted successfully");
+        return ApiRes.ok("Question deleted successfully");
     }
 
     @Override
     @Cacheable(value = "questions", key = "#testSuiteId + ':' + #questionId")
-    @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
+    //    @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod =
+    // "getByIdFallback")
     public ApiRes getById(UUID testSuiteId, UUID questionId) {
         log.info("Fetching question {} for test suite {}", questionId, testSuiteId);
         TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
@@ -138,21 +138,21 @@ public class QuestionServiceImpl implements QuestionService {
                                         new NotFoundException(
                                                 "Question not found with id: " + questionId));
 
-        return ApiRes.success("Question fetched successfully", this.toViewModel(question));
+        return ApiRes.ok("Question fetched successfully", this.toViewModel(question));
     }
 
     @Override
     @Cacheable(value = "questions", key = "#testSuiteId + ':all'")
-    @CircuitBreaker(
-            name = "questionServiceCircuitBreaker",
-            fallbackMethod = "getAllByTestSuiteFallback")
+    //    @CircuitBreaker(
+    //            name = "questionServiceCircuitBreaker",
+    //            fallbackMethod = "getAllByTestSuiteFallback")
     public ApiRes getAllByTestSuite(UUID testSuiteId) {
         log.info("Fetching all questions for test suite {}", testSuiteId);
         TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
         List<QuestionEntity> questions = questionRepository.findAllByTestSuite(testSuite);
         List<QuestionRes> responses = questions.stream().map(this::toViewModel).toList();
 
-        return ApiRes.success("Questions fetched successfully", responses);
+        return ApiRes.ok("Questions fetched successfully", responses);
     }
 
     void validateQuestionMetadata(QuestionType type, String metadata) {
@@ -224,13 +224,13 @@ public class QuestionServiceImpl implements QuestionService {
         if (to == null) {
             return QuestionEntity.builder()
                     .text(from.text())
-                    .type(from.type())
+                    .type(QuestionType.fromString(from.type()))
                     .metadata(from.metadata())
                     .build();
         }
 
         to.setText(from.text());
-        to.setType(from.type());
+        to.setType(QuestionType.fromString(from.type()));
         to.setMetadata(from.metadata());
         return to;
     }

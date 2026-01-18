@@ -1,0 +1,11 @@
+{
+    "status": 200,
+    "message": "Authentication successful.",
+    "data": {
+        "access_token": "eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiVVNFUiIsImlkIjoiN2YwMDAxMDEtOWJjZi0xNWI3LTgxOWItY2Y4NWUyYmEwMDAwIiwic3ViIjoidGVzdEBvb3BzbHkuY29tIiwiaWF0IjoxNzY4NzEzMjIwLCJleHAiOjE3Njg3OTk2MjB9.oIO6GsLfaoLWATc69cJb5h4CFptCo1nXQx8Dt1m6Dv8s1hTN03MfZiA4gYeQFNyNkVW45wL5ky2YoZhEh4X0_g",
+        "refresh_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZXN0QG9vcHNseS5jb20iLCJpYXQiOjE3Njg3MTMyMjAsImV4cCI6MTc2OTMxODAyMH0.C9nj1YF68FaHnTsWXAq4bMSIuliHGB2E6QAsMBkk47z91gZ87cTv5CpTSka9_Y0Yh-e5GX8ECjalOu2otkuyEQ",
+        "type": "Bearer"
+    },
+    "isSuccess": true,
+    "timestamp": "2026-01-18T05:13:40.689986284Z"
+}

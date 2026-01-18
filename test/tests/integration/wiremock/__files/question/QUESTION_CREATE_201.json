@@ -1,0 +1,12 @@
+{
+    "status": 201,
+    "message": "Question created successfully",
+    "data": {
+        "id": "7f000101-9bcf-15b7-819b-cf85f1bf0015",
+        "text": "What is the capital of Japan?",
+        "type": "FILL_IN_THE_BLANK",
+        "metadata": "{\"accepted_answers\": [\"Tokyo\", \"tokyo\"]}"
+    },
+    "isSuccess": true,
+    "timestamp": "2026-01-18T05:13:40.546429733Z"
+}

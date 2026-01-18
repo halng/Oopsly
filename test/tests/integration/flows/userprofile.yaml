@@ -113,8 +113,8 @@ flows:
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           THEME: "dark"
-          LANGUAGE: ""
-          NOTIFICATIONS: ""
+          LANGUAGE: "en"
+          SPACE_CONFIG: {"AGAIN": "1", "HARD": "1", "GOOD": "2", "EASY": "5"}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -127,9 +127,9 @@ flows:
         api: USERSETTINGS_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          THEME: ""
+          THEME: "dark"
           LANGUAGE: "en"
-          NOTIFICATIONS: ""
+          SPACE_CONFIG: {"AGAIN": "1", "HARD": "1", "GOOD": "2", "EASY": "5"}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -138,13 +138,13 @@ flows:
             type: equals
             value: 200
       
-      - name: "3. Update User Settings - Notifications"
+      - name: "3. Update User Settings - Space Config"
         api: USERSETTINGS_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          THEME: ""
-          LANGUAGE: ""
-          NOTIFICATIONS: "enabled"
+          THEME: "dark"
+          LANGUAGE: "vi"
+          SPACE_CONFIG: {"AGAIN": "1", "HARD": "1", "GOOD": "5", "EASY": "5"}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -158,8 +158,8 @@ flows:
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           THEME: "light"
-          LANGUAGE: "es"
-          NOTIFICATIONS: "disabled"
+          LANGUAGE: "en"
+          SPACE_CONFIG: {"AGAIN": "1", "HARD": "1", "GOOD": "5", "EASY": "5"}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -167,6 +167,48 @@ flows:
           - path: $.status
             type: equals
             value: 200
+      - name: "5. Update Setting with invalid THEME"
+        api: USERSETTINGS_UPDATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          THEME: "unknown-theme"
+          LANGUAGE: "vi"
+          SPACE_CONFIG: {"AGAIN": "1", "HARD": "1", "GOOD": "5", "EASY": "5"}
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 400
+      - name: "5. Update Setting with invalid LANGUAGE"
+        api: USERSETTINGS_UPDATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          THEME: "dark"
+          LANGUAGE: "non-existent-lang"
+          SPACE_CONFIG: { "AGAIN": "1", "HARD": "1", "GOOD": "5", "EASY": "5" }
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 400
+      - name: "5. Update Setting with invalid SPACE_CONFIG"
+        api: USERSETTINGS_UPDATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          THEME: "dark"
+          LANGUAGE: "non-existent-lang"
+          SPACE_CONFIG: { "AGAIN": "-1", "HARD": "1", "GOOD": "5", "EASY": "5" }
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 400
 
   - flow: User Profile Edge Cases
     description: "Test edge cases for user profile operations"
@@ -176,12 +218,8 @@ flows:
         with:
           AUTH_TOKEN: ""
         assertions:
-          - path: $.isSuccess
-            type: equals
-            value: false
-          - path: $.status
-            type: equals
-            value: 401
+          - type: status-code
+            value: 403
       
       - name: "2. Update Profile Without Authentication"
         api: USERPROFILE_UPDATE
@@ -191,24 +229,16 @@ flows:
           BIO: "Should not work"
           AVATAR_URL: ""
         assertions:
-          - path: $.isSuccess
-            type: equals
-            value: false
-          - path: $.status
-            type: equals
-            value: 401
+          - type: status-code
+            value: 403
       
       - name: "3. Get Profile With Invalid Token"
         api: USERPROFILE_GET
         with:
           AUTH_TOKEN: "invalid-token-12345"
         assertions:
-          - path: $.isSuccess
-            type: equals
-            value: false
-          - path: $.status
-            type: equals
-            value: 401
+          - type: status-code
+            value: 403
 
   - flow: Profile and Settings Integration
     description: "Test combined profile and settings operations"
@@ -216,7 +246,7 @@ flows:
       - name: Generate OTP
         api: GENERATE_OTP
         with:
-          EMAIL: integration@oopsly.com
+          EMAIL: test@oopsly.com
         assertions:
           - path: $.status
             type: equals
@@ -224,7 +254,7 @@ flows:
       - name: Verify OTP and Obtain Tokens
         api: VERIFY_OTP
         with:
-          EMAIL: integration@oopsly.com
+          EMAIL: test@oopsly.com
           OTP_CODE: "000000"
         assertions:
           - path: $.data.access_token
@@ -265,7 +295,7 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           THEME: "dark"
           LANGUAGE: "en"
-          NOTIFICATIONS: "enabled"
+          SPACE_CONFIG: {"AGAIN": "1", "HARD": "1", "GOOD": "5", "EASY": "5"}
         assertions:
           - path: $.isSuccess
             type: equals

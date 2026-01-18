@@ -57,7 +57,7 @@ public class DeckController {
     @ApiResponses(
             value = {
                 @ApiResponse(
-                        responseCode = "200",
+                        responseCode = "201",
                         description = "Deck created successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(responseCode = "400", description = "Invalid request body"),

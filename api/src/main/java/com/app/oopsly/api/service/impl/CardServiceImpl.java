@@ -30,7 +30,6 @@ import com.app.oopsly.api.service.CardService;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.util.StringUtils;
 import com.app.oopsly.api.viewmodel.*;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -54,7 +53,7 @@ public class CardServiceImpl implements CardService {
     private final UserService userService;
 
     @Override
-    @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "createFallback")
+    //    @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID deckId, UUID collectionId, CardReq request) {
         log.info(
                 "Creating {} cards for collection: {} in deck: {}",
@@ -76,11 +75,11 @@ public class CardServiceImpl implements CardService {
         List<CardRes> responseCards =
                 savedCards.stream().map(this::toCardRes).collect(Collectors.toList());
 
-        return ApiRes.success("Created successfully", responseCards);
+        return ApiRes.created("Created successfully", responseCards);
     }
 
     @Override
-    @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "deleteFallback")
+    //    @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID deckId, UUID collectionId, UUID cardId) {
         log.info("Deleting card: {} from collection: {} in deck: {}", cardId, collectionId, deckId);
         CollectionEntity collection = getCollectionForCurrentUser(deckId, collectionId);
@@ -92,11 +91,11 @@ public class CardServiceImpl implements CardService {
         existingCard.setDeleted(true);
         cardRepository.save(existingCard);
         log.info("Successfully deleted card: {}", cardId);
-        return ApiRes.success("Deleted successfully");
+        return ApiRes.ok("Deleted successfully");
     }
 
     @Override
-    @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
+    //    @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID deckId, UUID collectionId, UUID cardId) {
         log.info("Getting card: {} from collection: {} in deck: {}", cardId, collectionId, deckId);
         CollectionEntity collection = getCollectionForCurrentUser(deckId, collectionId);
@@ -106,13 +105,13 @@ public class CardServiceImpl implements CardService {
                         .orElseThrow(
                                 () -> new NotFoundException("Card not found with id: " + cardId));
         log.info("Successfully retrieved card: {}", cardId);
-        return ApiRes.success("Fetched successfully", toCardRes(card));
+        return ApiRes.ok("Fetched successfully", toCardRes(card));
     }
 
     @Override
-    @CircuitBreaker(
-            name = "cardServiceCircuitBreaker",
-            fallbackMethod = "getAllCardsByCollectionFallback")
+    //    @CircuitBreaker(
+    //            name = "cardServiceCircuitBreaker",
+    //            fallbackMethod = "getAllCardsByCollectionFallback")
     public ApiRes getAllCardsByCollection(UUID deckId, UUID collectionId, int page, int size) {
         log.info(
                 "Getting all cards for collection: {} in deck: {} with page: {} and size: {}",
@@ -138,7 +137,7 @@ public class CardServiceImpl implements CardService {
                 cards.size(),
                 collectionId,
                 pageData.getTotalElements());
-        return ApiRes.success("Fetched successfully", pagingRes);
+        return ApiRes.ok("Fetched successfully", pagingRes);
     }
 
     @Override
@@ -153,7 +152,7 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "updateCardFallback")
+    //    @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "updateCardFallback")
     public ApiRes updateCard(UUID deckId, UUID collectionId, UUID cardId, CardItemReq item) {
         CollectionEntity collection = getCollectionForCurrentUser(deckId, collectionId);
         CardEntity existingCard =
@@ -166,11 +165,12 @@ public class CardServiceImpl implements CardService {
         existingCard.setBack(item.back());
         cardRepository.save(existingCard);
         log.info("Successfully updated card: {}", cardId);
-        return ApiRes.success("Updated successfully", toCardRes(existingCard));
+        return ApiRes.ok("Updated successfully", toCardRes(existingCard));
     }
 
     @Override
-    @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "updateDifficultyFallback")
+    //    @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod =
+    // "updateDifficultyFallback")
     public ApiRes updateDifficulty(
             UUID deckId, UUID collectionId, List<UpdateDifficultyReq> reqList) {
         log.info(
@@ -189,7 +189,7 @@ public class CardServiceImpl implements CardService {
                         .collect(Collectors.toList());
         cardRepository.saveAll(updatedList);
         log.info("Successfully updated difficulty for all cards in collection: {}", collectionId);
-        return ApiRes.success("Updated successfully");
+        return ApiRes.ok("Updated successfully");
     }
 
     private CardEntity updateSingleCardDifficulty(

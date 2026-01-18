@@ -1,0 +1,7 @@
+{
+    "status": 400,
+    "message": "Bad request. Please check your input and try again.",
+    "data": null,
+    "isSuccess": false,
+    "timestamp": "2026-01-18T05:13:38.020625075Z"
+}

@@ -1,0 +1,12 @@
+{
+    "status": 201,
+    "message": "Created successfully",
+    "data": {
+        "id": "7f000101-9bcf-15b7-819b-cf85f2750016",
+        "name": "Integration Test Deck",
+        "description": "This deck is created during integration testing.",
+        "cards": []
+    },
+    "isSuccess": true,
+    "timestamp": "2026-01-18T05:13:40.729501379Z"
+}

@@ -49,7 +49,7 @@ class QuestionControllerTest {
         questionReq = new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
         testSuiteId = UUID.randomUUID();
         questionId = UUID.randomUUID();
-        expectedResponse = ApiRes.success("Success");
+        expectedResponse = ApiRes.ok("Success");
     }
 
     @Test

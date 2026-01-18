@@ -1,0 +1,7 @@
+{
+    "status": 404,
+    "message": "OTP has expired. Please request a new one.",
+    "data": null,
+    "isSuccess": false,
+    "timestamp": "2026-01-18T05:13:39.146545550Z"
+}

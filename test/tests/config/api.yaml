@@ -180,6 +180,7 @@ configs:
         cards:
           value: $CARDS_ARRAY
           constraints:
+            type: array
             nullable: false
     - name: CARD_GET_ALL_BY_COLLECTION
       method: GET
@@ -202,18 +203,14 @@ configs:
         Authorization: "Bearer $AUTH_TOKEN"
         Content-Type: "application/json"
       body:
-        question:
+        front:
           value: $CARD_QUESTION
           constraints:
             nullable: false
-        answer:
+        back:
           value: $CARD_ANSWER
           constraints:
             nullable: false
-        hint:
-          value: $CARD_HINT
-          constraints:
-            nullable: true
     - name: CARD_GET_BY_ID
       method: GET
       endpoint: /decks/$DECK_ID/collections/$COLLECTION_ID/cards/$CARD_ID
@@ -244,14 +241,14 @@ configs:
         Authorization: "Bearer $AUTH_TOKEN"
         Content-Type: "application/json"
       body:
-        name:
+        title:
           value: $TESTSUITE_NAME
           constraints:
             nullable: false
-        description:
-          value: $TESTSUITE_DESCRIPTION
+        isActive:
+          value: $TESTSUITE_IS_ACTIVE
           constraints:
-            nullable: true
+            nullable: false
     - name: TESTSUITE_UPDATE
       method: PUT
       endpoint: /decks/$DECK_ID/test-suites/$TESTSUITE_ID
@@ -259,14 +256,14 @@ configs:
         Authorization: "Bearer $AUTH_TOKEN"
         Content-Type: "application/json"
       body:
-        name:
+        title:
           value: $TESTSUITE_NAME
           constraints:
             nullable: false
-        description:
-          value: $TESTSUITE_DESCRIPTION
+        isActive:
+          value: $TESTSUITE_IS_ACTIVE
           constraints:
-            nullable: true
+            nullable: false
     - name: TESTSUITE_GET_BY_ID
       method: GET
       endpoint: /decks/$DECK_ID/test-suites/$TESTSUITE_ID
@@ -291,7 +288,7 @@ configs:
         Authorization: "Bearer $AUTH_TOKEN"
         Content-Type: "application/json"
       body:
-        question:
+        text:
           value: $QUESTION_TEXT
           constraints:
             nullable: false
@@ -302,7 +299,8 @@ configs:
         metadata:
           value: $QUESTION_METADATA
           constraints:
-            nullable: true
+            type: string-json
+            nullable: false
     - name: QUESTION_UPDATE
       method: PUT
       endpoint: /test-suites/$TESTSUITE_ID/questions/$QUESTION_ID
@@ -310,7 +308,7 @@ configs:
         Authorization: "Bearer $AUTH_TOKEN"
         Content-Type: "application/json"
       body:
-        question:
+        text:
           value: $QUESTION_TEXT
           constraints:
             nullable: false
@@ -321,7 +319,8 @@ configs:
         metadata:
           value: $QUESTION_METADATA
           constraints:
-            nullable: true
+            type: string-json
+            nullable: false
     - name: QUESTION_GET_BY_ID
       method: GET
       endpoint: /test-suites/$TESTSUITE_ID/questions/$QUESTION_ID
@@ -345,16 +344,12 @@ configs:
       headers:
         Content-Type: "application/json"
       body:
-        refreshToken:
+        refresh_token:
           value: $REFRESH_TOKEN
           constraints:
             nullable: false
-        userEmail:
+        user_email:
           value: $USER_EMAIL
-          constraints:
-            nullable: false
-        userId:
-          value: $USER_ID
           constraints:
             nullable: false
     - name: USER_LOGOUT
@@ -403,7 +398,8 @@ configs:
           value: $LANGUAGE
           constraints:
             nullable: true
-        notifications:
-          value: $NOTIFICATIONS
+        spaceConfig:
+          value: $SPACE_CONFIG
           constraints:
+            type: object
             nullable: true

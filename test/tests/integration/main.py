@@ -214,6 +214,7 @@ def get_api_definitions() -> (Dict[str, str], Dict[str, any]):
 def main() -> None:
     """Main entry point for running integration tests."""
     skip_docker = os.getenv("SKIP_DOCKER_SETUP", "false").lower() == "true"
+    record_response = os.getenv("RECORD_API_RESPONSE", "false").lower() == "true"
 
     try:
         if skip_docker:
@@ -230,6 +231,9 @@ def main() -> None:
 
         logger.info("🧪 Environment Ready. Initializing Test Runner...")
         env, apis = get_api_definitions()
+        if record_response:
+            logger.info("📸 Recording mode enabled: API responses will be saved.")
+            env["record_response"] = True
         result = runner.run(env, apis)
 
         if not result:

@@ -1,0 +1,13 @@
+{
+    "status": 200,
+    "message": "Test suites fetched successfully",
+    "data": [
+        {
+            "id": "7f000101-9bcf-15b7-819b-cf85e85a0007",
+            "title": "Updated Test Suite",
+            "isActive": true
+        }
+    ],
+    "isSuccess": true,
+    "timestamp": "2026-01-18T05:13:38.273339581Z"
+}

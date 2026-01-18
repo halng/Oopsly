@@ -1,0 +1,22 @@
+{
+    "status": 200,
+    "message": "Fetched successfully",
+    "data": {
+        "entities": [
+            {
+                "id": "7f000101-9bcf-15b7-819b-cf85e5f10003",
+                "front": "What is the capital of France?",
+                "back": "Paris",
+                "difficultyLevel": null,
+                "nextPracticeTime": "2026-01-18T05:13:37.520395Z",
+                "numberOfPractice": 0
+            }
+        ],
+        "currentPage": 0,
+        "totalItems": 1,
+        "totalPages": 1,
+        "hasNextPage": false
+    },
+    "isSuccess": true,
+    "timestamp": "2026-01-18T05:13:37.585615430Z"
+}
