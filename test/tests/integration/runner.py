@@ -137,9 +137,16 @@ def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
                 if isinstance(field_def, dict) and "value" in field_def:
                     body[key] = _substitute_variables(field_def["value"])
                     constraints = field_def.get("constraints")
-                    if "type" in constraints and constraints.get("type") == "array" or constraints.get("type") == "object":
+                    if (
+                        "type" in constraints
+                        and constraints.get("type") == "array"
+                        or constraints.get("type") == "object"
+                    ):
                         body[key] = ast.literal_eval(body[key])
-                    if "type" in constraints and constraints.get("type") == "string-json":
+                    if (
+                        "type" in constraints
+                        and constraints.get("type") == "string-json"
+                    ):
                         body[key] = json.dumps(ast.literal_eval(body[key]))
                 else:
                     body[key] = _substitute_variables(field_def)
@@ -335,6 +342,7 @@ def list_all_flow(directory_path):
     files = [entry for entry in p.iterdir() if entry.is_file()]
     return files
 
+
 def record_response(response: requests.Response, api_name: str):
     """
     Record the API response to a file if RECORD_RESPONSE is enabled.
@@ -347,7 +355,7 @@ def record_response(response: requests.Response, api_name: str):
     file_path = os.path.join(output_dir, f"{api_name}_{response.status_code}.json")
 
     try:
-        with open(file_path, "w", encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(response.json(), f, ensure_ascii=False, indent=4)
         logger.info(f"      💾 Recorded response to {file_path}")
     except IOError as e:

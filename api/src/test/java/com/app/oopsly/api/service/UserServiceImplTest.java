@@ -329,15 +329,23 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getProfile_throwsException_whenSettingsNotFound() {
+    void getProfile_returnsUserProfile_whenSettingsNotFound() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(settingRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
-        ValidationException exception =
-                assertThrows(ValidationException.class, () -> userService.getProfile());
-        assertTrue(exception.getMessage().contains("User settings not found"));
+        ApiRes result = userService.getProfile();
+
+        assertNotNull(result);
+        assertNotNull(result.getBody());
+        assertTrue(result.getBody().isSuccess());
+        UserProfileRes profile = (UserProfileRes) result.getBody().data();
+        assertEquals("Test User", profile.displayName());
+        assertEquals("Test Bio", profile.bio());
+        assertEquals(25, profile.age());
+        assertNull(profile.settings());
+        verify(settingRepository).findByUserId(userId);
     }
 
     @Test

@@ -75,12 +75,12 @@ class QuestionServiceImplTest {
     void create_savesNewQuestion_withMultipleChoice() {
         String metadata = "{\"options\":[\"A\",\"B\",\"C\"],\"correct_indices\":[0,2]}";
         QuestionReq questionReq =
-                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE.name(), metadata);
 
         QuestionEntity savedQuestion = new QuestionEntity();
         savedQuestion.setId(questionId);
         savedQuestion.setText(questionReq.text());
-        savedQuestion.setType(questionReq.type());
+        savedQuestion.setType(QuestionType.fromString(questionReq.type()));
         savedQuestion.setMetadata(questionReq.metadata());
         savedQuestion.setTestSuite(testSuite);
 
@@ -97,12 +97,12 @@ class QuestionServiceImplTest {
     void create_savesNewQuestion_withTrueFalse() {
         String metadata = "{\"correct_value\":true}";
         QuestionReq questionReq =
-                new QuestionReq("Is the sky blue?", QuestionType.TRUE_FALSE, metadata);
+                new QuestionReq("Is the sky blue?", QuestionType.TRUE_FALSE.name(), metadata);
 
         QuestionEntity savedQuestion = new QuestionEntity();
         savedQuestion.setId(questionId);
         savedQuestion.setText(questionReq.text());
-        savedQuestion.setType(questionReq.type());
+        savedQuestion.setType(QuestionType.fromString(questionReq.type()));
         savedQuestion.setMetadata(questionReq.metadata());
         savedQuestion.setTestSuite(testSuite);
 
@@ -121,13 +121,13 @@ class QuestionServiceImplTest {
         QuestionReq questionReq =
                 new QuestionReq(
                         "What is the process by which plants make food?",
-                        QuestionType.FILL_IN_THE_BLANK,
+                        QuestionType.FILL_IN_THE_BLANK.name(),
                         metadata);
 
         QuestionEntity savedQuestion = new QuestionEntity();
         savedQuestion.setId(questionId);
         savedQuestion.setText(questionReq.text());
-        savedQuestion.setType(questionReq.type());
+        savedQuestion.setType(QuestionType.fromString(questionReq.type()));
         savedQuestion.setMetadata(questionReq.metadata());
         savedQuestion.setTestSuite(testSuite);
 
@@ -144,7 +144,7 @@ class QuestionServiceImplTest {
     void create_throwsValidationException_whenMultipleChoiceHasNoOptions() {
         String metadata = "{\"correct_indices\":[0,2]}";
         QuestionReq questionReq =
-                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE.name(), metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
 
@@ -157,7 +157,7 @@ class QuestionServiceImplTest {
     void create_throwsValidationException_whenTrueFalseHasNoCorrectValue() {
         String metadata = "{\"something\":\"else\"}";
         QuestionReq questionReq =
-                new QuestionReq("Is the sky blue?", QuestionType.TRUE_FALSE, metadata);
+                new QuestionReq("Is the sky blue?", QuestionType.TRUE_FALSE.name(), metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
 
@@ -170,7 +170,8 @@ class QuestionServiceImplTest {
     void create_throwsValidationException_whenFillBlankHasNoAcceptedAnswers() {
         String metadata = "{\"something\":\"else\"}";
         QuestionReq questionReq =
-                new QuestionReq("Fill in the blank", QuestionType.FILL_IN_THE_BLANK, metadata);
+                new QuestionReq(
+                        "Fill in the blank", QuestionType.FILL_IN_THE_BLANK.name(), metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
 
@@ -183,7 +184,8 @@ class QuestionServiceImplTest {
     void create_throwsValidationException_whenFillBlankHasEmptyAcceptedAnswers() {
         String metadata = "{\"accepted_answers\":[]}";
         QuestionReq questionReq =
-                new QuestionReq("Fill in the blank", QuestionType.FILL_IN_THE_BLANK, metadata);
+                new QuestionReq(
+                        "Fill in the blank", QuestionType.FILL_IN_THE_BLANK.name(), metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
 
@@ -196,7 +198,7 @@ class QuestionServiceImplTest {
     void create_throwsValidationException_whenMetadataIsInvalidJson() {
         String metadata = "invalid json";
         QuestionReq questionReq =
-                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE.name(), metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
 
@@ -209,7 +211,7 @@ class QuestionServiceImplTest {
     void create_throwsNotFoundException_whenTestSuiteNotFound() {
         String metadata = "{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}";
         QuestionReq questionReq =
-                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE.name(), metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.empty());
 
@@ -222,7 +224,7 @@ class QuestionServiceImplTest {
     void update_updatesExistingQuestion() {
         String metadata = "{\"options\":[\"A\",\"B\",\"C\"],\"correct_indices\":[1]}";
         QuestionReq questionReq =
-                new QuestionReq("Updated question?", QuestionType.MULTIPLE_CHOICE, metadata);
+                new QuestionReq("Updated question?", QuestionType.MULTIPLE_CHOICE.name(), metadata);
 
         QuestionEntity existingQuestion = new QuestionEntity();
         existingQuestion.setId(questionId);
@@ -246,7 +248,7 @@ class QuestionServiceImplTest {
     void update_throwsNotFoundException_whenQuestionNotFound() {
         String metadata = "{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}";
         QuestionReq questionReq =
-                new QuestionReq("Updated question?", QuestionType.MULTIPLE_CHOICE, metadata);
+                new QuestionReq("Updated question?", QuestionType.MULTIPLE_CHOICE.name(), metadata);
 
         when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
         when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
@@ -344,7 +346,7 @@ class QuestionServiceImplTest {
         QuestionReq request =
                 new QuestionReq(
                         "Test Question",
-                        QuestionType.MULTIPLE_CHOICE,
+                        QuestionType.MULTIPLE_CHOICE.name(),
                         "{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}");
         RuntimeException exception = new RuntimeException("Database connection failed");
 
@@ -365,7 +367,9 @@ class QuestionServiceImplTest {
         UUID questionId = UUID.randomUUID();
         QuestionReq request =
                 new QuestionReq(
-                        "Updated Question", QuestionType.TRUE_FALSE, "{\"correct_value\":true}");
+                        "Updated Question",
+                        QuestionType.TRUE_FALSE.name(),
+                        "{\"correct_value\":true}");
         RuntimeException exception = new RuntimeException("Database connection failed");
 
         RetryLaterException thrown =

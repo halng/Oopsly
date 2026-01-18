@@ -46,7 +46,8 @@ class QuestionControllerTest {
     @BeforeEach
     void setUp() {
         String metadata = "{\"options\":[\"A\",\"B\",\"C\"],\"correct_indices\":[0,2]}";
-        questionReq = new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+        questionReq =
+                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE.name(), metadata);
         testSuiteId = UUID.randomUUID();
         questionId = UUID.randomUUID();
         expectedResponse = ApiRes.ok("Success");

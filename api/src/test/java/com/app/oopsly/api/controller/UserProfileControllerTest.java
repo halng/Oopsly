@@ -74,11 +74,21 @@ class UserProfileControllerTest {
     }
 
     @Test
-    void getProfile_throwsException_whenSettingsNotFound() {
+    void getProfile_returnProfileWithEmptySetting_whenSettingsNotFound() {
+        UserProfileRes profileWithEmptySettings =
+                new UserProfileRes("Test User", "Test Bio", 25, null);
         when(userService.getProfile())
-                .thenThrow(new ValidationException("User settings not found"));
+                .thenReturn(ApiRes.ok("Profile retrieved successfully", profileWithEmptySettings));
 
-        assertThrows(ValidationException.class, () -> userProfileController.getProfile());
+        ApiRes result = userProfileController.getProfile();
+        assertNotNull(result);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertTrue(result.getBody().isSuccess());
+        Object body = result.getBody().data();
+        assertInstanceOf(UserProfileRes.class, body);
+        UserProfileRes userProfileRes = (UserProfileRes) body;
+        assertNull(userProfileRes.settings());
         verify(userService, times(1)).getProfile();
     }
 

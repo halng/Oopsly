@@ -174,30 +174,6 @@ class ApiResTest {
     }
 
     @Test
-    void success_withMessage_returnsSuccessStatus() {
-        ApiRes result = ApiRes.success("Success");
-
-        assertNotNull(result);
-        assertEquals(200, result.getStatusCode().value());
-        assertNotNull(result.getBody());
-        assertEquals("Success", result.getBody().message());
-        assertTrue(result.getBody().isSuccess());
-    }
-
-    @Test
-    void success_withMessageAndData_returnsSuccessStatusWithData() {
-        Object data = "test data";
-        ApiRes result = ApiRes.success("Success", data);
-
-        assertNotNull(result);
-        assertEquals(200, result.getStatusCode().value());
-        assertNotNull(result.getBody());
-        assertEquals("Success", result.getBody().message());
-        assertEquals(data, result.getBody().data());
-        assertTrue(result.getBody().isSuccess());
-    }
-
-    @Test
     void rateLimitExceeded_returnsTooManyRequestsStatus() {
         ApiRes result = ApiRes.rateLimitExceeded("Rate limit exceeded");
 
