@@ -19,12 +19,12 @@ package com.app.oopsly.api.integration;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.app.oopsly.api.entity.CardEntity;
-import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.ShelveEntity;
+import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.repository.CardRepository;
-import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.repository.ShelveRepository;
+import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.service.SubjectService;
 import java.time.Instant;
@@ -117,8 +117,7 @@ class SubjectCascadeDeleteIntegrationTest {
         subjectService.delete(shelveId, subjectId);
 
         // Verify subject is soft deleted
-        Optional<SubjectEntity> subjectAfterDelete =
-                subjectRepository.findById(subjectId);
+        Optional<SubjectEntity> subjectAfterDelete = subjectRepository.findById(subjectId);
         assertTrue(subjectAfterDelete.isPresent());
         assertTrue(subjectAfterDelete.get().getDeleted());
 

@@ -22,14 +22,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.entity.CardEntity;
-import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.ShelveEntity;
+import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.ValidationException;
-import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.repository.ShelveRepository;
+import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.service.impl.SubjectServiceImpl;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.SubjectReq;
@@ -89,7 +89,8 @@ class SubjectServiceImplTest {
     @Test
     void create_savesSubject() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.save(any(SubjectEntity.class))).thenReturn(subject);
 
         ApiRes result = subjectService.create(shelveId, subjectReq);
@@ -104,8 +105,7 @@ class SubjectServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
 
-        assertThrows(
-                NotFoundException.class, () -> subjectService.create(shelveId, subjectReq));
+        assertThrows(NotFoundException.class, () -> subjectService.create(shelveId, subjectReq));
         verify(subjectRepository, never()).save(any(SubjectEntity.class));
     }
 
@@ -114,7 +114,8 @@ class SubjectServiceImplTest {
         SubjectReq updateReq = new SubjectReq("Updated Name", "Updated Description");
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
         when(subjectRepository.save(any(SubjectEntity.class))).thenReturn(subject);
@@ -165,7 +166,8 @@ class SubjectServiceImplTest {
         SubjectReq updateReq = new SubjectReq("Updated Name", "Updated Description");
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
         assertThrows(
@@ -186,7 +188,8 @@ class SubjectServiceImplTest {
         subject.setCards(cards);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
         when(subjectRepository.save(any(SubjectEntity.class))).thenReturn(subject);
@@ -213,7 +216,8 @@ class SubjectServiceImplTest {
     @Test
     void delete_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> subjectService.delete(shelveId, subjectId));
@@ -223,7 +227,8 @@ class SubjectServiceImplTest {
     @Test
     void getById_returnsSubject() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
 
@@ -239,19 +244,18 @@ class SubjectServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
 
-        assertThrows(
-                NotFoundException.class, () -> subjectService.getById(shelveId, subjectId));
+        assertThrows(NotFoundException.class, () -> subjectService.getById(shelveId, subjectId));
         verify(subjectRepository, never()).findByIdAndShelve(any(), any());
     }
 
     @Test
     void getById_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
-        assertThrows(
-                NotFoundException.class, () -> subjectService.getById(shelveId, subjectId));
+        assertThrows(NotFoundException.class, () -> subjectService.getById(shelveId, subjectId));
     }
 
     @Test
@@ -268,7 +272,8 @@ class SubjectServiceImplTest {
 
         Page<SubjectEntity> page = new PageImpl<>(collections, PageRequest.of(0, 10), 3);
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findAllByShelve(eq(shelve), any(Pageable.class))).thenReturn(page);
 
         ApiRes result = subjectService.getAllByShelve(shelveId, 0, 10);
@@ -310,9 +315,7 @@ class SubjectServiceImplTest {
         RetryLaterException exception =
                 assertThrows(
                         RetryLaterException.class,
-                        () ->
-                                subjectService.updateFallback(
-                                        shelveId, subjectId, request, cause));
+                        () -> subjectService.updateFallback(shelveId, subjectId, request, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));

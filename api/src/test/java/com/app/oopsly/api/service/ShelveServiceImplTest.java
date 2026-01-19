@@ -285,7 +285,8 @@ class ShelveServiceImplTest {
 
         RetryLaterException exception =
                 assertThrows(
-                        RetryLaterException.class, () -> shelveService.deleteFallback(shelveId, cause));
+                        RetryLaterException.class,
+                        () -> shelveService.deleteFallback(shelveId, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -312,7 +313,8 @@ class ShelveServiceImplTest {
 
         RetryLaterException exception =
                 assertThrows(
-                        RetryLaterException.class, () -> shelveService.getAllFallback(0, 10, cause));
+                        RetryLaterException.class,
+                        () -> shelveService.getAllFallback(0, 10, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -347,7 +349,8 @@ class ShelveServiceImplTest {
                                         new ShelveReq("Test", "Desc"), shelveId, cause));
         RetryLaterException deleteEx =
                 assertThrows(
-                        RetryLaterException.class, () -> shelveService.deleteFallback(shelveId, cause));
+                        RetryLaterException.class,
+                        () -> shelveService.deleteFallback(shelveId, cause));
 
         assertTrue(createEx.getMessage().contains("try again later"));
         assertTrue(updateEx.getMessage().contains("try again later"));

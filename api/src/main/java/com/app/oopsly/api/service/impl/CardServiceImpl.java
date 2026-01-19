@@ -17,15 +17,15 @@
 package com.app.oopsly.api.service.impl;
 
 import com.app.oopsly.api.entity.CardEntity;
-import com.app.oopsly.api.entity.SubjectEntity;
-import com.app.oopsly.api.entity.ShelveEntity;
 import com.app.oopsly.api.entity.DifficultyLevel;
+import com.app.oopsly.api.entity.ShelveEntity;
+import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.repository.CardRepository;
-import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.repository.ShelveRepository;
+import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.service.CardService;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.util.StringUtils;
@@ -69,10 +69,7 @@ public class CardServiceImpl implements CardService {
                         .collect(Collectors.toList());
 
         List<CardEntity> savedCards = cardRepository.saveAllAndFlush(cards);
-        log.info(
-                "Successfully created {} cards for subject: {}",
-                savedCards.size(),
-                subjectId);
+        log.info("Successfully created {} cards for subject: {}", savedCards.size(), subjectId);
         List<CardRes> responseCards =
                 savedCards.stream().map(this::toCardRes).collect(Collectors.toList());
 
@@ -235,9 +232,7 @@ public class CardServiceImpl implements CardService {
         return subjectRepository
                 .findByIdAndShelve(subjectId, shelve)
                 .orElseThrow(
-                        () ->
-                                new NotFoundException(
-                                        "Subject not found with id: " + subjectId));
+                        () -> new NotFoundException("Subject not found with id: " + subjectId));
     }
 
     private ShelveEntity getShelveForCurrentUser(UUID shelveId) {

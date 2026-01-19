@@ -16,21 +16,21 @@
 
 package com.app.oopsly.api.service.impl;
 
-import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.ShelveEntity;
+import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.ValidationException;
-import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.repository.ShelveRepository;
+import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.service.SubjectService;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.util.StringUtils;
 import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.PagingRes;
 import com.app.oopsly.api.viewmodel.SubjectReq;
 import com.app.oopsly.api.viewmodel.SubjectRes;
-import com.app.oopsly.api.viewmodel.PagingRes;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -152,9 +152,7 @@ public class SubjectServiceImpl implements SubjectService {
         Pageable pageable = PageRequest.of(page, size);
         Page<SubjectEntity> pageData = subjectRepository.findAllByShelve(shelve, pageable);
         List<SubjectRes> subjects =
-                pageData.getContent().stream()
-                        .map(this::toSubjectRes)
-                        .collect(Collectors.toList());
+                pageData.getContent().stream().map(this::toSubjectRes).collect(Collectors.toList());
 
         PagingRes<SubjectRes> pagingRes =
                 new PagingRes<>(
@@ -210,8 +208,7 @@ public class SubjectServiceImpl implements SubjectService {
     }
 
     // Fallback method for update
-    public ApiRes updateFallback(
-            UUID shelveId, UUID subjectId, SubjectReq request, Throwable t) {
+    public ApiRes updateFallback(UUID shelveId, UUID subjectId, SubjectReq request, Throwable t) {
         log.error("Subject service unavailable during update: {}", t.getMessage());
         throw new RetryLaterException(
                 "Subject service is currently unavailable. Please try again later.", t);

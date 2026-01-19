@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.*;
         name = "Test Suite",
         description =
                 "Test Suite management APIs for creating, updating, retrieving and deleting test"
-                        + " suites within decks")
+                        + " suites within shelves")
 public class TestSuiteController {
     private final TestSuiteService service;
 
@@ -46,7 +46,7 @@ public class TestSuiteController {
 
     @Operation(
             summary = "Create test suite",
-            description = "Creates a new test suite within a specific deck")
+            description = "Creates a new test suite within a specific shelve")
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -54,13 +54,13 @@ public class TestSuiteController {
                         description = "Test suite created successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(responseCode = "400", description = "Invalid request body"),
-                @ApiResponse(responseCode = "404", description = "Deck not found"),
+                @ApiResponse(responseCode = "404", description = "Shelve not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("")
     ApiRes create(
             @Parameter(
-                            description = "Deck ID",
+                            description = "Shelve ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
@@ -73,7 +73,7 @@ public class TestSuiteController {
 
     @Operation(
             summary = "Update test suite",
-            description = "Updates an existing test suite in a specific deck")
+            description = "Updates an existing test suite in a specific shelve")
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -81,13 +81,13 @@ public class TestSuiteController {
                         description = "Test suite updated successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(responseCode = "400", description = "Invalid request body"),
-                @ApiResponse(responseCode = "404", description = "Test suite or deck not found"),
+                @ApiResponse(responseCode = "404", description = "Test suite or shelve not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PutMapping("/{id}")
     ApiRes update(
             @Parameter(
-                            description = "Deck ID",
+                            description = "Shelve ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
@@ -106,20 +106,20 @@ public class TestSuiteController {
 
     @Operation(
             summary = "Get test suite by ID",
-            description = "Retrieves a specific test suite from a deck by its ID")
+            description = "Retrieves a specific test suite from a shelve by its ID")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
                         description = "Test suite retrieved successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(responseCode = "404", description = "Test suite or deck not found"),
+                @ApiResponse(responseCode = "404", description = "Test suite or shelve not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/{id}")
     ApiRes getById(
             @Parameter(
-                            description = "Deck ID",
+                            description = "Shelve ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
@@ -135,20 +135,20 @@ public class TestSuiteController {
 
     @Operation(
             summary = "Delete test suite",
-            description = "Soft deletes a test suite and all its questions from a specific deck")
+            description = "Soft deletes a test suite and all its questions from a specific shelve")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
                         description = "Test suite deleted successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(responseCode = "404", description = "Test suite or deck not found"),
+                @ApiResponse(responseCode = "404", description = "Test suite or shelve not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @DeleteMapping("/{id}")
     ApiRes deleteById(
             @Parameter(
-                            description = "Deck ID",
+                            description = "Shelve ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
@@ -163,21 +163,21 @@ public class TestSuiteController {
     }
 
     @Operation(
-            summary = "Get all test suites by deck",
-            description = "Retrieves a list of all test suites for a specific deck")
+            summary = "Get all test suites by shelve",
+            description = "Retrieves a list of all test suites for a specific shelve")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
                         description = "Test suites retrieved successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(responseCode = "404", description = "Deck not found"),
+                @ApiResponse(responseCode = "404", description = "Shelve not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("")
     ApiRes getAllByShelve(
             @Parameter(
-                            description = "Deck ID",
+                            description = "Shelve ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable

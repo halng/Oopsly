@@ -23,15 +23,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.entity.CardEntity;
-import com.app.oopsly.api.entity.SubjectEntity;
-import com.app.oopsly.api.entity.ShelveEntity;
 import com.app.oopsly.api.entity.DifficultyLevel;
+import com.app.oopsly.api.entity.ShelveEntity;
+import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.repository.CardRepository;
-import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.repository.ShelveRepository;
+import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.service.impl.CardServiceImpl;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CardItemReq;
@@ -112,7 +112,8 @@ class CardServiceImplTest {
         }
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
         when(cardRepository.saveAllAndFlush(anyList())).thenReturn(savedCards);
@@ -138,7 +139,8 @@ class CardServiceImplTest {
     @Test
     void create_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
         assertThrows(
@@ -156,7 +158,8 @@ class CardServiceImplTest {
         existingCard.setSubject(subject);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
         when(cardRepository.findByIdAndSubject(cardId, subject))
@@ -193,7 +196,8 @@ class CardServiceImplTest {
         updateDifficultyReq = List.of(new UpdateDifficultyReq(cardId, DifficultyLevel.EASY.name()));
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
         assertThrows(
@@ -208,7 +212,8 @@ class CardServiceImplTest {
         updateDifficultyReq = List.of(new UpdateDifficultyReq(cardId, DifficultyLevel.HARD.name()));
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
         when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.empty());
@@ -227,7 +232,8 @@ class CardServiceImplTest {
         existingCard.setSubject(subject);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
         when(cardRepository.findByIdAndSubject(cardId, subject))
@@ -254,7 +260,8 @@ class CardServiceImplTest {
     @Test
     void delete_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
         assertThrows(
@@ -265,7 +272,8 @@ class CardServiceImplTest {
     @Test
     void delete_throwsNotFoundException_whenCardNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
         when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.empty());
@@ -281,7 +289,8 @@ class CardServiceImplTest {
         existingCard.setSubject(subject);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
         when(cardRepository.findByIdAndSubject(cardId, subject))
@@ -308,7 +317,8 @@ class CardServiceImplTest {
     @Test
     void getById_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
         assertThrows(
@@ -319,7 +329,8 @@ class CardServiceImplTest {
     @Test
     void getById_throwsNotFoundException_whenCardNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
         when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.empty());
@@ -342,11 +353,11 @@ class CardServiceImplTest {
 
         Page<CardEntity> page = new PageImpl<>(cards, PageRequest.of(0, 10), 3);
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
-        when(cardRepository.findAllBySubject(eq(subject), any(Pageable.class)))
-                .thenReturn(page);
+        when(cardRepository.findAllBySubject(eq(subject), any(Pageable.class))).thenReturn(page);
 
         ApiRes result = cardService.getAllCardsBySubject(shelveId, subjectId, 0, 10);
 
@@ -370,7 +381,8 @@ class CardServiceImplTest {
     @Test
     void getAll_CardsByCollection_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
         assertThrows(
@@ -429,7 +441,8 @@ class CardServiceImplTest {
             existingCard.setSubject(subject);
 
             when(userService.getCurrentUser()).thenReturn(currentUser);
-            when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+            when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                    .thenReturn(Optional.of(shelve));
             when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                     .thenReturn(Optional.of(subject));
             when(cardRepository.findByIdAndSubject(cardId, subject))

@@ -82,7 +82,8 @@ class TestSuiteServiceImplTest {
         savedTestSuite.setShelve(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(savedTestSuite);
 
         ApiRes result = testSuiteService.create(shelveId, testSuiteReq);
@@ -96,7 +97,8 @@ class TestSuiteServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> testSuiteService.create(shelveId, testSuiteReq));
+        assertThrows(
+                NotFoundException.class, () -> testSuiteService.create(shelveId, testSuiteReq));
         verify(testSuiteRepository, never()).save(any(TestSuiteEntity.class));
     }
 
@@ -109,7 +111,8 @@ class TestSuiteServiceImplTest {
         existingTestSuite.setShelve(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.of(existingTestSuite));
         when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(existingTestSuite);
@@ -123,8 +126,10 @@ class TestSuiteServiceImplTest {
     @Test
     void update_throwsNotFoundException_whenTestSuiteNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
-        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
+                .thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
@@ -140,7 +145,8 @@ class TestSuiteServiceImplTest {
         existingTestSuite.setShelve(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.of(existingTestSuite));
         when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(existingTestSuite);
@@ -155,8 +161,10 @@ class TestSuiteServiceImplTest {
     @Test
     void delete_throwsNotFoundException_whenTestSuiteNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
-        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
+                .thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> testSuiteService.delete(shelveId, testSuiteId));
     }
@@ -170,7 +178,8 @@ class TestSuiteServiceImplTest {
         testSuite.setShelve(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.of(testSuite));
 
@@ -183,10 +192,13 @@ class TestSuiteServiceImplTest {
     @Test
     void getById_throwsNotFoundException_whenTestSuiteNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
-        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
+                .thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> testSuiteService.getById(shelveId, testSuiteId));
+        assertThrows(
+                NotFoundException.class, () -> testSuiteService.getById(shelveId, testSuiteId));
     }
 
     @Test
@@ -202,7 +214,8 @@ class TestSuiteServiceImplTest {
         }
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findAllByShelve(shelve)).thenReturn(testSuites);
 
         ApiRes result = testSuiteService.getAllByShelve(shelveId);
@@ -221,7 +234,8 @@ class TestSuiteServiceImplTest {
         savedTestSuite.setShelve(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(savedTestSuite);
 
         ApiRes result = testSuiteService.create(shelveId, reqWithNullIsActive);

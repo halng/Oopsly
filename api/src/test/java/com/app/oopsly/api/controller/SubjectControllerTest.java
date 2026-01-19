@@ -86,8 +86,7 @@ class SubjectControllerTest {
 
     @Test
     void update_delegatesToSubjectService() {
-        when(subjectService.update(shelveId, subjectId, subjectReq))
-                .thenReturn(expectedResponse);
+        when(subjectService.update(shelveId, subjectId, subjectReq)).thenReturn(expectedResponse);
 
         ApiRes result = subjectController.update(shelveId, subjectId, subjectReq);
 
