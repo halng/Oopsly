@@ -126,7 +126,7 @@ export default function DeckManagementScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 bg-gray-50 items-center justify-center">
-        <ActivityIndicator size="large" color="#6366F1" />
+        <ActivityIndicator size="large" color="#6366F1" testID="activity-indicator" />
         <Text className="text-gray-600 mt-4">Loading deck...</Text>
       </View>
     );
@@ -164,12 +164,14 @@ export default function DeckManagementScreen() {
               <TouchableOpacity
                 className="p-2 mr-2 bg-gray-200 rounded-full"
                 onPress={handleCancel}
+                testID="cancel-button"
               >
                 <X size={20} color="#6B7280" />
               </TouchableOpacity>
               <TouchableOpacity
                 className="p-2 bg-indigo-600 rounded-full"
                 onPress={handleSave}
+                testID="save-button"
               >
                 <Save size={20} color="white" />
               </TouchableOpacity>
@@ -178,6 +180,7 @@ export default function DeckManagementScreen() {
             <TouchableOpacity
               className="p-2 bg-indigo-600 rounded-full"
               onPress={handleEdit}
+              testID="edit-button"
             >
               <Edit3 size={20} color="white" />
             </TouchableOpacity>
