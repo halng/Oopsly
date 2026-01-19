@@ -14,4 +14,16 @@
  *    limitations under the License.
  */
 
-export { apiClient, IPathConfig } from '../config/axiosClient';
+export interface ApiResponse<T = unknown> {
+  status: number;
+  message: string;
+  data: T;
+  isSuccess: boolean;
+  timestamp: string;
+}
+
+export interface ApiErrorResponse {
+  message?: string;
+  status?: number;
+  error?: string;
+}

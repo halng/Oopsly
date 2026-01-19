@@ -14,4 +14,38 @@
  *    limitations under the License.
  */
 
-export { apiClient, IPathConfig } from '../config/axiosClient';
+export interface Deck {
+  id: string;
+  name: string;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeckPaginatedResponse {
+  content: Deck[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first?: boolean;
+  last?: boolean;
+  empty?: boolean;
+}
+
+export interface DeckCreateRequest {
+  name: string;
+  description?: string;
+}
+
+export interface DeckUpdateRequest {
+  name?: string;
+  description?: string;
+}
+
+export interface DeckQueryParams {
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDirection?: 'ASC' | 'DESC';
+}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  Image,
+  ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   Edit3,
   Save,
@@ -16,57 +16,85 @@ import {
   Trash2,
   BookOpen,
   Clock,
-  BarChart2,
-  Eye,
-  Play,
 } from "lucide-react-native";
+import { deckService } from "@/services/deckService";
+import { Deck } from "@/types/Deck";
 
 export default function DeckManagementScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const deckId = params.id as string;
 
-  // Mock deck data - in a real app this would come from props or API
-  const [deckData, setDeckData] = useState({
-    id: "1",
-    name: "Biology Fundamentals",
-    description:
-      "Basic concepts of biology including cell structure, genetics, and evolution",
-    icon: "https://images.unsplash.com/photo-1515073838964-4d4d56a58b21?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8U3R1ZGVudCUyMGxlYXJuZXIlMjBwdXBpbCUyMGVkdWNhdGlvbnxlbnwwfHwwfHx8MA%3D%3D",
-    cardCount: 42,
-    lastStudied: "2023-05-15",
-    retentionRate: 82,
-    isEditing: false,
-  });
+  const [deckData, setDeckData] = useState<Deck | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [editedName, setEditedName] = useState(deckData.name);
-  const [editedDescription, setEditedDescription] = useState(
-    deckData.description
-  );
+  const [editedName, setEditedName] = useState("");
+  const [editedDescription, setEditedDescription] = useState("");
+
+  const fetchDeck = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await deckService.getDeckById(deckId);
+      if (response.isSuccess) {
+        setDeckData(response.data);
+        setEditedName(response.data.name);
+        setEditedDescription(response.data.description || "");
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch deck";
+      setError(errorMessage);
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [deckId]);
+
+  useEffect(() => {
+    if (deckId) {
+      fetchDeck();
+    }
+  }, [deckId, fetchDeck]);
 
   const handleEdit = () => {
-    setEditedName(deckData.name);
-    setEditedDescription(deckData.description);
-    setDeckData({ ...deckData, isEditing: true });
+    if (deckData) {
+      setEditedName(deckData.name);
+      setEditedDescription(deckData.description || "");
+      setIsEditing(true);
+    }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (editedName.trim().length === 0) {
       Alert.alert("Validation Error", "Deck name cannot be empty");
       return;
     }
 
-    setDeckData({
-      ...deckData,
-      name: editedName,
-      description: editedDescription,
-      isEditing: false,
-    });
+    try {
+      const response = await deckService.updateDeck(deckId, {
+        name: editedName,
+        description: editedDescription,
+      });
 
-    // In a real app, you would save to your backend here
-    Alert.alert("Success", "Deck updated successfully");
+      if (response.isSuccess) {
+        setDeckData(response.data);
+        setIsEditing(false);
+        Alert.alert("Success", "Deck updated successfully");
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to update deck";
+      Alert.alert("Error", errorMessage);
+    }
   };
 
   const handleCancel = () => {
-    setDeckData({ ...deckData, isEditing: false });
+    if (deckData) {
+      setEditedName(deckData.name);
+      setEditedDescription(deckData.description || "");
+    }
+    setIsEditing(false);
   };
 
   const handleDelete = () => {
@@ -78,15 +106,50 @@ export default function DeckManagementScreen() {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            // In a real app, you would delete from your backend here
-            Alert.alert("Success", "Deck deleted successfully");
-            router.back();
+          onPress: async () => {
+            try {
+              const response = await deckService.deleteDeck(deckId);
+              if (response.isSuccess) {
+                Alert.alert("Success", "Deck deleted successfully");
+                router.back();
+              }
+            } catch (err) {
+              const errorMessage = err instanceof Error ? err.message : "Failed to delete deck";
+              Alert.alert("Error", errorMessage);
+            }
           },
         },
       ]
     );
   };
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-gray-50 items-center justify-center">
+        <ActivityIndicator size="large" color="#6366F1" />
+        <Text className="text-gray-600 mt-4">Loading deck...</Text>
+      </View>
+    );
+  }
+
+  if (error || !deckData) {
+    return (
+      <View className="flex-1 bg-gray-50 items-center justify-center p-4">
+        <Text className="text-xl font-bold text-gray-900 mb-2">
+          {error ? "Error Loading Deck" : "Deck Not Found"}
+        </Text>
+        <Text className="text-gray-600 text-center mb-4">
+          {error || "The deck you're looking for doesn't exist."}
+        </Text>
+        <TouchableOpacity
+          className="bg-indigo-600 px-6 py-3 rounded-lg"
+          onPress={() => router.back()}
+        >
+          <Text className="text-white font-medium">Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView className="flex-1 bg-gray-50">
@@ -96,7 +159,7 @@ export default function DeckManagementScreen() {
           <Text className="text-2xl font-bold text-gray-900">
             Deck Management
           </Text>
-          {deckData.isEditing ? (
+          {isEditing ? (
             <View className="flex-row">
               <TouchableOpacity
                 className="p-2 mr-2 bg-gray-200 rounded-full"
@@ -125,12 +188,9 @@ export default function DeckManagementScreen() {
         <View className="bg-white rounded-xl shadow-sm p-5 mb-6">
           <View className="flex-row items-center mb-4">
             <View className="w-16 h-16 rounded-xl bg-indigo-100 items-center justify-center mr-4">
-              <Image
-                source={{ uri: deckData.icon }}
-                className="w-full h-full rounded-xl"
-              />
+              <BookOpen size={32} color="#6366F1" />
             </View>
-            {deckData.isEditing ? (
+            {isEditing ? (
               <TextInput
                 className="flex-1 text-lg font-bold text-gray-900 border-b border-indigo-300 py-1"
                 value={editedName}
@@ -144,7 +204,7 @@ export default function DeckManagementScreen() {
             )}
           </View>
 
-          {deckData.isEditing ? (
+          {isEditing ? (
             <TextInput
               className="text-gray-600 mb-4 border-b border-gray-300 py-1"
               value={editedDescription}
@@ -158,95 +218,25 @@ export default function DeckManagementScreen() {
 
           <View className="flex-row justify-between mt-4">
             <View className="flex-row items-center">
-              <BookOpen size={16} color="#6B7280" />
+              <Clock size={16} color="#6B7280" />
               <Text className="text-gray-500 ml-2">
-                {deckData.cardCount} cards
+                Created: {new Date(deckData.createdAt).toLocaleDateString()}
               </Text>
             </View>
             <Text className="text-gray-500">
-              Last studied: {deckData.lastStudied}
+              Updated: {new Date(deckData.updatedAt).toLocaleDateString()}
             </Text>
           </View>
-        </View>
-
-        {/* High-level Stats */}
-        <View className="bg-white rounded-xl shadow-sm p-5 mb-6">
-          <Text className="text-lg font-bold text-gray-900 mb-4">
-            Deck Statistics
-          </Text>
-          <View className="flex-row justify-between mb-3">
-            <View className="flex-row items-center">
-              <BarChart2 size={20} color="#6366F1" />
-              <Text className="text-gray-600 ml-2">Retention Rate</Text>
-            </View>
-            <Text className="font-bold text-lg text-indigo-600">
-              {deckData.retentionRate}%
-            </Text>
-          </View>
-          <View className="flex-row justify-between">
-            <View className="flex-row items-center">
-              <BookOpen size={20} color="#10B981" />
-              <Text className="text-gray-600 ml-2">Cards Count</Text>
-            </View>
-            <Text className="font-bold text-lg text-emerald-500">
-              {deckData.cardCount}
-            </Text>
-          </View>
-        </View>
-
-        {/* Time Estimate Delight Factor */}
-        <View className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-sm p-5 mb-6">
-          <View className="flex-row items-center">
-            <Clock size={24} color="white" />
-            <Text className="text-white font-bold ml-2">Time Estimate</Text>
-          </View>
-          <Text className="text-white text-2xl font-bold mt-2">
-            15 mins remaining
-          </Text>
-          <Text className="text-indigo-100 mt-1">
-            Based on your average answer speed
-          </Text>
         </View>
 
         {/* Action Buttons */}
         <View className="bg-white rounded-xl shadow-sm p-5">
           <Text className="text-lg font-bold text-gray-900 mb-4">
-            Study Options
+            Deck Actions
           </Text>
 
           <TouchableOpacity
-            className="flex-row items-center p-4 bg-indigo-600 rounded-lg mb-3"
-            onPress={() => router.push("/study/1")}
-          >
-            <Play size={20} color="white" />
-            <Text className="text-white font-bold ml-3 flex-1">Study Now</Text>
-            <Text className="text-indigo-200">42 cards</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="flex-row items-center p-4 bg-white border border-gray-200 rounded-lg mb-3"
-            onPress={() => router.push("/study/1")}
-          >
-            <BarChart2 size={20} color="#6366F1" />
-            <Text className="text-gray-900 font-medium ml-3 flex-1">
-              Custom Study
-            </Text>
-            <Text className="text-gray-500">Create session</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="flex-row items-center p-4 bg-white border border-gray-200 rounded-lg"
-            onPress={() => router.push("/study/1")}
-          >
-            <Eye size={20} color="#6B7280" />
-            <Text className="text-gray-900 font-medium ml-3 flex-1">
-              Browse Cards
-            </Text>
-            <Text className="text-gray-500">View all</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="flex-row items-center p-4 bg-red-50 rounded-lg mt-4"
+            className="flex-row items-center p-4 bg-red-50 rounded-lg"
             onPress={handleDelete}
           >
             <Trash2 size={20} color="#EF4444" />

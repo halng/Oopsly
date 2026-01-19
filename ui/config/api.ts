@@ -14,4 +14,10 @@
  *    limitations under the License.
  */
 
-export { apiClient, IPathConfig } from '../config/axiosClient';
+const BASE_URL = process.env.BACKEND_API || 'http://localhost:9009';
+const BASE_PATH = 'api/v1/osmosis';
+
+export const API_CONFIG = {
+  BASE_URL: `${BASE_URL}/${BASE_PATH}`,
+  TIMEOUT: 30000,
+};
