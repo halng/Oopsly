@@ -235,11 +235,10 @@ run_security_scans() {
         snyk code test ./api --org="$SNYK_ORG_ID" --report --project-name="OOPSLY-API"
     fi
     
-    # Temporarily disabling UI Snyk scan
-    # if [ -d "ui" ]; then
-    #     echo "CI::Running Snyk test for UI..."
-    #     snyk code test ./ui --org="$SNYK_ORG_ID" --report --project-name="OOPSLY-UI"
-    # fi
+    if [ -d "ui" ]; then
+        echo "CI::Running Snyk test for UI..."
+        snyk code test ./ui --org="$SNYK_ORG_ID" --report --project-name="OOPSLY-UI"
+    fi
     
     echo "CI::Security scans completed successfully!"
 }
@@ -279,7 +278,7 @@ main() {
     # Run all CI steps
     run_backend_ci
     run_markdown_lint
-    # run_frontend_ci # Temporarily disabled
+    run_frontend_ci
     run_test_style_check
     
     if [ "$SKIP_SECURITY" = false ]; then
