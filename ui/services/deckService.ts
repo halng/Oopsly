@@ -32,53 +32,33 @@ const DECK_ENDPOINTS = {
 const fetchDecks = async (
   params?: DeckQueryParams
 ): Promise<ApiResponse<DeckPaginatedResponse>> => {
-  try {
-    const response = await apiClient.get(DECK_ENDPOINTS.BASE, { params });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiClient.get(DECK_ENDPOINTS.BASE, { params });
+  return response.data;
 };
 
 const getDeckById = async (id: string): Promise<ApiResponse<Deck>> => {
-  try {
-    const response = await apiClient.get(DECK_ENDPOINTS.BY_ID(id));
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiClient.get(DECK_ENDPOINTS.BY_ID(id));
+  return response.data;
 };
 
 const createDeck = async (
   data: DeckCreateRequest
 ): Promise<ApiResponse<Deck>> => {
-  try {
-    const response = await apiClient.post(DECK_ENDPOINTS.BASE, data);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiClient.post(DECK_ENDPOINTS.BASE, data);
+  return response.data;
 };
 
 const updateDeck = async (
   id: string,
   data: DeckUpdateRequest
 ): Promise<ApiResponse<Deck>> => {
-  try {
-    const response = await apiClient.put(DECK_ENDPOINTS.BY_ID(id), data);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiClient.put(DECK_ENDPOINTS.BY_ID(id), data);
+  return response.data;
 };
 
 const deleteDeck = async (id: string): Promise<ApiResponse<null>> => {
-  try {
-    const response = await apiClient.patch(DECK_ENDPOINTS.BY_ID(id));
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiClient.patch(DECK_ENDPOINTS.BY_ID(id));
+  return response.data;
 };
 
 export const deckService = {
