@@ -16,7 +16,7 @@
 
 import { apiClient } from '../../config/axiosClient';
 import { deckService } from '../../services/deckService';
-import { ApiResponse } from '../../types/api';
+import { ApiResponse } from '../../types/ApiRes';
 import { Deck, DeckPaginatedResponse } from '../../types/Deck';
 
 jest.mock('../../config/axiosClient', () => ({

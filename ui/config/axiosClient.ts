@@ -79,7 +79,7 @@ apiClient.interceptors.response.use(
       const errorMessage = errorData?.message || 'An error occurred';
       return Promise.reject(new Error(errorMessage));
     } else if (error.request) {
-      return Promise.reject(new Error('Network Error'));
+      return Promise.reject(new Error('Network error. Please check your connection.'));
     } else {
       return Promise.reject(new Error(error.message || 'An unexpected error occurred'));
     }

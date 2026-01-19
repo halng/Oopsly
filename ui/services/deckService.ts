@@ -15,7 +15,7 @@
  */
 
 import { apiClient } from '@/config/axiosClient';
-import { ApiResponse } from '@/types/api';
+import { ApiResponse } from '@/types/ApiRes';
 import {
   Deck,
   DeckPaginatedResponse,
