@@ -12,8 +12,8 @@
   ],
   "tags": [
     {
-      "name": "Deck",
-      "description": "Deck management APIs for creating, updating, retrieving and deleting decks"
+      "name": "Shelve",
+      "description": "Shelve management APIs for creating, updating, retrieving and deleting shelves"
     },
     {
       "name": "Question",
@@ -24,8 +24,8 @@
       "description": "User profile and settings management APIs"
     },
     {
-      "name": "Collection",
-      "description": "Collection management APIs for creating, updating, retrieving and deleting collections within decks"
+      "name": "Subject",
+      "description": "Subject management APIs for creating, updating, retrieving and deleting subjects within shelves"
     },
     {
       "name": "Users",
@@ -37,11 +37,11 @@
     },
     {
       "name": "Test Suite",
-      "description": "Test Suite management APIs for creating, updating, retrieving and deleting test suites within decks"
+      "description": "Test Suite management APIs for creating, updating, retrieving and deleting test suites within shelves"
     },
     {
       "name": "Card",
-      "description": "Card management APIs for creating, updating, retrieving and deleting cards within collections"
+      "description": "Card management APIs for creating, updating, retrieving and deleting cards within subjects"
     }
   ],
   "paths": {
@@ -259,19 +259,19 @@
         }
       }
     },
-    "/decks/{id}": {
+    "/shelves/{id}": {
       "get": {
         "tags": [
-          "Deck"
+          "Shelve"
         ],
-        "summary": "Get deck by ID",
-        "description": "Retrieves a deck by its unique identifier",
+        "summary": "Get shelve by ID",
+        "description": "Retrieves a shelve by its unique identifier",
         "operationId": "getById_1",
         "parameters": [
           {
             "name": "id",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -292,7 +292,7 @@
             }
           },
           "404": {
-            "description": "Deck not found",
+            "description": "Shelve not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -302,7 +302,7 @@
             }
           },
           "200": {
-            "description": "Deck retrieved successfully",
+            "description": "Shelve retrieved successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -315,16 +315,16 @@
       },
       "put": {
         "tags": [
-          "Deck"
+          "Shelve"
         ],
-        "summary": "Update deck",
-        "description": "Updates an existing deck by ID",
+        "summary": "Update shelve",
+        "description": "Updates an existing shelve by ID",
         "operationId": "update_1",
         "parameters": [
           {
             "name": "id",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -337,7 +337,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DeckReq"
+                "$ref": "#/components/schemas/ShelveReq"
               }
             }
           },
@@ -365,7 +365,7 @@
             }
           },
           "404": {
-            "description": "Deck not found",
+            "description": "Shelve not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -375,7 +375,7 @@
             }
           },
           "200": {
-            "description": "Deck updated successfully",
+            "description": "Shelve updated successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -388,16 +388,16 @@
       },
       "patch": {
         "tags": [
-          "Deck"
+          "Shelve"
         ],
-        "summary": "Delete deck",
-        "description": "Soft deletes a deck by ID",
+        "summary": "Delete shelve",
+        "description": "Soft deletes a shelve by ID",
         "operationId": "deleteById_1",
         "parameters": [
           {
             "name": "id",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -408,7 +408,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Deck deleted successfully",
+            "description": "Shelve deleted successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -428,7 +428,7 @@
             }
           },
           "404": {
-            "description": "Deck not found",
+            "description": "Shelve not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -440,19 +440,19 @@
         }
       }
     },
-    "/decks/{deckId}/test-suites/{id}": {
+    "/shelves/{shelveId}/test-suites/{id}": {
       "get": {
         "tags": [
           "Test Suite"
         ],
         "summary": "Get test suite by ID",
-        "description": "Retrieves a specific test suite from a deck by its ID",
+        "description": "Retrieves a specific test suite from a shelve by its ID",
         "operationId": "getById_2",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -494,7 +494,7 @@
             }
           },
           "404": {
-            "description": "Test suite or deck not found",
+            "description": "Test suite or shelve not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -510,13 +510,13 @@
           "Test Suite"
         ],
         "summary": "Update test suite",
-        "description": "Updates an existing test suite in a specific deck",
+        "description": "Updates an existing test suite in a specific shelve",
         "operationId": "update_2",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -578,7 +578,7 @@
             }
           },
           "404": {
-            "description": "Test suite or deck not found",
+            "description": "Test suite or shelve not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -594,13 +594,13 @@
           "Test Suite"
         ],
         "summary": "Delete test suite",
-        "description": "Soft deletes a test suite and all its questions from a specific deck",
+        "description": "Soft deletes a test suite and all its questions from a specific shelve",
         "operationId": "deleteById_2",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -642,7 +642,7 @@
             }
           },
           "404": {
-            "description": "Test suite or deck not found",
+            "description": "Test suite or shelve not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -654,19 +654,19 @@
         }
       }
     },
-    "/decks/{deckId}/collections/{id}": {
+    "/shelves/{shelveId}/subjects/{id}": {
       "get": {
         "tags": [
-          "Collection"
+          "Subject"
         ],
-        "summary": "Get collection by ID",
-        "description": "Retrieves a specific collection from a deck by its ID",
+        "summary": "Get subject by ID",
+        "description": "Retrieves a specific subject from a shelve by its ID",
         "operationId": "getById_3",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -677,7 +677,7 @@
           {
             "name": "id",
             "in": "path",
-            "description": "Collection ID",
+            "description": "Subject ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -698,7 +698,7 @@
             }
           },
           "404": {
-            "description": "Collection or deck not found",
+            "description": "Subject or shelve not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -708,7 +708,7 @@
             }
           },
           "200": {
-            "description": "Collection retrieved successfully",
+            "description": "Subject retrieved successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -721,16 +721,16 @@
       },
       "put": {
         "tags": [
-          "Collection"
+          "Subject"
         ],
-        "summary": "Update collection",
-        "description": "Updates an existing collection in a specific deck",
+        "summary": "Update subject",
+        "description": "Updates an existing subject in a specific shelve",
         "operationId": "update_3",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -741,7 +741,7 @@
           {
             "name": "id",
             "in": "path",
-            "description": "Collection ID",
+            "description": "Subject ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -754,7 +754,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CollectionReq"
+                "$ref": "#/components/schemas/SubjectReq"
               }
             }
           },
@@ -772,7 +772,7 @@
             }
           },
           "200": {
-            "description": "Collection updated successfully",
+            "description": "Subject updated successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -792,7 +792,7 @@
             }
           },
           "404": {
-            "description": "Collection or deck not found",
+            "description": "Subject or shelve not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -805,16 +805,16 @@
       },
       "patch": {
         "tags": [
-          "Collection"
+          "Subject"
         ],
-        "summary": "Delete collection",
-        "description": "Soft deletes a collection and all its cards from a specific deck",
+        "summary": "Delete subject",
+        "description": "Soft deletes a subject and all its cards from a specific shelve",
         "operationId": "delete",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -825,7 +825,7 @@
           {
             "name": "id",
             "in": "path",
-            "description": "Collection ID",
+            "description": "Subject ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -836,7 +836,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Collection deleted successfully",
+            "description": "Subject deleted successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -856,7 +856,7 @@
             }
           },
           "404": {
-            "description": "Collection or deck not found",
+            "description": "Subject or shelve not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -868,19 +868,19 @@
         }
       }
     },
-    "/decks/{deckId}/collections/{collectionId}/cards/{id}": {
+    "/shelves/{shelveId}/subjects/{subjectId}/cards/{id}": {
       "get": {
         "tags": [
           "Card"
         ],
         "summary": "Get card by ID",
-        "description": "Retrieves a specific card from a collection by its ID",
+        "description": "Retrieves a specific card from a subject by its ID",
         "operationId": "getById_4",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -889,9 +889,9 @@
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
           {
-            "name": "collectionId",
+            "name": "subjectId",
             "in": "path",
-            "description": "Collection ID",
+            "description": "Subject ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -913,7 +913,7 @@
         ],
         "responses": {
           "404": {
-            "description": "Card or collection not found",
+            "description": "Card or subject not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -949,13 +949,13 @@
           "Card"
         ],
         "summary": "Update card",
-        "description": "Updates an existing card in a specific collection",
+        "description": "Updates an existing card in a specific subject",
         "operationId": "updateCard",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -964,9 +964,9 @@
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
           {
-            "name": "collectionId",
+            "name": "subjectId",
             "in": "path",
-            "description": "Collection ID",
+            "description": "Subject ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -1008,7 +1008,7 @@
             }
           },
           "404": {
-            "description": "Card or collection not found",
+            "description": "Card or subject not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1044,13 +1044,13 @@
           "Card"
         ],
         "summary": "Delete card",
-        "description": "Soft deletes a card from a specific collection",
+        "description": "Soft deletes a card from a specific subject",
         "operationId": "deleteById_3",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -1059,9 +1059,9 @@
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
           {
-            "name": "collectionId",
+            "name": "subjectId",
             "in": "path",
-            "description": "Collection ID",
+            "description": "Subject ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -1083,7 +1083,7 @@
         ],
         "responses": {
           "404": {
-            "description": "Card or collection not found",
+            "description": "Card or subject not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1115,19 +1115,19 @@
         }
       }
     },
-    "/decks/{deckId}/collections/{collectionId}/cards/difficulty": {
+    "/shelves/{shelveId}/subjects/{subjectId}/cards/difficulty": {
       "put": {
         "tags": [
           "Card"
         ],
         "summary": "Update card difficulty",
-        "description": "Updates the difficulty level for multiple cards in a collection",
+        "description": "Updates the difficulty level for multiple cards in a subject",
         "operationId": "updateDifficulty",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -1136,9 +1136,9 @@
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
           {
-            "name": "collectionId",
+            "name": "subjectId",
             "in": "path",
-            "description": "Collection ID",
+            "description": "Subject ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -1193,7 +1193,7 @@
             }
           },
           "404": {
-            "description": "Collection not found",
+            "description": "Subject not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1554,13 +1554,13 @@
         }
       }
     },
-    "/decks": {
+    "/shelves": {
       "get": {
         "tags": [
-          "Deck"
+          "Shelve"
         ],
-        "summary": "Get all decks",
-        "description": "Retrieves a paginated list of all decks",
+        "summary": "Get all shelves",
+        "description": "Retrieves a paginated list of all shelves",
         "operationId": "getAll",
         "parameters": [
           {
@@ -1600,7 +1600,7 @@
             }
           },
           "200": {
-            "description": "Decks retrieved successfully",
+            "description": "Shelves retrieved successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -1623,16 +1623,16 @@
       },
       "post": {
         "tags": [
-          "Deck"
+          "Shelve"
         ],
-        "summary": "Create deck",
-        "description": "Creates a new deck with the provided information",
+        "summary": "Create shelve",
+        "description": "Creates a new shelve with the provided information",
         "operationId": "create_1",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DeckReq"
+                "$ref": "#/components/schemas/ShelveReq"
               }
             }
           },
@@ -1650,7 +1650,7 @@
             }
           },
           "200": {
-            "description": "Deck created successfully",
+            "description": "Shelve created successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -1672,19 +1672,19 @@
         }
       }
     },
-    "/decks/{deckId}/test-suites": {
+    "/shelves/{shelveId}/test-suites": {
       "get": {
         "tags": [
           "Test Suite"
         ],
-        "summary": "Get all test suites by deck",
-        "description": "Retrieves a list of all test suites for a specific deck",
+        "summary": "Get all test suites by shelve",
+        "description": "Retrieves a list of all test suites for a specific shelve",
         "operationId": "getAllByDeck",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -1715,7 +1715,7 @@
             }
           },
           "404": {
-            "description": "Deck not found",
+            "description": "Shelve not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1731,13 +1731,13 @@
           "Test Suite"
         ],
         "summary": "Create test suite",
-        "description": "Creates a new test suite within a specific deck",
+        "description": "Creates a new test suite within a specific shelve",
         "operationId": "create_2",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -1788,7 +1788,7 @@
             }
           },
           "404": {
-            "description": "Deck not found",
+            "description": "Shelve not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1800,19 +1800,19 @@
         }
       }
     },
-    "/decks/{deckId}/collections": {
+    "/shelves/{shelveId}/subjects": {
       "get": {
         "tags": [
-          "Collection"
+          "Subject"
         ],
-        "summary": "Get all collections by deck",
-        "description": "Retrieves a paginated list of all collections for a specific deck",
+        "summary": "Get all subjects by shelve",
+        "description": "Retrieves a paginated list of all subjects for a specific shelve",
         "operationId": "getAllByDeck_1",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -1867,7 +1867,7 @@
             }
           },
           "404": {
-            "description": "Deck not found",
+            "description": "Shelve not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1877,7 +1877,7 @@
             }
           },
           "200": {
-            "description": "Collections retrieved successfully",
+            "description": "Subjects retrieved successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -1890,16 +1890,16 @@
       },
       "post": {
         "tags": [
-          "Collection"
+          "Subject"
         ],
-        "summary": "Create collection",
-        "description": "Creates a new collection within a specific deck",
+        "summary": "Create subject",
+        "description": "Creates a new subject within a specific shelve",
         "operationId": "create_3",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -1912,7 +1912,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CollectionReq"
+                "$ref": "#/components/schemas/SubjectReq"
               }
             }
           },
@@ -1930,7 +1930,7 @@
             }
           },
           "200": {
-            "description": "Collection created successfully",
+            "description": "Subject created successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -1950,7 +1950,7 @@
             }
           },
           "404": {
-            "description": "Deck not found",
+            "description": "Shelve not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -1962,19 +1962,19 @@
         }
       }
     },
-    "/decks/{deckId}/collections/{collectionId}/cards": {
+    "/shelves/{shelveId}/subjects/{subjectId}/cards": {
       "get": {
         "tags": [
           "Card"
         ],
-        "summary": "Get all cards by collection",
-        "description": "Retrieves a paginated list of all cards for a specific collection",
+        "summary": "Get all cards by subject",
+        "description": "Retrieves a paginated list of all cards for a specific subject",
         "operationId": "getAllCardsByCollection",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -1983,9 +1983,9 @@
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
           {
-            "name": "collectionId",
+            "name": "subjectId",
             "in": "path",
-            "description": "Collection ID",
+            "description": "Subject ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -2050,7 +2050,7 @@
             }
           },
           "404": {
-            "description": "Collection not found",
+            "description": "Subject not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -2066,13 +2066,13 @@
           "Card"
         ],
         "summary": "Create cards",
-        "description": "Creates new cards for a specific collection",
+        "description": "Creates new cards for a specific subject",
         "operationId": "create_4",
         "parameters": [
           {
-            "name": "deckId",
+            "name": "shelveId",
             "in": "path",
-            "description": "Deck ID",
+            "description": "Shelve ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -2081,9 +2081,9 @@
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
           {
-            "name": "collectionId",
+            "name": "subjectId",
             "in": "path",
-            "description": "Collection ID",
+            "description": "Subject ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -2134,7 +2134,7 @@
             }
           },
           "404": {
-            "description": "Collection not found",
+            "description": "Subject not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -2373,9 +2373,9 @@
           }
         }
       },
-      "DeckReq": {
+      "ShelveReq": {
         "type": "object",
-        "description": "Deck creation request",
+        "description": "Shelve creation request",
         "properties": {
           "name": {
             "type": "string"
@@ -2402,9 +2402,9 @@
           "title"
         ]
       },
-      "CollectionReq": {
+      "SubjectReq": {
         "type": "object",
-        "description": "Collection creation request",
+        "description": "Subject creation request",
         "properties": {
           "name": {
             "type": "string"
@@ -2581,7 +2581,3 @@
     }
   }
 }
-Beta
-0 / 0
-used queries
-1
