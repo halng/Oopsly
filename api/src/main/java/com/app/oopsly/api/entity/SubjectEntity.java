@@ -26,22 +26,22 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "collections")
+@Table(name = "subjects")
 @Entity
-public class CollectionEntity extends Audit {
+public class SubjectEntity extends Audit {
 
     private String name;
     private String description;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "deck_id", nullable = false)
-    private DeckEntity deck;
+    @JoinColumn(name = "shelve_id", nullable = false)
+    private ShelveEntity shelve;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "collection", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "subject", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<CardEntity> cards;
 
-    @ManyToMany(mappedBy = "collections")
+    @ManyToMany(mappedBy = "subjects")
     private List<TestSuiteEntity> testSuites;
 }

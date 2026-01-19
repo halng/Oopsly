@@ -16,16 +16,16 @@
 
 package com.app.oopsly.api.service.impl;
 
-import com.app.oopsly.api.entity.DeckEntity;
+import com.app.oopsly.api.entity.ShelveEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
-import com.app.oopsly.api.repository.DeckRepository;
-import com.app.oopsly.api.service.DeckService;
+import com.app.oopsly.api.repository.ShelveRepository;
+import com.app.oopsly.api.service.ShelveService;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.DeckReq;
-import com.app.oopsly.api.viewmodel.DeckRes;
+import com.app.oopsly.api.viewmodel.ShelveReq;
+import com.app.oopsly.api.viewmodel.ShelveRes;
 import com.app.oopsly.api.viewmodel.PagingRes;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.List;
@@ -41,55 +41,55 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DeckServiceImpl implements DeckService {
+public class ShelveServiceImpl implements ShelveService {
 
-    private final DeckRepository deckRepository;
+    private final ShelveRepository shelveRepository;
     private final UserService userService;
 
     @Override
-    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "createFallback")
-    public ApiRes create(DeckReq request) {
-        log.info("Creating deck for user {}", this.currentUser().getId());
-        DeckEntity savedEntity = deckRepository.save(this.toEntity(request, null));
+    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "createFallback")
+    public ApiRes create(ShelveReq request) {
+        log.info("Creating shelve for user {}", this.currentUser().getId());
+        ShelveEntity savedEntity = shelveRepository.save(this.toEntity(request, null));
         return ApiRes.success("Created successfully", this.toViewModel(savedEntity));
     }
 
     @Override
-    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "updateFallback")
-    public ApiRes update(DeckReq request, UUID id) {
-        log.info("Updating deck {} for user {}", id, this.currentUser().getId());
-        DeckEntity existingEntity =
-                deckRepository
+    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "updateFallback")
+    public ApiRes update(ShelveReq request, UUID id) {
+        log.info("Updating shelve {} for user {}", id, this.currentUser().getId());
+        ShelveEntity existingEntity =
+                shelveRepository
                         .findByIdAndUser(id, this.currentUser())
                         .orElseThrow(
                                 () -> new NotFoundException("Entity not found with id: " + id));
 
-        DeckEntity newEntity = this.toEntity(request, existingEntity);
-        deckRepository.save(newEntity);
+        ShelveEntity newEntity = this.toEntity(request, existingEntity);
+        shelveRepository.save(newEntity);
         return ApiRes.success("Updated successfully");
     }
 
     @Override
-    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "deleteFallback")
+    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID id) {
-        log.info("Deleting deck {} for user {}", id, this.currentUser().getId());
-        DeckEntity existingEntity =
-                deckRepository
+        log.info("Deleting shelve {} for user {}", id, this.currentUser().getId());
+        ShelveEntity existingEntity =
+                shelveRepository
                         .findByIdAndUser(id, this.currentUser())
                         .orElseThrow(
                                 () -> new NotFoundException("Entity not found with id: " + id));
 
         existingEntity.setDeleted(true);
-        deckRepository.save(existingEntity);
+        shelveRepository.save(existingEntity);
         return ApiRes.success("Deleted successfully");
     }
 
     @Override
-    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
+    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID id) {
-        log.info("Fetching deck {} for user {}", id, this.currentUser().getId());
-        DeckEntity entity =
-                deckRepository
+        log.info("Fetching shelve {} for user {}", id, this.currentUser().getId());
+        ShelveEntity entity =
+                shelveRepository
                         .findByIdAndUser(id, this.currentUser())
                         .orElseThrow(
                                 () -> new NotFoundException("Entity not found with id: " + id));
@@ -97,18 +97,18 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
-    @CircuitBreaker(name = "deckServiceCircuitBreaker", fallbackMethod = "getAllFallback")
+    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "getAllFallback")
     public ApiRes getAll(int page, int size) {
         log.info(
-                "Fetching decks page {} size {} for user {}",
+                "Fetching shelves page {} size {} for user {}",
                 page,
                 size,
                 this.currentUser().getId());
         Pageable pageable = PageRequest.of(page, size);
-        Page<DeckEntity> pageData = deckRepository.findAllByUser(this.currentUser(), pageable);
-        List<DeckRes> entities = pageData.getContent().stream().map(this::toViewModel).toList();
+        Page<ShelveEntity> pageData = shelveRepository.findAllByUser(this.currentUser(), pageable);
+        List<ShelveRes> entities = pageData.getContent().stream().map(this::toViewModel).toList();
 
-        PagingRes<DeckRes> response =
+        PagingRes<ShelveRes> response =
                 new PagingRes<>(
                         entities,
                         pageable.getPageNumber(),
@@ -118,10 +118,10 @@ public class DeckServiceImpl implements DeckService {
         return ApiRes.success("Fetched successfully", response);
     }
 
-    DeckEntity toEntity(@NonNull DeckReq from, DeckEntity to) {
+    ShelveEntity toEntity(@NonNull ShelveReq from, ShelveEntity to) {
         if (to == null) {
             User currentUser = this.currentUser();
-            return DeckEntity.builder()
+            return ShelveEntity.builder()
                     .name(from.name())
                     .description(from.description())
                     .user(currentUser)
@@ -133,8 +133,8 @@ public class DeckServiceImpl implements DeckService {
         return to;
     }
 
-    DeckRes toViewModel(DeckEntity from) {
-        return new DeckRes(from.getId(), from.getName(), from.getDescription(), List.of());
+    ShelveRes toViewModel(ShelveEntity from) {
+        return new ShelveRes(from.getId(), from.getName(), from.getDescription(), List.of());
     }
 
     User currentUser() {
@@ -144,37 +144,37 @@ public class DeckServiceImpl implements DeckService {
     /** FALLBACK METHODS */
 
     // Fallback method for create
-    public ApiRes createFallback(DeckReq request, Throwable t) {
-        log.error("Deck service unavailable during create");
+    public ApiRes createFallback(ShelveReq request, Throwable t) {
+        log.error("Shelve service unavailable during create");
         throw new RetryLaterException(
-                "Deck service is currently unavailable. Please try again later.", t);
+                "Shelve service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for getAll
     public ApiRes getAllFallback(int page, int size, Throwable t) {
-        log.error("Deck service unavailable during getAll: {}", t.getMessage());
+        log.error("Shelve service unavailable during getAll: {}", t.getMessage());
         throw new RetryLaterException(
-                "Deck service is currently unavailable. Please try again later.", t);
+                "Shelve service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for getById
     public ApiRes getByIdFallback(UUID id, Throwable t) {
-        log.error("Deck service unavailable during getById: {}", t.getMessage());
+        log.error("Shelve service unavailable during getById: {}", t.getMessage());
         throw new RetryLaterException(
-                "Deck service is currently unavailable. Please try again later.", t);
+                "Shelve service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for delete
     public ApiRes deleteFallback(UUID id, Throwable t) {
-        log.error("Deck service unavailable during delete: {}", t.getMessage());
+        log.error("Shelve service unavailable during delete: {}", t.getMessage());
         throw new RetryLaterException(
-                "Deck service is currently unavailable. Please try again later.", t);
+                "Shelve service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for update
-    public ApiRes updateFallback(DeckReq request, UUID id, Throwable t) {
-        log.error("Deck service unavailable during update: {}", t.getMessage());
+    public ApiRes updateFallback(ShelveReq request, UUID id, Throwable t) {
+        log.error("Shelve service unavailable during update: {}", t.getMessage());
         throw new RetryLaterException(
-                "Deck service is currently unavailable. Please try again later.", t);
+                "Shelve service is currently unavailable. Please try again later.", t);
     }
 }

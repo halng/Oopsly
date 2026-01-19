@@ -38,16 +38,16 @@ public class TestSuiteEntity extends Audit {
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "deck_id", nullable = false)
-    private DeckEntity deck;
+    @JoinColumn(name = "shelve_id", nullable = false)
+    private ShelveEntity shelve;
 
     @OneToMany(mappedBy = "testSuite", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuestionEntity> questions;
 
     @ManyToMany
     @JoinTable(
-            name = "test_suite_collections",
+            name = "test_suite_subjects",
             joinColumns = @JoinColumn(name = "test_suite_id"),
-            inverseJoinColumns = @JoinColumn(name = "collection_id"))
-    private List<CollectionEntity> collections;
+            inverseJoinColumns = @JoinColumn(name = "subject_id"))
+    private List<SubjectEntity> subjects;
 }

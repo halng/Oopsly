@@ -21,13 +21,13 @@ import com.app.oopsly.api.viewmodel.TestSuiteReq;
 import java.util.UUID;
 
 public interface TestSuiteService {
-    ApiRes create(UUID deckId, TestSuiteReq request);
+    ApiRes create(UUID shelveId, TestSuiteReq request);
 
-    ApiRes update(UUID deckId, UUID testSuiteId, TestSuiteReq request);
+    ApiRes update(UUID shelveId, UUID testSuiteId, TestSuiteReq request);
 
-    ApiRes delete(UUID deckId, UUID testSuiteId);
+    ApiRes delete(UUID shelveId, UUID testSuiteId);
 
-    ApiRes getById(UUID deckId, UUID testSuiteId);
+    ApiRes getById(UUID shelveId, UUID testSuiteId);
 
-    ApiRes getAllByDeck(UUID deckId);
+    ApiRes getAllByShelve(UUID shelveId);
 }

@@ -42,6 +42,6 @@ public class CardEntity extends Audit {
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "collection_id", nullable = false)
-    private CollectionEntity collection;
+    @JoinColumn(name = "subject_id", nullable = false)
+    private SubjectEntity subject;
 }
