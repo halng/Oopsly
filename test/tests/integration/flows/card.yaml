@@ -1,6 +1,6 @@
 flows:
   - flow: Card Management Flow
-    description: "This flow tests card CRUD operations within collections"
+    description: "This flow tests card CRUD operations within subjects"
     before-all:
       - name: Generate OTP
         api: GENERATE_OTP
@@ -69,7 +69,7 @@ flows:
             type: not-null
       
       - name: "2. Get All Cards in Subject with Pagination"
-        api: CARD_GET_ALL_BY_COLLECTION
+        api: CARD_GET_ALL_BY_SUBJECT
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
@@ -254,7 +254,7 @@ flows:
             value: 404
       
       - name: "4. Get All Cards with Invalid Pagination"
-        api: CARD_GET_ALL_BY_COLLECTION
+        api: CARD_GET_ALL_BY_SUBJECT
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}

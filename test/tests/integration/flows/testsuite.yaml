@@ -94,7 +94,7 @@ flows:
             value: "Updated Test Suite"
       
       - name: "4. Get All Test Suites by Shelve"
-        api: TESTSUITE_GET_ALL_BY_DECK
+        api: TESTSUITE_GET_ALL_BY_SHELVE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}

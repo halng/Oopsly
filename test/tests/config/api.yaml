@@ -181,7 +181,7 @@ configs:
           value: $CARDS_ARRAY
           constraints:
             nullable: false
-    - name: CARD_GET_ALL_BY_COLLECTION
+    - name: CARD_GET_ALL_BY_SUBJECT
       method: GET
       endpoint: /shelves/$SHELVE_ID/subjects/$SUBJECT_ID/cards
       headers:
@@ -277,7 +277,7 @@ configs:
       endpoint: /shelves/$SHELVE_ID/test-suites/$TESTSUITE_ID
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
-    - name: TESTSUITE_GET_ALL_BY_DECK
+    - name: TESTSUITE_GET_ALL_BY_SHELVE
       method: GET
       endpoint: /shelves/$SHELVE_ID/test-suites
       headers:
