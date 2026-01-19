@@ -1,6 +1,6 @@
 flows:
-  - flow: Collection Management Flow
-    description: "This flow tests collection CRUD operations including create, read, update, and delete operations"
+  - flow: Subject Management Flow
+    description: "This flow tests subject CRUD operations including create, read, update, and delete operations"
     before-all:
       - name: Generate OTP
         api: GENERATE_OTP
@@ -23,12 +23,12 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-      - name: Create Test Deck
-        api: DECK_CREATION
+      - name: Create Test Shelve
+        api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_NAME: "Test Deck for Collections"
-          DECK_DESCRIPTION: "Deck created for collection testing"
+          SHELVE_NAME: "Test Shelve for Subjects"
+          SHELVE_DESCRIPTION: "Shelve created for subject testing"
         assertions:
           - path: $.status
             type: equals
@@ -36,15 +36,15 @@ flows:
           - path: $.data.id
             type: not-null
         env-vars:
-          DECK_ID: $.data.id
+          SHELVE_ID: $.data.id
     steps:
-      - name: "1. Create a New Collection"
-        api: COLLECTION_CREATE
+      - name: "1. Create a New Subject"
+        api: SUBJECT_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_NAME: "Test Collection"
-          COLLECTION_DESCRIPTION: "Collection for testing"
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_NAME: "Test Subject"
+          SUBJECT_DESCRIPTION: "Subject for testing"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -56,16 +56,16 @@ flows:
             type: not-null
           - path: $.data.name
             type: equals
-            value: "Test Collection"
+            value: "Test Subject"
         env-vars:
-          COLLECTION_ID: $.data.id
+          SUBJECT_ID: $.data.id
       
-      - name: "2. Get Collection by ID"
-        api: COLLECTION_GET_BY_ID
+      - name: "2. Get Subject by ID"
+        api: SUBJECT_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -75,19 +75,19 @@ flows:
             value: 200
           - path: $.data.id
             type: equals
-            value: ${COLLECTION_ID}
+            value: ${SUBJECT_ID}
           - path: $.data.name
             type: equals
-            value: "Test Collection"
+            value: "Test Subject"
       
-      - name: "3. Update Collection"
-        api: COLLECTION_UPDATE
+      - name: "3. Update Subject"
+        api: SUBJECT_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
-          COLLECTION_NAME: "Updated Collection"
-          COLLECTION_DESCRIPTION: "Updated description"
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
+          SUBJECT_NAME: "Updated Subject"
+          SUBJECT_DESCRIPTION: "Updated description"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -97,13 +97,13 @@ flows:
             value: 200
           - path: $.data.name
             type: equals
-            value: "Updated Collection"
+            value: "Updated Subject"
       
-      - name: "4. Get All Collections with Pagination"
-        api: COLLECTION_GET_ALL_BY_DECK
+      - name: "4. Get All Subjects with Pagination"
+        api: SUBJECT_GET_ALL_BY_SHELVE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
+          SHELVE_ID: ${SHELVE_ID}
           PAGE_NUM: "0"
           PAGE_SIZE: "10"
         assertions:
@@ -116,12 +116,12 @@ flows:
           - path: $.data
             type: not-null
       
-      - name: "5. Delete Collection"
-        api: COLLECTION_DELETE
+      - name: "5. Delete Subject"
+        api: SUBJECT_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -130,12 +130,12 @@ flows:
             type: equals
             value: 200
       
-      - name: "6. Verify Collection is Deleted (Get by ID should fail)"
-        api: COLLECTION_GET_BY_ID
+      - name: "6. Verify Subject is Deleted (Get by ID should fail)"
+        api: SUBJECT_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -144,8 +144,8 @@ flows:
             type: equals
             value: 404
 
-  - flow: Collection Edge Cases
-    description: "Test edge cases for collection operations"
+  - flow: Subject Edge Cases
+    description: "Test edge cases for subject operations"
     before-all:
       - name: Generate OTP
         api: GENERATE_OTP
@@ -165,24 +165,24 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-      - name: Create Test Deck
-        api: DECK_CREATION
+      - name: Create Test Shelve
+        api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_NAME: "Edge Case Deck"
-          DECK_DESCRIPTION: "Deck for edge case testing"
+          SHELVE_NAME: "Edge Case Shelve"
+          SHELVE_DESCRIPTION: "Shelve for edge case testing"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          DECK_ID: $.data.id
+          SHELVE_ID: $.data.id
     steps:
-      - name: "1. Get Collection with Invalid ID"
-        api: COLLECTION_GET_BY_ID
+      - name: "1. Get Subject with Invalid ID"
+        api: SUBJECT_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: "00000000-0000-0000-0000-000000000000"
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -191,14 +191,14 @@ flows:
             type: equals
             value: 404
       
-      - name: "2. Update Non-existent Collection"
-        api: COLLECTION_UPDATE
+      - name: "2. Update Non-existent Subject"
+        api: SUBJECT_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: "00000000-0000-0000-0000-000000000000"
-          COLLECTION_NAME: "Should Fail"
-          COLLECTION_DESCRIPTION: "Should not work"
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: "00000000-0000-0000-0000-000000000000"
+          SUBJECT_NAME: "Should Fail"
+          SUBJECT_DESCRIPTION: "Should not work"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -207,12 +207,12 @@ flows:
             type: equals
             value: 404
       
-      - name: "3. Delete Non-existent Collection"
-        api: COLLECTION_DELETE
+      - name: "3. Delete Non-existent Subject"
+        api: SUBJECT_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: "00000000-0000-0000-0000-000000000000"
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess
             type: equals
