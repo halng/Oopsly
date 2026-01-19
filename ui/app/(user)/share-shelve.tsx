@@ -4,12 +4,12 @@
 // import { QRCode } from 'react-native-custom-qr-codes-expo';
 // import { Share2, Mail, Copy, Check, Users } from 'lucide-react-native';
 
-// export default function ShareDeckScreen() {
+// export default function ShareShelveScreen() {
 //   const router = useRouter();
 //   const [email, setEmail] = useState('');
 //   const [isCopied, setIsCopied] = useState(false);
-//   const [deckId] = useState('deck-12345');
-//   const [deckTitle] = useState('Biology Fundamentals');
+//   const [shelveId] = useState('shelve-12345');
+//   const [shelveTitle] = useState('Biology Fundamentals');
 
 //   const handleEmailShare = () => {
 //     if (!email) {
@@ -20,14 +20,14 @@
 //     // In a real app, this would send an email invitation
 //     Alert.alert(
 //       'Invitation Sent',
-//       `An invitation to join "${deckTitle}" has been sent to ${email}`,
+//       `An invitation to join "${shelveTitle}" has been sent to ${email}`,
 //       [{ text: 'OK' }]
 //     );
 //     setEmail('');
 //   };
 
 //   const copyToClipboard = () => {
-//     // In a real app, this would copy the deck link to clipboard
+//     // In a real app, this would copy the shelve link to clipboard
 //     setIsCopied(true);
 //     setTimeout(() => setIsCopied(false), 2000);
 //   };
@@ -35,10 +35,10 @@
 //   const shareViaSystem = async () => {
 //     try {
 //       await Share.share({
-//         message: `Join my study deck "${deckTitle}" on Osmosis! Deck ID: ${deckId}`,
+//         message: `Join my study shelve "${shelveTitle}" on Osmosis! Shelve ID: ${shelveId}`,
 //       });
 //     } catch (error) {
-//       Alert.alert('Error', 'Failed to share deck');
+//       Alert.alert('Error', 'Failed to share shelve');
 //     }
 //   };
 
@@ -47,22 +47,22 @@
 //       <View className="p-6">
 //         {/* Header */}
 //         <View className="mb-8">
-//           <Text className="text-2xl font-bold text-gray-900 mb-2">Share Deck</Text>
-//           <Text className="text-gray-600">Share "{deckTitle}" with friends and classmates</Text>
+//           <Text className="text-2xl font-bold text-gray-900 mb-2">Share Shelve</Text>
+//           <Text className="text-gray-600">Share "{shelveTitle}" with friends and classmates</Text>
 //         </View>
 
 //         {/* QR Code Section */}
 //         <View className="bg-white rounded-xl p-6 mb-6 shadow-sm">
 //           <View className="items-center mb-4">
 //             <QRCode 
-//               content={`osmosis://deck/${deckId}`} 
+//               content={`osmosis://shelve/${shelveId}`} 
 //               size={200}
 //               color="#6366F1"
 //               backgroundColor="white"
 //             />
 //           </View>
 //           <Text className="text-center text-gray-600 mb-4">
-//             Scan this QR code to instantly access this deck
+//             Scan this QR code to instantly access this shelve
 //           </Text>
           
 //           <TouchableOpacity 
@@ -77,7 +77,7 @@
 //             ) : (
 //               <>
 //                 <Copy color="white" size={20} />
-//                 <Text className="text-white font-medium ml-2">Copy Deck Link</Text>
+//                 <Text className="text-white font-medium ml-2">Copy Shelve Link</Text>
 //               </>
 //             )}
 //           </TouchableOpacity>
@@ -91,7 +91,7 @@
 //           </View>
           
 //           <Text className="text-gray-600 mb-4">
-//             Invite someone by email to collaborate on this deck
+//             Invite someone by email to collaborate on this shelve
 //           </Text>
           
 //           <TextInput
@@ -118,7 +118,7 @@
 //           </View>
           
 //           <Text className="text-gray-600 mb-4">
-//             Share this deck using your device's sharing options
+//             Share this shelve using your device's sharing options
 //           </Text>
           
 //           <TouchableOpacity 
@@ -133,7 +133,7 @@
 //         {/* Permissions Note */}
 //         <View className="bg-blue-50 rounded-xl p-4 mb-6">
 //           <Text className="text-blue-800 text-center">
-//             Collaborators will be able to view and study this deck. 
+//             Collaborators will be able to view and study this shelve. 
 //             Only you can edit the content.
 //           </Text>
 //         </View>

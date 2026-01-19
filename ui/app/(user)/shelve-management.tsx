@@ -21,11 +21,11 @@ import {
   Play,
 } from "lucide-react-native";
 
-export default function DeckManagementScreen() {
+export default function ShelveManagementScreen() {
   const router = useRouter();
 
-  // Mock deck data - in a real app this would come from props or API
-  const [deckData, setDeckData] = useState({
+  // Mock shelve data - in a real app this would come from props or API
+  const [shelveData, setShelveData] = useState({
     id: "1",
     name: "Biology Fundamentals",
     description:
@@ -37,42 +37,42 @@ export default function DeckManagementScreen() {
     isEditing: false,
   });
 
-  const [editedName, setEditedName] = useState(deckData.name);
+  const [editedName, setEditedName] = useState(shelveData.name);
   const [editedDescription, setEditedDescription] = useState(
-    deckData.description
+    shelveData.description
   );
 
   const handleEdit = () => {
-    setEditedName(deckData.name);
-    setEditedDescription(deckData.description);
-    setDeckData({ ...deckData, isEditing: true });
+    setEditedName(shelveData.name);
+    setEditedDescription(shelveData.description);
+    setShelveData({ ...shelveData, isEditing: true });
   };
 
   const handleSave = () => {
     if (editedName.trim().length === 0) {
-      Alert.alert("Validation Error", "Deck name cannot be empty");
+      Alert.alert("Validation Error", "Shelve name cannot be empty");
       return;
     }
 
-    setDeckData({
-      ...deckData,
+    setShelveData({
+      ...shelveData,
       name: editedName,
       description: editedDescription,
       isEditing: false,
     });
 
     // In a real app, you would save to your backend here
-    Alert.alert("Success", "Deck updated successfully");
+    Alert.alert("Success", "Shelve updated successfully");
   };
 
   const handleCancel = () => {
-    setDeckData({ ...deckData, isEditing: false });
+    setShelveData({ ...shelveData, isEditing: false });
   };
 
   const handleDelete = () => {
     Alert.alert(
-      "Delete Deck",
-      "Are you sure you want to delete this deck? This action cannot be undone.",
+      "Delete Shelve",
+      "Are you sure you want to delete this shelve? This action cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -80,7 +80,7 @@ export default function DeckManagementScreen() {
           style: "destructive",
           onPress: () => {
             // In a real app, you would delete from your backend here
-            Alert.alert("Success", "Deck deleted successfully");
+            Alert.alert("Success", "Shelve deleted successfully");
             router.back();
           },
         },
@@ -94,9 +94,9 @@ export default function DeckManagementScreen() {
         {/* Header */}
         <View className="flex-row items-center justify-between mb-6">
           <Text className="text-2xl font-bold text-gray-900">
-            Deck Management
+            Shelve Management
           </Text>
-          {deckData.isEditing ? (
+          {shelveData.isEditing ? (
             <View className="flex-row">
               <TouchableOpacity
                 className="p-2 mr-2 bg-gray-200 rounded-full"
@@ -121,50 +121,50 @@ export default function DeckManagementScreen() {
           )}
         </View>
 
-        {/* Deck Preview Card */}
+        {/* Shelve Preview Card */}
         <View className="bg-white rounded-xl shadow-sm p-5 mb-6">
           <View className="flex-row items-center mb-4">
             <View className="w-16 h-16 rounded-xl bg-indigo-100 items-center justify-center mr-4">
               <Image
-                source={{ uri: deckData.icon }}
+                source={{ uri: shelveData.icon }}
                 className="w-full h-full rounded-xl"
               />
             </View>
-            {deckData.isEditing ? (
+            {shelveData.isEditing ? (
               <TextInput
                 className="flex-1 text-lg font-bold text-gray-900 border-b border-indigo-300 py-1"
                 value={editedName}
                 onChangeText={setEditedName}
-                placeholder="Deck name"
+                placeholder="Shelve name"
               />
             ) : (
               <Text className="text-xl font-bold text-gray-900 flex-1">
-                {deckData.name}
+                {shelveData.name}
               </Text>
             )}
           </View>
 
-          {deckData.isEditing ? (
+          {shelveData.isEditing ? (
             <TextInput
               className="text-gray-600 mb-4 border-b border-gray-300 py-1"
               value={editedDescription}
               onChangeText={setEditedDescription}
-              placeholder="Deck description"
+              placeholder="Shelve description"
               multiline
             />
           ) : (
-            <Text className="text-gray-600 mb-4">{deckData.description}</Text>
+            <Text className="text-gray-600 mb-4">{shelveData.description}</Text>
           )}
 
           <View className="flex-row justify-between mt-4">
             <View className="flex-row items-center">
               <BookOpen size={16} color="#6B7280" />
               <Text className="text-gray-500 ml-2">
-                {deckData.cardCount} cards
+                {shelveData.cardCount} cards
               </Text>
             </View>
             <Text className="text-gray-500">
-              Last studied: {deckData.lastStudied}
+              Last studied: {shelveData.lastStudied}
             </Text>
           </View>
         </View>
@@ -172,7 +172,7 @@ export default function DeckManagementScreen() {
         {/* High-level Stats */}
         <View className="bg-white rounded-xl shadow-sm p-5 mb-6">
           <Text className="text-lg font-bold text-gray-900 mb-4">
-            Deck Statistics
+            Shelve Statistics
           </Text>
           <View className="flex-row justify-between mb-3">
             <View className="flex-row items-center">
@@ -180,7 +180,7 @@ export default function DeckManagementScreen() {
               <Text className="text-gray-600 ml-2">Retention Rate</Text>
             </View>
             <Text className="font-bold text-lg text-indigo-600">
-              {deckData.retentionRate}%
+              {shelveData.retentionRate}%
             </Text>
           </View>
           <View className="flex-row justify-between">
@@ -189,7 +189,7 @@ export default function DeckManagementScreen() {
               <Text className="text-gray-600 ml-2">Cards Count</Text>
             </View>
             <Text className="font-bold text-lg text-emerald-500">
-              {deckData.cardCount}
+              {shelveData.cardCount}
             </Text>
           </View>
         </View>
@@ -250,7 +250,7 @@ export default function DeckManagementScreen() {
             onPress={handleDelete}
           >
             <Trash2 size={20} color="#EF4444" />
-            <Text className="text-red-600 font-medium ml-3">Delete Deck</Text>
+            <Text className="text-red-600 font-medium ml-3">Delete Shelve</Text>
           </TouchableOpacity>
         </View>
       </View>

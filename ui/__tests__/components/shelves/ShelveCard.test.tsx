@@ -16,20 +16,20 @@
 
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { DeckCard } from '../../../components/deck/DeckCard';
-import { Deck } from '../../../types/Deck';
+import { ShelveCard } from '../../../components/shelves/ShelveCard';
+import { Shelve } from '../../../types/Shelve';
 
-describe('DeckCard', () => {
-  const mockDeck: Deck = {
-    id: 'deck-123',
+describe('ShelveCard', () => {
+  const mockShelve: Shelve = {
+    id: 'shelve-123',
     name: 'Japanese Vocabulary',
     description: 'Basic Japanese words for beginners',
     createdAt: '2025-12-14T10:00:00.000Z',
     updatedAt: '2025-12-14T15:30:00.000Z',
   };
 
-  const mockDeckWithoutDescription: Deck = {
-    id: 'deck-456',
+  const mockShelveWithoutDescription: Shelve = {
+    id: 'shelve-456',
     name: 'Math Formulas',
     description: null,
     createdAt: '2025-12-14T10:00:00.000Z',
@@ -44,10 +44,10 @@ describe('DeckCard', () => {
     jest.clearAllMocks();
   });
 
-  it('renders deck name correctly', () => {
+  it('renders shelve name correctly', () => {
     render(
-      <DeckCard
-        deck={mockDeck}
+      <ShelveCard
+        shelve={mockShelve}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
       />
@@ -56,10 +56,10 @@ describe('DeckCard', () => {
     expect(screen.getByText('Japanese Vocabulary')).toBeTruthy();
   });
 
-  it('renders deck description when provided', () => {
+  it('renders shelve description when provided', () => {
     render(
-      <DeckCard
-        deck={mockDeck}
+      <ShelveCard
+        shelve={mockShelve}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
       />
@@ -70,8 +70,8 @@ describe('DeckCard', () => {
 
   it('does not render description when null', () => {
     render(
-      <DeckCard
-        deck={mockDeckWithoutDescription}
+      <ShelveCard
+        shelve={mockShelveWithoutDescription}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
       />
@@ -82,8 +82,8 @@ describe('DeckCard', () => {
 
   it('renders formatted date correctly', () => {
     render(
-      <DeckCard
-        deck={mockDeck}
+      <ShelveCard
+        shelve={mockShelve}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
       />
@@ -95,78 +95,78 @@ describe('DeckCard', () => {
 
   it('calls onEdit when edit button is pressed', () => {
     render(
-      <DeckCard
-        deck={mockDeck}
+      <ShelveCard
+        shelve={mockShelve}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
       />
     );
 
-    const editButton = screen.getByTestId('deck-edit-deck-123');
+    const editButton = screen.getByTestId('shelve-edit-shelve-123');
     fireEvent.press(editButton);
 
     expect(mockOnEdit).toHaveBeenCalledTimes(1);
-    expect(mockOnEdit).toHaveBeenCalledWith(mockDeck);
+    expect(mockOnEdit).toHaveBeenCalledWith(mockShelve);
   });
 
   it('calls onDelete when delete button is pressed', () => {
     render(
-      <DeckCard
-        deck={mockDeck}
+      <ShelveCard
+        shelve={mockShelve}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
       />
     );
 
-    const deleteButton = screen.getByTestId('deck-delete-deck-123');
+    const deleteButton = screen.getByTestId('shelve-delete-shelve-123');
     fireEvent.press(deleteButton);
 
     expect(mockOnDelete).toHaveBeenCalledTimes(1);
-    expect(mockOnDelete).toHaveBeenCalledWith(mockDeck);
+    expect(mockOnDelete).toHaveBeenCalledWith(mockShelve);
   });
 
   it('calls onPress when card is pressed', () => {
     render(
-      <DeckCard
-        deck={mockDeck}
+      <ShelveCard
+        shelve={mockShelve}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
         onPress={mockOnPress}
       />
     );
 
-    const card = screen.getByTestId('deck-card-deck-123');
+    const card = screen.getByTestId('shelve-card-shelve-123');
     fireEvent.press(card);
 
     expect(mockOnPress).toHaveBeenCalledTimes(1);
-    expect(mockOnPress).toHaveBeenCalledWith(mockDeck);
+    expect(mockOnPress).toHaveBeenCalledWith(mockShelve);
   });
 
   it('does not crash when onPress is not provided and card is pressed', () => {
     render(
-      <DeckCard
-        deck={mockDeck}
+      <ShelveCard
+        shelve={mockShelve}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
       />
     );
 
-    const card = screen.getByTestId('deck-card-deck-123');
+    const card = screen.getByTestId('shelve-card-shelve-123');
     // Should not throw when pressed
     expect(() => fireEvent.press(card)).not.toThrow();
   });
 
   it('renders with correct testID', () => {
     render(
-      <DeckCard
-        deck={mockDeck}
+      <ShelveCard
+        shelve={mockShelve}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
       />
     );
 
-    expect(screen.getByTestId('deck-card-deck-123')).toBeTruthy();
-    expect(screen.getByTestId('deck-edit-deck-123')).toBeTruthy();
-    expect(screen.getByTestId('deck-delete-deck-123')).toBeTruthy();
+    expect(screen.getByTestId('shelve-card-shelve-123')).toBeTruthy();
+    expect(screen.getByTestId('shelve-edit-shelve-123')).toBeTruthy();
+    expect(screen.getByTestId('shelve-delete-shelve-123')).toBeTruthy();
   });
 });
