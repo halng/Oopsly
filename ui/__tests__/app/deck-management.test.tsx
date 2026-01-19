@@ -1,5 +1,5 @@
 /*
- *    Copyright 2025 Hao Nguyen Tan
+ *    Copyright 2026 Hao Nguyen Tan
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -116,14 +116,13 @@ describe('DeckManagementScreen', () => {
 
   describe('Error State', () => {
     it('should display error message when fetch fails', async () => {
-      const errorMessage = 'Failed to fetch deck';
-      (deckService.getDeckById as jest.Mock).mockRejectedValue(new Error(errorMessage));
+      (deckService.getDeckById as jest.Mock).mockRejectedValue(new Error('Backend error'));
 
       render(<DeckManagementScreen />);
 
       await waitFor(() => {
         expect(screen.getByText('Error Loading Deck')).toBeTruthy();
-        expect(screen.getByText(errorMessage)).toBeTruthy();
+        expect(screen.getByText('Unable to load deck. Please try again.')).toBeTruthy();
       });
     });
 
@@ -307,9 +306,8 @@ describe('DeckManagementScreen', () => {
     });
 
     it('should handle update error gracefully', async () => {
-      const errorMessage = 'Failed to update deck';
       (deckService.getDeckById as jest.Mock).mockResolvedValue(mockSuccessResponse);
-      (deckService.updateDeck as jest.Mock).mockRejectedValue(new Error(errorMessage));
+      (deckService.updateDeck as jest.Mock).mockRejectedValue(new Error('Backend error'));
 
       render(<DeckManagementScreen />);
 
@@ -326,7 +324,7 @@ describe('DeckManagementScreen', () => {
       });
 
       await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith('Error', errorMessage);
+        expect(Alert.alert).toHaveBeenCalledWith('Error', 'Unable to update deck. Please try again.');
       });
     });
   });
@@ -390,9 +388,8 @@ describe('DeckManagementScreen', () => {
     });
 
     it('should handle delete error gracefully', async () => {
-      const errorMessage = 'Failed to delete deck';
       (deckService.getDeckById as jest.Mock).mockResolvedValue(mockSuccessResponse);
-      (deckService.deleteDeck as jest.Mock).mockRejectedValue(new Error(errorMessage));
+      (deckService.deleteDeck as jest.Mock).mockRejectedValue(new Error('Backend error'));
 
       render(<DeckManagementScreen />);
 
@@ -411,7 +408,7 @@ describe('DeckManagementScreen', () => {
       await deleteAction.onPress();
 
       await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith('Error', errorMessage);
+        expect(Alert.alert).toHaveBeenCalledWith('Error', 'Unable to delete deck. Please try again.');
       });
     });
   });
@@ -458,7 +455,7 @@ describe('DeckManagementScreen', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Error Loading Deck')).toBeTruthy();
-        expect(screen.getByText('Failed to fetch deck')).toBeTruthy();
+        expect(screen.getByText('Unable to load deck. Please try again.')).toBeTruthy();
       });
     });
   });

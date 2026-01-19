@@ -44,9 +44,12 @@ export default function DeckManagementScreen() {
         setEditedDescription(response.data.description || "");
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch deck";
+      const errorMessage = "Unable to load deck. Please try again.";
       setError(errorMessage);
       Alert.alert("Error", errorMessage);
+      if (err instanceof Error) {
+        console.error('Failed to fetch deck:', err.message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -84,8 +87,10 @@ export default function DeckManagementScreen() {
         Alert.alert("Success", "Deck updated successfully");
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update deck";
-      Alert.alert("Error", errorMessage);
+      Alert.alert("Error", "Unable to update deck. Please try again.");
+      if (err instanceof Error) {
+        console.error('Failed to update deck:', err.message);
+      }
     }
   };
 
@@ -97,6 +102,21 @@ export default function DeckManagementScreen() {
     setIsEditing(false);
   };
 
+  const handleDeleteConfirm = async () => {
+    try {
+      const response = await deckService.deleteDeck(deckId);
+      if (response.isSuccess) {
+        Alert.alert("Success", "Deck deleted successfully");
+        router.back();
+      }
+    } catch (err) {
+      Alert.alert("Error", "Unable to delete deck. Please try again.");
+      if (err instanceof Error) {
+        console.error('Failed to delete deck:', err.message);
+      }
+    }
+  };
+
   const handleDelete = () => {
     Alert.alert(
       "Delete Deck",
@@ -106,18 +126,7 @@ export default function DeckManagementScreen() {
         {
           text: "Delete",
           style: "destructive",
-          onPress: async () => {
-            try {
-              const response = await deckService.deleteDeck(deckId);
-              if (response.isSuccess) {
-                Alert.alert("Success", "Deck deleted successfully");
-                router.back();
-              }
-            } catch (err) {
-              const errorMessage = err instanceof Error ? err.message : "Failed to delete deck";
-              Alert.alert("Error", errorMessage);
-            }
-          },
+          onPress: handleDeleteConfirm,
         },
       ]
     );

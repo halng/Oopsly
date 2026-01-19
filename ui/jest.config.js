@@ -16,7 +16,6 @@ module.exports = {
   testPathIgnorePatterns: [
     '/node_modules/',
     '/__tests__/components/deck/', // Deck components not yet implemented
-    '/__tests__/services/otp.test.ts', // OTP service not yet implemented
   ],
   
   collectCoverage: true,

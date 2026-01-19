@@ -73,7 +73,46 @@ apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error: AxiosError<ApiErrorResponse>) => {
+  async (error: AxiosError<ApiErrorResponse>) => {
+    const originalRequest = error.config;
+    
+    // Handle 401 Unauthorized - token expired
+    if (error.response?.status === 401 && originalRequest) {
+      const { refreshToken, setAuthTokens, clearAuth } = useAuthStore.getState();
+      
+      if (refreshToken && !(originalRequest as any)._retry) {
+        (originalRequest as any)._retry = true;
+        
+        try {
+          // Attempt to refresh the access token
+          const response = await apiClient.post('/auth/refresh', {
+            refreshToken,
+          });
+          
+          if (response.data?.data?.access_token && response.data?.data?.refresh_token) {
+            const { access_token, refresh_token } = response.data.data;
+            setAuthTokens(access_token, refresh_token);
+            
+            // Retry the original request with new token
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${access_token}`;
+            }
+            return apiClient(originalRequest);
+          }
+        } catch (refreshError) {
+          // Refresh failed, clear auth and redirect to login
+          clearAuth();
+          console.error('Token refresh failed:', refreshError);
+          return Promise.reject(new Error('Session expired. Please login again.'));
+        }
+      } else {
+        // No refresh token available, clear auth
+        clearAuth();
+        return Promise.reject(new Error('Session expired. Please login again.'));
+      }
+    }
+    
+    // Handle other errors
     if (error.response) {
       const errorData = error.response.data;
       const errorMessage = errorData?.message || 'An error occurred';
