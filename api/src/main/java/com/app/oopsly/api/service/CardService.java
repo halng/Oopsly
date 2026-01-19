@@ -34,7 +34,7 @@ public interface CardService {
 
     ApiRes getById(UUID shelveId, UUID subjectId, UUID cardId);
 
-    ApiRes getAllCardsByCollection(UUID shelveId, UUID subjectId, int page, int size);
+    ApiRes getAllCardsBySubject(UUID shelveId, UUID subjectId, int page, int size);
 
     Instant calculateNextPracticeTime(DifficultyLevel difficultyLevel);
 

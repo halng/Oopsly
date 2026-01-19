@@ -128,13 +128,13 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
-    @Cacheable(value = "testSuites", key = "#deckId + ':all'")
+    @Cacheable(value = "testSuites", key = "#shelveId + ':all'")
     @CircuitBreaker(
             name = "testSuiteServiceCircuitBreaker",
-            fallbackMethod = "getAllByDeckFallback")
-    public ApiRes getAllByDeck(UUID deckId) {
-        log.info("Fetching all test suites for shelve {}", deckId);
-        ShelveEntity shelve = this.findShelveByIdAndUser(deckId);
+            fallbackMethod = "getAllByShelveFallback")
+    public ApiRes getAllByShelve(UUID shelveId) {
+        log.info("Fetching all test suites for shelve {}", shelveId);
+        ShelveEntity shelve = this.findShelveByIdAndUser(shelveId);
         List<TestSuiteEntity> testSuites = testSuiteRepository.findAllByShelve(shelve);
         List<TestSuiteRes> responses = testSuites.stream().map(this::toViewModel).toList();
 
@@ -192,8 +192,8 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                 "Test suite service is currently unavailable. Please try again later.", t);
     }
 
-    public ApiRes getAllByDeckFallback(UUID deckId, Throwable t) {
-        log.error("Test suite service unavailable during getAllByDeck: {}", t.getMessage());
+    public ApiRes getAllByShelveFallback(UUID shelveId, Throwable t) {
+        log.error("Test suite service unavailable during getAllByShelve: {}", t.getMessage());
         throw new RetryLaterException(
                 "Test suite service is currently unavailable. Please try again later.", t);
     }

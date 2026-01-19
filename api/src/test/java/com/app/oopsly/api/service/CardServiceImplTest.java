@@ -23,15 +23,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.entity.CardEntity;
-import com.app.oopsly.api.entity.CollectionEntity;
-import com.app.oopsly.api.entity.DeckEntity;
+import com.app.oopsly.api.entity.SubjectEntity;
+import com.app.oopsly.api.entity.ShelveEntity;
 import com.app.oopsly.api.entity.DifficultyLevel;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.repository.CardRepository;
-import com.app.oopsly.api.repository.CollectionRepository;
-import com.app.oopsly.api.repository.DeckRepository;
+import com.app.oopsly.api.repository.SubjectRepository;
+import com.app.oopsly.api.repository.ShelveRepository;
 import com.app.oopsly.api.service.impl.CardServiceImpl;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CardItemReq;
@@ -59,9 +59,9 @@ class CardServiceImplTest {
 
     @Mock private CardRepository cardRepository;
 
-    @Mock private CollectionRepository collectionRepository;
+    @Mock private SubjectRepository subjectRepository;
 
-    @Mock private DeckRepository deckRepository;
+    @Mock private ShelveRepository shelveRepository;
 
     @Mock private UserService userService;
 
@@ -69,10 +69,10 @@ class CardServiceImplTest {
 
     private CardReq cardReq;
     private User currentUser;
-    private DeckEntity deck;
-    private CollectionEntity collection;
-    private UUID deckId;
-    private UUID collectionId;
+    private ShelveEntity shelve;
+    private SubjectEntity subject;
+    private UUID shelveId;
+    private UUID subjectId;
     private UUID cardId;
     private List<UpdateDifficultyReq> updateDifficultyReq;
 
@@ -82,15 +82,15 @@ class CardServiceImplTest {
         cardReq = new CardReq(cardItems);
         currentUser = new User();
         currentUser.setEmail("test@example.com");
-        deckId = UUID.randomUUID();
-        collectionId = UUID.randomUUID();
+        shelveId = UUID.randomUUID();
+        subjectId = UUID.randomUUID();
         cardId = UUID.randomUUID();
-        deck = new DeckEntity();
-        deck.setId(deckId);
-        deck.setUser(currentUser);
-        collection = new CollectionEntity();
-        collection.setId(collectionId);
-        collection.setDeck(deck);
+        shelve = new ShelveEntity();
+        shelve.setId(shelveId);
+        shelve.setUser(currentUser);
+        subject = new SubjectEntity();
+        subject.setId(subjectId);
+        subject.setShelve(shelve);
     }
 
     @Test
@@ -107,42 +107,42 @@ class CardServiceImplTest {
             card.setId(UUID.randomUUID());
             card.setFront(cardItems.get(i).front());
             card.setBack(cardItems.get(i).back());
-            card.setCollection(collection);
+            card.setSubject(subject);
             savedCards.add(card);
         }
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.of(collection));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve))
+                .thenReturn(Optional.of(subject));
         when(cardRepository.saveAllAndFlush(anyList())).thenReturn(savedCards);
 
-        ApiRes result = cardService.create(deckId, collectionId, request);
+        ApiRes result = cardService.create(shelveId, subjectId, request);
 
         assertNotNull(result);
-        verify(deckRepository, times(1)).findByIdAndUser(deckId, currentUser);
-        verify(collectionRepository, times(1)).findByIdAndDeck(collectionId, deck);
+        verify(shelveRepository, times(1)).findByIdAndUser(shelveId, currentUser);
+        verify(subjectRepository, times(1)).findByIdAndShelve(subjectId, shelve);
         verify(cardRepository, times(1)).saveAllAndFlush(anyList());
     }
 
     @Test
     void create_throwsNotFoundException_whenDeckNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
 
         assertThrows(
-                NotFoundException.class, () -> cardService.create(deckId, collectionId, cardReq));
+                NotFoundException.class, () -> cardService.create(shelveId, subjectId, cardReq));
         verify(cardRepository, never()).saveAll(anyList());
     }
 
     @Test
     void create_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
         assertThrows(
-                NotFoundException.class, () -> cardService.create(deckId, collectionId, cardReq));
+                NotFoundException.class, () -> cardService.create(shelveId, subjectId, cardReq));
         verify(cardRepository, never()).saveAll(anyList());
     }
 
@@ -153,24 +153,24 @@ class CardServiceImplTest {
         existingCard.setId(cardId);
         existingCard.setFront("Topic");
         existingCard.setBack("Answer");
-        existingCard.setCollection(collection);
+        existingCard.setSubject(subject);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.of(collection));
-        when(cardRepository.findByIdAndCollection(cardId, collection))
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve))
+                .thenReturn(Optional.of(subject));
+        when(cardRepository.findByIdAndSubject(cardId, subject))
                 .thenReturn(Optional.of(existingCard));
         when(cardRepository.saveAll(any())).thenReturn(List.of(existingCard));
 
-        ApiRes result = cardService.updateDifficulty(deckId, collectionId, updateDifficultyReq);
+        ApiRes result = cardService.updateDifficulty(shelveId, subjectId, updateDifficultyReq);
 
         assertNotNull(result);
         assertEquals(DifficultyLevel.GOOD, existingCard.getDifficultyLevel());
         assertNotNull(existingCard.getNextPracticeTime());
-        verify(deckRepository, times(1)).findByIdAndUser(deckId, currentUser);
-        verify(collectionRepository, times(1)).findByIdAndDeck(collectionId, deck);
-        verify(cardRepository, times(1)).findByIdAndCollection(cardId, collection);
+        verify(shelveRepository, times(1)).findByIdAndUser(shelveId, currentUser);
+        verify(subjectRepository, times(1)).findByIdAndShelve(subjectId, shelve);
+        verify(cardRepository, times(1)).findByIdAndSubject(cardId, subject);
         verify(cardRepository, times(1)).saveAll(any());
     }
 
@@ -179,12 +179,12 @@ class CardServiceImplTest {
         updateDifficultyReq = List.of(new UpdateDifficultyReq(cardId, DifficultyLevel.EASY.name()));
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
-                () -> cardService.updateDifficulty(deckId, collectionId, updateDifficultyReq));
-        verify(cardRepository, never()).findByIdAndCollection(any(), any());
+                () -> cardService.updateDifficulty(shelveId, subjectId, updateDifficultyReq));
+        verify(cardRepository, never()).findByIdAndSubject(any(), any());
         verify(cardRepository, never()).save(any(CardEntity.class));
     }
 
@@ -193,13 +193,13 @@ class CardServiceImplTest {
         updateDifficultyReq = List.of(new UpdateDifficultyReq(cardId, DifficultyLevel.EASY.name()));
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
-                () -> cardService.updateDifficulty(deckId, collectionId, updateDifficultyReq));
-        verify(cardRepository, never()).findByIdAndCollection(any(), any());
+                () -> cardService.updateDifficulty(shelveId, subjectId, updateDifficultyReq));
+        verify(cardRepository, never()).findByIdAndSubject(any(), any());
         verify(cardRepository, never()).save(any(CardEntity.class));
     }
 
@@ -208,14 +208,14 @@ class CardServiceImplTest {
         updateDifficultyReq = List.of(new UpdateDifficultyReq(cardId, DifficultyLevel.HARD.name()));
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.of(collection));
-        when(cardRepository.findByIdAndCollection(cardId, collection)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve))
+                .thenReturn(Optional.of(subject));
+        when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
-                () -> cardService.updateDifficulty(deckId, collectionId, updateDifficultyReq));
+                () -> cardService.updateDifficulty(shelveId, subjectId, updateDifficultyReq));
         verify(cardRepository, never()).save(any(CardEntity.class));
     }
 
@@ -224,17 +224,17 @@ class CardServiceImplTest {
         CardEntity existingCard = new CardEntity();
         existingCard.setId(cardId);
         existingCard.setDeleted(false);
-        existingCard.setCollection(collection);
+        existingCard.setSubject(subject);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.of(collection));
-        when(cardRepository.findByIdAndCollection(cardId, collection))
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve))
+                .thenReturn(Optional.of(subject));
+        when(cardRepository.findByIdAndSubject(cardId, subject))
                 .thenReturn(Optional.of(existingCard));
         when(cardRepository.save(any(CardEntity.class))).thenReturn(existingCard);
 
-        ApiRes result = cardService.delete(deckId, collectionId, cardId);
+        ApiRes result = cardService.delete(shelveId, subjectId, cardId);
 
         assertNotNull(result);
         assertTrue(existingCard.getDeleted());
@@ -244,88 +244,88 @@ class CardServiceImplTest {
     @Test
     void delete_throwsNotFoundException_whenDeckNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
 
         assertThrows(
-                NotFoundException.class, () -> cardService.delete(deckId, collectionId, cardId));
-        verify(cardRepository, never()).findByIdAndCollection(any(), any());
+                NotFoundException.class, () -> cardService.delete(shelveId, subjectId, cardId));
+        verify(cardRepository, never()).findByIdAndSubject(any(), any());
     }
 
     @Test
     void delete_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
         assertThrows(
-                NotFoundException.class, () -> cardService.delete(deckId, collectionId, cardId));
-        verify(cardRepository, never()).findByIdAndCollection(any(), any());
+                NotFoundException.class, () -> cardService.delete(shelveId, subjectId, cardId));
+        verify(cardRepository, never()).findByIdAndSubject(any(), any());
     }
 
     @Test
     void delete_throwsNotFoundException_whenCardNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.of(collection));
-        when(cardRepository.findByIdAndCollection(cardId, collection)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve))
+                .thenReturn(Optional.of(subject));
+        when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.empty());
 
         assertThrows(
-                NotFoundException.class, () -> cardService.delete(deckId, collectionId, cardId));
+                NotFoundException.class, () -> cardService.delete(shelveId, subjectId, cardId));
     }
 
     @Test
     void getById_returnsCard() {
         CardEntity existingCard = new CardEntity();
         existingCard.setId(cardId);
-        existingCard.setCollection(collection);
+        existingCard.setSubject(subject);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.of(collection));
-        when(cardRepository.findByIdAndCollection(cardId, collection))
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve))
+                .thenReturn(Optional.of(subject));
+        when(cardRepository.findByIdAndSubject(cardId, subject))
                 .thenReturn(Optional.of(existingCard));
 
-        ApiRes result = cardService.getById(deckId, collectionId, cardId);
+        ApiRes result = cardService.getById(shelveId, subjectId, cardId);
 
         assertNotNull(result);
-        verify(deckRepository, times(1)).findByIdAndUser(deckId, currentUser);
-        verify(collectionRepository, times(1)).findByIdAndDeck(collectionId, deck);
-        verify(cardRepository, times(1)).findByIdAndCollection(cardId, collection);
+        verify(shelveRepository, times(1)).findByIdAndUser(shelveId, currentUser);
+        verify(subjectRepository, times(1)).findByIdAndShelve(subjectId, shelve);
+        verify(cardRepository, times(1)).findByIdAndSubject(cardId, subject);
     }
 
     @Test
     void getById_throwsNotFoundException_whenDeckNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
 
         assertThrows(
-                NotFoundException.class, () -> cardService.getById(deckId, collectionId, cardId));
-        verify(cardRepository, never()).findByIdAndCollection(any(), any());
+                NotFoundException.class, () -> cardService.getById(shelveId, subjectId, cardId));
+        verify(cardRepository, never()).findByIdAndSubject(any(), any());
     }
 
     @Test
     void getById_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
         assertThrows(
-                NotFoundException.class, () -> cardService.getById(deckId, collectionId, cardId));
-        verify(cardRepository, never()).findByIdAndCollection(any(), any());
+                NotFoundException.class, () -> cardService.getById(shelveId, subjectId, cardId));
+        verify(cardRepository, never()).findByIdAndSubject(any(), any());
     }
 
     @Test
     void getById_throwsNotFoundException_whenCardNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.of(collection));
-        when(cardRepository.findByIdAndCollection(cardId, collection)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve))
+                .thenReturn(Optional.of(subject));
+        when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.empty());
 
         assertThrows(
-                NotFoundException.class, () -> cardService.getById(deckId, collectionId, cardId));
+                NotFoundException.class, () -> cardService.getById(shelveId, subjectId, cardId));
     }
 
     @Test
@@ -336,47 +336,47 @@ class CardServiceImplTest {
             card.setId(UUID.randomUUID());
             card.setFront("Topic " + i);
             card.setBack("Answer " + i);
-            card.setCollection(collection);
+            card.setSubject(subject);
             cards.add(card);
         }
 
         Page<CardEntity> page = new PageImpl<>(cards, PageRequest.of(0, 10), 3);
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                .thenReturn(Optional.of(collection));
-        when(cardRepository.findAllByCollection(eq(collection), any(Pageable.class)))
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve))
+                .thenReturn(Optional.of(subject));
+        when(cardRepository.findAllBySubject(eq(subject), any(Pageable.class)))
                 .thenReturn(page);
 
-        ApiRes result = cardService.getAllCardsByCollection(deckId, collectionId, 0, 10);
+        ApiRes result = cardService.getAllCardsBySubject(shelveId, subjectId, 0, 10);
 
         assertNotNull(result);
-        verify(deckRepository, times(1)).findByIdAndUser(deckId, currentUser);
-        verify(collectionRepository, times(1)).findByIdAndDeck(collectionId, deck);
-        verify(cardRepository, times(1)).findAllByCollection(eq(collection), any(Pageable.class));
+        verify(shelveRepository, times(1)).findByIdAndUser(shelveId, currentUser);
+        verify(subjectRepository, times(1)).findByIdAndShelve(subjectId, shelve);
+        verify(cardRepository, times(1)).findAllBySubject(eq(subject), any(Pageable.class));
     }
 
     @Test
     void getAll_CardsByCollection_throwsNotFoundException_whenDeckNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
-                () -> cardService.getAllCardsByCollection(deckId, collectionId, 0, 10));
-        verify(cardRepository, never()).findAllByCollection(any(), any());
+                () -> cardService.getAllCardsBySubject(shelveId, subjectId, 0, 10));
+        verify(cardRepository, never()).findAllBySubject(any(), any());
     }
 
     @Test
     void getAll_CardsByCollection_throwsNotFoundException_whenCollectionNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(collectionRepository.findByIdAndDeck(collectionId, deck)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
-                () -> cardService.getAllCardsByCollection(deckId, collectionId, 0, 10));
-        verify(cardRepository, never()).findAllByCollection(any(), any());
+                () -> cardService.getAllCardsBySubject(shelveId, subjectId, 0, 10));
+        verify(cardRepository, never()).findAllBySubject(any(), any());
     }
 
     @Test
@@ -426,20 +426,20 @@ class CardServiceImplTest {
             existingCard.setId(cardId);
             existingCard.setFront("Topic");
             existingCard.setBack("Answer");
-            existingCard.setCollection(collection);
+            existingCard.setSubject(subject);
 
             when(userService.getCurrentUser()).thenReturn(currentUser);
-            when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-            when(collectionRepository.findByIdAndDeck(collectionId, deck))
-                    .thenReturn(Optional.of(collection));
-            when(cardRepository.findByIdAndCollection(cardId, collection))
+            when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.of(shelve));
+            when(subjectRepository.findByIdAndShelve(subjectId, shelve))
+                    .thenReturn(Optional.of(subject));
+            when(cardRepository.findByIdAndSubject(cardId, subject))
                     .thenReturn(Optional.of(existingCard));
             when(cardRepository.saveAll(any())).thenReturn(List.of(existingCard));
 
             ApiRes result =
                     cardService.updateDifficulty(
-                            deckId,
-                            collectionId,
+                            shelveId,
+                            subjectId,
                             List.of(new UpdateDifficultyReq(cardId, level.name())));
             assertNotNull(result);
             assertEquals(level, existingCard.getDifficultyLevel());
@@ -456,7 +456,7 @@ class CardServiceImplTest {
         RetryLaterException exception =
                 assertThrows(
                         RetryLaterException.class,
-                        () -> cardService.createFallback(deckId, collectionId, request, cause));
+                        () -> cardService.createFallback(shelveId, subjectId, request, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -470,7 +470,7 @@ class CardServiceImplTest {
         RetryLaterException exception =
                 assertThrows(
                         RetryLaterException.class,
-                        () -> cardService.deleteFallback(deckId, collectionId, cardId, cause));
+                        () -> cardService.deleteFallback(shelveId, subjectId, cardId, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -484,7 +484,7 @@ class CardServiceImplTest {
         RetryLaterException exception =
                 assertThrows(
                         RetryLaterException.class,
-                        () -> cardService.getByIdFallback(deckId, collectionId, cardId, cause));
+                        () -> cardService.getByIdFallback(shelveId, subjectId, cardId, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -492,15 +492,15 @@ class CardServiceImplTest {
     }
 
     @Test
-    void getAllCardsByCollectionFallback_throwsRuntimeException() {
+    void getAllCardsBySubjectFallback_throwsRuntimeException() {
         Throwable cause = new Throwable("Service degraded");
 
         RetryLaterException exception =
                 assertThrows(
                         RetryLaterException.class,
                         () ->
-                                cardService.getAllCardsByCollectionFallback(
-                                        deckId, collectionId, 0, 10, cause));
+                                cardService.getAllCardsBySubjectFallback(
+                                        shelveId, subjectId, 0, 10, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -517,7 +517,7 @@ class CardServiceImplTest {
                         RetryLaterException.class,
                         () ->
                                 cardService.updateCardFallback(
-                                        deckId, collectionId, cardId, item, cause));
+                                        shelveId, subjectId, cardId, item, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -535,7 +535,7 @@ class CardServiceImplTest {
                         RetryLaterException.class,
                         () ->
                                 cardService.updateDifficultyFallback(
-                                        deckId, collectionId, reqList, cause));
+                                        shelveId, subjectId, reqList, cause));
 
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
@@ -554,7 +554,7 @@ class CardServiceImplTest {
                         RetryLaterException.class,
                         () ->
                                 cardService.createFallback(
-                                        deckId, collectionId, request, wrappedException));
+                                        shelveId, subjectId, request, wrappedException));
 
         assertEquals(wrappedException, exception.getCause());
         assertEquals(originalException, exception.getCause().getCause());
@@ -569,14 +569,14 @@ class CardServiceImplTest {
                         RuntimeException.class,
                         () ->
                                 cardService.createFallback(
-                                        deckId,
-                                        collectionId,
+                                        shelveId,
+                                        subjectId,
                                         new CardReq(List.of(new CardItemReq("F", "B"))),
                                         cause));
         RetryLaterException deleteEx =
                 assertThrows(
                         RetryLaterException.class,
-                        () -> cardService.deleteFallback(deckId, collectionId, cardId, cause));
+                        () -> cardService.deleteFallback(shelveId, subjectId, cardId, cause));
 
         assertTrue(createEx.getMessage().contains("try again later"));
         assertTrue(deleteEx.getMessage().contains("try again later"));
