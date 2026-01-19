@@ -16,9 +16,9 @@
 
 package com.app.oopsly.api.controller;
 
-import com.app.oopsly.api.service.DeckService;
+import com.app.oopsly.api.service.ShelveService;
 import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.DeckReq;
+import com.app.oopsly.api.viewmodel.ShelveReq;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -40,14 +40,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/decks")
+@RequestMapping("/shelves")
 @Tag(
         name = "Deck",
         description = "Deck management APIs for creating, updating, retrieving and deleting decks")
-public class DeckController {
-    private final DeckService service;
+public class ShelveController {
+    private final ShelveService service;
 
-    public DeckController(DeckService service) {
+    public ShelveController(ShelveService service) {
         this.service = service;
     }
 
@@ -66,7 +66,7 @@ public class DeckController {
     @PostMapping("")
     ApiRes create(
             @Parameter(description = "Deck creation request", required = true) @Valid @RequestBody
-                    DeckReq requestBody) {
+                    ShelveReq requestBody) {
         return this.service.create(requestBody);
     }
 
@@ -84,7 +84,7 @@ public class DeckController {
     @PutMapping("/{id}")
     ApiRes update(
             @Parameter(description = "Deck update request", required = true) @Valid @RequestBody
-                    DeckReq requestBody,
+                    ShelveReq requestBody,
             @Parameter(
                             description = "Deck ID",
                             required = true,

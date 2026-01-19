@@ -16,9 +16,9 @@
 
 package com.app.oopsly.api.controller;
 
-import com.app.oopsly.api.service.CollectionService;
+import com.app.oopsly.api.service.SubjectService;
 import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.CollectionReq;
+import com.app.oopsly.api.viewmodel.SubjectReq;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/decks/{deckId}/collections")
+@RequestMapping("/shelves/{shelveId}/subjects")
 @RequiredArgsConstructor
 @Validated
 @Tag(
@@ -44,9 +44,9 @@ import org.springframework.web.bind.annotation.*;
         description =
                 "Collection management APIs for creating, updating, retrieving and deleting"
                         + " collections within decks")
-public class CollectionController {
+public class SubjectController {
 
-    private final CollectionService collectionService;
+    private final SubjectService subjectService;
 
     @Operation(
             summary = "Create collection",
@@ -68,12 +68,12 @@ public class CollectionController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(description = "Collection creation request", required = true)
                     @Valid @RequestBody
-                    CollectionReq requestBody) {
-        log.info("Creating collection for deck: {}", deckId);
-        return collectionService.create(deckId, requestBody);
+                    SubjectReq requestBody) {
+        log.info("Creating collection for deck: {}", shelveId);
+        return subjectService.create(shelveId, requestBody);
     }
 
     @Operation(
@@ -90,13 +90,13 @@ public class CollectionController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("")
-    ApiRes getAllByDeck(
+    ApiRes getAllByShelve(
             @Parameter(
                             description = "Deck ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(description = "Page number (starts from 0)", required = true, example = "0")
                     @RequestParam
                     @Min(value = 0, message = "Page must be greater than or equal to 0") int page,
@@ -105,10 +105,10 @@ public class CollectionController {
                     @Min(value = 1, message = "Size must be greater than 0") int size) {
         log.info(
                 "Getting all collections for deck: {} with page: {} and size: {}",
-                deckId,
+                shelveId,
                 page,
                 size);
-        return collectionService.getAllByDeck(deckId, page, size);
+        return subjectService.getAllByShelve(shelveId, page, size);
     }
 
     @Operation(
@@ -131,7 +131,7 @@ public class CollectionController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(
                             description = "Collection ID",
                             required = true,
@@ -140,9 +140,9 @@ public class CollectionController {
                     UUID id,
             @Parameter(description = "Collection update request", required = true)
                     @Valid @RequestBody
-                    CollectionReq requestBody) {
-        log.info("Updating collection: {} in deck: {}", id, deckId);
-        return collectionService.update(deckId, id, requestBody);
+                    SubjectReq requestBody) {
+        log.info("Updating collection: {} in deck: {}", id, shelveId);
+        return subjectService.update(shelveId, id, requestBody);
     }
 
     @Operation(
@@ -164,15 +164,15 @@ public class CollectionController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(
                             description = "Collection ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
                     UUID id) {
-        log.info("Getting collection: {} from deck: {}", id, deckId);
-        return collectionService.getById(deckId, id);
+        log.info("Getting collection: {} from deck: {}", id, shelveId);
+        return subjectService.getById(shelveId, id);
     }
 
     @Operation(
@@ -194,14 +194,14 @@ public class CollectionController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(
                             description = "Collection ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
                     UUID id) {
-        log.info("Deleting collection: {} from deck: {}", id, deckId);
-        return collectionService.delete(deckId, id);
+        log.info("Deleting collection: {} from deck: {}", id, shelveId);
+        return subjectService.delete(shelveId, id);
     }
 }

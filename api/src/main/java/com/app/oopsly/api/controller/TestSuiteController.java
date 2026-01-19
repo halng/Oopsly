@@ -31,7 +31,7 @@ import java.util.UUID;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/decks/{deckId}/test-suites")
+@RequestMapping("/shelves/{shelveId}/test-suites")
 @Tag(
         name = "Test Suite",
         description =
@@ -64,11 +64,11 @@ public class TestSuiteController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(description = "Test suite creation request", required = true)
                     @Valid @RequestBody
                     TestSuiteReq requestBody) {
-        return this.service.create(deckId, requestBody);
+        return this.service.create(shelveId, requestBody);
     }
 
     @Operation(
@@ -91,7 +91,7 @@ public class TestSuiteController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(
                             description = "Test Suite ID",
                             required = true,
@@ -101,7 +101,7 @@ public class TestSuiteController {
             @Parameter(description = "Test suite update request", required = true)
                     @Valid @RequestBody
                     TestSuiteReq requestBody) {
-        return this.service.update(deckId, id, requestBody);
+        return this.service.update(shelveId, id, requestBody);
     }
 
     @Operation(
@@ -123,14 +123,14 @@ public class TestSuiteController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(
                             description = "Test Suite ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
                     UUID id) {
-        return this.service.getById(deckId, id);
+        return this.service.getById(shelveId, id);
     }
 
     @Operation(
@@ -152,14 +152,14 @@ public class TestSuiteController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(
                             description = "Test Suite ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
                     UUID id) {
-        return this.service.delete(deckId, id);
+        return this.service.delete(shelveId, id);
     }
 
     @Operation(
@@ -175,13 +175,13 @@ public class TestSuiteController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("")
-    ApiRes getAllByDeck(
+    ApiRes getAllByShelve(
             @Parameter(
                             description = "Deck ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId) {
-        return this.service.getAllByDeck(deckId);
+                    UUID shelveId) {
+        return this.service.getAllByShelve(shelveId);
     }
 }

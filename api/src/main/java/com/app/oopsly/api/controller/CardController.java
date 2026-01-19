@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/decks/{deckId}/collections/{collectionId}/cards")
+@RequestMapping("/shelves/{shelveId}/subjects/{subjectId}/cards")
 @RequiredArgsConstructor
 @Validated
 @Tag(
@@ -71,17 +71,17 @@ public class CardController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(
                             description = "Collection ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
-                    UUID collectionId,
+                    UUID subjectId,
             @Parameter(description = "Card creation request", required = true) @Valid @RequestBody
                     CardReq requestBody) {
-        log.info("Creating cards for collection: {} in deck: {}", collectionId, deckId);
-        return cardService.create(deckId, collectionId, requestBody);
+        log.info("Creating cards for collection: {} in deck: {}", subjectId, shelveId);
+        return cardService.create(shelveId, subjectId, requestBody);
     }
 
     @Operation(
@@ -98,19 +98,19 @@ public class CardController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("")
-    ApiRes getAllCardsByCollection(
+    ApiRes getAllCardsBySubject(
             @Parameter(
                             description = "Deck ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(
                             description = "Collection ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
-                    UUID collectionId,
+                    UUID subjectId,
             @Parameter(description = "Page number (starts from 0)", required = true, example = "0")
                     @RequestParam
                     @Min(value = 0, message = "Page must be greater than or equal to 0") int page,
@@ -119,11 +119,11 @@ public class CardController {
                     @Min(value = 1, message = "Size must be greater than 0") int size) {
         log.info(
                 "Getting all cards for collection: {} in deck: {} with page: {} and size: {}",
-                collectionId,
-                deckId,
+                subjectId,
+                shelveId,
                 page,
                 size);
-        return cardService.getAllCardsByCollection(deckId, collectionId, page, size);
+        return cardService.getAllCardsBySubject(shelveId, subjectId, page, size);
     }
 
     @Operation(
@@ -146,13 +146,13 @@ public class CardController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(
                             description = "Collection ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
-                    UUID collectionId,
+                    UUID subjectId,
             @Parameter(
                             description = "Card ID",
                             required = true,
@@ -161,8 +161,8 @@ public class CardController {
                     UUID id,
             @Parameter(description = "Card update request", required = true) @Valid @RequestBody
                     CardItemReq requestBody) {
-        log.info("Updating card: {} in collection: {} in deck: {}", id, collectionId, deckId);
-        return cardService.updateCard(deckId, collectionId, id, requestBody);
+        log.info("Updating card: {} in collection: {} in deck: {}", id, subjectId, shelveId);
+        return cardService.updateCard(shelveId, subjectId, id, requestBody);
     }
 
     @Operation(
@@ -184,21 +184,21 @@ public class CardController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(
                             description = "Collection ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
-                    UUID collectionId,
+                    UUID subjectId,
             @Parameter(
                             description = "Card ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174002")
                     @PathVariable
                     UUID id) {
-        log.info("Getting card: {} from collection: {} in deck: {}", id, collectionId, deckId);
-        return cardService.getById(deckId, collectionId, id);
+        log.info("Getting card: {} from collection: {} in deck: {}", id, subjectId, shelveId);
+        return cardService.getById(shelveId, subjectId, id);
     }
 
     @Operation(
@@ -221,21 +221,21 @@ public class CardController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(
                             description = "Collection ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
-                    UUID collectionId,
+                    UUID subjectId,
             @Parameter(description = "List of difficulty update requests", required = true)
                     @Valid @RequestBody
                     List<UpdateDifficultyReq> requestBody) {
         log.info(
                 "Updating difficulty for cards in collection: {} in deck: {}",
-                collectionId,
-                deckId);
-        return cardService.updateDifficulty(deckId, collectionId, requestBody);
+                subjectId,
+                shelveId);
+        return cardService.updateDifficulty(shelveId, subjectId, requestBody);
     }
 
     @Operation(
@@ -257,20 +257,20 @@ public class CardController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID deckId,
+                    UUID shelveId,
             @Parameter(
                             description = "Collection ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
-                    UUID collectionId,
+                    UUID subjectId,
             @Parameter(
                             description = "Card ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174002")
                     @PathVariable
                     UUID id) {
-        log.info("Deleting card: {} from collection: {} in deck: {}", id, collectionId, deckId);
-        return cardService.delete(deckId, collectionId, id);
+        log.info("Deleting card: {} from collection: {} in deck: {}", id, subjectId, shelveId);
+        return cardService.delete(shelveId, subjectId, id);
     }
 }
