@@ -20,12 +20,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.entity.DeckEntity;
+import com.app.oopsly.api.entity.ShelveEntity;
 import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
-import com.app.oopsly.api.repository.DeckRepository;
+import com.app.oopsly.api.repository.ShelveRepository;
 import com.app.oopsly.api.repository.TestSuiteRepository;
 import com.app.oopsly.api.service.impl.TestSuiteServiceImpl;
 import com.app.oopsly.api.viewmodel.ApiRes;
@@ -46,7 +46,7 @@ class TestSuiteServiceImplTest {
 
     @Mock private TestSuiteRepository testSuiteRepository;
 
-    @Mock private DeckRepository deckRepository;
+    @Mock private ShelveRepository shelveRepository;
 
     @Mock private UserService userService;
 
@@ -54,8 +54,8 @@ class TestSuiteServiceImplTest {
 
     private TestSuiteReq testSuiteReq;
     private User currentUser;
-    private DeckEntity deck;
-    private UUID deckId;
+    private ShelveEntity shelve;
+    private UUID shelveId;
     private UUID testSuiteId;
 
     @BeforeEach
@@ -63,14 +63,14 @@ class TestSuiteServiceImplTest {
         testSuiteReq = new TestSuiteReq("Chapter 1 Review", true);
         currentUser = new User();
         currentUser.setEmail("test@example.com");
-        deckId = UUID.randomUUID();
+        shelveId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
 
-        deck = new DeckEntity();
-        deck.setId(deckId);
-        deck.setName("Test Deck");
-        deck.setDescription("Test deck description for testing purposes");
-        deck.setUser(currentUser);
+        shelve = new ShelveEntity();
+        shelve.setId(shelveId);
+        shelve.setName("Test Shelve");
+        shelve.setDescription("Test shelve description for testing purposes");
+        shelve.setUser(currentUser);
     }
 
     @Test
@@ -79,13 +79,14 @@ class TestSuiteServiceImplTest {
         savedTestSuite.setId(testSuiteId);
         savedTestSuite.setTitle(testSuiteReq.title());
         savedTestSuite.setIsActive(testSuiteReq.isActive());
-        savedTestSuite.setDeck(deck);
+        savedTestSuite.setShelve(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(savedTestSuite);
 
-        ApiRes result = testSuiteService.create(deckId, testSuiteReq);
+        ApiRes result = testSuiteService.create(shelveId, testSuiteReq);
 
         assertNotNull(result);
         verify(testSuiteRepository, times(1)).save(any(TestSuiteEntity.class));
@@ -94,9 +95,10 @@ class TestSuiteServiceImplTest {
     @Test
     void create_throwsNotFoundException_whenDeckNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> testSuiteService.create(deckId, testSuiteReq));
+        assertThrows(
+                NotFoundException.class, () -> testSuiteService.create(shelveId, testSuiteReq));
         verify(testSuiteRepository, never()).save(any(TestSuiteEntity.class));
     }
 
@@ -106,15 +108,16 @@ class TestSuiteServiceImplTest {
         existingTestSuite.setId(testSuiteId);
         existingTestSuite.setTitle("Old Title");
         existingTestSuite.setIsActive(false);
-        existingTestSuite.setDeck(deck);
+        existingTestSuite.setShelve(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(testSuiteRepository.findByIdAndDeck(testSuiteId, deck))
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.of(existingTestSuite));
         when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(existingTestSuite);
 
-        ApiRes result = testSuiteService.update(deckId, testSuiteId, testSuiteReq);
+        ApiRes result = testSuiteService.update(shelveId, testSuiteId, testSuiteReq);
 
         assertNotNull(result);
         verify(testSuiteRepository, times(1)).save(any(TestSuiteEntity.class));
@@ -123,12 +126,14 @@ class TestSuiteServiceImplTest {
     @Test
     void update_throwsNotFoundException_whenTestSuiteNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(testSuiteRepository.findByIdAndDeck(testSuiteId, deck)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
+                .thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
-                () -> testSuiteService.update(deckId, testSuiteId, testSuiteReq));
+                () -> testSuiteService.update(shelveId, testSuiteId, testSuiteReq));
         verify(testSuiteRepository, never()).save(any(TestSuiteEntity.class));
     }
 
@@ -137,15 +142,16 @@ class TestSuiteServiceImplTest {
         TestSuiteEntity existingTestSuite = new TestSuiteEntity();
         existingTestSuite.setId(testSuiteId);
         existingTestSuite.setDeleted(false);
-        existingTestSuite.setDeck(deck);
+        existingTestSuite.setShelve(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(testSuiteRepository.findByIdAndDeck(testSuiteId, deck))
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.of(existingTestSuite));
         when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(existingTestSuite);
 
-        ApiRes result = testSuiteService.delete(deckId, testSuiteId);
+        ApiRes result = testSuiteService.delete(shelveId, testSuiteId);
 
         assertNotNull(result);
         assertTrue(existingTestSuite.getDeleted());
@@ -155,10 +161,12 @@ class TestSuiteServiceImplTest {
     @Test
     void delete_throwsNotFoundException_whenTestSuiteNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(testSuiteRepository.findByIdAndDeck(testSuiteId, deck)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
+                .thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> testSuiteService.delete(deckId, testSuiteId));
+        assertThrows(NotFoundException.class, () -> testSuiteService.delete(shelveId, testSuiteId));
     }
 
     @Test
@@ -167,48 +175,53 @@ class TestSuiteServiceImplTest {
         testSuite.setId(testSuiteId);
         testSuite.setTitle(testSuiteReq.title());
         testSuite.setIsActive(testSuiteReq.isActive());
-        testSuite.setDeck(deck);
+        testSuite.setShelve(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(testSuiteRepository.findByIdAndDeck(testSuiteId, deck))
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.of(testSuite));
 
-        ApiRes result = testSuiteService.getById(deckId, testSuiteId);
+        ApiRes result = testSuiteService.getById(shelveId, testSuiteId);
 
         assertNotNull(result);
-        verify(testSuiteRepository, times(1)).findByIdAndDeck(testSuiteId, deck);
+        verify(testSuiteRepository, times(1)).findByIdAndShelve(testSuiteId, shelve);
     }
 
     @Test
     void getById_throwsNotFoundException_whenTestSuiteNotFound() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(testSuiteRepository.findByIdAndDeck(testSuiteId, deck)).thenReturn(Optional.empty());
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
+                .thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> testSuiteService.getById(deckId, testSuiteId));
+        assertThrows(
+                NotFoundException.class, () -> testSuiteService.getById(shelveId, testSuiteId));
     }
 
     @Test
-    void getAllByDeck_returnsAllTestSuites() {
+    void getAllByShelve_returnsAllTestSuites() {
         List<TestSuiteEntity> testSuites = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             TestSuiteEntity testSuite = new TestSuiteEntity();
             testSuite.setId(UUID.randomUUID());
             testSuite.setTitle("Test Suite " + i);
             testSuite.setIsActive(true);
-            testSuite.setDeck(deck);
+            testSuite.setShelve(shelve);
             testSuites.add(testSuite);
         }
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
-        when(testSuiteRepository.findAllByDeck(deck)).thenReturn(testSuites);
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findAllByShelve(shelve)).thenReturn(testSuites);
 
-        ApiRes result = testSuiteService.getAllByDeck(deckId);
+        ApiRes result = testSuiteService.getAllByShelve(shelveId);
 
         assertNotNull(result);
-        verify(testSuiteRepository, times(1)).findAllByDeck(deck);
+        verify(testSuiteRepository, times(1)).findAllByShelve(shelve);
     }
 
     @Test
@@ -218,13 +231,14 @@ class TestSuiteServiceImplTest {
         savedTestSuite.setId(testSuiteId);
         savedTestSuite.setTitle(reqWithNullIsActive.title());
         savedTestSuite.setIsActive(true);
-        savedTestSuite.setDeck(deck);
+        savedTestSuite.setShelve(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(deckRepository.findByIdAndUser(deckId, currentUser)).thenReturn(Optional.of(deck));
+        when(shelveRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(savedTestSuite);
 
-        ApiRes result = testSuiteService.create(deckId, reqWithNullIsActive);
+        ApiRes result = testSuiteService.create(shelveId, reqWithNullIsActive);
 
         assertNotNull(result);
         verify(testSuiteRepository, times(1)).save(any(TestSuiteEntity.class));
@@ -232,14 +246,14 @@ class TestSuiteServiceImplTest {
 
     @Test
     void testCreateFallback() {
-        UUID deckId = UUID.randomUUID();
+        UUID shelveId = UUID.randomUUID();
         TestSuiteReq request = new TestSuiteReq("Test Suite", true);
         RuntimeException exception = new RuntimeException("Database connection failed");
 
         RetryLaterException thrown =
                 assertThrows(
                         RetryLaterException.class,
-                        () -> testSuiteService.createFallback(deckId, request, exception));
+                        () -> testSuiteService.createFallback(shelveId, request, exception));
 
         assertEquals(
                 "Test suite service is currently unavailable. Please try again later.",
@@ -249,7 +263,7 @@ class TestSuiteServiceImplTest {
 
     @Test
     void testUpdateFallback() {
-        UUID deckId = UUID.randomUUID();
+        UUID shelveId = UUID.randomUUID();
         UUID testSuiteId = UUID.randomUUID();
         TestSuiteReq request = new TestSuiteReq("Updated Suite", true);
         RuntimeException exception = new RuntimeException("Database connection failed");
@@ -259,7 +273,7 @@ class TestSuiteServiceImplTest {
                         RetryLaterException.class,
                         () ->
                                 testSuiteService.updateFallback(
-                                        deckId, testSuiteId, request, exception));
+                                        shelveId, testSuiteId, request, exception));
 
         assertEquals(
                 "Test suite service is currently unavailable. Please try again later.",
@@ -269,14 +283,14 @@ class TestSuiteServiceImplTest {
 
     @Test
     void testDeleteFallback() {
-        UUID deckId = UUID.randomUUID();
+        UUID shelveId = UUID.randomUUID();
         UUID testSuiteId = UUID.randomUUID();
         RuntimeException exception = new RuntimeException("Database connection failed");
 
         RetryLaterException thrown =
                 assertThrows(
                         RetryLaterException.class,
-                        () -> testSuiteService.deleteFallback(deckId, testSuiteId, exception));
+                        () -> testSuiteService.deleteFallback(shelveId, testSuiteId, exception));
 
         assertEquals(
                 "Test suite service is currently unavailable. Please try again later.",
@@ -286,14 +300,14 @@ class TestSuiteServiceImplTest {
 
     @Test
     void testGetByIdFallback() {
-        UUID deckId = UUID.randomUUID();
+        UUID shelveId = UUID.randomUUID();
         UUID testSuiteId = UUID.randomUUID();
         RuntimeException exception = new RuntimeException("Database connection failed");
 
         RetryLaterException thrown =
                 assertThrows(
                         RetryLaterException.class,
-                        () -> testSuiteService.getByIdFallback(deckId, testSuiteId, exception));
+                        () -> testSuiteService.getByIdFallback(shelveId, testSuiteId, exception));
 
         assertEquals(
                 "Test suite service is currently unavailable. Please try again later.",
@@ -303,13 +317,13 @@ class TestSuiteServiceImplTest {
 
     @Test
     void testGetAllByDeckFallback() {
-        UUID deckId = UUID.randomUUID();
+        UUID shelveId = UUID.randomUUID();
         RuntimeException exception = new RuntimeException("Database connection failed");
 
         RetryLaterException thrown =
                 assertThrows(
                         RetryLaterException.class,
-                        () -> testSuiteService.getAllByDeckFallback(deckId, exception));
+                        () -> testSuiteService.getAllByShelveFallback(shelveId, exception));
 
         assertEquals(
                 "Test suite service is currently unavailable. Please try again later.",

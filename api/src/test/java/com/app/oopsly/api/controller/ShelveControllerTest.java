@@ -19,9 +19,9 @@ package com.app.oopsly.api.controller;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.service.DeckService;
+import com.app.oopsly.api.service.ShelveService;
 import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.DeckReq;
+import com.app.oopsly.api.viewmodel.ShelveReq;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,75 +31,75 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DeckControllerTest {
+class ShelveControllerTest {
 
-    @Mock private DeckService deckService;
+    @Mock private ShelveService shelveService;
 
-    @InjectMocks private DeckController deckController;
+    @InjectMocks private ShelveController shelveController;
 
-    private DeckReq deckReq;
-    private UUID deckId;
+    private ShelveReq shelveReq;
+    private UUID shelveId;
     private ApiRes expectedResponse;
 
     @BeforeEach
     void setUp() {
-        deckReq =
-                new DeckReq(
-                        "Test Deck",
+        shelveReq =
+                new ShelveReq(
+                        "Test Shelve",
                         "Test description with sufficient length to meet validation requirements");
-        deckId = UUID.randomUUID();
+        shelveId = UUID.randomUUID();
         expectedResponse = ApiRes.success("Success");
     }
 
     @Test
-    void create_delegatesToDeckService() {
-        when(deckService.create(deckReq)).thenReturn(expectedResponse);
+    void create_delegatesToShelveService() {
+        when(shelveService.create(shelveReq)).thenReturn(expectedResponse);
 
-        ApiRes result = deckController.create(deckReq);
+        ApiRes result = shelveController.create(shelveReq);
 
         assertSame(expectedResponse, result);
-        verify(deckService, times(1)).create(deckReq);
+        verify(shelveService, times(1)).create(shelveReq);
     }
 
     @Test
-    void update_delegatesToDeckService() {
-        when(deckService.update(deckReq, deckId)).thenReturn(expectedResponse);
+    void update_delegatesToShelveService() {
+        when(shelveService.update(shelveReq, shelveId)).thenReturn(expectedResponse);
 
-        ApiRes result = deckController.update(deckReq, deckId);
+        ApiRes result = shelveController.update(shelveReq, shelveId);
 
         assertSame(expectedResponse, result);
-        verify(deckService, times(1)).update(deckReq, deckId);
+        verify(shelveService, times(1)).update(shelveReq, shelveId);
     }
 
     @Test
-    void getById_delegatesToDeckService() {
-        when(deckService.getById(deckId)).thenReturn(expectedResponse);
+    void getById_delegatesToShelveService() {
+        when(shelveService.getById(shelveId)).thenReturn(expectedResponse);
 
-        ApiRes result = deckController.getById(deckId);
+        ApiRes result = shelveController.getById(shelveId);
 
         assertSame(expectedResponse, result);
-        verify(deckService, times(1)).getById(deckId);
+        verify(shelveService, times(1)).getById(shelveId);
     }
 
     @Test
-    void deleteById_delegatesToDeckService() {
-        when(deckService.delete(deckId)).thenReturn(expectedResponse);
+    void deleteById_delegatesToShelveService() {
+        when(shelveService.delete(shelveId)).thenReturn(expectedResponse);
 
-        ApiRes result = deckController.deleteById(deckId);
+        ApiRes result = shelveController.deleteById(shelveId);
 
         assertSame(expectedResponse, result);
-        verify(deckService, times(1)).delete(deckId);
+        verify(shelveService, times(1)).delete(shelveId);
     }
 
     @Test
-    void getAll_delegatesToDeckService() {
+    void getAll_delegatesToShelveService() {
         int page = 0;
         int size = 10;
-        when(deckService.getAll(page, size)).thenReturn(expectedResponse);
+        when(shelveService.getAll(page, size)).thenReturn(expectedResponse);
 
-        ApiRes result = deckController.getAll(page, size);
+        ApiRes result = shelveController.getAll(page, size);
 
         assertSame(expectedResponse, result);
-        verify(deckService, times(1)).getAll(page, size);
+        verify(shelveService, times(1)).getAll(page, size);
     }
 }

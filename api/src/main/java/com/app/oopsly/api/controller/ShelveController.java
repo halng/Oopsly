@@ -16,9 +16,9 @@
 
 package com.app.oopsly.api.controller;
 
-import com.app.oopsly.api.service.DeckService;
+import com.app.oopsly.api.service.ShelveService;
 import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.DeckReq;
+import com.app.oopsly.api.viewmodel.ShelveReq;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -40,53 +40,54 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/decks")
+@RequestMapping("/shelves")
 @Tag(
-        name = "Deck",
-        description = "Deck management APIs for creating, updating, retrieving and deleting decks")
-public class DeckController {
-    private final DeckService service;
+        name = "Shelve",
+        description =
+                "Shelve management APIs for creating, updating, retrieving and deleting shelves")
+public class ShelveController {
+    private final ShelveService service;
 
-    public DeckController(DeckService service) {
+    public ShelveController(ShelveService service) {
         this.service = service;
     }
 
     @Operation(
-            summary = "Create deck",
-            description = "Creates a new deck with the provided information")
+            summary = "Create shelve",
+            description = "Creates a new shelve with the provided information")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
-                        description = "Deck created successfully",
+                        description = "Shelve created successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(responseCode = "400", description = "Invalid request body"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("")
     ApiRes create(
-            @Parameter(description = "Deck creation request", required = true) @Valid @RequestBody
-                    DeckReq requestBody) {
+            @Parameter(description = "Shelve creation request", required = true) @Valid @RequestBody
+                    ShelveReq requestBody) {
         return this.service.create(requestBody);
     }
 
-    @Operation(summary = "Update deck", description = "Updates an existing deck by ID")
+    @Operation(summary = "Update shelve", description = "Updates an existing shelve by ID")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
-                        description = "Deck updated successfully",
+                        description = "Shelve updated successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(responseCode = "400", description = "Invalid request body or ID"),
-                @ApiResponse(responseCode = "404", description = "Deck not found"),
+                @ApiResponse(responseCode = "404", description = "Shelve not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PutMapping("/{id}")
     ApiRes update(
-            @Parameter(description = "Deck update request", required = true) @Valid @RequestBody
-                    DeckReq requestBody,
+            @Parameter(description = "Shelve update request", required = true) @Valid @RequestBody
+                    ShelveReq requestBody,
             @Parameter(
-                            description = "Deck ID",
+                            description = "Shelve ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
@@ -95,21 +96,21 @@ public class DeckController {
     }
 
     @Operation(
-            summary = "Get deck by ID",
-            description = "Retrieves a deck by its unique identifier")
+            summary = "Get shelve by ID",
+            description = "Retrieves a shelve by its unique identifier")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
-                        description = "Deck retrieved successfully",
+                        description = "Shelve retrieved successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(responseCode = "404", description = "Deck not found"),
+                @ApiResponse(responseCode = "404", description = "Shelve not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/{id}")
     ApiRes getById(
             @Parameter(
-                            description = "Deck ID",
+                            description = "Shelve ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
@@ -117,20 +118,20 @@ public class DeckController {
         return this.service.getById(id);
     }
 
-    @Operation(summary = "Delete deck", description = "Soft deletes a deck by ID")
+    @Operation(summary = "Delete shelve", description = "Soft deletes a shelve by ID")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
-                        description = "Deck deleted successfully",
+                        description = "Shelve deleted successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(responseCode = "404", description = "Deck not found"),
+                @ApiResponse(responseCode = "404", description = "Shelve not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PatchMapping("/{id}")
     ApiRes deleteById(
             @Parameter(
-                            description = "Deck ID",
+                            description = "Shelve ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
@@ -138,12 +139,14 @@ public class DeckController {
         return this.service.delete(id);
     }
 
-    @Operation(summary = "Get all decks", description = "Retrieves a paginated list of all decks")
+    @Operation(
+            summary = "Get all shelves",
+            description = "Retrieves a paginated list of all shelves")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
-                        description = "Decks retrieved successfully",
+                        description = "Shelves retrieved successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(responseCode = "400", description = "Invalid pagination parameters"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")

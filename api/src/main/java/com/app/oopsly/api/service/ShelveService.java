@@ -14,9 +14,20 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.viewmodel;
+package com.app.oopsly.api.service;
 
-import jakarta.validation.constraints.NotBlank;
+import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.ShelveReq;
+import java.util.UUID;
 
-public record CollectionReq(
-        @NotBlank(message = "Name is required") String name, String description) {}
+public interface ShelveService {
+    ApiRes create(ShelveReq request);
+
+    ApiRes update(ShelveReq request, UUID id);
+
+    ApiRes delete(UUID id);
+
+    ApiRes getById(UUID id);
+
+    ApiRes getAll(int page, int size);
+}

@@ -19,14 +19,14 @@ package com.app.oopsly.api.integration;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.app.oopsly.api.entity.CardEntity;
-import com.app.oopsly.api.entity.CollectionEntity;
-import com.app.oopsly.api.entity.DeckEntity;
+import com.app.oopsly.api.entity.ShelveEntity;
+import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.repository.CardRepository;
-import com.app.oopsly.api.repository.CollectionRepository;
-import com.app.oopsly.api.repository.DeckRepository;
+import com.app.oopsly.api.repository.ShelveRepository;
+import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.repository.UserRepository;
-import com.app.oopsly.api.service.CollectionService;
+import com.app.oopsly.api.service.SubjectService;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,21 +44,21 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("test")
 @Transactional
 @EnabledIfSystemProperty(named = "run.integration.tests", matches = "true")
-class CollectionCascadeDeleteIntegrationTest {
+class SubjectCascadeDeleteIntegrationTest {
 
-    @Autowired private CollectionService collectionService;
+    @Autowired private SubjectService subjectService;
 
-    @Autowired private DeckRepository deckRepository;
+    @Autowired private ShelveRepository shelveRepository;
 
-    @Autowired private CollectionRepository collectionRepository;
+    @Autowired private SubjectRepository subjectRepository;
 
     @Autowired private CardRepository cardRepository;
 
     @Autowired private UserRepository userRepository;
 
     private User testUser;
-    private DeckEntity testDeck;
-    private CollectionEntity testCollection;
+    private ShelveEntity testShelve;
+    private SubjectEntity testSubject;
     private CardEntity testCard;
 
     @BeforeEach
@@ -73,96 +73,95 @@ class CollectionCascadeDeleteIntegrationTest {
         SecurityContextHolder.getContext()
                 .setAuthentication(new UsernamePasswordAuthenticationToken(testUser, null, null));
 
-        // Create and save test deck
-        testDeck = new DeckEntity();
-        testDeck.setName("Test Deck");
-        testDeck.setDescription("Test Deck Description");
-        testDeck.setUser(testUser);
-        testDeck = deckRepository.save(testDeck);
+        // Create and save test shelve
+        testShelve = new ShelveEntity();
+        testShelve.setName("Test Shelve");
+        testShelve.setDescription("Test Shelve Description");
+        testShelve.setUser(testUser);
+        testShelve = shelveRepository.save(testShelve);
 
-        // Create and save test collection
-        testCollection = new CollectionEntity();
-        testCollection.setName("Test Collection");
-        testCollection.setDescription("Test Collection Description");
-        testCollection.setDeck(testDeck);
-        testCollection = collectionRepository.save(testCollection);
+        // Create and save test subject
+        testSubject = new SubjectEntity();
+        testSubject.setName("Test Subject");
+        testSubject.setDescription("Test Subject Description");
+        testSubject.setShelve(testShelve);
+        testSubject = subjectRepository.save(testSubject);
 
         // Create and save test card
         testCard = new CardEntity();
         testCard.setFront("Test Front");
         testCard.setBack("Test Back");
-        testCard.setCollection(testCollection);
+        testCard.setSubject(testSubject);
         testCard.setNextPracticeTime(Instant.now());
         testCard = cardRepository.save(testCard);
     }
 
     @Test
-    void deleteCollection_cascadeDeletesCards() {
-        UUID collectionId = testCollection.getId();
+    void deleteSubject_cascadeDeletesCards() {
+        UUID subjectId = testSubject.getId();
         UUID cardId = testCard.getId();
-        UUID deckId = testDeck.getId();
+        UUID shelveId = testShelve.getId();
 
-        // Verify collection and card exist
-        Optional<CollectionEntity> collectionBeforeDelete =
-                collectionRepository.findByIdAndDeck(collectionId, testDeck);
-        assertTrue(collectionBeforeDelete.isPresent());
-        assertFalse(collectionBeforeDelete.get().getDeleted());
+        // Verify subject and card exist
+        Optional<SubjectEntity> subjectBeforeDelete =
+                subjectRepository.findByIdAndShelve(subjectId, testShelve);
+        assertTrue(subjectBeforeDelete.isPresent());
+        assertFalse(subjectBeforeDelete.get().getDeleted());
 
         Optional<CardEntity> cardBeforeDelete =
-                cardRepository.findByIdAndCollection(cardId, testCollection);
+                cardRepository.findByIdAndSubject(cardId, testSubject);
         assertTrue(cardBeforeDelete.isPresent());
         assertFalse(cardBeforeDelete.get().getDeleted());
 
-        // Delete the collection
-        collectionService.delete(deckId, collectionId);
+        // Delete the subject
+        subjectService.delete(shelveId, subjectId);
 
-        // Verify collection is soft deleted
-        Optional<CollectionEntity> collectionAfterDelete =
-                collectionRepository.findById(collectionId);
-        assertTrue(collectionAfterDelete.isPresent());
-        assertTrue(collectionAfterDelete.get().getDeleted());
+        // Verify subject is soft deleted
+        Optional<SubjectEntity> subjectAfterDelete = subjectRepository.findById(subjectId);
+        assertTrue(subjectAfterDelete.isPresent());
+        assertTrue(subjectAfterDelete.get().getDeleted());
 
         // Verify card is also soft deleted
         Optional<CardEntity> cardAfterDelete = cardRepository.findById(cardId);
         assertTrue(cardAfterDelete.isPresent());
         assertTrue(cardAfterDelete.get().getDeleted());
 
-        // Verify findByIdAndDeck no longer returns the deleted collection
-        Optional<CollectionEntity> queryAfterDelete =
-                collectionRepository.findByIdAndDeck(collectionId, testDeck);
+        // Verify findByIdAndShelve no longer returns the deleted subject
+        Optional<SubjectEntity> queryAfterDelete =
+                subjectRepository.findByIdAndShelve(subjectId, testShelve);
         assertFalse(queryAfterDelete.isPresent());
 
-        // Verify findByIdAndCollection no longer returns the deleted card
+        // Verify findByIdAndSubject no longer returns the deleted card
         Optional<CardEntity> cardQueryAfterDelete =
-                cardRepository.findByIdAndCollection(cardId, testCollection);
+                cardRepository.findByIdAndSubject(cardId, testSubject);
         assertFalse(cardQueryAfterDelete.isPresent());
     }
 
     @Test
-    void deleteCollection_withMultipleCards_deletesAllCards() {
+    void deleteSubject_withMultipleCards_deletesAllCards() {
         // Create additional cards
         CardEntity card2 = new CardEntity();
         card2.setFront("Test Front 2");
         card2.setBack("Test Back 2");
-        card2.setCollection(testCollection);
+        card2.setSubject(testSubject);
         card2.setNextPracticeTime(Instant.now());
         card2 = cardRepository.save(card2);
 
         CardEntity card3 = new CardEntity();
         card3.setFront("Test Front 3");
         card3.setBack("Test Back 3");
-        card3.setCollection(testCollection);
+        card3.setSubject(testSubject);
         card3.setNextPracticeTime(Instant.now());
         card3 = cardRepository.save(card3);
 
-        UUID collectionId = testCollection.getId();
-        UUID deckId = testDeck.getId();
+        UUID subjectId = testSubject.getId();
+        UUID shelveId = testShelve.getId();
         UUID cardId1 = testCard.getId();
         UUID cardId2 = card2.getId();
         UUID cardId3 = card3.getId();
 
-        // Delete the collection
-        collectionService.delete(deckId, collectionId);
+        // Delete the subject
+        subjectService.delete(shelveId, subjectId);
 
         // Verify all cards are soft deleted
         Optional<CardEntity> card1AfterDelete = cardRepository.findById(cardId1);

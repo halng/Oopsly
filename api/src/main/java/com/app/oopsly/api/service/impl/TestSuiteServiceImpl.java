@@ -16,12 +16,12 @@
 
 package com.app.oopsly.api.service.impl;
 
-import com.app.oopsly.api.entity.DeckEntity;
+import com.app.oopsly.api.entity.ShelveEntity;
 import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
-import com.app.oopsly.api.repository.DeckRepository;
+import com.app.oopsly.api.repository.ShelveRepository;
 import com.app.oopsly.api.repository.TestSuiteRepository;
 import com.app.oopsly.api.service.TestSuiteService;
 import com.app.oopsly.api.service.UserService;
@@ -45,18 +45,18 @@ import org.springframework.stereotype.Service;
 public class TestSuiteServiceImpl implements TestSuiteService {
 
     private final TestSuiteRepository testSuiteRepository;
-    private final DeckRepository deckRepository;
+    private final ShelveRepository shelveRepository;
     private final UserService userService;
 
     @Override
     @CacheEvict(value = "testSuites", key = "#deckId + ':all'")
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID deckId, TestSuiteReq request) {
-        log.info("Creating test suite for deck {}", deckId);
-        DeckEntity deck = this.findDeckByIdAndUser(deckId);
+        log.info("Creating test suite for shelve {}", deckId);
+        ShelveEntity shelve = this.findShelveByIdAndUser(deckId);
 
         TestSuiteEntity testSuite = this.toEntity(request, null);
-        testSuite.setDeck(deck);
+        testSuite.setShelve(shelve);
         TestSuiteEntity savedEntity = testSuiteRepository.save(testSuite);
 
         return ApiRes.created("Test suite created successfully", this.toViewModel(savedEntity));
@@ -70,11 +70,11 @@ public class TestSuiteServiceImpl implements TestSuiteService {
             })
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(UUID deckId, UUID testSuiteId, TestSuiteReq request) {
-        log.info("Updating test suite {} for deck {}", testSuiteId, deckId);
-        DeckEntity deck = this.findDeckByIdAndUser(deckId);
+        log.info("Updating test suite {} for shelve {}", testSuiteId, deckId);
+        ShelveEntity shelve = this.findShelveByIdAndUser(deckId);
         TestSuiteEntity existingTestSuite =
                 testSuiteRepository
-                        .findByIdAndDeck(testSuiteId, deck)
+                        .findByIdAndShelve(testSuiteId, shelve)
                         .orElseThrow(
                                 () ->
                                         new NotFoundException(
@@ -94,11 +94,11 @@ public class TestSuiteServiceImpl implements TestSuiteService {
             })
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID deckId, UUID testSuiteId) {
-        log.info("Deleting test suite {} for deck {}", testSuiteId, deckId);
-        DeckEntity deck = this.findDeckByIdAndUser(deckId);
+        log.info("Deleting test suite {} for shelve {}", testSuiteId, deckId);
+        ShelveEntity shelve = this.findShelveByIdAndUser(deckId);
         TestSuiteEntity testSuite =
                 testSuiteRepository
-                        .findByIdAndDeck(testSuiteId, deck)
+                        .findByIdAndShelve(testSuiteId, shelve)
                         .orElseThrow(
                                 () ->
                                         new NotFoundException(
@@ -114,11 +114,11 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     @Cacheable(value = "testSuites", key = "#deckId + ':' + #testSuiteId")
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID deckId, UUID testSuiteId) {
-        log.info("Fetching test suite {} for deck {}", testSuiteId, deckId);
-        DeckEntity deck = this.findDeckByIdAndUser(deckId);
+        log.info("Fetching test suite {} for shelve {}", testSuiteId, deckId);
+        ShelveEntity shelve = this.findShelveByIdAndUser(deckId);
         TestSuiteEntity testSuite =
                 testSuiteRepository
-                        .findByIdAndDeck(testSuiteId, deck)
+                        .findByIdAndShelve(testSuiteId, shelve)
                         .orElseThrow(
                                 () ->
                                         new NotFoundException(
@@ -128,14 +128,14 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
-    @Cacheable(value = "testSuites", key = "#deckId + ':all'")
+    @Cacheable(value = "testSuites", key = "#shelveId + ':all'")
     @CircuitBreaker(
             name = "testSuiteServiceCircuitBreaker",
-            fallbackMethod = "getAllByDeckFallback")
-    public ApiRes getAllByDeck(UUID deckId) {
-        log.info("Fetching all test suites for deck {}", deckId);
-        DeckEntity deck = this.findDeckByIdAndUser(deckId);
-        List<TestSuiteEntity> testSuites = testSuiteRepository.findAllByDeck(deck);
+            fallbackMethod = "getAllByShelveFallback")
+    public ApiRes getAllByShelve(UUID shelveId) {
+        log.info("Fetching all test suites for shelve {}", shelveId);
+        ShelveEntity shelve = this.findShelveByIdAndUser(shelveId);
+        List<TestSuiteEntity> testSuites = testSuiteRepository.findAllByShelve(shelve);
         List<TestSuiteRes> responses = testSuites.stream().map(this::toViewModel).toList();
 
         return ApiRes.success("Test suites fetched successfully", responses);
@@ -160,11 +160,11 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         return new TestSuiteRes(from.getId(), from.getTitle(), from.getIsActive());
     }
 
-    private DeckEntity findDeckByIdAndUser(UUID deckId) {
+    private ShelveEntity findShelveByIdAndUser(UUID deckId) {
         User currentUser = userService.getCurrentUser();
-        return deckRepository
+        return shelveRepository
                 .findByIdAndUser(deckId, currentUser)
-                .orElseThrow(() -> new NotFoundException("Deck not found with id: " + deckId));
+                .orElseThrow(() -> new NotFoundException("Shelve not found with id: " + deckId));
     }
 
     // Fallback methods for Circuit Breaker
@@ -192,8 +192,8 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                 "Test suite service is currently unavailable. Please try again later.", t);
     }
 
-    public ApiRes getAllByDeckFallback(UUID deckId, Throwable t) {
-        log.error("Test suite service unavailable during getAllByDeck: {}", t.getMessage());
+    public ApiRes getAllByShelveFallback(UUID shelveId, Throwable t) {
+        log.error("Test suite service unavailable during getAllByShelve: {}", t.getMessage());
         throw new RetryLaterException(
                 "Test suite service is currently unavailable. Please try again later.", t);
     }

@@ -17,17 +17,17 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import { Alert } from 'react-native';
-import { DeckInputModal } from '../../../components/deck/DeckInputModal';
-import { Deck } from '../../../types/Deck';
+import { ShelveInputModal } from '../../../components/shelves/ShelveInputModal';
+import { Shelve } from '../../../types/Shelve';
 
 jest.spyOn(Alert, 'alert');
 
-describe('DeckInputModal', () => {
+describe('ShelveInputModal', () => {
   const mockOnClose = jest.fn();
   const mockOnSubmit = jest.fn();
 
-  const mockDeck: Deck = {
-    id: 'deck-123',
+  const mockShelve: Shelve = {
+    id: 'shelve-123',
     name: 'Japanese Vocabulary',
     description: 'Basic Japanese words for beginners',
     createdAt: '2025-12-14T10:00:00.000Z',
@@ -40,29 +40,29 @@ describe('DeckInputModal', () => {
   });
 
   describe('Create Mode', () => {
-    it('renders with "Create New Deck" title when no deck is provided', () => {
+    it('renders with "Create New Shelve" title when no shelve is provided', () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
         />
       );
 
-      expect(screen.getByText('Create New Deck')).toBeTruthy();
+      expect(screen.getByText('Create New Shelve')).toBeTruthy();
     });
 
     it('renders empty input fields in create mode', () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
         />
       );
 
-      const nameInput = screen.getByTestId('deck-name-input');
-      const descriptionInput = screen.getByTestId('deck-description-input');
+      const nameInput = screen.getByTestId('shelve-name-input');
+      const descriptionInput = screen.getByTestId('shelve-description-input');
 
       expect(nameInput.props.value).toBe('');
       expect(descriptionInput.props.value).toBe('');
@@ -70,7 +70,7 @@ describe('DeckInputModal', () => {
 
     it('shows "Create" button text in create mode', () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
@@ -82,7 +82,7 @@ describe('DeckInputModal', () => {
 
     it('validates name is required', async () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
@@ -93,7 +93,7 @@ describe('DeckInputModal', () => {
       fireEvent.press(submitButton);
 
       await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith('Validation Error', 'Deck name is required');
+        expect(Alert.alert).toHaveBeenCalledWith('Validation Error', 'Shelve name is required');
       });
 
       expect(mockOnSubmit).not.toHaveBeenCalled();
@@ -101,17 +101,17 @@ describe('DeckInputModal', () => {
 
     it('calls onSubmit with correct data when form is valid', async () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
         />
       );
 
-      const nameInput = screen.getByTestId('deck-name-input');
-      const descriptionInput = screen.getByTestId('deck-description-input');
+      const nameInput = screen.getByTestId('shelve-name-input');
+      const descriptionInput = screen.getByTestId('shelve-description-input');
 
-      fireEvent.changeText(nameInput, 'New Deck');
+      fireEvent.changeText(nameInput, 'New Shelve');
       fireEvent.changeText(descriptionInput, 'New description');
 
       const submitButton = screen.getByTestId('modal-submit-button');
@@ -119,7 +119,7 @@ describe('DeckInputModal', () => {
 
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledWith({
-          name: 'New Deck',
+          name: 'New Shelve',
           description: 'New description',
         });
       });
@@ -127,15 +127,15 @@ describe('DeckInputModal', () => {
 
     it('trims whitespace from inputs', async () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
         />
       );
 
-      const nameInput = screen.getByTestId('deck-name-input');
-      const descriptionInput = screen.getByTestId('deck-description-input');
+      const nameInput = screen.getByTestId('shelve-name-input');
+      const descriptionInput = screen.getByTestId('shelve-description-input');
 
       fireEvent.changeText(nameInput, '  Trimmed Name  ');
       fireEvent.changeText(descriptionInput, '  Trimmed Description  ');
@@ -153,23 +153,23 @@ describe('DeckInputModal', () => {
 
     it('submits with undefined description when empty', async () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
         />
       );
 
-      const nameInput = screen.getByTestId('deck-name-input');
+      const nameInput = screen.getByTestId('shelve-name-input');
 
-      fireEvent.changeText(nameInput, 'New Deck');
+      fireEvent.changeText(nameInput, 'New Shelve');
 
       const submitButton = screen.getByTestId('modal-submit-button');
       fireEvent.press(submitButton);
 
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledWith({
-          name: 'New Deck',
+          name: 'New Shelve',
           description: undefined,
         });
       });
@@ -177,31 +177,31 @@ describe('DeckInputModal', () => {
   });
 
   describe('Edit Mode', () => {
-    it('renders with "Edit Deck" title when deck is provided', () => {
+    it('renders with "Edit Shelve" title when shelve is provided', () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-          deck={mockDeck}
+          shelve={mockShelve}
         />
       );
 
-      expect(screen.getByText('Edit Deck')).toBeTruthy();
+      expect(screen.getByText('Edit Shelve')).toBeTruthy();
     });
 
-    it('pre-fills input fields with deck data', () => {
+    it('pre-fills input fields with shelve data', () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-          deck={mockDeck}
+          shelve={mockShelve}
         />
       );
 
-      const nameInput = screen.getByTestId('deck-name-input');
-      const descriptionInput = screen.getByTestId('deck-description-input');
+      const nameInput = screen.getByTestId('shelve-name-input');
+      const descriptionInput = screen.getByTestId('shelve-description-input');
 
       expect(nameInput.props.value).toBe('Japanese Vocabulary');
       expect(descriptionInput.props.value).toBe('Basic Japanese words for beginners');
@@ -209,33 +209,33 @@ describe('DeckInputModal', () => {
 
     it('shows "Update" button text in edit mode', () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-          deck={mockDeck}
+          shelve={mockShelve}
         />
       );
 
       expect(screen.getByText('Update')).toBeTruthy();
     });
 
-    it('handles deck with null description', () => {
-      const deckWithNullDesc: Deck = {
-        ...mockDeck,
+    it('handles shelve with null description', () => {
+      const shelveWithNullDesc: Shelve = {
+        ...mockShelve,
         description: null,
       };
 
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-          deck={deckWithNullDesc}
+          shelve={shelveWithNullDesc}
         />
       );
 
-      const descriptionInput = screen.getByTestId('deck-description-input');
+      const descriptionInput = screen.getByTestId('shelve-description-input');
       expect(descriptionInput.props.value).toBe('');
     });
   });
@@ -243,7 +243,7 @@ describe('DeckInputModal', () => {
   describe('Modal Actions', () => {
     it('calls onClose when close button is pressed', () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
@@ -258,7 +258,7 @@ describe('DeckInputModal', () => {
 
     it('calls onClose when cancel button is pressed', () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
@@ -273,14 +273,14 @@ describe('DeckInputModal', () => {
 
     it('clears form when closed', () => {
       const { rerender } = render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
         />
       );
 
-      const nameInput = screen.getByTestId('deck-name-input');
+      const nameInput = screen.getByTestId('shelve-name-input');
       fireEvent.changeText(nameInput, 'Test Name');
 
       const cancelButton = screen.getByTestId('modal-cancel-button');
@@ -288,14 +288,14 @@ describe('DeckInputModal', () => {
 
       // Rerender with visible true to see if form is cleared
       rerender(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
         />
       );
 
-      const nameInputAfter = screen.getByTestId('deck-name-input');
+      const nameInputAfter = screen.getByTestId('shelve-name-input');
       expect(nameInputAfter.props.value).toBe('');
     });
   });
@@ -303,7 +303,7 @@ describe('DeckInputModal', () => {
   describe('Loading State', () => {
     it('disables inputs when loading', () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
@@ -311,8 +311,8 @@ describe('DeckInputModal', () => {
         />
       );
 
-      const nameInput = screen.getByTestId('deck-name-input');
-      const descriptionInput = screen.getByTestId('deck-description-input');
+      const nameInput = screen.getByTestId('shelve-name-input');
+      const descriptionInput = screen.getByTestId('shelve-description-input');
 
       expect(nameInput.props.editable).toBe(false);
       expect(descriptionInput.props.editable).toBe(false);
@@ -320,7 +320,7 @@ describe('DeckInputModal', () => {
 
     it('disables close button when loading', () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
@@ -337,7 +337,7 @@ describe('DeckInputModal', () => {
 
     it('disables cancel button when loading', () => {
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
@@ -355,24 +355,24 @@ describe('DeckInputModal', () => {
 
   describe('Error Handling', () => {
     it('displays error message when onSubmit throws', async () => {
-      mockOnSubmit.mockRejectedValue(new Error('Failed to create deck'));
+      mockOnSubmit.mockRejectedValue(new Error('Failed to create shelve'));
 
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
         />
       );
 
-      const nameInput = screen.getByTestId('deck-name-input');
-      fireEvent.changeText(nameInput, 'Test Deck');
+      const nameInput = screen.getByTestId('shelve-name-input');
+      fireEvent.changeText(nameInput, 'Test Shelve');
 
       const submitButton = screen.getByTestId('modal-submit-button');
       fireEvent.press(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Failed to create deck')).toBeTruthy();
+        expect(screen.getByText('Failed to create shelve')).toBeTruthy();
       });
     });
 
@@ -380,15 +380,15 @@ describe('DeckInputModal', () => {
       mockOnSubmit.mockRejectedValue('Something went wrong');
 
       render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
         />
       );
 
-      const nameInput = screen.getByTestId('deck-name-input');
-      fireEvent.changeText(nameInput, 'Test Deck');
+      const nameInput = screen.getByTestId('shelve-name-input');
+      fireEvent.changeText(nameInput, 'Test Shelve');
 
       const submitButton = screen.getByTestId('modal-submit-button');
       fireEvent.press(submitButton);
@@ -400,7 +400,7 @@ describe('DeckInputModal', () => {
 
     it('clears error when modal is reopened', () => {
       const { rerender } = render(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
@@ -413,7 +413,7 @@ describe('DeckInputModal', () => {
 
       // Rerender with new visible state to simulate reopening
       rerender(
-        <DeckInputModal
+        <ShelveInputModal
           visible={false}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
@@ -421,7 +421,7 @@ describe('DeckInputModal', () => {
       );
 
       rerender(
-        <DeckInputModal
+        <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
@@ -429,7 +429,7 @@ describe('DeckInputModal', () => {
       );
 
       // Error should be cleared
-      expect(screen.queryByText('Deck name is required')).toBeNull();
+      expect(screen.queryByText('Shelve name is required')).toBeNull();
     });
   });
 });

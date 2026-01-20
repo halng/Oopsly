@@ -38,66 +38,66 @@ class TestSuiteControllerTest {
     @InjectMocks private TestSuiteController testSuiteController;
 
     private TestSuiteReq testSuiteReq;
-    private UUID deckId;
+    private UUID shelveId;
     private UUID testSuiteId;
     private ApiRes expectedResponse;
 
     @BeforeEach
     void setUp() {
         testSuiteReq = new TestSuiteReq("Chapter 1 Review", true);
-        deckId = UUID.randomUUID();
+        shelveId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
         expectedResponse = ApiRes.success("Success");
     }
 
     @Test
     void create_delegatesToTestSuiteService() {
-        when(testSuiteService.create(deckId, testSuiteReq)).thenReturn(expectedResponse);
+        when(testSuiteService.create(shelveId, testSuiteReq)).thenReturn(expectedResponse);
 
-        ApiRes result = testSuiteController.create(deckId, testSuiteReq);
+        ApiRes result = testSuiteController.create(shelveId, testSuiteReq);
 
         assertSame(expectedResponse, result);
-        verify(testSuiteService, times(1)).create(deckId, testSuiteReq);
+        verify(testSuiteService, times(1)).create(shelveId, testSuiteReq);
     }
 
     @Test
     void update_delegatesToTestSuiteService() {
-        when(testSuiteService.update(deckId, testSuiteId, testSuiteReq))
+        when(testSuiteService.update(shelveId, testSuiteId, testSuiteReq))
                 .thenReturn(expectedResponse);
 
-        ApiRes result = testSuiteController.update(deckId, testSuiteId, testSuiteReq);
+        ApiRes result = testSuiteController.update(shelveId, testSuiteId, testSuiteReq);
 
         assertSame(expectedResponse, result);
-        verify(testSuiteService, times(1)).update(deckId, testSuiteId, testSuiteReq);
+        verify(testSuiteService, times(1)).update(shelveId, testSuiteId, testSuiteReq);
     }
 
     @Test
     void getById_delegatesToTestSuiteService() {
-        when(testSuiteService.getById(deckId, testSuiteId)).thenReturn(expectedResponse);
+        when(testSuiteService.getById(shelveId, testSuiteId)).thenReturn(expectedResponse);
 
-        ApiRes result = testSuiteController.getById(deckId, testSuiteId);
+        ApiRes result = testSuiteController.getById(shelveId, testSuiteId);
 
         assertSame(expectedResponse, result);
-        verify(testSuiteService, times(1)).getById(deckId, testSuiteId);
+        verify(testSuiteService, times(1)).getById(shelveId, testSuiteId);
     }
 
     @Test
     void deleteById_delegatesToTestSuiteService() {
-        when(testSuiteService.delete(deckId, testSuiteId)).thenReturn(expectedResponse);
+        when(testSuiteService.delete(shelveId, testSuiteId)).thenReturn(expectedResponse);
 
-        ApiRes result = testSuiteController.deleteById(deckId, testSuiteId);
+        ApiRes result = testSuiteController.deleteById(shelveId, testSuiteId);
 
         assertSame(expectedResponse, result);
-        verify(testSuiteService, times(1)).delete(deckId, testSuiteId);
+        verify(testSuiteService, times(1)).delete(shelveId, testSuiteId);
     }
 
     @Test
-    void getAllByDeck_delegatesToTestSuiteService() {
-        when(testSuiteService.getAllByDeck(deckId)).thenReturn(expectedResponse);
+    void getAllByShelve_delegatesToTestSuiteService() {
+        when(testSuiteService.getAllByShelve(shelveId)).thenReturn(expectedResponse);
 
-        ApiRes result = testSuiteController.getAllByDeck(deckId);
+        ApiRes result = testSuiteController.getAllByShelve(shelveId);
 
         assertSame(expectedResponse, result);
-        verify(testSuiteService, times(1)).getAllByDeck(deckId);
+        verify(testSuiteService, times(1)).getAllByShelve(shelveId);
     }
 }

@@ -14,20 +14,10 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.service;
+package com.app.oopsly.api.viewmodel;
 
-import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.CollectionReq;
-import java.util.UUID;
+import jakarta.validation.constraints.Size;
+import lombok.NonNull;
 
-public interface CollectionService {
-    ApiRes create(UUID deckId, CollectionReq request);
-
-    ApiRes update(UUID deckId, UUID collectionId, CollectionReq request);
-
-    ApiRes delete(UUID deckId, UUID collectionId);
-
-    ApiRes getById(UUID deckId, UUID collectionId);
-
-    ApiRes getAllByDeck(UUID deckId, int page, int size);
-}
+public record ShelveReq(
+        @NonNull String name, @NonNull @Size(min = 10, max = 100) String description) {}

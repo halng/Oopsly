@@ -18,4 +18,4 @@ package com.app.oopsly.api.viewmodel;
 
 import java.util.UUID;
 
-public record CollectionRes(UUID id, String name, String description) {}
+public record SubjectRes(UUID id, String name, String description) {}

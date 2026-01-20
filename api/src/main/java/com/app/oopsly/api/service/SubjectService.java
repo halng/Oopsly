@@ -14,9 +14,20 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.viewmodel;
+package com.app.oopsly.api.service;
 
-import java.util.List;
+import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.SubjectReq;
 import java.util.UUID;
 
-public record DeckRes(UUID id, String name, String description, List<CardReq> cards) {}
+public interface SubjectService {
+    ApiRes create(UUID shelveId, SubjectReq request);
+
+    ApiRes update(UUID shelveId, UUID subjectId, SubjectReq request);
+
+    ApiRes delete(UUID shelveId, UUID subjectId);
+
+    ApiRes getById(UUID shelveId, UUID subjectId);
+
+    ApiRes getAllByShelve(UUID shelveId, int page, int size);
+}

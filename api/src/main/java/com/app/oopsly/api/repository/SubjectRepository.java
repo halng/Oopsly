@@ -16,8 +16,8 @@
 
 package com.app.oopsly.api.repository;
 
-import com.app.oopsly.api.entity.CollectionEntity;
-import com.app.oopsly.api.entity.DeckEntity;
+import com.app.oopsly.api.entity.ShelveEntity;
+import com.app.oopsly.api.entity.SubjectEntity;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -27,12 +27,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface CollectionRepository extends JpaRepository<CollectionEntity, UUID> {
+public interface SubjectRepository extends JpaRepository<SubjectEntity, UUID> {
     @Query(
-            "SELECT c FROM CollectionEntity c WHERE c.id = ?1 AND c.deck = ?2 AND c.deleted ="
+            "SELECT c FROM SubjectEntity c WHERE c.id = ?1 AND c.shelve = ?2 AND c.deleted ="
                     + " false")
-    Optional<CollectionEntity> findByIdAndDeck(UUID id, DeckEntity deck);
+    Optional<SubjectEntity> findByIdAndShelve(UUID id, ShelveEntity shelve);
 
-    @Query("SELECT c FROM CollectionEntity c WHERE c.deck = ?1 AND c.deleted = false")
-    Page<CollectionEntity> findAllByDeck(DeckEntity deck, Pageable pageable);
+    @Query("SELECT c FROM SubjectEntity c WHERE c.shelve = ?1 AND c.deleted = false")
+    Page<SubjectEntity> findAllByShelve(ShelveEntity shelve, Pageable pageable);
 }
