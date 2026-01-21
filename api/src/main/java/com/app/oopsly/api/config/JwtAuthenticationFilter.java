@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
-        final String authHeader = request.getHeader("Authorization");
+        final String authHeader = request.getHeader("authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -50,16 +50,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String jwt = authHeader.substring(7);
-        String userId = jwtUtils.extractUserId(jwt);
-        String userRole = jwtUtils.extractUserRole(jwt);
+        try {
+            String userId = jwtUtils.extractUserId(jwt);
+            String userRole = jwtUtils.extractUserRole(jwt);
 
-        if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(
-                            userId, null, List.of((GrantedAuthority) () -> userRole));
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                userId, null, List.of((GrantedAuthority) () -> userRole));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+            filterChain.doFilter(request, response);
+        } catch (Exception e) {
+            sendErrorResponse(response, "EXPIRED_OR_INVALID_JWT");
         }
-        filterChain.doFilter(request, response);
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, String message)
+            throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"error\": \"" + message + "\"}");
     }
 }

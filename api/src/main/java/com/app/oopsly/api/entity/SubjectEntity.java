@@ -35,8 +35,8 @@ public class SubjectEntity extends Audit {
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shelve_id", nullable = false)
-    private ShelveEntity shelve;
+    @JoinColumn(name = "shelf_id", nullable = false)
+    private ShelfEntity shelf;
 
     @JsonIgnore
     @OneToMany(mappedBy = "subject", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

@@ -48,7 +48,7 @@ public class User extends Audit {
     @Column private Integer age;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<ShelveEntity> shelves;
+    private List<ShelfEntity> shelves;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private SettingEntity setting;

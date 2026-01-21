@@ -16,23 +16,25 @@
 
 package com.app.oopsly.api.service.impl;
 
-import com.app.oopsly.api.entity.ShelveEntity;
+import com.app.oopsly.api.entity.ShelfEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
-import com.app.oopsly.api.repository.ShelveRepository;
-import com.app.oopsly.api.service.ShelveService;
+import com.app.oopsly.api.repository.ShelfRepository;
+import com.app.oopsly.api.service.CardService;
+import com.app.oopsly.api.service.ShelfService;
 import com.app.oopsly.api.service.UserService;
-import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.PagingRes;
-import com.app.oopsly.api.viewmodel.ShelveReq;
-import com.app.oopsly.api.viewmodel.ShelveRes;
+import com.app.oopsly.api.viewmodel.*;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,46 +43,47 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ShelveServiceImpl implements ShelveService {
+public class ShelfServiceImpl implements ShelfService {
 
-    private final ShelveRepository shelveRepository;
+    private final ShelfRepository shelfRepository;
     private final UserService userService;
+    private final CardService cardService;
 
     @Override
-    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "createFallback")
-    public ApiRes create(ShelveReq request) {
+//    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "createFallback")
+    public ApiRes create(ShelfReq request) {
         log.info("Creating shelve for user {}", this.currentUser().getId());
-        ShelveEntity savedEntity = shelveRepository.save(this.toEntity(request, null));
-        return ApiRes.success("Created successfully", this.toViewModel(savedEntity));
+        ShelfEntity savedEntity = shelfRepository.save(this.toEntity(request, null));
+        return ApiRes.created("Created successfully", this.toViewModel(savedEntity));
     }
 
     @Override
-    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "updateFallback")
-    public ApiRes update(ShelveReq request, UUID id) {
+//    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "updateFallback")
+    public ApiRes update(ShelfReq request, UUID id) {
         log.info("Updating shelve {} for user {}", id, this.currentUser().getId());
-        ShelveEntity existingEntity =
-                shelveRepository
+        ShelfEntity existingEntity =
+                shelfRepository
                         .findByIdAndUser(id, this.currentUser())
                         .orElseThrow(
                                 () -> new NotFoundException("Entity not found with id: " + id));
 
-        ShelveEntity newEntity = this.toEntity(request, existingEntity);
-        shelveRepository.save(newEntity);
+        ShelfEntity newEntity = this.toEntity(request, existingEntity);
+        shelfRepository.save(newEntity);
         return ApiRes.success("Updated successfully");
     }
 
     @Override
-    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "deleteFallback")
+//    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID id) {
         log.info("Deleting shelve {} for user {}", id, this.currentUser().getId());
-        ShelveEntity existingEntity =
-                shelveRepository
+        ShelfEntity existingEntity =
+                shelfRepository
                         .findByIdAndUser(id, this.currentUser())
                         .orElseThrow(
                                 () -> new NotFoundException("Entity not found with id: " + id));
 
         existingEntity.setDeleted(true);
-        shelveRepository.save(existingEntity);
+        shelfRepository.save(existingEntity);
         return ApiRes.success("Deleted successfully");
     }
 
@@ -88,8 +91,8 @@ public class ShelveServiceImpl implements ShelveService {
     @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID id) {
         log.info("Fetching shelve {} for user {}", id, this.currentUser().getId());
-        ShelveEntity entity =
-                shelveRepository
+        ShelfEntity entity =
+                shelfRepository
                         .findByIdAndUser(id, this.currentUser())
                         .orElseThrow(
                                 () -> new NotFoundException("Entity not found with id: " + id));
@@ -99,16 +102,17 @@ public class ShelveServiceImpl implements ShelveService {
     @Override
     @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "getAllFallback")
     public ApiRes getAll(int page, int size) {
+
         log.info(
                 "Fetching shelves page {} size {} for user {}",
                 page,
                 size,
                 this.currentUser().getId());
         Pageable pageable = PageRequest.of(page, size);
-        Page<ShelveEntity> pageData = shelveRepository.findAllByUser(this.currentUser(), pageable);
-        List<ShelveRes> entities = pageData.getContent().stream().map(this::toViewModel).toList();
+        Page<ShelfEntity> pageData = shelfRepository.findAllByUser(this.currentUser(), pageable);
+        List<ShelfRes> entities = pageData.getContent().stream().map(this::toViewModel).toList();
 
-        PagingRes<ShelveRes> response =
+        PagingRes<ShelfRes> response =
                 new PagingRes<>(
                         entities,
                         pageable.getPageNumber(),
@@ -118,10 +122,11 @@ public class ShelveServiceImpl implements ShelveService {
         return ApiRes.success("Fetched successfully", response);
     }
 
-    ShelveEntity toEntity(@NonNull ShelveReq from, ShelveEntity to) {
+    ShelfEntity toEntity(@NonNull ShelfReq from, ShelfEntity to) {
         if (to == null) {
             User currentUser = this.currentUser();
-            return ShelveEntity.builder()
+            return ShelfEntity.builder()
+                    .icon(from.icon())
                     .name(from.name())
                     .description(from.description())
                     .user(currentUser)
@@ -133,18 +138,31 @@ public class ShelveServiceImpl implements ShelveService {
         return to;
     }
 
-    ShelveRes toViewModel(ShelveEntity from) {
-        return new ShelveRes(from.getId(), from.getName(), from.getDescription(), List.of());
+    ShelfRes toViewModel(ShelfEntity from) {
+        if (from.getSubjects() == null || from.getSubjects().isEmpty()) {
+            return new ShelfRes(from.getId(), from.getIcon(), from.getName(), from.getDescription(), Collections.emptyList());
+        }
+
+        List<SubjectRes> subjects = getSubjects(from);
+            return new ShelfRes(from.getId(), from.getIcon() ,from.getName(), from.getDescription(), subjects);
     }
 
     User currentUser() {
         return userService.getCurrentUser();
     }
 
+    private List<SubjectRes> getSubjects(ShelfEntity from) {
+        return from.getSubjects().stream().map(subject -> {
+            var stats = cardService.getShortPracticeStats(subject);
+            return new SubjectRes(
+                    subject.getId(), subject.getName(), subject.getDescription(), stats.getLeft(), stats.getRight());
+        }).toList();
+    }
+
     /** FALLBACK METHODS */
 
     // Fallback method for create
-    public ApiRes createFallback(ShelveReq request, Throwable t) {
+    public ApiRes createFallback(ShelfReq request, Throwable t) {
         log.error("Shelve service unavailable during create");
         throw new RetryLaterException(
                 "Shelve service is currently unavailable. Please try again later.", t);
@@ -172,7 +190,7 @@ public class ShelveServiceImpl implements ShelveService {
     }
 
     // Fallback method for update
-    public ApiRes updateFallback(ShelveReq request, UUID id, Throwable t) {
+    public ApiRes updateFallback(ShelfReq request, UUID id, Throwable t) {
         log.error("Shelve service unavailable during update: {}", t.getMessage());
         throw new RetryLaterException(
                 "Shelve service is currently unavailable. Please try again later.", t);

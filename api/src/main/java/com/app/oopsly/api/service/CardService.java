@@ -17,26 +17,31 @@
 package com.app.oopsly.api.service;
 
 import com.app.oopsly.api.entity.DifficultyLevel;
+import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CardItemReq;
 import com.app.oopsly.api.viewmodel.CardReq;
 import com.app.oopsly.api.viewmodel.UpdateDifficultyReq;
+import org.apache.commons.lang3.tuple.Pair;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 public interface CardService {
-    ApiRes create(UUID shelveId, UUID subjectId, CardReq request);
+    ApiRes create(UUID shelfId, UUID subjectId, CardReq request);
 
-    ApiRes updateDifficulty(UUID shelveId, UUID subjectId, List<UpdateDifficultyReq> reqList);
+    ApiRes updateDifficulty(UUID shelfId, UUID subjectId, List<UpdateDifficultyReq> reqList);
 
-    ApiRes delete(UUID shelveId, UUID subjectId, UUID cardId);
+    ApiRes delete(UUID shelfId, UUID subjectId, UUID cardId);
 
-    ApiRes getById(UUID shelveId, UUID subjectId, UUID cardId);
+    ApiRes getById(UUID shelfId, UUID subjectId, UUID cardId);
 
-    ApiRes getAllCardsBySubject(UUID shelveId, UUID subjectId, int page, int size);
+    ApiRes getAllCardsBySubject(UUID shelfId, UUID subjectId, int page, int size);
 
     Instant calculateNextPracticeTime(DifficultyLevel difficultyLevel);
 
-    ApiRes updateCard(UUID shelveId, UUID subjectId, UUID cardId, CardItemReq request);
+    ApiRes updateCard(UUID shelfId, UUID subjectId, UUID cardId, CardItemReq request);
+
+    Pair<Integer, Double> getShortPracticeStats(SubjectEntity subject);
 }

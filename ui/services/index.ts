@@ -25,7 +25,7 @@ interface IPathConfig {
 }
 
 const BASE_URL= process.env.BACKEND_API || 'http://localhost:9009';
-const BASE_PATH = 'api/v1/osmosis';
+const BASE_PATH = 'api/v1/oopsly';
 
 const PUBLIC_PATHS: IPathConfig[] = [
     {
@@ -35,6 +35,10 @@ const PUBLIC_PATHS: IPathConfig[] = [
     {
         method: 'POST',
         url: 'otp/validate',
+    },
+    {
+        method: 'POST',
+        url: 'users/refresh-token',
     }
 ];
 
@@ -78,15 +82,12 @@ apiClient.interceptors.response.use(
   (error: AxiosError<ApiErrorResponse>) => {
     // Handle common error responses
     if (error.response) {
-      // Server responded with error status
       const errorData = error.response.data;
       const errorMessage = errorData?.message || 'An error occurred';
       return Promise.reject(new Error(errorMessage));
     } else if (error.request) {
-      // Request was made but no response received
       return Promise.reject(new Error('Network error. Please check your connection.'));
     } else {
-      // Something else happened
       return Promise.reject(new Error(error.message || 'An unexpected error occurred'));
     }
   }

@@ -19,11 +19,11 @@ package com.app.oopsly.api.integration;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.app.oopsly.api.entity.CardEntity;
-import com.app.oopsly.api.entity.ShelveEntity;
+import com.app.oopsly.api.entity.ShelfEntity;
 import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.repository.CardRepository;
-import com.app.oopsly.api.repository.ShelveRepository;
+import com.app.oopsly.api.repository.ShelfRepository;
 import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.service.SubjectService;
@@ -48,7 +48,7 @@ class SubjectCascadeDeleteIntegrationTest {
 
     @Autowired private SubjectService subjectService;
 
-    @Autowired private ShelveRepository shelveRepository;
+    @Autowired private ShelfRepository shelfRepository;
 
     @Autowired private SubjectRepository subjectRepository;
 
@@ -57,7 +57,7 @@ class SubjectCascadeDeleteIntegrationTest {
     @Autowired private UserRepository userRepository;
 
     private User testUser;
-    private ShelveEntity testShelve;
+    private ShelfEntity testShelve;
     private SubjectEntity testSubject;
     private CardEntity testCard;
 
@@ -74,17 +74,17 @@ class SubjectCascadeDeleteIntegrationTest {
                 .setAuthentication(new UsernamePasswordAuthenticationToken(testUser, null, null));
 
         // Create and save test shelve
-        testShelve = new ShelveEntity();
+        testShelve = new ShelfEntity();
         testShelve.setName("Test Shelve");
         testShelve.setDescription("Test Shelve Description");
         testShelve.setUser(testUser);
-        testShelve = shelveRepository.save(testShelve);
+        testShelve = shelfRepository.save(testShelve);
 
         // Create and save test subject
         testSubject = new SubjectEntity();
         testSubject.setName("Test Subject");
         testSubject.setDescription("Test Subject Description");
-        testSubject.setShelve(testShelve);
+        testSubject.setShelf(testShelve);
         testSubject = subjectRepository.save(testSubject);
 
         // Create and save test card

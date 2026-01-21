@@ -18,13 +18,13 @@ package com.app.oopsly.api.service.impl;
 
 import com.app.oopsly.api.entity.CardEntity;
 import com.app.oopsly.api.entity.DifficultyLevel;
-import com.app.oopsly.api.entity.ShelveEntity;
+import com.app.oopsly.api.entity.ShelfEntity;
 import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.repository.CardRepository;
-import com.app.oopsly.api.repository.ShelveRepository;
+import com.app.oopsly.api.repository.ShelfRepository;
 import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.service.CardService;
 import com.app.oopsly.api.service.UserService;
@@ -38,6 +38,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -50,18 +51,18 @@ public class CardServiceImpl implements CardService {
 
     private final CardRepository cardRepository;
     private final SubjectRepository subjectRepository;
-    private final ShelveRepository shelveRepository;
+    private final ShelfRepository shelfRepository;
     private final UserService userService;
 
     @Override
     @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "createFallback")
-    public ApiRes create(UUID shelveId, UUID subjectId, CardReq request) {
+    public ApiRes create(UUID shelfId, UUID subjectId, CardReq request) {
         log.info(
                 "Creating {} cards for subject: {} in shelve: {}",
                 request.cards().size(),
                 subjectId,
-                shelveId);
-        SubjectEntity subject = getSubjectForCurrentUser(shelveId, subjectId);
+                shelfId);
+        SubjectEntity subject = getSubjectForCurrentUser(shelfId, subjectId);
 
         List<CardEntity> cards =
                 request.cards().stream()
@@ -78,9 +79,9 @@ public class CardServiceImpl implements CardService {
 
     @Override
     @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "deleteFallback")
-    public ApiRes delete(UUID shelveId, UUID subjectId, UUID cardId) {
-        log.info("Deleting card: {} from subject: {} in shelve: {}", cardId, subjectId, shelveId);
-        SubjectEntity subject = getSubjectForCurrentUser(shelveId, subjectId);
+    public ApiRes delete(UUID shelfId, UUID subjectId, UUID cardId) {
+        log.info("Deleting card: {} from subject: {} in shelve: {}", cardId, subjectId, shelfId);
+        SubjectEntity subject = getSubjectForCurrentUser(shelfId, subjectId);
         CardEntity existingCard =
                 cardRepository
                         .findByIdAndSubject(cardId, subject)
@@ -94,9 +95,9 @@ public class CardServiceImpl implements CardService {
 
     @Override
     @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
-    public ApiRes getById(UUID shelveId, UUID subjectId, UUID cardId) {
-        log.info("Getting card: {} from subject: {} in shelve: {}", cardId, subjectId, shelveId);
-        SubjectEntity subject = getSubjectForCurrentUser(shelveId, subjectId);
+    public ApiRes getById(UUID shelfId, UUID subjectId, UUID cardId) {
+        log.info("Getting card: {} from subject: {} in shelve: {}", cardId, subjectId, shelfId);
+        SubjectEntity subject = getSubjectForCurrentUser(shelfId, subjectId);
         CardEntity card =
                 cardRepository
                         .findByIdAndSubject(cardId, subject)
@@ -110,14 +111,14 @@ public class CardServiceImpl implements CardService {
     @CircuitBreaker(
             name = "cardServiceCircuitBreaker",
             fallbackMethod = "getAllCardsBySubjectFallback")
-    public ApiRes getAllCardsBySubject(UUID shelveId, UUID subjectId, int page, int size) {
+    public ApiRes getAllCardsBySubject(UUID shelfId, UUID subjectId, int page, int size) {
         log.info(
                 "Getting all cards for subject: {} in shelve: {} with page: {} and size: {}",
                 subjectId,
-                shelveId,
+                shelfId,
                 page,
                 size);
-        SubjectEntity subject = getSubjectForCurrentUser(shelveId, subjectId);
+        SubjectEntity subject = getSubjectForCurrentUser(shelfId, subjectId);
         Pageable pageable = PageRequest.of(page, size);
         Page<CardEntity> pageData = cardRepository.findAllBySubject(subject, pageable);
         List<CardRes> cards =
@@ -151,8 +152,8 @@ public class CardServiceImpl implements CardService {
 
     @Override
     @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "updateCardFallback")
-    public ApiRes updateCard(UUID shelveId, UUID subjectId, UUID cardId, CardItemReq item) {
-        SubjectEntity subject = getSubjectForCurrentUser(shelveId, subjectId);
+    public ApiRes updateCard(UUID shelfId, UUID subjectId, UUID cardId, CardItemReq item) {
+        SubjectEntity subject = getSubjectForCurrentUser(shelfId, subjectId);
         CardEntity existingCard =
                 cardRepository
                         .findByIdAndSubject(cardId, subject)
@@ -167,15 +168,26 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
+    public Pair<Integer, Double> getShortPracticeStats(SubjectEntity subject) {
+        long totalCards = cardRepository.countBySubjectAndDeletedFalse(subject);
+        long dueCards = cardRepository.countOverdue(subject);
+        if (totalCards == 0) {
+            return Pair.of(0, 0.0);
+        }
+        double percentage = (dueCards * 100.0) / totalCards;
+        return Pair.of((int) dueCards, percentage);
+    }
+
+    @Override
     @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "updateDifficultyFallback")
     public ApiRes updateDifficulty(
-            UUID shelveId, UUID subjectId, List<UpdateDifficultyReq> reqList) {
+            UUID shelfId, UUID subjectId, List<UpdateDifficultyReq> reqList) {
         log.info(
                 "Updating difficulty for cards in subject: {} in shelve: {}. Total cards: {}",
                 subjectId,
-                shelveId,
+                shelfId,
                 reqList.size());
-        SubjectEntity subject = getSubjectForCurrentUser(shelveId, subjectId);
+        SubjectEntity subject = getSubjectForCurrentUser(shelfId, subjectId);
 
         List<CardEntity> updatedList =
                 reqList.stream()
@@ -227,33 +239,33 @@ public class CardServiceImpl implements CardService {
                 entity.getNumberOfPractice());
     }
 
-    private SubjectEntity getSubjectForCurrentUser(UUID shelveId, UUID subjectId) {
-        ShelveEntity shelve = getShelveForCurrentUser(shelveId);
+    private SubjectEntity getSubjectForCurrentUser(UUID shelfId, UUID subjectId) {
+        ShelfEntity shelve = getShelveForCurrentUser(shelfId);
         return subjectRepository
                 .findByIdAndShelve(subjectId, shelve)
                 .orElseThrow(
                         () -> new NotFoundException("Subject not found with id: " + subjectId));
     }
 
-    private ShelveEntity getShelveForCurrentUser(UUID shelveId) {
+    private ShelfEntity getShelveForCurrentUser(UUID shelfId) {
         User currentUser = userService.getCurrentUser();
         log.debug(
                 "Getting shelve: {} for user: {}",
-                shelveId,
+                shelfId,
                 StringUtils.masked(currentUser.getEmail()));
-        return shelveRepository
-                .findByIdAndUser(shelveId, currentUser)
-                .orElseThrow(() -> new NotFoundException("Shelve not found with id: " + shelveId));
+        return shelfRepository
+                .findByIdAndUser(shelfId, currentUser)
+                .orElseThrow(() -> new NotFoundException("Shelve not found with id: " + shelfId));
     }
 
     /** FALLBACK METHODS FOR CIRCUIT BREAKER */
 
     // Fallback method for create
-    public ApiRes createFallback(UUID shelveId, UUID subjectId, CardReq request, Throwable t) {
+    public ApiRes createFallback(UUID shelfId, UUID subjectId, CardReq request, Throwable t) {
         log.error(
-                "Card service unavailable during create: {}, shelveId={}, subjectId={}",
+                "Card service unavailable during create: {}, shelfId={}, subjectId={}",
                 t.getMessage(),
-                shelveId,
+                shelfId,
                 subjectId);
         throw new RetryLaterException(
                 "Card service is currently unavailable. Please try again later.", t);
@@ -261,11 +273,11 @@ public class CardServiceImpl implements CardService {
 
     // Fallback method for updateDifficulty
     public ApiRes updateDifficultyFallback(
-            UUID shelveId, UUID subjectId, List<UpdateDifficultyReq> reqList, Throwable t) {
+            UUID shelfId, UUID subjectId, List<UpdateDifficultyReq> reqList, Throwable t) {
         log.error(
-                "Card service unavailable during updateDifficulty: {}, shelveId={}, subjectId={}",
+                "Card service unavailable during updateDifficulty: {}, shelfId={}, subjectId={}",
                 t.getMessage(),
-                shelveId,
+                shelfId,
                 subjectId);
         throw new RetryLaterException(
                 "Card service is currently unavailable. Please try again later.", t);
@@ -273,12 +285,12 @@ public class CardServiceImpl implements CardService {
 
     // Fallback method for updateCard
     public ApiRes updateCardFallback(
-            UUID shelveId, UUID subjectId, UUID cardId, CardItemReq item, Throwable t) {
+            UUID shelfId, UUID subjectId, UUID cardId, CardItemReq item, Throwable t) {
         log.error(
-                "Card service unavailable during updateCard: {}, shelveId={}, subjectId={},"
+                "Card service unavailable during updateCard: {}, shelfId={}, subjectId={},"
                         + " cardId={}",
                 t.getMessage(),
-                shelveId,
+                shelfId,
                 subjectId,
                 cardId);
         throw new RetryLaterException(
@@ -287,12 +299,12 @@ public class CardServiceImpl implements CardService {
 
     // Fallback method for getAllCardsBySubject
     public ApiRes getAllCardsBySubjectFallback(
-            UUID shelveId, UUID subjectId, int page, int size, Throwable t) {
+            UUID shelfId, UUID subjectId, int page, int size, Throwable t) {
         log.error(
-                "Card service unavailable during getAllCardsBySubject: {}, shelveId={},"
+                "Card service unavailable during getAllCardsBySubject: {}, shelfId={},"
                         + " subjectId={}, page={}, size={}",
                 t.getMessage(),
-                shelveId,
+                shelfId,
                 subjectId,
                 page,
                 size);
@@ -301,11 +313,11 @@ public class CardServiceImpl implements CardService {
     }
 
     // Fallback method for delete
-    public ApiRes deleteFallback(UUID shelveId, UUID subjectId, UUID cardId, Throwable t) {
+    public ApiRes deleteFallback(UUID shelfId, UUID subjectId, UUID cardId, Throwable t) {
         log.error(
-                "Card service unavailable during delete: {}, shelveId={}, subjectId={}, cardId={}",
+                "Card service unavailable during delete: {}, shelfId={}, subjectId={}, cardId={}",
                 t.getMessage(),
-                shelveId,
+                shelfId,
                 subjectId,
                 cardId);
         throw new RetryLaterException(
@@ -313,12 +325,12 @@ public class CardServiceImpl implements CardService {
     }
 
     // Fallback method for getById
-    public ApiRes getByIdFallback(UUID shelveId, UUID subjectId, UUID cardId, Throwable t) {
+    public ApiRes getByIdFallback(UUID shelfId, UUID subjectId, UUID cardId, Throwable t) {
         log.error(
-                "Card service unavailable during getById: {}, shelveId={}, subjectId={},"
+                "Card service unavailable during getById: {}, shelfId={}, subjectId={},"
                         + " cardId={}",
                 t.getMessage(),
-                shelveId,
+                shelfId,
                 subjectId,
                 cardId);
         throw new RetryLaterException(

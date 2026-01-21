@@ -16,9 +16,9 @@
 
 package com.app.oopsly.api.controller;
 
-import com.app.oopsly.api.service.ShelveService;
+import com.app.oopsly.api.service.ShelfService;
 import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.ShelveReq;
+import com.app.oopsly.api.viewmodel.ShelfReq;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -42,36 +42,36 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/shelves")
 @Tag(
-        name = "Shelve",
+        name = "Shelf",
         description =
-                "Shelve management APIs for creating, updating, retrieving and deleting shelves")
-public class ShelveController {
-    private final ShelveService service;
+                "Shelf management APIs for creating, updating, retrieving and deleting shelfs")
+public class ShelfController {
+    private final ShelfService service;
 
-    public ShelveController(ShelveService service) {
+    public ShelfController(ShelfService service) {
         this.service = service;
     }
 
     @Operation(
-            summary = "Create shelve",
-            description = "Creates a new shelve with the provided information")
+            summary = "Create shelf",
+            description = "Creates a new shelf with the provided information")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
-                        description = "Shelve created successfully",
+                        description = "Shelf created successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(responseCode = "400", description = "Invalid request body"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("")
     ApiRes create(
-            @Parameter(description = "Shelve creation request", required = true) @Valid @RequestBody
-                    ShelveReq requestBody) {
+            @Parameter(description = "Shelf creation request", required = true) @Valid @RequestBody
+                    ShelfReq requestBody) {
         return this.service.create(requestBody);
     }
 
-    @Operation(summary = "Update shelve", description = "Updates an existing shelve by ID")
+    @Operation(summary = "Update shelf", description = "Updates an existing shelf by ID")
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -85,7 +85,7 @@ public class ShelveController {
     @PutMapping("/{id}")
     ApiRes update(
             @Parameter(description = "Shelve update request", required = true) @Valid @RequestBody
-                    ShelveReq requestBody,
+                    ShelfReq requestBody,
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -96,8 +96,8 @@ public class ShelveController {
     }
 
     @Operation(
-            summary = "Get shelve by ID",
-            description = "Retrieves a shelve by its unique identifier")
+            summary = "Get shelf by ID",
+            description = "Retrieves a shelf by its unique identifier")
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -118,7 +118,7 @@ public class ShelveController {
         return this.service.getById(id);
     }
 
-    @Operation(summary = "Delete shelve", description = "Soft deletes a shelve by ID")
+    @Operation(summary = "Delete shelf", description = "Soft deletes a shelf by ID")
     @ApiResponses(
             value = {
                 @ApiResponse(
@@ -139,9 +139,7 @@ public class ShelveController {
         return this.service.delete(id);
     }
 
-    @Operation(
-            summary = "Get all shelves",
-            description = "Retrieves a paginated list of all shelves")
+    @Operation(summary = "Get all shelfs", description = "Retrieves a paginated list of all shelfs")
     @ApiResponses(
             value = {
                 @ApiResponse(

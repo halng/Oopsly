@@ -6,7 +6,7 @@ server:
     context-path: /api/${server.active.version}/oopsly
 
 app:
-  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:8081}
   jwt:
     secret: ${JWT_SECRET:changeme}
     expiration-in-ms: 86400000
@@ -43,6 +43,11 @@ spring:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:oopsly}
     username: ${DB_USERNAME}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 10
+      connection-timeout: 2000
+      max-lifetime: 1800000
   data:
     redis:
       host: ${REDIS_HOST:localhost}

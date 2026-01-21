@@ -16,6 +16,7 @@
 
 package com.app.oopsly.api.viewmodel;
 
+import java.util.List;
 import java.util.UUID;
 
-public record SubjectRes(UUID id, String name, String description, int overdue, double completedPercent) {}
+public record ShelfRes(UUID id, String icon, String name, String description, List<SubjectRes> subjects) {}

@@ -19,9 +19,9 @@ package com.app.oopsly.api.controller;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.service.ShelveService;
+import com.app.oopsly.api.service.ShelfService;
 import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.ShelveReq;
+import com.app.oopsly.api.viewmodel.ShelfReq;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,18 +33,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ShelveControllerTest {
 
-    @Mock private ShelveService shelveService;
+    @Mock private ShelfService shelfService;
 
-    @InjectMocks private ShelveController shelveController;
+    @InjectMocks private ShelfController shelveController;
 
-    private ShelveReq shelveReq;
+    private ShelfReq shelfReq;
     private UUID shelveId;
     private ApiRes expectedResponse;
 
     @BeforeEach
     void setUp() {
-        shelveReq =
-                new ShelveReq(
+        shelfReq =
+                new ShelfReq(
                         "Test Shelve",
                         "Test description with sufficient length to meet validation requirements");
         shelveId = UUID.randomUUID();
@@ -53,53 +53,53 @@ class ShelveControllerTest {
 
     @Test
     void create_delegatesToShelveService() {
-        when(shelveService.create(shelveReq)).thenReturn(expectedResponse);
+        when(shelfService.create(shelfReq)).thenReturn(expectedResponse);
 
-        ApiRes result = shelveController.create(shelveReq);
+        ApiRes result = shelveController.create(shelfReq);
 
         assertSame(expectedResponse, result);
-        verify(shelveService, times(1)).create(shelveReq);
+        verify(shelfService, times(1)).create(shelfReq);
     }
 
     @Test
     void update_delegatesToShelveService() {
-        when(shelveService.update(shelveReq, shelveId)).thenReturn(expectedResponse);
+        when(shelfService.update(shelfReq, shelveId)).thenReturn(expectedResponse);
 
-        ApiRes result = shelveController.update(shelveReq, shelveId);
+        ApiRes result = shelveController.update(shelfReq, shelveId);
 
         assertSame(expectedResponse, result);
-        verify(shelveService, times(1)).update(shelveReq, shelveId);
+        verify(shelfService, times(1)).update(shelfReq, shelveId);
     }
 
     @Test
     void getById_delegatesToShelveService() {
-        when(shelveService.getById(shelveId)).thenReturn(expectedResponse);
+        when(shelfService.getById(shelveId)).thenReturn(expectedResponse);
 
         ApiRes result = shelveController.getById(shelveId);
 
         assertSame(expectedResponse, result);
-        verify(shelveService, times(1)).getById(shelveId);
+        verify(shelfService, times(1)).getById(shelveId);
     }
 
     @Test
     void deleteById_delegatesToShelveService() {
-        when(shelveService.delete(shelveId)).thenReturn(expectedResponse);
+        when(shelfService.delete(shelveId)).thenReturn(expectedResponse);
 
         ApiRes result = shelveController.deleteById(shelveId);
 
         assertSame(expectedResponse, result);
-        verify(shelveService, times(1)).delete(shelveId);
+        verify(shelfService, times(1)).delete(shelveId);
     }
 
     @Test
     void getAll_delegatesToShelveService() {
         int page = 0;
         int size = 10;
-        when(shelveService.getAll(page, size)).thenReturn(expectedResponse);
+        when(shelfService.getAll(page, size)).thenReturn(expectedResponse);
 
         ApiRes result = shelveController.getAll(page, size);
 
         assertSame(expectedResponse, result);
-        verify(shelveService, times(1)).getAll(page, size);
+        verify(shelfService, times(1)).getAll(page, size);
     }
 }
