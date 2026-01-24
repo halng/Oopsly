@@ -15,9 +15,15 @@
  */
 
 export interface SubjectStats {
-    id: string;
+  id: string;
   name: string;
   description: string | null;
   overdue: number | null;
   completedPercent: number | null;
+}
+
+
+export interface SubjectCreateRequest {
+  name: string;
+  description?: string;
 }

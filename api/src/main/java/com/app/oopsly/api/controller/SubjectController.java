@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/shelves/{shelveId}/subjects")
+@RequestMapping("/shelves/{shelfId}/subjects")
 @RequiredArgsConstructor
 @Validated
 @Tag(
@@ -68,12 +68,12 @@ public class SubjectController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID shelveId,
+                    UUID shelfId,
             @Parameter(description = "Subject creation request", required = true)
                     @Valid @RequestBody
                     SubjectReq requestBody) {
-        log.info("Creating subject for shelve: {}", shelveId);
-        return subjectService.create(shelveId, requestBody);
+        log.info("Creating subject for shelve: {}", shelfId);
+        return subjectService.create(shelfId, requestBody);
     }
 
     @Operation(
@@ -96,7 +96,7 @@ public class SubjectController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID shelveId,
+                    UUID shelfId,
             @Parameter(description = "Page number (starts from 0)", required = true, example = "0")
                     @RequestParam
                     @Min(value = 0, message = "Page must be greater than or equal to 0") int page,
@@ -104,11 +104,11 @@ public class SubjectController {
                     @RequestParam
                     @Min(value = 1, message = "Size must be greater than 0") int size) {
         log.info(
-                "Getting all subjects for shelve: {} with page: {} and size: {}",
-                shelveId,
+                "Getting all subjects for shelf: {} with page: {} and size: {}",
+                shelfId,
                 page,
                 size);
-        return subjectService.getAllByShelve(shelveId, page, size);
+        return subjectService.getAllByShelve(shelfId, page, size);
     }
 
     @Operation(
@@ -131,7 +131,7 @@ public class SubjectController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID shelveId,
+                    UUID shelfId,
             @Parameter(
                             description = "Subject ID",
                             required = true,
@@ -140,8 +140,8 @@ public class SubjectController {
                     UUID id,
             @Parameter(description = "Subject update request", required = true) @Valid @RequestBody
                     SubjectReq requestBody) {
-        log.info("Updating subject: {} in shelve: {}", id, shelveId);
-        return subjectService.update(shelveId, id, requestBody);
+        log.info("Updating subject: {} in shelve: {}", id, shelfId);
+        return subjectService.update(shelfId, id, requestBody);
     }
 
     @Operation(
@@ -163,15 +163,15 @@ public class SubjectController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID shelveId,
+                    UUID shelfId,
             @Parameter(
                             description = "Subject ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
                     UUID id) {
-        log.info("Getting subject: {} from shelve: {}", id, shelveId);
-        return subjectService.getById(shelveId, id);
+        log.info("Getting subject: {} from shelve: {}", id, shelfId);
+        return subjectService.getById(shelfId, id);
     }
 
     @Operation(
@@ -193,14 +193,14 @@ public class SubjectController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID shelveId,
+                    UUID shelfId,
             @Parameter(
                             description = "Subject ID",
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
                     UUID id) {
-        log.info("Deleting subject: {} from shelve: {}", id, shelveId);
-        return subjectService.delete(shelveId, id);
+        log.info("Deleting subject: {} from shelve: {}", id, shelfId);
+        return subjectService.delete(shelfId, id);
     }
 }

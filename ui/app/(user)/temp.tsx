@@ -1,46 +1,41 @@
-import { createShelf, deleteShelf, fetchShelves } from "@/services/ShelfService";
-import { createSubject } from "@/services/SubjectService";
-import { Shelf } from "@/types/Shelf";
-import { SubjectStats } from "@/types/Subject";
-import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
-  Bookmark,
-  BookOpen,
-  Calendar,
-  Camera,
-  CheckSquare,
-  Code,
-  Coffee,
-  Database,
-  Delete,
-  Flame,
-  Gift,
-  Globe,
-  Heart,
-  Languages,
-  Music,
-  PlusCircle,
-  Smile,
-  Star,
-  StickyNote,
-  Target,
-  Trophy,
-  Umbrella,
-  User,
-  X,
-  Zap,
-} from "lucide-react-native";
-import React, { useEffect, useState } from "react";
-import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
   Image,
   Modal,
-  Pressable,
-  ScrollView,
-  Text,
   TextInput,
-  TouchableOpacity,
-  View,
+  Pressable,
 } from "react-native";
+import { useRouter } from "expo-router";
+import {
+  Flame,
+  BookOpen,
+  Languages,
+  Code,
+  Database,
+  Calendar,
+  StickyNote,
+  CheckSquare,
+  User,
+  PlusCircle,
+  X,
+  Smile,
+  Heart,
+  Star,
+  Zap,
+  Trophy,
+  Target,
+  Bookmark,
+  Coffee,
+  Music,
+  Camera,
+  Globe,
+  Umbrella,
+  Gift,
+} from "lucide-react-native";
 
 // Available icons for shelf creation
 const availableIcons = [
@@ -60,51 +55,70 @@ const availableIcons = [
   { name: "Globe", component: Globe, color: "#0EA5E9" },
   { name: "Umbrella", component: Umbrella, color: "#6366F1" },
   { name: "Gift", component: Gift, color: "#EC4899" },
-  { name: "Smile", component: Smile, color: "#F59E0B" },
-  { name: "User", component: User, color: "#3B82F6" },
 ];
 
-const OopslyApp = () => {
+// Dummy data for shelves and subjects
+const dummyData = [
+  {
+    id: "1",
+    name: "Computer Science",
+    icon: <Code size={20} color="#4F46E5" />,
+    subjects: [
+      { id: "1-1", name: "Data Structures", dueCount: 12, totalCount: 45 },
+      { id: "1-2", name: "Algorithms", dueCount: 8, totalCount: 32 },
+      { id: "1-3", name: "System Design", dueCount: 5, totalCount: 28 },
+      { id: "1-4", name: "Machine Learning", dueCount: 15, totalCount: 60 },
+    ],
+  },
+  {
+    id: "2",
+    name: "Languages",
+    icon: <Languages size={20} color="#10B981" />,
+    subjects: [
+      { id: "2-1", name: "Japanese Kanji N5", dueCount: 22, totalCount: 120 },
+      { id: "2-2", name: "Spanish Vocabulary", dueCount: 7, totalCount: 85 },
+      { id: "2-3", name: "French Grammar", dueCount: 3, totalCount: 50 },
+    ],
+  },
+  {
+    id: "3",
+    name: "Liberal Arts",
+    icon: <BookOpen size={20} color="#EF4444" />,
+    subjects: [
+      { id: "3-1", name: "World History", dueCount: 18, totalCount: 95 },
+      { id: "3-2", name: "Philosophy", dueCount: 9, totalCount: 42 },
+      { id: "3-3", name: "Art History", dueCount: 6, totalCount: 38 },
+    ],
+  },
+  {
+    id: "4",
+    name: "Sciences",
+    icon: <Database size={20} color="#8B5CF6" />,
+    subjects: [
+      { id: "4-1", name: "Organic Chemistry", dueCount: 25, totalCount: 110 },
+      { id: "4-2", name: "Biology Fundamentals", dueCount: 14, totalCount: 75 },
+      { id: "4-3", name: "Physics Concepts", dueCount: 11, totalCount: 68 },
+    ],
+  },
+];
+
+const OsmosisApp = () => {
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
   const [shelfName, setShelfName] = useState("");
   const [shelfDescription, setShelfDescription] = useState("");
   const [selectedIcon, setSelectedIcon] = useState(availableIcons[0]);
   const [showIconPicker, setShowIconPicker] = useState(false);
-  const [shelves, setShelves] = useState<Shelf[]>();
 
   // New state for add content modal
   const [addContentModalVisible, setAddContentModalVisible] = useState(false);
   const [selectedShelfId, setSelectedShelfId] = useState<string | null>(null);
   const [contentTypeModalVisible, setContentTypeModalVisible] = useState(false);
   const [selectedContentType, setSelectedContentType] = useState<
-    "test" | "subject" | "delete" | null
+    "test" | "subject" | null
   >(null);
   const [contentName, setContentName] = useState("");
   const [contentDescription, setContentDescription] = useState("");
-  const [confirmText, setConfirmText] = useState("");
-  const [deletedModalVisible, setDeletedModalVisible] = useState(false);
-
-  const fetchShelvesData = () => {
-    fetchShelves({
-      page: 0,
-      size: 100,
-    })
-      .then((response) => {
-        if (response.isSuccess) {
-          setShelves(response.data.entities);
-        } else {
-          console.error("Failed to fetch shelves:", response.message);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching shelves:", error);
-      });
-  };
-
-  useEffect(() => {
-    fetchShelvesData();
-  }, []);
 
   // Handle shelf creation
   const handleCreateShelf = () => {
@@ -113,41 +127,28 @@ const OopslyApp = () => {
       return;
     }
 
-    createShelf({
-      icon: selectedIcon.name,
+    // In a real app, you would save this data to your backend or local storage
+    console.log("Creating shelf:", {
       name: shelfName,
       description: shelfDescription,
-    })
-      .then((response) => {
-        console.log("Shelf created successfully:", response);
-        fetchShelvesData();
-      })
-      .catch((error) => {
-        console.error("Error creating shelf:", error);
-      });
+      icon: selectedIcon.name,
+    });
 
     // Reset form and close modal
     setShelfName("");
     setShelfDescription("");
     setSelectedIcon(availableIcons[0]);
     setModalVisible(false);
-  };
 
-  // Open content type selection modal
-  const openContentTypeModal = (shelfId: string) => {
-    setSelectedShelfId(shelfId);
-    setContentTypeModalVisible(true);
+    // Show success message
+    alert("Shelf created successfully!");
   };
 
   // Handle content type selection
-  const handleContentTypeSelect = (type: "test" | "subject" | "delete") => {
+  const handleContentTypeSelect = (type: "test" | "subject") => {
     setSelectedContentType(type);
     setContentTypeModalVisible(false);
-    if (type === "delete") {
-      setDeletedModalVisible(true);
-    } else {
-      setAddContentModalVisible(true);
-    }
+    setAddContentModalVisible(true);
   };
 
   // Handle content creation
@@ -157,22 +158,13 @@ const OopslyApp = () => {
       return;
     }
 
-    if (selectedContentType === "subject" && selectedShelfId) {
-      createSubject(selectedShelfId, {
-        name: contentName,
-        description: contentDescription,
-      })
-        .then((response) => {
-          if (response.isSuccess) {
-            console.log("Subject created successfully:", response);
-          fetchShelvesData();
-          }
-          
-        })
-        .catch((error) => {
-          console.error("Error creating subject:", error);
-        });
-    }
+    console.log("Creating content:", {
+      shelfId: selectedShelfId,
+      type: selectedContentType,
+      name: contentName,
+      description: contentDescription,
+    });
+
     // Reset form and close modal
     setContentName("");
     setContentDescription("");
@@ -181,45 +173,18 @@ const OopslyApp = () => {
     setSelectedShelfId(null);
 
     alert(
-      `${selectedContentType === "test" ? "Test" : "Subject"} created successfully!`,
+      `${selectedContentType === "test" ? "Test" : "Subject"} created successfully!`
     );
   };
 
-  const handleDeleteShelf = () => {
-    if (selectedShelfId && selectedContentType === "delete") {
-      deleteShelf(selectedShelfId).then((response) => {
-        if (response.isSuccess) {
-          console.log("Shelf deleted successfully:", response);
-          fetchShelvesData();
-        } else {
-          console.error("Failed to delete shelf:", response.message);
-        }}
-      ).catch((error) => {
-        console.error("Error deleting shelf:", error);
-      });
-
-      // Reset state and close modal
-      setSelectedShelfId(null);
-      setConfirmText("");
-      setDeletedModalVisible(false);
-    }
-  }
-
-  const getShelfName = (shelfId: string) => {
-    const shelf = shelves?.find((s) => s.id === shelfId);
-    return shelf ? shelf.name : "";
-  };
-
-  const isDisable = (): boolean => {
-    if (selectedContentType !== "delete") {
-      return true;
-    }
-
-    return !(confirmText && confirmText.trim().toLowerCase() === "confirm");
+  // Open content type selection modal
+  const openContentTypeModal = (shelfId: string) => {
+    setSelectedShelfId(shelfId);
+    setContentTypeModalVisible(true);
   };
 
   // Render subject cards horizontally
-  const renderSubjectCards = (subjects: SubjectStats[], shelfId: string) => {
+  const renderSubjectCards = (subjects, shelfId) => {
     return (
       <ScrollView
         horizontal
@@ -227,6 +192,20 @@ const OopslyApp = () => {
         className="max-h-40"
       >
         <View className="flex-row gap-4 px-4 pb-2">
+          {/* Add Placeholder Card */}
+          <TouchableOpacity
+            className="bg-white rounded-xl p-4 w-60 shadow-sm border-2 border-dashed border-gray-300 justify-center items-center"
+            onPress={() => openContentTypeModal(shelfId)}
+          >
+            <View className="bg-indigo-100 rounded-full p-3 mb-2">
+              <PlusCircle size={32} color="#4F46E5" />
+            </View>
+            <Text className="text-gray-600 font-semibold">
+              Add Test or Subject
+            </Text>
+            <Text className="text-gray-400 text-xs mt-1">Tap to create</Text>
+          </TouchableOpacity>
+
           {subjects.map((subject) => (
             <TouchableOpacity
               key={subject.id}
@@ -239,7 +218,7 @@ const OopslyApp = () => {
                 </Text>
                 <View className="bg-blue-50 rounded-full px-2 py-1">
                   <Text className="text-blue-600 text-xs font-semibold">
-                    {subject.overdue} due
+                    {subject.dueCount} due
                   </Text>
                 </View>
               </View>
@@ -250,39 +229,20 @@ const OopslyApp = () => {
                     <View
                       className="bg-blue-500 h-2 rounded-full"
                       style={{
-                        width: `${subject.completedPercent ? subject.completedPercent : 0}%`,
+                        width: `${((subject.totalCount - subject.dueCount) / subject.totalCount) * 100}%`,
                       }}
                     />
                   </View>
                   <Text className="text-gray-500 text-xs ml-2">
-                    {subject.completedPercent ? subject.completedPercent : 0}%
+                    {subject.totalCount - subject.dueCount}/{subject.totalCount}
                   </Text>
                 </View>
               </View>
             </TouchableOpacity>
           ))}
-          {/* Add Placeholder Manage Shelf Card */}
-          <TouchableOpacity
-            className="bg-white rounded-xl p-4 w-60 shadow-sm border-2 border-dashed border-gray-300 justify-center items-center"
-            onPress={() => openContentTypeModal(shelfId)}
-          >
-            <View className="mb-1">
-              <Text className="text-gray-600 font-semibold">Management</Text>
-              <Text className="text-gray-400 text-xs mt-1">Tap to manage</Text>
-            </View>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     );
-  };
-
-  const renderIconComponent = (iconName: string) => {
-    const icon = availableIcons.find(
-      (icon) => icon.name.toLowerCase() === iconName.toLowerCase(),
-    );
-    return icon
-      ? React.createElement(icon.component, { size: 20, color: icon.color })
-      : null;
   };
 
   return (
@@ -299,7 +259,7 @@ const OopslyApp = () => {
                 className="w-8 h-8 rounded-full"
               />
             </View>
-            <Text className="text-2xl font-bold text-gray-800">Oopsly</Text>
+            <Text className="text-2xl font-bold text-gray-800">Osmosis</Text>
           </View>
 
           <View className="flex-row items-center bg-orange-50 px-3 py-1 rounded-full">
@@ -364,11 +324,10 @@ const OopslyApp = () => {
 
       {/* Main Content */}
       <ScrollView className="flex-1">
-        {Array.from(shelves ?? []).map((shelf) => (
+        {dummyData.map((shelf) => (
           <View key={shelf.id} className="mb-6">
             <View className="flex-row items-center px-4 mb-3 mt-2">
-              <View className="mr-2">{renderIconComponent(shelf.icon)}</View>
-
+              <View className="mr-2">{shelf.icon}</View>
               <Text className="text-lg font-bold text-gray-800">
                 {shelf.name}
               </Text>
@@ -526,7 +485,7 @@ const OopslyApp = () => {
             {/* Modal Header */}
             <View className="flex-row justify-between items-center mb-6">
               <Text className="text-xl font-bold text-gray-800">
-                What would you like to do?
+                Choose Content Type
               </Text>
               <TouchableOpacity
                 onPress={() => setContentTypeModalVisible(false)}
@@ -537,7 +496,7 @@ const OopslyApp = () => {
             </View>
 
             <Text className="text-gray-600 mb-6">
-              Choose the action you want to do under this shelf.
+              What would you like to create?
             </Text>
 
             {/* Test Option */}
@@ -562,7 +521,7 @@ const OopslyApp = () => {
 
             {/* Subject Option */}
             <TouchableOpacity
-              className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-5 mb-4 border-2 border-purple-200"
+              className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-5 border-2 border-purple-200"
               onPress={() => handleContentTypeSelect("subject")}
             >
               <View className="flex-row items-center">
@@ -575,26 +534,6 @@ const OopslyApp = () => {
                   </Text>
                   <Text className="text-gray-600 text-sm">
                     Create a subject to organize related content
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            {/* Delete option */}
-            <TouchableOpacity
-              className="bg-gradient-to-r from-red-50 to-red-100 rounded-xl p-5 border-2 border-red-200"
-              onPress={() => handleContentTypeSelect("delete")}
-            >
-              <View className="flex-row items-center">
-                <View className="bg-red-500 rounded-full p-3 mr-4">
-                  <Delete size={28} color="#FFFFFF" />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-gray-800 font-bold text-lg mb-1">
-                    Delete Shelf
-                  </Text>
-                  <Text className="text-gray-600 text-sm">
-                    Delete a shelf and all its contents
                   </Text>
                 </View>
               </View>
@@ -686,79 +625,8 @@ const OopslyApp = () => {
           </Pressable>
         </Pressable>
       </Modal>
-
-      {/* Confirm delete selected shelf */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={deletedModalVisible}
-        onRequestClose={() => setDeletedModalVisible(false)}
-      >
-        <Pressable
-          className="flex-1 bg-black/50 justify-center items-center px-6"
-          onPress={() => setDeletedModalVisible(false)}
-        >
-          <Pressable
-            className="bg-white rounded-2xl w-full max-w-md"
-            onPress={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <View className="flex-row justify-between items-center p-6 pb-4 border-b border-gray-100">
-              <Text className="text-xl font-bold text-gray-800">
-                Permanently Delete Shelf{" "}
-                <Text className="italic">{getShelfName(selectedShelfId!)}</Text>
-              </Text>
-              <TouchableOpacity
-                onPress={() => setDeletedModalVisible(false)}
-                className="p-1"
-              >
-                <X size={24} color="#6B7280" />
-              </TouchableOpacity>
-            </View>
-
-            <View className="px-6 py-4">
-              {/* Name Input */}
-              <View className="mb-5">
-                <Text className="text-gray-700 font-semibold mb-3">
-                  Warning: You are about to delete {getShelfName(selectedShelfId!)}. This will wipe all associated data, including subjects and test history. You will not be able to recover this information
-                </Text>
-                <TextInput
-                  className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
-                  placeholder={`Enter Confirm to delete`}
-                  placeholderTextColor="#9CA3AF"
-                  value={confirmText}
-                  onChangeText={setConfirmText}
-                />
-              </View>
-
-              {/* Action Buttons */}
-              <View className="flex-row gap-3 mt-2">
-                <TouchableOpacity
-                  className="flex-1 bg-gray-200 rounded-xl py-4 items-center"
-                  onPress={() => {
-                    setDeletedModalVisible(false);
-                    setConfirmText("");
-                  }}
-                >
-                  <Text className="text-gray-700 font-bold">Cancel</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  className={`flex-1 ${isDisable() ? "bg-red-400" : "bg-red-500"} rounded-xl py-4 items-center`}
-                  onPress={handleDeleteShelf}
-                  disabled={isDisable()}
-                >
-                  <Text className="text-white font-bold">
-                    Delete
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
     </View>
   );
 };
 
-export default OopslyApp;
+export default OsmosisApp;

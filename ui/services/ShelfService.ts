@@ -24,7 +24,7 @@ import {
 } from "@/types/Shelf";
 import { apiClient } from ".";
 
-const SHELVE_ENDPOINTS = {
+const SHELF_ENDPOINTS = {
   BASE: "/shelves",
   BY_ID: (id: string) => `/shelves/${id}`,
 };
@@ -32,19 +32,19 @@ const SHELVE_ENDPOINTS = {
 const fetchShelves = async (
   params?: ShelfQueryParams,
 ): Promise<ApiResponse<ShelfPaginatedResponse>> => {
-  const response = await apiClient.get(SHELVE_ENDPOINTS.BASE, { params });
+  const response = await apiClient.get(SHELF_ENDPOINTS.BASE, { params });
   return response.data;
 };
 
 const getShelfById = async (id: string): Promise<ApiResponse<Shelf>> => {
-  const response = await apiClient.get(SHELVE_ENDPOINTS.BY_ID(id));
+  const response = await apiClient.get(SHELF_ENDPOINTS.BY_ID(id));
   return response.data;
 };
 
 const createShelf = async (
   data: ShelfCreateRequest,
 ): Promise<ApiResponse<Shelf>> => {
-  const response = await apiClient.post(SHELVE_ENDPOINTS.BASE, data);
+  const response = await apiClient.post(SHELF_ENDPOINTS.BASE, data);
   return response.data;
 };
 
@@ -52,14 +52,14 @@ const updateShelve = async (
   id: string,
   data: ShelfUpdateRequest,
 ): Promise<ApiResponse<Shelf>> => {
-  const response = await apiClient.put(SHELVE_ENDPOINTS.BY_ID(id), data);
+  const response = await apiClient.put(SHELF_ENDPOINTS.BY_ID(id), data);
   return response.data;
 };
 
-const deleteShelve = async (id: string): Promise<ApiResponse<null>> => {
-  const response = await apiClient.patch(SHELVE_ENDPOINTS.BY_ID(id));
+const deleteShelf = async (id: string): Promise<ApiResponse<null>> => {
+  const response = await apiClient.patch(SHELF_ENDPOINTS.BY_ID(id));
   return response.data;
 };
 
-export { createShelf, deleteShelve, fetchShelves, getShelfById, updateShelve };
+export { createShelf, deleteShelf, fetchShelves, getShelfById, updateShelve };
 
