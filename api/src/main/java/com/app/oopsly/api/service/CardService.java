@@ -22,11 +22,10 @@ import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CardItemReq;
 import com.app.oopsly.api.viewmodel.CardReq;
 import com.app.oopsly.api.viewmodel.UpdateDifficultyReq;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.apache.commons.lang3.tuple.Pair;
 
 public interface CardService {
     ApiRes create(UUID shelfId, UUID subjectId, CardReq request);

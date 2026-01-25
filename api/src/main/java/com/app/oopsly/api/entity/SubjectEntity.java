@@ -33,6 +33,10 @@ public class SubjectEntity extends Audit {
     private String name;
     private String description;
 
+    @Builder.Default private Integer dailyLimit = 20;
+    @Builder.Default private Integer newCardsPerDay = 5;
+    @Builder.Default private Integer interval = 1;
+
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shelf_id", nullable = false)

@@ -139,7 +139,9 @@ public class ShelfController {
         return this.service.delete(id);
     }
 
-    @Operation(summary = "Get all shelfs", description = "Retrieves a paginated list of all shelfs")
+    @Operation(
+            summary = "Get all shelves",
+            description = "Retrieves a paginated list of all shelves")
     @ApiResponses(
             value = {
                 @ApiResponse(

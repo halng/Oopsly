@@ -55,7 +55,8 @@ public class SecurityConfig {
                                                 "/swagger-ui/**",
                                                 "/api-docs/**")
                                         .permitAll()
-                                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow OPTIONS everywhere
+                                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                                        .permitAll() // Allow OPTIONS everywhere
                                         .anyRequest()
                                         .authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)

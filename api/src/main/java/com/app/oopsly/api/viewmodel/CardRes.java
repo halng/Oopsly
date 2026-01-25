@@ -22,8 +22,8 @@ import java.util.UUID;
 
 public record CardRes(
         UUID id,
-        String topic,
-        String answer,
+        String front,
+        String back,
         DifficultyLevel difficultyLevel,
         Instant nextPracticeTime,
         Integer numberOfPractice) {}

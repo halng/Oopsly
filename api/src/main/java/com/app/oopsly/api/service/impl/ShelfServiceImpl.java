@@ -26,15 +26,12 @@ import com.app.oopsly.api.service.ShelfService;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.viewmodel.*;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -50,7 +47,7 @@ public class ShelfServiceImpl implements ShelfService {
     private final CardService cardService;
 
     @Override
-//    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "createFallback")
+    //    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(ShelfReq request) {
         log.info("Creating shelve for user {}", this.currentUser().getId());
         ShelfEntity savedEntity = shelfRepository.save(this.toEntity(request, null));
@@ -58,7 +55,7 @@ public class ShelfServiceImpl implements ShelfService {
     }
 
     @Override
-//    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "updateFallback")
+    //    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(ShelfReq request, UUID id) {
         log.info("Updating shelve {} for user {}", id, this.currentUser().getId());
         ShelfEntity existingEntity =
@@ -73,7 +70,7 @@ public class ShelfServiceImpl implements ShelfService {
     }
 
     @Override
-//    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "deleteFallback")
+    //    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID id) {
         log.info("Deleting shelve {} for user {}", id, this.currentUser().getId());
         ShelfEntity existingEntity =
@@ -140,11 +137,17 @@ public class ShelfServiceImpl implements ShelfService {
 
     ShelfRes toViewModel(ShelfEntity from) {
         if (from.getSubjects() == null || from.getSubjects().isEmpty()) {
-            return new ShelfRes(from.getId(), from.getIcon(), from.getName(), from.getDescription(), Collections.emptyList());
+            return new ShelfRes(
+                    from.getId(),
+                    from.getIcon(),
+                    from.getName(),
+                    from.getDescription(),
+                    Collections.emptyList());
         }
 
         List<SubjectRes> subjects = getSubjects(from);
-            return new ShelfRes(from.getId(), from.getIcon() ,from.getName(), from.getDescription(), subjects);
+        return new ShelfRes(
+                from.getId(), from.getIcon(), from.getName(), from.getDescription(), subjects);
     }
 
     User currentUser() {
@@ -152,11 +155,21 @@ public class ShelfServiceImpl implements ShelfService {
     }
 
     private List<SubjectRes> getSubjects(ShelfEntity from) {
-        return from.getSubjects().stream().map(subject -> {
-            var stats = cardService.getShortPracticeStats(subject);
-            return new SubjectRes(
-                    subject.getId(), subject.getName(), subject.getDescription(), stats.getLeft(), stats.getRight());
-        }).toList();
+        return from.getSubjects().stream()
+                .map(
+                        subject -> {
+                            var stats = cardService.getShortPracticeStats(subject);
+                            return new SubjectRes(
+                                    subject.getId(),
+                                    subject.getName(),
+                                    subject.getDescription(),
+                                    stats.getLeft(),
+                                    stats.getRight(),
+                                    subject.getDailyLimit(),
+                                    subject.getNewCardsPerDay(),
+                                    subject.getInterval());
+                        })
+                .toList();
     }
 
     /** FALLBACK METHODS */

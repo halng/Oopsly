@@ -18,4 +18,12 @@ package com.app.oopsly.api.viewmodel;
 
 import java.util.UUID;
 
-public record SubjectRes(UUID id, String name, String description, int overdue, double completedPercent) {}
+public record SubjectRes(
+        UUID id,
+        String name,
+        String description,
+        int overdue,
+        double completedPercent,
+        int dailyLimit,
+        int newCardsPerDay,
+        int interval) {}

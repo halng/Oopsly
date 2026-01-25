@@ -171,7 +171,15 @@ public class SubjectServiceImpl implements SubjectService {
     }
 
     private SubjectRes toSubjectRes(SubjectEntity entity) {
-        return new SubjectRes(entity.getId(), entity.getName(), entity.getDescription(), 0, 0.0);
+        return new SubjectRes(
+                entity.getId(),
+                entity.getName(),
+                entity.getDescription(),
+                0,
+                0.0,
+                entity.getDailyLimit(),
+                entity.getNewCardsPerDay(),
+                entity.getInterval());
     }
 
     private ShelfEntity getShelfForCurrentUser(UUID shelfId) {
