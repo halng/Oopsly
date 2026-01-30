@@ -14,64 +14,97 @@
  *    limitations under the License.
  */
 
-import axios, { AxiosError } from 'axios';
-import { ApiErrorResponse } from '@/types/ApiRes';
-import { useAuthStore } from '@/store';
+import axios, { AxiosError } from "axios";
+import { ApiErrorResponse } from "@/types/ApiRes";
+import { useAuthStore } from "@/store";
+import { Logger } from "@/utils";
+import { Platform } from "react-native";
+import uuid from 'react-native-uuid';
 
+
+const logger = Logger.extend("apiClient");
+const XRequestIdHeader = "X-Request-ID";
 interface IPathConfig {
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE';
-    url: string;
-    description?: string;
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  url: string;
+  description?: string;
 }
 
-const BASE_URL= process.env.BACKEND_API || 'http://localhost:9009';
-const BASE_PATH = 'api/v1/oopsly';
+const BASE_URL = process.env.BACKEND_API || "http://localhost:9009";
+const BASE_PATH = "api/v1/oopsly";
 
 const PUBLIC_PATHS: IPathConfig[] = [
-    {
-        method: 'POST',
-        url: 'otp',
-    },
-    {
-        method: 'POST',
-        url: 'otp/validate',
-    },
-    {
-        method: 'POST',
-        url: 'users/refresh-token',
-    }
+  {
+    method: "POST",
+    url: "otp",
+  },
+  {
+    method: "POST",
+    url: "otp/validate",
+  },
+  {
+    method: "POST",
+    url: "users/refresh-token",
+  },
 ];
 
 const apiClient = axios.create({
   baseURL: `${BASE_URL}/${BASE_PATH}`,
   timeout: 30000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
+const generateId = () => {
+    const timestamp = Date.now();
+    return `${Platform.OS}-${uuid.v4()}-${timestamp}`;
+};
+
+// Output: "android-l8k9j2z-8x7a1b"
 
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    const isPublicPath = PUBLIC_PATHS.some((path => 
-      path.method === config.method?.toUpperCase() && 
-      config.url?.includes(path.url)
-    ));
+    let requestId = generateId()
+
+    logger.debug(
+      "Request interceptor triggered for ",
+      config.url,
+      "Request method:",
+      config.method,
+      "Config: ",
+      config,
+    );
+    const isPublicPath = PUBLIC_PATHS.some(
+      (path) =>
+        path.method === config.method?.toUpperCase() &&
+        config.url?.includes(path.url),
+    );
 
     if (isPublicPath) {
+      logger.debug(
+        "Public path detected, skipping Authorization header addition",
+      );
+      requestId = "p" + requestId;
+      config.headers.set(XRequestIdHeader, requestId);
+
       return config;
     }
 
     const { accessToken } = useAuthStore.getState();
     if (accessToken) {
-        config.headers.set('Authorization', `Bearer ${accessToken}`);
+      config.headers.set("Authorization", `Bearer ${accessToken}`);
+      logger.debug("Added Authorization header");
+      requestId = "a" + requestId;
     }
+    config.headers.set(XRequestIdHeader, requestId);
     return config;
   },
   (error) => {
+    logger.error(`Request error: ${error} for ${error.config?.url}`);
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor
@@ -80,17 +113,22 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error: AxiosError<ApiErrorResponse>) => {
+    logger.error(`Response error: ${error} for ${error.config?.url}`);
     // Handle common error responses
     if (error.response) {
       const errorData = error.response.data;
-      const errorMessage = errorData?.message || 'An error occurred';
+      const errorMessage = errorData?.message || "An error occurred";
       return Promise.reject(new Error(errorMessage));
     } else if (error.request) {
-      return Promise.reject(new Error('Network error. Please check your connection.'));
+      return Promise.reject(
+        new Error("Network error. Please check your connection."),
+      );
     } else {
-      return Promise.reject(new Error(error.message || 'An unexpected error occurred'));
+      return Promise.reject(
+        new Error(error.message || "An unexpected error occurred"),
+      );
     }
-  }
+  },
 );
 
 export { apiClient, IPathConfig };

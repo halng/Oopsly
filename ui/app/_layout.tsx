@@ -14,26 +14,47 @@
  *    limitations under the License.
  */
 
-import React from 'react';
-import { Stack } from 'expo-router';
-import 'react-native-reanimated';
+import React, { useEffect, useState } from "react";
+import { Stack } from "expo-router";
+import "react-native-reanimated";
 import "@/global.css";
-import { useAuthStore } from '@/store';
+import { useAuthStore } from "@/store";
+import { Logger } from "@/utils";
+const logger = Logger.extend("RootLayout");
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: "(tabs)",
 };
 
 export default function RootLayout() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  // const [isReady, setIsReady] = useState(false);
+  // const hydrated = useAuthStore.persist.hasHydrated();
+  const isAuthenticated = useAuthStore(((state) => state.isAuthenticated));
+  logger.debug("RootLayout rendered");
+
+  // useEffect(() => {
+  //   logger.debug("Checking auth store hydration status...");
+  //   const unsub = useAuthStore.persist.onFinishHydration(() => {
+  //     setIsReady(true);
+  //     logger.debug("Auth store hydrated. isAuthenticated:", isAuthenticated);
+  //   });
+
+  //   if (hydrated) {
+  //     setIsReady(true);
+  //     logger.debug("Auth store hydrated. isAuthenticated:", isAuthenticated);
+  //   }
+
+  //   return () => unsub();
+  // }, [hydrated]);
+
   //TODO: add theme provider when themes are ready
   return (
-    <Stack screenOptions={{ headerShown: false }} >
-      <Stack.Protected guard={isAuthenticated} >
-        <Stack.Screen name="(user)"options={{ headerShown: false }} />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={isAuthenticated}>
+        <Stack.Screen name="(user)" options={{ headerShown: false }} />
       </Stack.Protected>
-      
+
       <Stack.Screen name="index" />
-  </Stack>
-)
+    </Stack>
+  );
 }

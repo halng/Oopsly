@@ -27,10 +27,7 @@ import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.service.SubjectService;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.util.StringUtils;
-import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.PagingRes;
-import com.app.oopsly.api.viewmodel.SubjectReq;
-import com.app.oopsly.api.viewmodel.SubjectRes;
+import com.app.oopsly.api.viewmodel.*;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -95,6 +92,35 @@ public class SubjectServiceImpl implements SubjectService {
 
         log.info("Successfully updated subject: {}", subjectId);
         return ApiRes.success("Updated successfully", toSubjectRes(updatedSubject));
+    }
+
+    @Override
+    public ApiRes updateSetting(UUID shelveId, UUID subjectId, SubjectSettingReq request) {
+        log.info("Updating subject settings: {} in shelf: {}", subjectId, shelveId);
+
+        var shelfId = getShelfForCurrentUser(shelveId);
+        SubjectEntity existingSubject =
+                subjectRepository
+                        .findByIdAndShelve(subjectId, shelfId)
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                "Subject not found with id: " + subjectId));
+
+        log.debug(
+                "Updating settings for subject: {}: dailyLimit={}, newCardsPerDay={}, interval={}",
+                subjectId,
+                request.dailyLimit(),
+                request.newCardsPerDay(),
+                request.interval());
+
+        existingSubject.setDailyLimit(request.dailyLimit());
+        existingSubject.setNewCardsPerDay(request.newCardsPerDay());
+        existingSubject.setInterval(request.interval());
+
+        subjectRepository.save(existingSubject);
+        log.info("Successfully updated subject settings: {}", subjectId);
+        return ApiRes.success("Updated successfully");
     }
 
     @Override

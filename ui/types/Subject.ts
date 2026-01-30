@@ -17,9 +17,18 @@
 export interface SubjectStats {
   id: string;
   name: string;
-  description: string | null;
-  overdue: number | null;
-  completedPercent: number | null;
+  description: string;
+  overdue: number;
+  completedPercent: number;
+  dailyLimit: number;
+  newCardsPerDay: number;
+  interval: number;
+}
+
+export interface SubjectSettings {
+  dailyLimit: number;
+  newCardsPerDay: number;
+  interval: number;
 }
 
 

@@ -35,7 +35,7 @@ public class SubjectEntity extends Audit {
 
     @Builder.Default private Integer dailyLimit = 20;
     @Builder.Default private Integer newCardsPerDay = 5;
-    @Builder.Default private Integer interval = 1;
+    @Builder.Default private Double interval = 1.0;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)

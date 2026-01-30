@@ -19,6 +19,7 @@ package com.app.oopsly.api.controller;
 import com.app.oopsly.api.service.SubjectService;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.SubjectReq;
+import com.app.oopsly.api.viewmodel.SubjectSettingReq;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -142,6 +143,27 @@ public class SubjectController {
                     SubjectReq requestBody) {
         log.info("Updating subject: {} in shelve: {}", id, shelfId);
         return subjectService.update(shelfId, id, requestBody);
+    }
+
+    @PutMapping("/{id}/settings")
+    ApiRes updateSetting(
+            @Parameter(
+                            description = "Shelve ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174000")
+                    @PathVariable
+                    UUID shelfId,
+            @Parameter(
+                            description = "Subject ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174001")
+                    @PathVariable
+                    UUID id,
+            @Parameter(description = "Subject Setting update request", required = true)
+                    @Valid @RequestBody
+                    SubjectSettingReq requestBody) {
+        log.info("Updating Setting for subject: {} in shelve: {}", id, shelfId);
+        return subjectService.updateSetting(shelfId, id, requestBody);
     }
 
     @Operation(

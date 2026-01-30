@@ -14,16 +14,32 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.viewmodel;
 
-import java.util.UUID;
+import { logger, consoleTransport } from "react-native-logs";
 
-public record SubjectRes(
-        UUID id,
-        String name,
-        String description,
-        int overdue,
-        double completedPercent,
-        int dailyLimit,
-        int newCardsPerDay,
-        double interval) {}
+const log = logger.createLogger({
+  levels: {
+    debug: 0,
+    info: 1,
+    warn: 2,
+    error: 3,
+  },
+  severity: __DEV__ ? "debug" : "info",
+  transport: consoleTransport,
+  transportOptions: {
+    colors: {
+      debug: "cyanBright",
+      info: "blueBright",
+      warn: "yellowBright",
+      error: "redBright",
+    },
+  },
+  async: true,
+  dateFormat: "time",
+  printLevel: true,
+  printDate: true,
+  fixedExtLvlLength: false,
+  enabled: true,
+});
+
+export default log;

@@ -81,7 +81,7 @@ class SubjectServiceImplTest {
         subject.setId(subjectId);
         subject.setName("Test Subject");
         subject.setDescription("Test Description");
-        subject.setShelve(shelve);
+        subject.setShelf(shelve);
 
         subjectReq = new SubjectReq("Test Subject", "Test Description");
     }
@@ -266,7 +266,7 @@ class SubjectServiceImplTest {
             col.setId(UUID.randomUUID());
             col.setName("Subject " + i);
             col.setDescription("Description " + i);
-            col.setShelve(shelve);
+            col.setShelf(shelve);
             collections.add(col);
         }
 

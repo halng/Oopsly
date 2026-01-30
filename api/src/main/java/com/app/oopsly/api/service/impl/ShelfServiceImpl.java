@@ -151,6 +151,7 @@ public class ShelfServiceImpl implements ShelfService {
     }
 
     User currentUser() {
+        log.info("Retrieving current user info from UserService");
         return userService.getCurrentUser();
     }
 

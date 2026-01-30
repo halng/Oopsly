@@ -1,5 +1,5 @@
 /*
- *    Copyright 2026 Hao Nguyen Tan
+ *    Copyright 2025 Hao Nguyen Tan
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -14,16 +14,30 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.viewmodel;
+export interface CardRes {
+  id: string;
+  front: string;
+  back: string;
+  difficultyLevel: string;
+  nextPracticeTime: number;
+  numberOfPractice: number;
+}
 
-import java.util.UUID;
+export interface CardCreateRequest {
+  front: string;
+  back: string;
+}
 
-public record SubjectRes(
-        UUID id,
-        String name,
-        String description,
-        int overdue,
-        double completedPercent,
-        int dailyLimit,
-        int newCardsPerDay,
-        double interval) {}
+export interface CardUpdateRequest {
+  front?: string;
+  back?: string;
+}
+
+export interface CardPaginatedResponse {
+  entities: CardRes[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  totalItems: number;
+  hasNextPage?: boolean;
+}

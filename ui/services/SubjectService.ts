@@ -15,12 +15,13 @@
  */
 
 import { ApiResponse } from "@/types/ApiRes";
-import { SubjectStats, SubjectCreateRequest } from "@/types/Subject";
+import { SubjectStats, SubjectCreateRequest, SubjectSettings } from "@/types/Subject";
 import { apiClient } from ".";
 
 const SUBJECT_ENDPOINTS = {
-  BASE: "/shelves/{shelfId}/subjects",
-  BY_ID: (id: string) => `/shelves/{shelfId}/subjects/${id}`,
+  BASE: (shelfId: string) => `/shelves/${shelfId}/subjects`,
+  BY_ID: (shelfId: string, id: string) => `/shelves/${shelfId}/subjects/${id}`,
+  UPDATE_SETTINGS: (shelfId: string, id: string) => `/shelves/${shelfId}/subjects/${id}/settings`,
 };
 
 // const fetchSubjects = async (
@@ -30,18 +31,40 @@ const SUBJECT_ENDPOINTS = {
 //   return response.data;
 // };
 
-// const getSubjectById = async (id: string): Promise<ApiResponse<Subject>> => {
-//   const response = await apiClient.get(SUBJECT_ENDPOINTS.BY_ID(id));
-//   return response.data;
-// };
+const getSubjectById = async (shelfId: string, id: string): Promise<ApiResponse<SubjectStats>> => {
+  const endpoint = SUBJECT_ENDPOINTS.BY_ID(shelfId, id);
+  const response = await apiClient.get(endpoint);
+  return response.data;
+};
 
 const createSubject = async (
   shelfId: string,
   data: SubjectCreateRequest,
 ): Promise<ApiResponse<SubjectStats>> => {
-  const endpoint = SUBJECT_ENDPOINTS.BASE.replace("{shelfId}", shelfId);
+  const endpoint = SUBJECT_ENDPOINTS.BASE(shelfId);
   const response = await apiClient.post(endpoint, data);
   return response.data;
 };
 
-export { createSubject };
+
+const updateSubjectSetting = async (
+  shelfId: string,
+  id: string,
+  data: SubjectSettings,
+): Promise<ApiResponse> => {
+  const endpoint = SUBJECT_ENDPOINTS.UPDATE_SETTINGS(shelfId, id)
+  const response = await apiClient.put(endpoint, data);
+  return response.data;
+}
+
+const updateSubjectById = async (
+  shelfId: string,
+  id: string,
+  data: SubjectCreateRequest,
+): Promise<ApiResponse<SubjectStats>> => {
+  const endpoint = SUBJECT_ENDPOINTS.BY_ID(shelfId, id);
+  const response = await apiClient.put(endpoint, data);
+  return response.data;
+}
+
+export { createSubject, getSubjectById, updateSubjectSetting, updateSubjectById };

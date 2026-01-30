@@ -16,14 +16,4 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import java.util.UUID;
-
-public record SubjectRes(
-        UUID id,
-        String name,
-        String description,
-        int overdue,
-        double completedPercent,
-        int dailyLimit,
-        int newCardsPerDay,
-        double interval) {}
+public record SubjectSettingReq(int dailyLimit, int newCardsPerDay, double interval) {}

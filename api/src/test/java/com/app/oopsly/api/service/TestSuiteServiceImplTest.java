@@ -79,7 +79,7 @@ class TestSuiteServiceImplTest {
         savedTestSuite.setId(testSuiteId);
         savedTestSuite.setTitle(testSuiteReq.title());
         savedTestSuite.setIsActive(testSuiteReq.isActive());
-        savedTestSuite.setShelve(shelve);
+        savedTestSuite.setShelf(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
@@ -108,7 +108,7 @@ class TestSuiteServiceImplTest {
         existingTestSuite.setId(testSuiteId);
         existingTestSuite.setTitle("Old Title");
         existingTestSuite.setIsActive(false);
-        existingTestSuite.setShelve(shelve);
+        existingTestSuite.setShelf(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
@@ -142,7 +142,7 @@ class TestSuiteServiceImplTest {
         TestSuiteEntity existingTestSuite = new TestSuiteEntity();
         existingTestSuite.setId(testSuiteId);
         existingTestSuite.setDeleted(false);
-        existingTestSuite.setShelve(shelve);
+        existingTestSuite.setShelf(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
@@ -175,7 +175,7 @@ class TestSuiteServiceImplTest {
         testSuite.setId(testSuiteId);
         testSuite.setTitle(testSuiteReq.title());
         testSuite.setIsActive(testSuiteReq.isActive());
-        testSuite.setShelve(shelve);
+        testSuite.setShelf(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
@@ -209,7 +209,7 @@ class TestSuiteServiceImplTest {
             testSuite.setId(UUID.randomUUID());
             testSuite.setTitle("Test Suite " + i);
             testSuite.setIsActive(true);
-            testSuite.setShelve(shelve);
+            testSuite.setShelf(shelve);
             testSuites.add(testSuite);
         }
 
@@ -231,7 +231,7 @@ class TestSuiteServiceImplTest {
         savedTestSuite.setId(testSuiteId);
         savedTestSuite.setTitle(reqWithNullIsActive.title());
         savedTestSuite.setIsActive(true);
-        savedTestSuite.setShelve(shelve);
+        savedTestSuite.setShelf(shelve);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))

@@ -90,7 +90,7 @@ class CardServiceImplTest {
         shelve.setUser(currentUser);
         subject = new SubjectEntity();
         subject.setId(subjectId);
-        subject.setShelve(shelve);
+        subject.setShelf(shelve);
     }
 
     @Test

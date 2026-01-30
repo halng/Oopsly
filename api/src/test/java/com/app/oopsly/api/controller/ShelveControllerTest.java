@@ -45,6 +45,7 @@ class ShelveControllerTest {
     void setUp() {
         shelfReq =
                 new ShelfReq(
+                        "code",
                         "Test Shelve",
                         "Test description with sufficient length to meet validation requirements");
         shelveId = UUID.randomUUID();

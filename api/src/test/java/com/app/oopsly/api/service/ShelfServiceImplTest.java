@@ -61,6 +61,7 @@ class ShelfServiceImplTest {
     void setUp() {
         shelfReq =
                 new ShelfReq(
+                        "code",
                         "Sample Shelve",
                         "A shelve for testing purposes with sufficient description length to meet"
                                 + " validation");
@@ -251,7 +252,7 @@ class ShelfServiceImplTest {
     // Fallback Function Tests
     @Test
     void createFallback_throwsRuntimeException() {
-        ShelfReq request = new ShelfReq("Test Shelve", "Test Description");
+        ShelfReq request = new ShelfReq("test", "Test Shelve", "Test Description");
         RuntimeException cause = new RuntimeException("Service unavailable");
 
         RetryLaterException exception =
@@ -266,7 +267,7 @@ class ShelfServiceImplTest {
 
     @Test
     void updateFallback_throwsRuntimeException() {
-        ShelfReq request = new ShelfReq("Updated Shelve", "Updated Description");
+        ShelfReq request = new ShelfReq("test", "Updated Shelve", "Updated Description");
         RuntimeException cause = new RuntimeException("Database connection failed");
 
         RetryLaterException exception =
@@ -326,7 +327,9 @@ class ShelfServiceImplTest {
         RetryLaterException createEx =
                 assertThrows(
                         RetryLaterException.class,
-                        () -> shelveService.createFallback(new ShelfReq("Test", "Desc"), null));
+                        () ->
+                                shelveService.createFallback(
+                                        new ShelfReq("code", "Test", "Desc"), null));
 
         assertNotNull(createEx);
         assertTrue(createEx.getMessage().contains("currently unavailable"));
@@ -340,13 +343,15 @@ class ShelfServiceImplTest {
         RetryLaterException createEx =
                 assertThrows(
                         RetryLaterException.class,
-                        () -> shelveService.createFallback(new ShelfReq("Test", "Desc"), cause));
+                        () ->
+                                shelveService.createFallback(
+                                        new ShelfReq("icon", "Test", "Desc"), cause));
         RetryLaterException updateEx =
                 assertThrows(
                         RetryLaterException.class,
                         () ->
                                 shelveService.updateFallback(
-                                        new ShelfReq("Test", "Desc"), shelveId, cause));
+                                        new ShelfReq("icon", "Test", "Desc"), shelveId, cause));
         RetryLaterException deleteEx =
                 assertThrows(
                         RetryLaterException.class,
@@ -368,7 +373,7 @@ class ShelfServiceImplTest {
                         RetryLaterException.class,
                         () ->
                                 shelveService.createFallback(
-                                        new ShelfReq("Test", "Desc"), wrappedException));
+                                        new ShelfReq("icon", "Test", "Desc"), wrappedException));
 
         assertEquals(wrappedException, exception.getCause());
         assertEquals(originalException, exception.getCause().getCause());

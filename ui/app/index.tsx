@@ -20,6 +20,7 @@ import { View, Text, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Logger } from '@/utils';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -27,7 +28,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const ONBOARDING_DATA = [
   {
     id: 1,
-    title: 'Welcome to Osmisis',
+    title: 'Welcome to Oopsly',
     subtitle: 'The smart way to study and retain information efficiently',
     image: 'https://images.unsplash.com/photo-1515073838964-4d4d56a58b21?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0'
   },
@@ -46,6 +47,8 @@ const ONBOARDING_DATA = [
 ];
 
 export default function WelcomeScreen() {
+  const logger = Logger.extend('WelcomeScreen');
+  logger.debug('Rendering WelcomeScreen component');
   const [currentIndex, setCurrentIndex] = useState(0);
   const router = useRouter();
   
@@ -64,6 +67,7 @@ export default function WelcomeScreen() {
   };
 
   const handleSkip = () => {
+    logger.info('User skipped onboarding');
     router.push('/onboard');
   };
 

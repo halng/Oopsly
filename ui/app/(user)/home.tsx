@@ -2,6 +2,7 @@ import { createShelf, deleteShelf, fetchShelves } from "@/services/ShelfService"
 import { createSubject } from "@/services/SubjectService";
 import { Shelf } from "@/types/Shelf";
 import { SubjectStats } from "@/types/Subject";
+import { Logger } from "@/utils";
 import { useRouter } from "expo-router";
 import {
   Bookmark,
@@ -42,7 +43,6 @@ import {
   View,
 } from "react-native";
 
-// Available icons for shelf creation
 const availableIcons = [
   { name: "Code", component: Code, color: "#4F46E5" },
   { name: "Languages", component: Languages, color: "#10B981" },
@@ -65,6 +65,7 @@ const availableIcons = [
 ];
 
 const OopslyApp = () => {
+  const logger = Logger.extend("OopslyApp");
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
   const [shelfName, setShelfName] = useState("");
@@ -103,12 +104,16 @@ const OopslyApp = () => {
   };
 
   useEffect(() => {
+    logger.debug("Fetching shelves data on component mount");
     fetchShelvesData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle shelf creation
   const handleCreateShelf = () => {
+    logger.debug("Creating shelf with name:", shelfName);
     if (shelfName.trim() === "") {
+      logger.warn("Shelf name is empty");
       alert("Please enter a shelf name");
       return;
     }
@@ -119,11 +124,15 @@ const OopslyApp = () => {
       description: shelfDescription,
     })
       .then((response) => {
-        console.log("Shelf created successfully:", response);
-        fetchShelvesData();
+        if (response.isSuccess) {
+          logger.debug("Shelf created successfully:", response);
+          fetchShelvesData();
+        } else {
+          logger.error("Failed to create shelf:", response);
+        }
       })
       .catch((error) => {
-        console.error("Error creating shelf:", error);
+        logger.error("Error creating shelf:", error);
       });
 
     // Reset form and close modal
@@ -153,6 +162,7 @@ const OopslyApp = () => {
   // Handle content creation
   const handleCreateContent = () => {
     if (contentName.trim() === "") {
+      logger.warn("Content name is empty");
       alert(`Please enter a ${selectedContentType} name`);
       return;
     }
@@ -164,13 +174,13 @@ const OopslyApp = () => {
       })
         .then((response) => {
           if (response.isSuccess) {
-            console.log("Subject created successfully:", response);
+            logger.debug("Subject created successfully:", response);
           fetchShelvesData();
           }
           
         })
         .catch((error) => {
-          console.error("Error creating subject:", error);
+          logger.error("Error creating subject:", error);
         });
     }
     // Reset form and close modal
@@ -180,22 +190,19 @@ const OopslyApp = () => {
     setSelectedContentType(null);
     setSelectedShelfId(null);
 
-    alert(
-      `${selectedContentType === "test" ? "Test" : "Subject"} created successfully!`,
-    );
   };
 
   const handleDeleteShelf = () => {
     if (selectedShelfId && selectedContentType === "delete") {
       deleteShelf(selectedShelfId).then((response) => {
         if (response.isSuccess) {
-          console.log("Shelf deleted successfully:", response);
+          logger.debug("Shelf deleted successfully:", response);
           fetchShelvesData();
         } else {
-          console.error("Failed to delete shelf:", response.message);
+          logger.error("Failed to delete shelf:", response.message);
         }}
       ).catch((error) => {
-        console.error("Error deleting shelf:", error);
+        logger.error("Error deleting shelf:", error);
       });
 
       // Reset state and close modal
@@ -231,7 +238,7 @@ const OopslyApp = () => {
             <TouchableOpacity
               key={subject.id}
               className="bg-white rounded-xl p-4 w-60 shadow-sm border border-gray-100"
-              onPress={() => router.push(`/subject/${subject.id}`)}
+              onPress={() => router.push(`${shelfId}/subject/${subject.id}`)}
             >
               <View className="flex-row justify-between items-start mb-2">
                 <Text className="font-bold text-gray-800 text-lg">

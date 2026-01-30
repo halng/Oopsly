@@ -20,8 +20,12 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { AuthService } from '@/services/AuthService';
 import { useAuthStore } from '@/store';
+import { Logger } from '@/utils';
 
 export default function EmailInputScreen() {
+  const logger = Logger.extend('EmailInputScreen');
+  logger.debug('Rendering EmailInputScreen component');
+  
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -41,16 +45,19 @@ export default function EmailInputScreen() {
     
     setIsLoading(true);
     AuthService.CreateOTP(email)
-      .then(() => {
-        console.log('OTP sent successfully');
-        authState.setUserEmail(email);
-        setIsLoading(false);  
-        router.push('/verification');
+      .then((res) => {
+        if (res.isSuccess) {
+          logger.info('OTP sent successfully');
+          authState.setUserEmail(email);
+          setIsLoading(false);  
+          router.push('/verification');
+        }
+        
       })
       .catch((error) => {
         setError('Failed to send OTP. Please try again.');
         setIsLoading(false);
-        console.error('Error sending OTP:', error);
+        logger.error('Error sending OTP:', error);
       })
     
   }, [email, router, authState]);

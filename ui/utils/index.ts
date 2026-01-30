@@ -14,16 +14,4 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.viewmodel;
-
-import java.util.UUID;
-
-public record SubjectRes(
-        UUID id,
-        String name,
-        String description,
-        int overdue,
-        double completedPercent,
-        int dailyLimit,
-        int newCardsPerDay,
-        double interval) {}
+export { default as Logger } from './Logger';
