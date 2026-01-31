@@ -81,8 +81,9 @@ export default function WelcomeScreen() {
           <TouchableOpacity
             onPress={handleSkip}
             className="py-2 px-4"
+            testID="skip-button"
           >
-            <Text className="text-gray-500 text-base">Skip</Text>
+            <Text className="text-gray-500 text-base" testID="skip-button-text">Skip</Text>
           </TouchableOpacity>
         </View>
 

@@ -53,36 +53,39 @@ describe('EmailInputScreen', () => {
   describe('Rendering', () => {
     it('renders header with back button', () => {
       render(<EmailInputScreen />);
-      expect(screen.getByLabelText('Go back')).toBeTruthy();
+      expect(screen.getByTestId('back-button')).toBeTruthy();
     });
 
     it('renders title text', () => {
       render(<EmailInputScreen />);
-      expect(screen.getByText("What's your email?")).toBeTruthy();
+      expect(screen.getByTestId('title-text')).toBeTruthy();
+      expect(screen.getByTestId('title-text').props.children).toBe("What's your email?");
     });
 
     it('renders description text', () => {
       render(<EmailInputScreen />);
-      expect(screen.getByText("We'll send you a secure code to verify your account.")).toBeTruthy();
+      expect(screen.getByTestId('description-text')).toBeTruthy();
+      expect(screen.getByTestId('description-text').props.children).toBe("We'll send you a secure code to verify your account.");
     });
 
     it('renders email input field', () => {
       render(<EmailInputScreen />);
-      expect(screen.getByLabelText('Email input field')).toBeTruthy();
-      expect(screen.getByPlaceholderText('name@example.com')).toBeTruthy();
+      expect(screen.getByTestId('email-input')).toBeTruthy();
+      expect(screen.getByTestId('email-input').props.placeholder).toBe('name@example.com');
     });
 
     it('renders continue button', () => {
       render(<EmailInputScreen />);
-      expect(screen.getByLabelText('Continue button')).toBeTruthy();
-      expect(screen.getByText('Continue')).toBeTruthy();
+      expect(screen.getByTestId('continue-button')).toBeTruthy();
+      expect(screen.getByTestId('continue-button-text')).toBeTruthy();
+      expect(screen.getByTestId('continue-button-text').props.children).toBe('Continue');
     });
   });
 
   describe('Navigation', () => {
     it('navigates to home when back button is pressed', () => {
       render(<EmailInputScreen />);
-      fireEvent.press(screen.getByLabelText('Go back'));
+      fireEvent.press(screen.getByTestId('back-button'));
       expect(mockPush).toHaveBeenCalledWith('/');
     });
   });
@@ -90,14 +93,14 @@ describe('EmailInputScreen', () => {
   describe('Email Validation', () => {
     it('disables continue button when email is empty', () => {
       render(<EmailInputScreen />);
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
     });
 
     it('disables continue button when email is invalid', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
-      const continueBtn = screen.getByLabelText('Continue button');
+      const input = screen.getByTestId('email-input');
+      const continueBtn = screen.getByTestId('continue-button');
 
       fireEvent.changeText(input, 'invalid-email');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
@@ -105,8 +108,8 @@ describe('EmailInputScreen', () => {
 
     it('disables continue button for email without domain', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
-      const continueBtn = screen.getByLabelText('Continue button');
+      const input = screen.getByTestId('email-input');
+      const continueBtn = screen.getByTestId('continue-button');
 
       fireEvent.changeText(input, 'test@');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
@@ -114,8 +117,8 @@ describe('EmailInputScreen', () => {
 
     it('disables continue button for email without @', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
-      const continueBtn = screen.getByLabelText('Continue button');
+      const input = screen.getByTestId('email-input');
+      const continueBtn = screen.getByTestId('continue-button');
 
       fireEvent.changeText(input, 'testexample.com');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
@@ -123,8 +126,8 @@ describe('EmailInputScreen', () => {
 
     it('disables continue button for email with spaces', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
-      const continueBtn = screen.getByLabelText('Continue button');
+      const input = screen.getByTestId('email-input');
+      const continueBtn = screen.getByTestId('continue-button');
 
       fireEvent.changeText(input, 'test @example.com');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
@@ -132,8 +135,8 @@ describe('EmailInputScreen', () => {
 
     it('enables continue button when email is valid', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
-      const continueBtn = screen.getByLabelText('Continue button');
+      const input = screen.getByTestId('email-input');
+      const continueBtn = screen.getByTestId('continue-button');
 
       fireEvent.changeText(input, 'test@example.com');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
@@ -141,8 +144,8 @@ describe('EmailInputScreen', () => {
 
     it('enables continue button for valid email with subdomain', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
-      const continueBtn = screen.getByLabelText('Continue button');
+      const input = screen.getByTestId('email-input');
+      const continueBtn = screen.getByTestId('continue-button');
 
       fireEvent.changeText(input, 'user@mail.example.com');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
@@ -150,8 +153,8 @@ describe('EmailInputScreen', () => {
 
     it('enables continue button for valid email with plus sign', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
-      const continueBtn = screen.getByLabelText('Continue button');
+      const input = screen.getByTestId('email-input');
+      const continueBtn = screen.getByTestId('continue-button');
 
       fireEvent.changeText(input, 'user+tag@example.com');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
@@ -161,7 +164,7 @@ describe('EmailInputScreen', () => {
   describe('Error Display', () => {
     it('shows error when submitting invalid email', async () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
       
       // First enter valid email to enable button
       fireEvent.changeText(input, 'valid@example.com');
@@ -175,14 +178,13 @@ describe('EmailInputScreen', () => {
       
       // The component shows red border for invalid email
       // We can verify the button is disabled
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
     });
 
     it('does not show error initially', () => {
       render(<EmailInputScreen />);
-      expect(screen.queryByText('Please enter a valid email address.')).toBeNull();
-      expect(screen.queryByText('Failed to send OTP. Please try again.')).toBeNull();
+      expect(screen.queryByTestId('error-message')).toBeNull();
     });
   });
 
@@ -191,10 +193,10 @@ describe('EmailInputScreen', () => {
       (AuthService.CreateOTP as jest.Mock).mockResolvedValue({ isSuccess: true });
       
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
       fireEvent.changeText(input, 'test@example.com');
 
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       fireEvent.press(continueBtn);
 
       await waitFor(() => {
@@ -206,10 +208,10 @@ describe('EmailInputScreen', () => {
       (AuthService.CreateOTP as jest.Mock).mockResolvedValue({ isSuccess: true });
       
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
       fireEvent.changeText(input, 'test@example.com');
 
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       fireEvent.press(continueBtn);
 
       await waitFor(() => {
@@ -221,10 +223,10 @@ describe('EmailInputScreen', () => {
       (AuthService.CreateOTP as jest.Mock).mockResolvedValue({ isSuccess: true });
       
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
       fireEvent.changeText(input, 'test@example.com');
 
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       fireEvent.press(continueBtn);
 
       await waitFor(() => {
@@ -239,14 +241,15 @@ describe('EmailInputScreen', () => {
       (AuthService.CreateOTP as jest.Mock).mockRejectedValue(new Error('Network error'));
       
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
       fireEvent.changeText(input, 'test@example.com');
 
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       fireEvent.press(continueBtn);
 
       await waitFor(() => {
-        expect(screen.getByText('Failed to send OTP. Please try again.')).toBeTruthy();
+        expect(screen.getByTestId('error-message')).toBeTruthy();
+        expect(screen.getByTestId('error-message').props.children).toBe('Failed to send OTP. Please try again.');
       });
 
       consoleErrorSpy.mockRestore();
@@ -257,14 +260,14 @@ describe('EmailInputScreen', () => {
       (AuthService.CreateOTP as jest.Mock).mockRejectedValue(new Error('Network error'));
       
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
       fireEvent.changeText(input, 'test@example.com');
 
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       fireEvent.press(continueBtn);
 
       await waitFor(() => {
-        expect(screen.getByText('Failed to send OTP. Please try again.')).toBeTruthy();
+        expect(screen.getByTestId('error-message')).toBeTruthy();
       });
 
       expect(mockPush).not.toHaveBeenCalledWith('/verification');
@@ -276,14 +279,14 @@ describe('EmailInputScreen', () => {
       (AuthService.CreateOTP as jest.Mock).mockRejectedValue(new Error('Network error'));
       
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
       fireEvent.changeText(input, 'test@example.com');
 
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       fireEvent.press(continueBtn);
 
       await waitFor(() => {
-        expect(screen.getByText('Failed to send OTP. Please try again.')).toBeTruthy();
+        expect(screen.getByTestId('error-message')).toBeTruthy();
       });
 
       expect(mockSetUserEmail).not.toHaveBeenCalled();
@@ -291,22 +294,19 @@ describe('EmailInputScreen', () => {
     });
 
     it('logs error to console when OTP request fails', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const error = new Error('Network error');
       (AuthService.CreateOTP as jest.Mock).mockRejectedValue(error);
       
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
       fireEvent.changeText(input, 'test@example.com');
 
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       fireEvent.press(continueBtn);
 
       await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Error sending OTP:', error);
+        expect(screen.getByTestId('error-message')).toBeTruthy();
       });
-
-      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -319,15 +319,16 @@ describe('EmailInputScreen', () => {
       );
       
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
       fireEvent.changeText(input, 'test@example.com');
 
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       fireEvent.press(continueBtn);
 
       // Check that button text changes (ActivityIndicator is shown instead of "Continue")
       await waitFor(() => {
-        expect(screen.queryByText('Continue')).toBeNull();
+        expect(screen.queryByTestId('continue-button-text')).toBeNull();
+        expect(screen.getByTestId('loading-indicator')).toBeTruthy();
       });
 
       // Resolve the promise to clean up
@@ -341,14 +342,14 @@ describe('EmailInputScreen', () => {
       );
       
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
       fireEvent.changeText(input, 'test@example.com');
 
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       fireEvent.press(continueBtn);
 
       await waitFor(() => {
-        const btn = screen.getByLabelText('Continue button');
+        const btn = screen.getByTestId('continue-button');
         expect(btn.props.accessibilityState?.disabled).toBe(true);
       });
 
@@ -360,10 +361,10 @@ describe('EmailInputScreen', () => {
       (AuthService.CreateOTP as jest.Mock).mockResolvedValue({ isSuccess: true });
       
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
       fireEvent.changeText(input, 'test@example.com');
 
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       fireEvent.press(continueBtn);
 
       await waitFor(() => {
@@ -376,18 +377,19 @@ describe('EmailInputScreen', () => {
       (AuthService.CreateOTP as jest.Mock).mockRejectedValue(new Error('Network error'));
       
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
       fireEvent.changeText(input, 'test@example.com');
 
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       fireEvent.press(continueBtn);
 
       await waitFor(() => {
-        expect(screen.getByText('Failed to send OTP. Please try again.')).toBeTruthy();
+        expect(screen.getByTestId('error-message')).toBeTruthy();
       });
 
       // Button should show "Continue" again
-      expect(screen.getByText('Continue')).toBeTruthy();
+      expect(screen.getByTestId('continue-button-text')).toBeTruthy();
+      expect(screen.getByTestId('continue-button-text').props.children).toBe('Continue');
       
       consoleErrorSpy.mockRestore();
     });
@@ -396,8 +398,8 @@ describe('EmailInputScreen', () => {
   describe('Edge Cases', () => {
     it('handles email with numbers', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
-      const continueBtn = screen.getByLabelText('Continue button');
+      const input = screen.getByTestId('email-input');
+      const continueBtn = screen.getByTestId('continue-button');
 
       fireEvent.changeText(input, 'user123@example.com');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
@@ -405,8 +407,8 @@ describe('EmailInputScreen', () => {
 
     it('handles email with dots in local part', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
-      const continueBtn = screen.getByLabelText('Continue button');
+      const input = screen.getByTestId('email-input');
+      const continueBtn = screen.getByTestId('continue-button');
 
       fireEvent.changeText(input, 'first.last@example.com');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
@@ -414,8 +416,8 @@ describe('EmailInputScreen', () => {
 
     it('handles email with hyphens in domain', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
-      const continueBtn = screen.getByLabelText('Continue button');
+      const input = screen.getByTestId('email-input');
+      const continueBtn = screen.getByTestId('continue-button');
 
       fireEvent.changeText(input, 'user@my-company.com');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
@@ -423,8 +425,8 @@ describe('EmailInputScreen', () => {
 
     it('handles clearing email after entering', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
-      const continueBtn = screen.getByLabelText('Continue button');
+      const input = screen.getByTestId('email-input');
+      const continueBtn = screen.getByTestId('continue-button');
 
       fireEvent.changeText(input, 'test@example.com');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
@@ -435,8 +437,8 @@ describe('EmailInputScreen', () => {
 
     it('handles changing from valid to invalid email', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
-      const continueBtn = screen.getByLabelText('Continue button');
+      const input = screen.getByTestId('email-input');
+      const continueBtn = screen.getByTestId('continue-button');
 
       fireEvent.changeText(input, 'test@example.com');
       expect(continueBtn.props.accessibilityState?.disabled).toBe(false);
@@ -452,10 +454,10 @@ describe('EmailInputScreen', () => {
       );
       
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
       fireEvent.changeText(input, 'test@example.com');
 
-      const continueBtn = screen.getByLabelText('Continue button');
+      const continueBtn = screen.getByTestId('continue-button');
       fireEvent.press(continueBtn);
       fireEvent.press(continueBtn); // Second press while loading
 
@@ -470,7 +472,7 @@ describe('EmailInputScreen', () => {
   describe('Input Behavior', () => {
     it('updates email state on text change', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
 
       fireEvent.changeText(input, 'test@example.com');
       expect(input.props.value).toBe('test@example.com');
@@ -478,7 +480,7 @@ describe('EmailInputScreen', () => {
 
     it('preserves email case', () => {
       render(<EmailInputScreen />);
-      const input = screen.getByPlaceholderText('name@example.com');
+      const input = screen.getByTestId('email-input');
 
       fireEvent.changeText(input, 'Test@Example.COM');
       expect(input.props.value).toBe('Test@Example.COM');

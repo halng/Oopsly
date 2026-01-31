@@ -65,29 +65,30 @@ export default function EmailInputScreen() {
   const isEmailValid = isValidEmail(email);
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-white" testID="email-input-screen">
       {/* Header */}
-      <View className="px-4 pt-12 pb-4">
+      <View className="px-4 pt-12 pb-4" testID="header-container">
         <TouchableOpacity
           onPress={() => router.push("/")}
           className="w-10 h-10 items-center justify-center"
           accessibilityLabel="Go back"
+          testID="back-button"
         >
           <ArrowLeft size={24} color="#1F2937" />
         </TouchableOpacity>
       </View>
 
       {/* Content */}
-      <View className="flex-1 px-4">
-        <Text className="text-3xl font-bold text-gray-900 mb-2">
+      <View className="flex-1 px-4" testID="content-container">
+        <Text className="text-3xl font-bold text-gray-900 mb-2" testID="title-text">
           What's your email?
         </Text>
-        <Text className="text-base text-gray-500 mb-8">
+        <Text className="text-base text-gray-500 mb-8" testID="description-text">
           We'll send you a secure code to verify your account.
         </Text>
 
         {/* Email Input */}
-        <View className="mb-6">
+        <View className="mb-6" testID="email-input-container">
           <TextInput
             className={`w-full h-14 px-4 rounded-xl border-2 ${
               email ? (isEmailValid ? 'border-indigo-600' : 'border-red-500') 
@@ -102,13 +103,14 @@ export default function EmailInputScreen() {
             autoCorrect={false}
             accessibilityLabel="Email input field"
             accessibilityHint="Enter your email address"
+            testID="email-input"
           />
-          {error && <Text className="text-red-500 mt-2">{error}</Text>}
+          {error && <Text className="text-red-500 mt-2" testID="error-message">{error}</Text>}
         </View>
       </View>
 
       {/* Bottom Button */}
-      <View className="px-4 pb-8">
+      <View className="px-4 pb-8" testID="button-container">
         <TouchableOpacity
           onPress={handleContinue}
           disabled={!isEmailValid || isLoading}
@@ -116,11 +118,12 @@ export default function EmailInputScreen() {
             ${(!isEmailValid || isLoading) ? 'opacity-50' : 'opacity-100'}`}
           accessibilityLabel="Continue button"
           accessibilityHint="Proceed to verification"
+          testID="continue-button"
         >
           {isLoading ? (
-            <ActivityIndicator color="white" />
+            <ActivityIndicator color="white" testID="loading-indicator" />
           ) : (
-            <Text className="text-white text-base font-semibold">
+            <Text className="text-white text-base font-semibold" testID="continue-button-text">
               Continue
             </Text>
           )}
