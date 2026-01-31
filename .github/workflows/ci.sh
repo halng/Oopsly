@@ -216,78 +216,145 @@ run_integration_tests() {
         return 0
     fi
     
-    # Build backend Docker image for integration tests
-    echo "CI::Building backend Docker image for integration tests..."
-    if [ -d "api" ]; then
-        cd api
-        
-        # Create temporary .env file for build if it doesn't exist
-        if [ ! -f ".env" ]; then
-            echo "CI::Creating temporary .env file for build..."
-            cp .env.example .env
-        fi
-        
-        echo "CI::Building local Docker image..."
-        ./gradlew bootBuildImage --imageName=ghcr.io/halng/oopsly-api:latest
-        cd ..
-    else
-        echo "CI::Error: api directory not found, cannot build backend image"
+    if [ ! -d "api" ]; then
+        echo "CI::ERROR: api directory not found"
         return 1
     fi
     
-    cd test
+    # Start PostgreSQL and Redis services only
+    echo "CI::Starting database and cache services..."
+    cd test/tests/config
+    docker compose -f docker-compose-integration.yaml up -d postgres redis
     
-    # Check if docker-compose config exists
-    if [ ! -f "tests/config/docker-compose-integration.yaml" ]; then
-        echo "CI::Warning: docker-compose-integration.yaml not found, skipping integration tests"
-        cd ..
-        return 0
+    # Wait for postgres and redis to be healthy
+    echo "CI::Waiting for services to be healthy..."
+    timeout=60
+    elapsed=0
+    while [ $elapsed -lt $timeout ]; do
+        postgres_status=$(docker compose -f docker-compose-integration.yaml ps postgres --format json 2>/dev/null | grep -o '"Health":"healthy"' || echo "")
+        redis_status=$(docker compose -f docker-compose-integration.yaml ps redis --format json 2>/dev/null | grep -o '"Health":"healthy"' || echo "")
+        
+        if [ -n "$postgres_status" ] && [ -n "$redis_status" ]; then
+            echo "CI::Database and cache services are healthy!"
+            break
+        fi
+        
+        sleep 2
+        elapsed=$((elapsed + 2))
+    done
+    
+    if [ $elapsed -ge $timeout ]; then
+        echo "CI::ERROR: Services failed to become healthy"
+        docker compose -f docker-compose-integration.yaml down
+        return 1
     fi
     
+    cd ../../..
+    
+    # Start Spring Boot application with test profile
+    echo "CI::Starting Spring Boot application with itest profile..."
+    cd api
+    
+    # Always create .env file with correct test values
+    echo "CI::Creating .env file with test configuration..."
+    cat > .env << 'EOF'
+SPRING_PROFILES_ACTIVE=itest
+GOOGLE_CLIENT_ID=dummy.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=dummy
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_NAME=oopsly
+EMAIL_USERNAME=test@example.com
+EMAIL_PASSWORD=dummy
+JWT_SECRET=dummysecretkey
+REDIS_HOST=localhost
+REDIS_PORT=6379
+EOF
+    
+    # Verify .env file was created
+    echo "CI::.env file contents:"
+    cat .env
+    
+    # Run bootRun with explicit spring profile argument
+    echo "CI::Starting Spring Boot application (logs will be shown below)..."
+    ./gradlew bootRun --args='--spring.profiles.active=itest' > /tmp/spring-boot.log 2>&1 &
+    BOOT_PID=$!
+    echo "CI::Spring Boot started with PID $BOOT_PID"
+    
+    # Tail logs in background
+    tail -f /tmp/spring-boot.log &
+    TAIL_PID=$!
+    
+    # Wait for application to be ready
+    echo "CI::Waiting for application to start (checking health endpoint)..."
+    timeout=120
+    elapsed=0
+    app_ready=false
+    while [ $elapsed -lt $timeout ]; do
+        if curl -f http://localhost:9009/api/v1/oopsly/actuator/health > /dev/null 2>&1; then
+            echo "CI::Application is ready!"
+            app_ready=true
+            break
+        fi
+        
+        # Check if process is still running
+        if ! kill -0 $BOOT_PID 2>/dev/null; then
+            echo "CI::ERROR: Spring Boot process died"
+            break
+        fi
+        
+        sleep 2
+        elapsed=$((elapsed + 2))
+    done
+    
+    # Stop tailing logs
+    kill $TAIL_PID 2>/dev/null || true
+    
+    if [ "$app_ready" = false ]; then
+        echo "CI::ERROR: Application failed to start within timeout"
+        kill $BOOT_PID 2>/dev/null || true
+        cd ../test/tests/config
+        docker compose -f docker-compose-integration.yaml down
+        cd ../../..
+        return 1
+    fi
+    
+    cd ..
+    
+    # Run integration tests (skip Docker setup since we're managing it here)
+    echo "CI::Executing integration tests..."
+    cd test
+    
+    # Install Python dependencies if not already installed
     echo "CI::Installing Python test dependencies..."
     python -m pip install --upgrade pip
     pip install -r config/requirement.txt
     
-    echo "CI::Starting Docker Compose services for integration tests..."
-    docker compose -f tests/config/docker-compose-integration.yaml up -d
-    
-    # Wait for services to be healthy
-    echo "CI::Waiting for services to be healthy..."
-    sleep 10
-    
-    # Check service health
-    local max_retries=30
-    local retry_count=0
-    while [ $retry_count -lt $max_retries ]; do
-        if docker compose -f tests/config/docker-compose-integration.yaml ps | grep -q "healthy"; then
-            echo "CI::Services are healthy!"
-            break
-        fi
-        echo "CI::Waiting for services... ($retry_count/$max_retries)"
-        sleep 2
-        retry_count=$((retry_count + 1))
-    done
-    
-    if [ $retry_count -eq $max_retries ]; then
-        echo "CI::Warning: Timeout waiting for services to be healthy"
-        docker compose -f tests/config/docker-compose-integration.yaml logs
-    fi
-    
-    echo "CI::Running integration tests..."
+    # Set environment variable to skip Docker setup in Python script
+    export SKIP_DOCKER_SETUP=true
     python -m tests.integration.main
-    local test_exit_code=$?
-    
-    echo "CI::Stopping Docker Compose services..."
-    docker compose -f tests/config/docker-compose-integration.yaml down -v
-    
+    TEST_EXIT_CODE=$?
     cd ..
     
-    if [ $test_exit_code -ne 0 ]; then
-        echo "CI::Integration tests failed with exit code $test_exit_code"
-        exit 1
-    fi
+    # Cleanup
+    echo "CI::Stopping Spring Boot application..."
+    kill $BOOT_PID 2>/dev/null || true
+    wait $BOOT_PID 2>/dev/null || true
     
-    echo "CI::Integration tests completed successfully!"
+    echo "CI::Stopping database and cache services..."
+    cd test/tests/config
+    docker compose -f docker-compose-integration.yaml down
+    cd ../../..
+    
+    if [ $TEST_EXIT_CODE -eq 0 ]; then
+        echo "CI::Integration tests completed successfully!"
+        return 0
+    else
+        echo "CI::ERROR: Integration tests failed with exit code $TEST_EXIT_CODE"
+        return 1
+    fi
 }
 
 # Security Scans (Snyk)
