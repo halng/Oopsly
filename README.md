@@ -73,3 +73,43 @@ Osmosis is an intelligent test generation application designed to help students 
 5. Take the test or save it for later
 
 The app provides helpful tips throughout the creation process to ensure optimal results.
+
+## Development
+
+### Getting Started
+
+**Frontend (React Native)**
+```bash
+cd ui
+pnpm install
+pnpm start
+```
+
+**Backend (Spring Boot)**
+```bash
+cd api
+./gradlew bootRun
+```
+
+**Integration Tests**
+```bash
+cd test
+pytest
+```
+
+### Contributing
+
+This project uses GitHub Copilot to assist with development. For comprehensive coding guidelines, best practices, and testing requirements, please refer to:
+
+📘 **[GitHub Copilot Instructions](.github/copilot-instructions.md)**
+
+This document includes:
+- Project architecture and tech stack overview
+- Coding standards for TypeScript, Java, and Python
+- Testing strategy and coverage requirements
+- Security and performance best practices
+- Code review guidelines
+
+### License
+
+Licensed under the Apache License 2.0. See source files for full license headers.
