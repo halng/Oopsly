@@ -10,7 +10,7 @@ Oopsly (Osmosis) is a cross-platform learning application built with a modern, s
 
 ### High-Level Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                      Client Layer                            │
 ├─────────────────────────────────────────────────────────────┤
@@ -67,19 +67,20 @@ Oopsly (Osmosis) is a cross-platform learning application built with a modern, s
 
 ### Frontend (Mobile Application)
 
-| Component | Technology | Version | Purpose |
-|-----------|------------|---------|---------|
-| **Framework** | React Native | Latest | Cross-platform mobile development |
-| **Platform** | Expo | Latest | Development tooling and build system |
-| **Language** | TypeScript | Latest | Type-safe JavaScript |
-| **Styling** | NativeWind | Latest | Tailwind CSS for React Native |
-| **Routing** | Expo Router | Latest | File-based navigation |
-| **State** | Zustand | Latest | Lightweight state management |
-| **HTTP** | Axios | Latest | API communication |
-| **Icons** | Lucide Icons | Latest | SVG icon library |
-| **Testing** | Jest + React Testing Library | Latest | Unit and integration testing |
+| Component     | Technology                   | Version | Purpose                               |
+| ------------- | ---------------------------- | ------- | ------------------------------------- |
+| **Framework** | React Native                 | Latest  | Cross-platform mobile development     |
+| **Platform**  | Expo                         | Latest  | Development tooling and build system  |
+| **Language**  | TypeScript                   | Latest  | Type-safe JavaScript                  |
+| **Styling**   | NativeWind                   | Latest  | Tailwind CSS for React Native         |
+| **Routing**   | Expo Router                  | Latest  | File-based navigation                 |
+| **State**     | Zustand                      | Latest  | Lightweight state management          |
+| **HTTP**      | Axios                        | Latest  | API communication                     |
+| **Icons**     | Lucide Icons                 | Latest  | SVG icon library                      |
+| **Testing**   | Jest + React Testing Library | Latest  | Unit and integration testing          |
 
 **Key Frontend Features:**
+
 - Cross-platform support (iOS, Android, Web planned)
 - Type-safe development with TypeScript
 - Hot reload for fast development
@@ -88,18 +89,19 @@ Oopsly (Osmosis) is a cross-platform learning application built with a modern, s
 
 ### Backend (API Server)
 
-| Component | Technology | Version | Purpose |
-|-----------|------------|---------|---------|
-| **Framework** | Spring Boot | 3.5.8 | Application framework |
-| **Language** | Java | 21 | Programming language |
-| **API Style** | REST | - | HTTP-based API |
-| **ORM** | Spring Data JPA | Latest | Database abstraction |
-| **Security** | Spring Security | Latest | Authentication & authorization |
-| **AI** | Spring AI | Latest (planned) | AI/ML integration (in development) |
-| **Build Tool** | Gradle | Latest | Build automation |
-| **API Docs** | SpringDoc OpenAPI | Latest | Auto-generated API documentation |
+| Component      | Technology             | Version          | Purpose                              |
+| -------------- | ---------------------- | ---------------- | ------------------------------------ |
+| **Framework**  | Spring Boot            | 3.5.8            | Application framework                |
+| **Language**   | Java                   | 21               | Programming language                 |
+| **API Style**  | REST                   | -                | HTTP-based API                       |
+| **ORM**        | Spring Data JPA        | Latest           | Database abstraction                 |
+| **Security**   | Spring Security        | Latest           | Authentication & authorization       |
+| **AI**         | Spring AI              | Latest (planned) | AI/ML integration (in development)   |
+| **Build Tool** | Gradle                 | Latest           | Build automation                     |
+| **API Docs**   | SpringDoc OpenAPI      | Latest           | Auto-generated API documentation     |
 
 **Key Backend Features:**
+
 - RESTful API design
 - JWT-based authentication
 - OTP email verification
@@ -110,33 +112,33 @@ Oopsly (Osmosis) is a cross-platform learning application built with a modern, s
 
 ### Database
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| **RDBMS** | PostgreSQL | Primary data store |
-| **ORM** | JPA/Hibernate | Object-relational mapping |
-| **Migration** | Flyway/Liquibase (planned) | Schema version control |
-| **Extensions** | pgvector (planned) | Vector embeddings for AI |
+| Component      | Technology                 | Purpose                      |
+| -------------- | -------------------------- | ---------------------------- |
+| **RDBMS**      | PostgreSQL                 | Primary data store           |
+| **ORM**        | JPA/Hibernate              | Object-relational mapping    |
+| **Migration**  | Flyway/Liquibase (planned) | Schema version control       |
+| **Extensions** | pgvector (planned)         | Vector embeddings for AI     |
 
 ### Testing Infrastructure
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| **UI Testing** | Jest | Unit testing |
-| **UI Testing** | React Testing Library | Component testing |
-| **API Testing** | JUnit | Unit testing |
-| **API Testing** | Mockito | Mocking framework |
-| **Integration Testing** | Pytest | End-to-end testing |
-| **E2E Testing** | Playwright | Browser automation |
+| Component               | Technology            | Purpose               |
+| ----------------------- | --------------------- | --------------------- |
+| **UI Testing**          | Jest                  | Unit testing          |
+| **UI Testing**          | React Testing Library | Component testing     |
+| **API Testing**         | JUnit                 | Unit testing          |
+| **API Testing**         | Mockito               | Mocking framework     |
+| **Integration Testing** | Pytest                | End-to-end testing    |
+| **E2E Testing**         | Playwright            | Browser automation    |
 
 ### DevOps & Infrastructure
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| **Containerization** | Docker | Application packaging |
-| **Orchestration** | Docker Compose | Local development |
-| **Version Control** | Git | Source code management |
-| **CI/CD** | GitHub Actions (planned) | Automated testing & deployment |
-| **Hosting** | Google Cloud Run (planned) | Serverless deployment |
+| Component            | Technology                 | Purpose                        |
+| -------------------- | -------------------------- | ------------------------------ |
+| **Containerization** | Docker                     | Application packaging          |
+| **Orchestration**    | Docker Compose             | Local development              |
+| **Version Control**  | Git                        | Source code management         |
+| **CI/CD**            | GitHub Actions (planned)   | Automated testing & deployment |
+| **Hosting**          | Google Cloud Run (planned) | Serverless deployment          |
 
 ---
 
@@ -144,7 +146,7 @@ Oopsly (Osmosis) is a cross-platform learning application built with a modern, s
 
 ### Frontend Structure
 
-```
+```text
 ui/
 ├── app/                          # Expo Router pages
 │   ├── (user)/                   # Authenticated routes
@@ -176,7 +178,7 @@ ui/
 
 ### Backend Structure
 
-```
+```text
 api/
 ├── src/
 │   ├── main/
@@ -225,7 +227,7 @@ api/
 
 ### Testing Structure
 
-```
+```text
 test/
 ├── integration/                  # Integration tests
 │   ├── test_auth.py              # Authentication tests
@@ -246,7 +248,7 @@ test/
 
 ### Entity Relationship Diagram
 
-```
+```text
 ┌─────────────┐
 │    User     │
 └──────┬──────┘
@@ -271,6 +273,7 @@ test/
 ### Core Entities
 
 #### User
+
 ```java
 User {
   UUID id
@@ -285,6 +288,7 @@ User {
 ```
 
 #### Shelve (Collection)
+
 ```java
 Shelve {
   UUID id
@@ -302,6 +306,7 @@ Shelve {
 ```
 
 #### Subject
+
 ```java
 Subject {
   UUID id
@@ -317,6 +322,7 @@ Subject {
 ```
 
 #### Card (Flashcard)
+
 ```java
 Card {
   UUID id
@@ -334,6 +340,7 @@ Card {
 ```
 
 #### TestSuite
+
 ```java
 TestSuite {
   UUID id
@@ -351,6 +358,7 @@ TestSuite {
 ```
 
 #### Question
+
 ```java
 Question {
   UUID id
@@ -373,7 +381,8 @@ Question {
 ### RESTful Conventions
 
 1. **Hierarchical URLs**: Reflect data relationships
-   ```
+
+   ```text
    /shelves/{shelveId}/subjects/{subjectId}/cards/{cardId}
    ```
 
@@ -385,6 +394,7 @@ Question {
    - `DELETE`: Hard delete
 
 3. **Standard Response Format**:
+
    ```json
    {
      "success": boolean,
@@ -395,7 +405,8 @@ Question {
    ```
 
 4. **Pagination**: Query parameters for lists
-   ```
+
+   ```text
    ?page=0&size=20
    ```
 
@@ -410,7 +421,7 @@ Question {
 
 ### Authentication Flow
 
-```
+```text
 1. User enters email → POST /otp
 2. System sends OTP to email
 3. User enters OTP → POST /otp/validate
@@ -438,6 +449,7 @@ Question {
 ### Token Structure
 
 **Access Token:**
+
 ```json
 {
   "sub": "user-uuid",
@@ -449,6 +461,7 @@ Question {
 ```
 
 **Refresh Token:**
+
 ```json
 {
   "sub": "user-uuid",
@@ -531,7 +544,7 @@ Question {
 
 ### Development Environment
 
-```
+```text
 ┌────────────────┐
 │  Developer PC  │
 ├────────────────┤
@@ -543,7 +556,7 @@ Question {
 
 ### Production Environment (Planned)
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │         Google Cloud Platform            │
 ├─────────────────────────────────────────┤
@@ -570,6 +583,7 @@ Question {
 ```
 
 **Cost Optimization:**
+
 - GraalVM Native Image: Fast startup, scale to zero
 - Smallest Cloud SQL instance for text/vectors
 - Free tier for light usage
@@ -605,17 +619,20 @@ Question {
 ## Monitoring & Observability (Planned)
 
 ### Logging
+
 - **Frontend**: Console logging, error tracking
 - **Backend**: Structured logging (Logback)
 - **Database**: Query logging for slow queries
 
 ### Metrics
+
 - API response times
 - Error rates
 - User activity
 - Database performance
 
 ### Error Tracking
+
 - Sentry or similar service
 - Client-side error reporting
 - Server-side exception tracking
@@ -625,6 +642,7 @@ Question {
 ## Scalability Considerations
 
 ### Current Scale
+
 - Target: 1,000+ active users
 - Architecture supports horizontal scaling
 
@@ -657,6 +675,7 @@ Question {
 ### Local Development
 
 1. **Prerequisites**:
+
    ```bash
    - Node.js 18+
    - Java 21
@@ -666,6 +685,7 @@ Question {
    ```
 
 2. **Setup**:
+
    ```bash
    # Backend
    cd api
@@ -681,6 +701,7 @@ Question {
    ```
 
 3. **Testing**:
+
    ```bash
    # Backend tests
    cd api
@@ -697,7 +718,7 @@ Question {
 
 ### CI/CD Pipeline (Planned)
 
-```
+```text
 ┌─────────────┐
 │  Git Push   │
 └──────┬──────┘

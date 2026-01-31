@@ -71,6 +71,7 @@ For detailed information about the project, see:
 - **[Features Documentation](./docs/FEATURES.md)** - Comprehensive guide to all features
 - **[API Documentation](./docs/API.md)** - REST API endpoints and usage
 - **[Architecture Documentation](./docs/ARCHITECTURE.md)** - System architecture and technical design
+- **[Flow Diagrams](./docs/FLOW_DIAGRAMS.md)** - End-to-end user journey visualizations
 - **[Initiative Document](./docs/initiative.md)** - Project vision and goals
 - **[Story & Design](./docs/story.md)** - Design philosophy and narrative
 - **[Screen Specifications](./docs/screen.md)** - UI/UX screen details

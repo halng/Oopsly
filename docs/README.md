@@ -31,6 +31,13 @@ Welcome to the Oopsly (Osmosis) project documentation! This index will help you 
   - Deployment strategy
   - Performance considerations
 
+- **[FLOW_DIAGRAMS.md](./FLOW_DIAGRAMS.md)** - End-to-end user flow diagrams
+  - Complete user journeys for all features
+  - Mermaid diagrams for visual understanding
+  - Authentication, flashcard review, test generation flows
+  - Study tools and goal tracking flows
+  - System integration overview
+
 ### For Designers & Stakeholders
 
 - **[initiative.md](./initiative.md)** - Project vision and goals
@@ -58,7 +65,7 @@ Welcome to the Oopsly (Osmosis) project documentation! This index will help you 
 
 ## 🗺️ Quick Navigation
 
-### I want to...
+### I want to
 
 **...understand what Oopsly does**
 → Start with [FEATURES.md](./FEATURES.md)
@@ -68,6 +75,9 @@ Welcome to the Oopsly (Osmosis) project documentation! This index will help you 
 
 **...understand the technical architecture**
 → Check [ARCHITECTURE.md](./ARCHITECTURE.md)
+
+**...see end-to-end user flows**
+→ Review [FLOW_DIAGRAMS.md](./FLOW_DIAGRAMS.md)
 
 **...learn about the project vision**
 → Review [initiative.md](./initiative.md)
@@ -90,6 +100,7 @@ The project uses these status indicators throughout the documentation:
 - 📋 **Planned** - Designed but not yet implemented
 
 ### Currently Implemented (✅)
+
 - OTP-based authentication with JWT
 - User profile management
 - Flashcard CRUD with difficulty levels
@@ -100,12 +111,14 @@ The project uses these status indicators throughout the documentation:
 - Flashcard review system
 
 ### In Development (🔄)
+
 - AI-powered test generation from topics
 - Document upload and parsing
 - AI content extraction
 - Spring AI integration
 
 ### Planned (📋)
+
 - Resource library with PDF viewer
 - Community deck marketplace
 - Advanced analytics
@@ -143,6 +156,7 @@ To improve these docs:
 ## 📧 Questions?
 
 For documentation feedback or questions:
+
 - Create an issue on GitHub
 - Tag with `documentation` label
 - Reference specific doc file and section

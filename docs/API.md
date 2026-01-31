@@ -13,6 +13,7 @@ The Oopsly API is a RESTful API built with Spring Boot 3.x and Java 21. It provi
 ## Authentication
 
 ### Authentication Method
+
 - **Type:** JWT (JSON Web Token)
 - **Header:** `Authorization: Bearer <access_token>`
 - **Token Types:**
@@ -21,7 +22,7 @@ The Oopsly API is a RESTful API built with Spring Boot 3.x and Java 21. It provi
 
 ### Authentication Flow
 
-```
+```text
 1. User requests OTP → POST /otp
 2. User validates OTP → POST /otp/validate
 3. Server returns JWT tokens (access + refresh)
@@ -66,13 +67,15 @@ All API responses follow a standard wrapper format:
 ### 1. OTP Controller
 
 #### Generate OTP
-```
+
+```http
 POST /otp
 ```
 
 **Description:** Generate and send a one-time password to the specified email address.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com"
@@ -80,9 +83,11 @@ POST /otp
 ```
 
 **Validation:**
+
 - Email must match pattern: `^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$`
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -97,13 +102,15 @@ POST /otp
 ---
 
 #### Validate OTP
-```
+
+```http
 POST /otp/validate
 ```
 
 **Description:** Verify the OTP and authenticate the user.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -112,6 +119,7 @@ POST /otp/validate
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -130,13 +138,15 @@ POST /otp/validate
 ### 2. User Controller
 
 #### Refresh Token
-```
+
+```http
 POST /users/refresh-token
 ```
 
 **Description:** Generate new access and refresh tokens using a valid refresh token.
 
 **Request Body:**
+
 ```json
 {
   "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -144,6 +154,7 @@ POST /users/refresh-token
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -160,18 +171,21 @@ POST /users/refresh-token
 ---
 
 #### Logout
-```
+
+```http
 POST /users/logout
 ```
 
 **Description:** Invalidate the refresh token and log out the user.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -179,6 +193,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -193,18 +208,21 @@ Authorization: Bearer <access_token>
 ### 3. User Profile Controller
 
 #### Get User Profile
-```
+
+```http
 GET /user/profile
 ```
 
 **Description:** Retrieve the authenticated user's profile information.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -225,18 +243,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Update User Profile
-```
+
+```http
 PATCH /user/profile
 ```
 
 **Description:** Update user profile information.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "displayName": "John Doe Updated",
@@ -245,6 +266,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -261,18 +283,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Update Settings
-```
+
+```http
 PATCH /user/settings
 ```
 
 **Description:** Update application settings for the user.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "theme": "light",
@@ -283,6 +308,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -299,18 +325,21 @@ Authorization: Bearer <access_token>
 Shelves are top-level collections that contain subjects and test suites.
 
 #### Create Shelve
-```
+
+```http
 POST /shelves
 ```
 
 **Description:** Create a new shelve (collection).
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "name": "Biology Collection",
@@ -321,6 +350,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -339,22 +369,26 @@ Authorization: Bearer <access_token>
 ---
 
 #### Get All Shelves
-```
+
+```http
 GET /shelves?page=0&size=20
 ```
 
 **Description:** Retrieve a paginated list of shelves.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Query Parameters:**
+
 - `page` (optional): Page number (default: 0)
 - `size` (optional): Items per page (default: 20)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -379,18 +413,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Get Shelve by ID
-```
+
+```http
 GET /shelves/{id}
 ```
 
 **Description:** Retrieve a specific shelve by its ID.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -411,18 +448,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Update Shelve
-```
+
+```http
 PUT /shelves/{id}
 ```
 
 **Description:** Update shelve information.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "name": "Advanced Biology",
@@ -432,6 +472,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -447,18 +488,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Delete Shelve
-```
+
+```http
 PATCH /shelves/{id}
 ```
 
 **Description:** Soft delete a shelve (marks as deleted, can be recovered).
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -475,18 +519,21 @@ Authorization: Bearer <access_token>
 Subjects are collections of flashcards within a shelve.
 
 #### Create Subject
-```
+
+```http
 POST /shelves/{shelveId}/subjects
 ```
 
 **Description:** Create a new subject within a shelve.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "name": "Cell Biology",
@@ -496,6 +543,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -513,22 +561,26 @@ Authorization: Bearer <access_token>
 ---
 
 #### Get All Subjects
-```
+
+```http
 GET /shelves/{shelveId}/subjects?page=0&size=20
 ```
 
 **Description:** Retrieve paginated subjects for a shelve.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Query Parameters:**
+
 - `page` (optional): Page number (default: 0)
 - `size` (optional): Items per page (default: 20)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -552,18 +604,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Get Subject by ID
-```
+
+```http
 GET /shelves/{shelveId}/subjects/{id}
 ```
 
 **Description:** Retrieve a specific subject.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -585,18 +640,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Update Subject
-```
+
+```http
 PUT /shelves/{shelveId}/subjects/{id}
 ```
 
 **Description:** Update subject information.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "name": "Advanced Cell Biology",
@@ -605,6 +663,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -615,18 +674,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Delete Subject
-```
+
+```http
 PATCH /shelves/{shelveId}/subjects/{id}
 ```
 
 **Description:** Soft delete a subject (cascades to all cards).
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -643,18 +705,21 @@ Authorization: Bearer <access_token>
 Cards are individual flashcards within a subject.
 
 #### Create Cards
-```
+
+```http
 POST /shelves/{shelveId}/subjects/{subjectId}/cards
 ```
 
 **Description:** Create one or more flashcards for a subject.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "cards": [
@@ -669,6 +734,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -690,22 +756,26 @@ Authorization: Bearer <access_token>
 ---
 
 #### Get All Cards
-```
+
+```http
 GET /shelves/{shelveId}/subjects/{subjectId}/cards?page=0&size=20
 ```
 
 **Description:** Retrieve paginated cards for a subject.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Query Parameters:**
+
 - `page` (optional): Page number (default: 0)
 - `size` (optional): Items per page (default: 20)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -730,18 +800,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Get Card by ID
-```
+
+```http
 GET /shelves/{shelveId}/subjects/{subjectId}/cards/{id}
 ```
 
 **Description:** Retrieve a specific card.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -761,18 +834,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Update Card
-```
+
+```http
 PUT /shelves/{shelveId}/subjects/{subjectId}/cards/{id}
 ```
 
 **Description:** Update card content and properties.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "front": "Updated question",
@@ -783,6 +859,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -793,18 +870,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Update Card Difficulty (Batch)
-```
+
+```http
 PUT /shelves/{shelveId}/subjects/{subjectId}/cards/difficulty
 ```
 
 **Description:** Batch update difficulty for multiple cards.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "updates": [
@@ -821,6 +901,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -834,18 +915,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Delete Card
-```
+
+```http
 PATCH /shelves/{shelveId}/subjects/{subjectId}/cards/{id}
 ```
 
 **Description:** Soft delete a card.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -862,18 +946,21 @@ Authorization: Bearer <access_token>
 Test suites contain collections of questions for assessments.
 
 #### Create Test Suite
-```
+
+```http
 POST /shelves/{shelveId}/test-suites
 ```
 
 **Description:** Create a new test suite within a shelve.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "title": "Biology Midterm Practice",
@@ -885,6 +972,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -901,18 +989,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Get All Test Suites
-```
+
+```http
 GET /shelves/{shelveId}/test-suites
 ```
 
 **Description:** Retrieve all test suites for a shelve.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -931,18 +1022,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Get Test Suite by ID
-```
+
+```http
 GET /shelves/{shelveId}/test-suites/{id}
 ```
 
 **Description:** Retrieve a specific test suite with all questions.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -965,18 +1059,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Update Test Suite
-```
+
+```http
 PUT /shelves/{shelveId}/test-suites/{id}
 ```
 
 **Description:** Update test suite properties.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "title": "Updated Title",
@@ -986,6 +1083,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -996,18 +1094,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Delete Test Suite
-```
+
+```http
 DELETE /shelves/{shelveId}/test-suites/{id}
 ```
 
 **Description:** Soft delete a test suite (cascades to all questions).
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1024,18 +1125,21 @@ Authorization: Bearer <access_token>
 Questions belong to test suites and support multiple question types.
 
 #### Create Question
-```
+
+```http
 POST /test-suites/{testSuiteId}/questions
 ```
 
 **Description:** Create a new question in a test suite.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body (Multiple Choice):**
+
 ```json
 {
   "questionText": "What is the powerhouse of the cell?",
@@ -1055,6 +1159,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Request Body (True/False):**
+
 ```json
 {
   "questionText": "Photosynthesis occurs in animals.",
@@ -1068,6 +1173,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Request Body (Short Answer):**
+
 ```json
 {
   "questionText": "Explain the process of mitosis.",
@@ -1081,6 +1187,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1098,18 +1205,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Get All Questions
-```
+
+```http
 GET /test-suites/{testSuiteId}/questions
 ```
 
 **Description:** Retrieve all questions for a test suite.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1128,18 +1238,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Get Question by ID
-```
+
+```http
 GET /test-suites/{testSuiteId}/questions/{id}
 ```
 
 **Description:** Retrieve a specific question with full details.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1161,18 +1274,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Update Question
-```
+
+```http
 PUT /test-suites/{testSuiteId}/questions/{id}
 ```
 
 **Description:** Update question content and properties.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "questionText": "Updated question text",
@@ -1182,6 +1298,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1192,18 +1309,21 @@ Authorization: Bearer <access_token>
 ---
 
 #### Delete Question
-```
+
+```http
 DELETE /test-suites/{testSuiteId}/questions/{id}
 ```
 
 **Description:** Soft delete a question.
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1218,12 +1338,14 @@ Authorization: Bearer <access_token>
 ### Enums
 
 #### Difficulty Levels
-```
+
+```text
 EASY, MEDIUM, HARD
 ```
 
 #### Question Types
-```
+
+```text
 MULTIPLE_CHOICE, TRUE_FALSE, SHORT_ANSWER
 ```
 
@@ -1233,17 +1355,17 @@ MULTIPLE_CHOICE, TRUE_FALSE, SHORT_ANSWER
 
 ## Error Codes
 
-| Code | Description |
-|------|-------------|
-| `AUTH_001` | Invalid or expired token |
-| `AUTH_002` | Invalid OTP |
-| `AUTH_003` | OTP expired |
-| `VALID_001` | Validation error |
-| `VALID_002` | Invalid email format |
-| `NOT_FOUND` | Resource not found |
-| `FORBIDDEN` | Access denied |
-| `CONFLICT` | Resource already exists |
-| `SERVER_ERROR` | Internal server error |
+| Code           | Description               |
+| -------------- | ------------------------- |
+| `AUTH_001`     | Invalid or expired token  |
+| `AUTH_002`     | Invalid OTP               |
+| `AUTH_003`     | OTP expired               |
+| `VALID_001`    | Validation error          |
+| `VALID_002`    | Invalid email format      |
+| `NOT_FOUND`    | Resource not found        |
+| `FORBIDDEN`    | Access denied             |
+| `CONFLICT`     | Resource already exists   |
+| `SERVER_ERROR` | Internal server error     |
 
 ---
 
@@ -1266,6 +1388,7 @@ All list endpoints support pagination with these parameters:
 - `size`: Items per page (default: 20, max: 100)
 
 Response includes:
+
 ```json
 {
   "content": [],
@@ -1296,6 +1419,7 @@ Response includes:
 ## SDK Support
 
 Official SDKs are planned for:
+
 - JavaScript/TypeScript (React Native)
 - Python
 - Java
@@ -1307,12 +1431,14 @@ Official SDKs are planned for:
 ## OpenAPI/Swagger
 
 Interactive API documentation is available at:
-```
+
+```text
 http://localhost:8080/swagger-ui.html
 ```
 
 OpenAPI specification:
-```
+
+```text
 http://localhost:8080/v3/api-docs
 ```
 
@@ -1321,8 +1447,9 @@ http://localhost:8080/v3/api-docs
 ## Support
 
 For API support and bug reports:
-- GitHub Issues: https://github.com/halng/Oopsly/issues
-- Email: support@oopsly.app (if available)
+
+- GitHub Issues: <https://github.com/halng/Oopsly/issues>
+- Email: <support@oopsly.app> (if available)
 
 ---
 
