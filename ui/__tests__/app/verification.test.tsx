@@ -70,54 +70,56 @@ describe('OTPVerification', () => {
   describe('Rendering', () => {
     it('renders 6 input fields', () => {
       render(<OTPVerification />);
-      // We expect 6 inputs with accessibility labels "OTP digit 1" to "6"
-      expect(screen.getByLabelText('OTP digit 1')).toBeTruthy();
-      expect(screen.getByLabelText('OTP digit 2')).toBeTruthy();
-      expect(screen.getByLabelText('OTP digit 3')).toBeTruthy();
-      expect(screen.getByLabelText('OTP digit 4')).toBeTruthy();
-      expect(screen.getByLabelText('OTP digit 5')).toBeTruthy();
-      expect(screen.getByLabelText('OTP digit 6')).toBeTruthy();
+      // We expect 6 inputs with testIDs "otp-input-0" to "otp-input-5"
+      expect(screen.getByTestId('otp-input-0')).toBeTruthy();
+      expect(screen.getByTestId('otp-input-1')).toBeTruthy();
+      expect(screen.getByTestId('otp-input-2')).toBeTruthy();
+      expect(screen.getByTestId('otp-input-3')).toBeTruthy();
+      expect(screen.getByTestId('otp-input-4')).toBeTruthy();
+      expect(screen.getByTestId('otp-input-5')).toBeTruthy();
     });
 
     it('renders header with back button', () => {
       render(<OTPVerification />);
-      expect(screen.getByLabelText('Go back')).toBeTruthy();
+      expect(screen.getByTestId('back-button')).toBeTruthy();
     });
 
     it('renders verification title and description', () => {
       render(<OTPVerification />);
-      expect(screen.getByText('Verify your email')).toBeTruthy();
-      expect(screen.getByText(/Enter the code sent to/)).toBeTruthy();
+      expect(screen.getByTestId('title-text').props.children).toBe('Verify your email');
+      const descriptionText = screen.getByTestId('description-text').props.children;
+      // Description has nested elements, check if it's an array containing the text
+      expect(Array.isArray(descriptionText) && descriptionText[0]).toBe('Enter the code sent to ');
     });
 
     it('displays user email username part', () => {
       render(<OTPVerification />);
       // The email is test@example.com, so it should display "test"
-      expect(screen.getByText('test')).toBeTruthy();
+      expect(screen.getByTestId('user-email-display').props.children).toBe('test');
     });
 
     it('renders verify button', () => {
       render(<OTPVerification />);
-      expect(screen.getByLabelText('Verify and create account')).toBeTruthy();
-      expect(screen.getByText('Verify & Create Account')).toBeTruthy();
+      expect(screen.getByTestId('verify-button')).toBeTruthy();
+      expect(screen.getByTestId('verify-button-text').props.children).toBe('Verify & Create Account');
     });
 
     it('renders timer with initial value of 02:00', () => {
       render(<OTPVerification />);
-      expect(screen.getByText('02:00')).toBeTruthy();
+      expect(screen.getByTestId('timer-text').props.children).toBe('02:00');
     });
 
     it('renders resend text and button', () => {
       render(<OTPVerification />);
-      expect(screen.getByText("I didn't receive code.")).toBeTruthy();
-      expect(screen.getByText('Resend')).toBeTruthy();
+      expect(screen.getByTestId('resend-label').props.children).toBe("I didn't receive code.");
+      expect(screen.getByTestId('resend-button-text').props.children).toBe('Resend');
     });
   });
 
   describe('Navigation', () => {
     it('navigates back to onboard when back button is pressed', () => {
       render(<OTPVerification />);
-      const backButton = screen.getByLabelText('Go back');
+      const backButton = screen.getByTestId('back-button');
       
       fireEvent.press(backButton);
       
@@ -129,8 +131,8 @@ describe('OTPVerification', () => {
     it('handles input entry and focuses next field', () => {
       render(<OTPVerification />);
       
-      const input1 = screen.getByLabelText('OTP digit 1');
-      const input2 = screen.getByLabelText('OTP digit 2');
+      const input1 = screen.getByTestId('otp-input-0');
+      const input2 = screen.getByTestId('otp-input-1');
 
       // Simulate typing '5' in first box
       fireEvent.changeText(input1, '5');
@@ -143,7 +145,7 @@ describe('OTPVerification', () => {
 
     it('ignores non-numeric input', () => {
       render(<OTPVerification />);
-      const input1 = screen.getByLabelText('OTP digit 1');
+      const input1 = screen.getByTestId('otp-input-0');
       
       fireEvent.changeText(input1, 'a');
       expect(input1.props.value).toBe(''); // Should remain empty
@@ -151,7 +153,7 @@ describe('OTPVerification', () => {
 
     it('ignores special characters input', () => {
       render(<OTPVerification />);
-      const input1 = screen.getByLabelText('OTP digit 1');
+      const input1 = screen.getByTestId('otp-input-0');
       
       fireEvent.changeText(input1, '@');
       expect(input1.props.value).toBe('');
@@ -165,7 +167,7 @@ describe('OTPVerification', () => {
 
     it('accepts numeric input', () => {
       render(<OTPVerification />);
-      const input1 = screen.getByLabelText('OTP digit 1');
+      const input1 = screen.getByTestId('otp-input-0');
       
       fireEvent.changeText(input1, '7');
       expect(input1.props.value).toBe('7');
@@ -174,7 +176,7 @@ describe('OTPVerification', () => {
     it('should move focus to previous input on Backspace when current is empty', () => {
       render(<OTPVerification />);
 
-      const input2 = screen.getByLabelText('OTP digit 2');
+      const input2 = screen.getByTestId('otp-input-1');
 
       fireEvent(input2, 'focus');
       fireEvent(input2, 'onKeyPress', {
@@ -188,7 +190,7 @@ describe('OTPVerification', () => {
     it('should not move focus on Backspace when on first input', () => {
       render(<OTPVerification />);
 
-      const input1 = screen.getByLabelText('OTP digit 1');
+      const input1 = screen.getByTestId('otp-input-0');
 
       fireEvent(input1, 'focus');
       fireEvent(input1, 'onKeyPress', {
@@ -202,7 +204,7 @@ describe('OTPVerification', () => {
     it('should not move focus on Backspace when current input has value', () => {
       render(<OTPVerification />);
 
-      const input2 = screen.getByLabelText('OTP digit 2');
+      const input2 = screen.getByTestId('otp-input-1');
 
       fireEvent.changeText(input2, '5');
       fireEvent(input2, 'onKeyPress', {
@@ -216,7 +218,7 @@ describe('OTPVerification', () => {
     it('does not auto-advance from last input', () => {
       render(<OTPVerification />);
       
-      const input6 = screen.getByLabelText('OTP digit 6');
+      const input6 = screen.getByTestId('otp-input-5');
       fireEvent.changeText(input6, '9');
       
       // Value should be set, no error should occur
@@ -227,7 +229,7 @@ describe('OTPVerification', () => {
   describe('Verify Button State', () => {
     it('disables Verify button when OTP is incomplete', () => {
       render(<OTPVerification />);
-      const verifyBtn = screen.getByLabelText('Verify and create account');
+      const verifyBtn = screen.getByTestId('verify-button');
 
       // Initially disabled
       expect(verifyBtn.props.accessibilityState?.disabled).toBe(true);
@@ -235,15 +237,15 @@ describe('OTPVerification', () => {
 
     it('enables Verify button only when all fields are filled', () => {
       render(<OTPVerification />);
-      const verifyBtn = screen.getByLabelText('Verify and create account');
+      const verifyBtn = screen.getByTestId('verify-button');
 
       // Initially disabled
       expect(verifyBtn.props.accessibilityState?.disabled).toBe(true);
 
       // Fill all inputs
-      const inputs = [1, 2, 3, 4, 5, 6];
+      const inputs = [0, 1, 2, 3, 4, 5];
       inputs.forEach(idx => {
-        fireEvent.changeText(screen.getByLabelText(`OTP digit ${idx}`), '1');
+        fireEvent.changeText(screen.getByTestId(`otp-input-${idx}`), '1');
       });
 
       // Now enabled
@@ -252,17 +254,17 @@ describe('OTPVerification', () => {
 
     it('disables Verify button when one field is cleared', () => {
       render(<OTPVerification />);
-      const verifyBtn = screen.getByLabelText('Verify and create account');
+      const verifyBtn = screen.getByTestId('verify-button');
 
       // Fill all inputs
-      [1, 2, 3, 4, 5, 6].forEach(idx => {
-        fireEvent.changeText(screen.getByLabelText(`OTP digit ${idx}`), '1');
+      [0, 1, 2, 3, 4, 5].forEach(idx => {
+        fireEvent.changeText(screen.getByTestId(`otp-input-${idx}`), '1');
       });
 
       expect(verifyBtn.props.accessibilityState?.disabled).toBe(false);
 
       // Clear one field
-      fireEvent.changeText(screen.getByLabelText('OTP digit 3'), '');
+      fireEvent.changeText(screen.getByTestId('otp-input-2'), '');
 
       expect(verifyBtn.props.accessibilityState?.disabled).toBe(true);
     });
@@ -271,7 +273,7 @@ describe('OTPVerification', () => {
   describe('Timer Functionality', () => {
     it('starts timer at 02:00', () => {
       render(<OTPVerification />);
-      expect(screen.getByText('02:00')).toBeTruthy();
+      expect(screen.getByTestId('timer-text').props.children).toBe('02:00');
     });
 
     it('counts down timer correctly', () => {
@@ -280,12 +282,12 @@ describe('OTPVerification', () => {
       act(() => {
         jest.advanceTimersByTime(1000);
       });
-      expect(screen.getByText('01:59')).toBeTruthy();
+      expect(screen.getByTestId('timer-text').props.children).toBe('01:59');
 
       act(() => {
         jest.advanceTimersByTime(59000);
       });
-      expect(screen.getByText('01:00')).toBeTruthy();
+      expect(screen.getByTestId('timer-text').props.children).toBe('01:00');
     });
 
     it('formats time correctly with leading zeros', () => {
@@ -294,7 +296,7 @@ describe('OTPVerification', () => {
       act(() => {
         jest.advanceTimersByTime(115000); // 115 seconds = 1:55 remaining (5 seconds left)
       });
-      expect(screen.getByText('00:05')).toBeTruthy();
+      expect(screen.getByTestId('timer-text').props.children).toBe('00:05');
     });
 
     it('stops timer at 00:00', () => {
@@ -304,12 +306,12 @@ describe('OTPVerification', () => {
         jest.advanceTimersByTime(120000);
       });
 
-      expect(screen.getByText('00:00')).toBeTruthy();
+      expect(screen.getByTestId('timer-text').props.children).toBe('00:00');
     });
 
     it('resend button is disabled initially', () => {
       render(<OTPVerification />);
-      const resendBtn = screen.getByText('Resend');
+      const resendBtn = screen.getByTestId('resend-button-text');
       expect(resendBtn.props.className).toContain('text-gray-400');
     });
 
@@ -320,7 +322,7 @@ describe('OTPVerification', () => {
         jest.advanceTimersByTime(120000);
       });
 
-      const resendBtn = screen.getByText('Resend');
+      const resendBtn = screen.getByTestId('resend-button-text');
       expect(resendBtn.props.className).toContain('text-indigo-600');
     });
   });
@@ -328,7 +330,7 @@ describe('OTPVerification', () => {
   describe('Resend OTP', () => {
     it('does not trigger resend when timer is active', () => {
       render(<OTPVerification />);
-      const resendBtn = screen.getByText('Resend');
+      const resendBtn = screen.getByTestId('resend-button');
 
       fireEvent.press(resendBtn);
 
@@ -343,7 +345,7 @@ describe('OTPVerification', () => {
         jest.advanceTimersByTime(120000);
       });
 
-      const resendBtn = screen.getByText('Resend');
+      const resendBtn = screen.getByTestId('resend-button');
       fireEvent.press(resendBtn);
 
       expect(AuthService.CreateOTP).toHaveBeenCalledWith('test@example.com');
@@ -354,15 +356,15 @@ describe('OTPVerification', () => {
       render(<OTPVerification />);
 
       // Fill OTP
-      [1, 2, 3, 4, 5, 6].forEach(idx => {
-        fireEvent.changeText(screen.getByLabelText(`OTP digit ${idx}`), `${idx}`);
+      [0, 1, 2, 3, 4, 5].forEach(idx => {
+        fireEvent.changeText(screen.getByTestId(`otp-input-${idx}`), `${idx}`);
       });
 
       act(() => {
         jest.advanceTimersByTime(120000);
       });
 
-      const resendBtn = screen.getByText('Resend');
+      const resendBtn = screen.getByTestId('resend-button');
       
       await act(async () => {
         fireEvent.press(resendBtn);
@@ -370,8 +372,8 @@ describe('OTPVerification', () => {
       });
 
       // OTP should be cleared
-      [1, 2, 3, 4, 5, 6].forEach(idx => {
-        expect(screen.getByLabelText(`OTP digit ${idx}`).props.value).toBe('');
+      [0, 1, 2, 3, 4, 5].forEach(idx => {
+        expect(screen.getByTestId(`otp-input-${idx}`).props.value).toBe('');
       });
     });
 
@@ -383,16 +385,16 @@ describe('OTPVerification', () => {
         jest.advanceTimersByTime(120000);
       });
 
-      expect(screen.getByText('00:00')).toBeTruthy();
+      expect(screen.getByTestId('timer-text').props.children).toBe('00:00');
 
-      const resendBtn = screen.getByText('Resend');
+      const resendBtn = screen.getByTestId('resend-button');
       
       await act(async () => {
         fireEvent.press(resendBtn);
         await Promise.resolve();
       });
 
-      expect(screen.getByText('02:00')).toBeTruthy();
+      expect(screen.getByTestId('timer-text').props.children).toBe('02:00');
     });
 
     it('disables resend button after successful resend', async () => {
@@ -403,15 +405,15 @@ describe('OTPVerification', () => {
         jest.advanceTimersByTime(120000);
       });
 
-      const resendBtn = screen.getByText('Resend');
+      const resendBtn = screen.getByTestId('resend-button-text');
       expect(resendBtn.props.className).toContain('text-indigo-600');
       
       await act(async () => {
-        fireEvent.press(resendBtn);
+        fireEvent.press(screen.getByTestId('resend-button'));
         await Promise.resolve();
       });
 
-      const newResendBtn = screen.getByText('Resend');
+      const newResendBtn = screen.getByTestId('resend-button-text');
       expect(newResendBtn.props.className).toContain('text-gray-400');
     });
 
@@ -425,7 +427,7 @@ describe('OTPVerification', () => {
         jest.advanceTimersByTime(120000);
       });
 
-      const resendBtn = screen.getByText('Resend');
+      const resendBtn = screen.getByTestId('resend-button');
       
       await act(async () => {
         fireEvent.press(resendBtn);
@@ -440,7 +442,7 @@ describe('OTPVerification', () => {
   describe('OTP Verification', () => {
     const fillOTP = (otp: string = '123456') => {
       otp.split('').forEach((digit, idx) => {
-        fireEvent.changeText(screen.getByLabelText(`OTP digit ${idx + 1}`), digit);
+        fireEvent.changeText(screen.getByTestId(`otp-input-${idx}`), digit);
       });
     };
 
@@ -453,7 +455,7 @@ describe('OTPVerification', () => {
       render(<OTPVerification />);
       fillOTP('123456');
 
-      const verifyBtn = screen.getByLabelText('Verify and create account');
+      const verifyBtn = screen.getByTestId('verify-button');
       
       fireEvent.press(verifyBtn);
       
@@ -471,7 +473,7 @@ describe('OTPVerification', () => {
       render(<OTPVerification />);
       fillOTP();
 
-      const verifyBtn = screen.getByLabelText('Verify and create account');
+      const verifyBtn = screen.getByTestId('verify-button');
       
       fireEvent.press(verifyBtn);
 
@@ -489,7 +491,7 @@ describe('OTPVerification', () => {
       render(<OTPVerification />);
       fillOTP();
 
-      const verifyBtn = screen.getByLabelText('Verify and create account');
+      const verifyBtn = screen.getByTestId('verify-button');
       
       fireEvent.press(verifyBtn);
 
@@ -508,7 +510,7 @@ describe('OTPVerification', () => {
       render(<OTPVerification />);
       fillOTP();
 
-      const verifyBtn = screen.getByLabelText('Verify and create account');
+      const verifyBtn = screen.getByTestId('verify-button');
       
       fireEvent.press(verifyBtn);
 
@@ -528,7 +530,7 @@ describe('OTPVerification', () => {
       render(<OTPVerification />);
       fillOTP();
 
-      const verifyBtn = screen.getByLabelText('Verify and create account');
+      const verifyBtn = screen.getByTestId('verify-button');
       
       fireEvent.press(verifyBtn);
 
@@ -548,7 +550,7 @@ describe('OTPVerification', () => {
       render(<OTPVerification />);
       fillOTP();
 
-      const verifyBtn = screen.getByLabelText('Verify and create account');
+      const verifyBtn = screen.getByTestId('verify-button');
       
       fireEvent.press(verifyBtn);
 
@@ -572,20 +574,20 @@ describe('OTPVerification', () => {
 
       render(<OTPVerification />);
       // Should render without crashing
-      expect(screen.getByText('Verify your email')).toBeTruthy();
+      expect(screen.getByTestId('title-text').props.children).toBe('Verify your email');
     });
 
     it('handles rapid input correctly', () => {
       render(<OTPVerification />);
       
       // Rapidly fill all inputs
-      [1, 2, 3, 4, 5, 6].forEach(idx => {
-        fireEvent.changeText(screen.getByLabelText(`OTP digit ${idx}`), `${idx}`);
+      [0, 1, 2, 3, 4, 5].forEach(idx => {
+        fireEvent.changeText(screen.getByTestId(`otp-input-${idx}`), `${idx + 1}`);
       });
 
       // Verify all inputs are filled correctly
-      [1, 2, 3, 4, 5, 6].forEach(idx => {
-        expect(screen.getByLabelText(`OTP digit ${idx}`).props.value).toBe(`${idx}`);
+      [0, 1, 2, 3, 4, 5].forEach(idx => {
+        expect(screen.getByTestId(`otp-input-${idx}`).props.value).toBe(`${idx + 1}`);
       });
     });
 
@@ -593,28 +595,28 @@ describe('OTPVerification', () => {
       render(<OTPVerification />);
       
       // Fill all inputs
-      [1, 2, 3, 4, 5, 6].forEach(idx => {
-        fireEvent.changeText(screen.getByLabelText(`OTP digit ${idx}`), '1');
+      [0, 1, 2, 3, 4, 5].forEach(idx => {
+        fireEvent.changeText(screen.getByTestId(`otp-input-${idx}`), '1');
       });
 
       // Clear all inputs
-      [1, 2, 3, 4, 5, 6].forEach(idx => {
-        fireEvent.changeText(screen.getByLabelText(`OTP digit ${idx}`), '');
+      [0, 1, 2, 3, 4, 5].forEach(idx => {
+        fireEvent.changeText(screen.getByTestId(`otp-input-${idx}`), '');
       });
 
       // Verify all inputs are empty
-      [1, 2, 3, 4, 5, 6].forEach(idx => {
-        expect(screen.getByLabelText(`OTP digit ${idx}`).props.value).toBe('');
+      [0, 1, 2, 3, 4, 5].forEach(idx => {
+        expect(screen.getByTestId(`otp-input-${idx}`).props.value).toBe('');
       });
 
       // Refill with different values
-      [1, 2, 3, 4, 5, 6].forEach(idx => {
-        fireEvent.changeText(screen.getByLabelText(`OTP digit ${idx}`), `${idx}`);
+      [0, 1, 2, 3, 4, 5].forEach(idx => {
+        fireEvent.changeText(screen.getByTestId(`otp-input-${idx}`), `${idx + 1}`);
       });
 
       // Verify new values
-      [1, 2, 3, 4, 5, 6].forEach(idx => {
-        expect(screen.getByLabelText(`OTP digit ${idx}`).props.value).toBe(`${idx}`);
+      [0, 1, 2, 3, 4, 5].forEach(idx => {
+        expect(screen.getByTestId(`otp-input-${idx}`).props.value).toBe(`${idx + 1}`);
       });
     });
   });

@@ -263,14 +263,15 @@ const SubjectDetailScreen = () => {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-gray-50" testID="subject-detail-screen">
       {/* Header */}
-      <View className="bg-white pt-12 pb-4 px-4 shadow-sm">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
+      <View className="bg-white pt-12 pb-4 px-4 shadow-sm" testID="header-container">
+        <View className="flex-row items-center justify-between" testID="header-top-row">
+          <View className="flex-row items-center" testID="header-left">
             <TouchableOpacity
               className="p-2 -ml-2"
               onPress={() => router.back()}
+              testID="back-button"
             >
               <ChevronLeft size={24} color="#4B5563" />
             </TouchableOpacity>
@@ -282,15 +283,16 @@ const SubjectDetailScreen = () => {
                 onChangeText={setSubjectName}
                 placeholder="Subject name"
                 autoFocus
+                testID="subject-name-input"
               />
             ) : (
-              <Text className="text-xl font-bold text-gray-800 ml-2">
+              <Text className="text-xl font-bold text-gray-800 ml-2" testID="subject-name-text">
                 {subjectName}
               </Text>
             )}
           </View>
 
-          <TouchableOpacity className="p-2" onPress={toggleEditMode}>
+          <TouchableOpacity className="p-2" onPress={toggleEditMode} testID="edit-toggle-button">
             {isEditing ? (
               <Save size={20} color="#4F46E5" />
             ) : (
@@ -300,17 +302,18 @@ const SubjectDetailScreen = () => {
         </View>
 
         {/* Progress Bar */}
-        <View className="mt-4">
-          <View className="flex-row justify-between mb-1">
-            <Text className="text-gray-600 font-medium">Progress</Text>
-            <Text className="text-gray-600 font-medium">
+        <View className="mt-4" testID="progress-section">
+          <View className="flex-row justify-between mb-1" testID="progress-header">
+            <Text className="text-gray-600 font-medium" testID="progress-label">Progress</Text>
+            <Text className="text-gray-600 font-medium" testID="progress-percentage">
               {subjectStatsData?.completedPercent}%
             </Text>
           </View>
-          <View className="bg-gray-200 rounded-full h-3">
+          <View className="bg-gray-200 rounded-full h-3" testID="progress-bar-background">
             <View
               className="bg-indigo-500 h-3 rounded-full"
               style={{ width: `${subjectStatsData?.completedPercent}%` }}
+              testID="progress-bar-fill"
             />
           </View>
         </View>
@@ -318,14 +321,15 @@ const SubjectDetailScreen = () => {
 
       {/* Main Actions */}
       
-      <View className="px-4 mt-6">
+      <View className="px-4 mt-6" testID="main-actions-container">
         {!isEditing && 
         <TouchableOpacity
           className="bg-indigo-600 rounded-xl py-5 mb-4 items-center shadow-sm"
           onPress={() => router.push(`/study/${subjectStatsData?.id}`)}
+          testID="review-due-cards-button"
         >
-          <Text className="text-white text-lg font-bold">Review Due Cards</Text>
-          <Text className="text-indigo-200 mt-1">
+          <Text className="text-white text-lg font-bold" testID="review-due-cards-title">Review Due Cards</Text>
+          <Text className="text-indigo-200 mt-1" testID="review-due-cards-count">
             {subjectStatsData?.overdue} cards ready for review
           </Text>
         </TouchableOpacity>}
@@ -339,31 +343,34 @@ const SubjectDetailScreen = () => {
           <Text className="text-gray-500 mt-1">Generate personalized quiz</Text>
         </TouchableOpacity> */}
 
-        <View className="flex-col gap-3 mt-2">
-          <View className="flex-row gap-3">
+        <View className="flex-col gap-3 mt-2" testID="action-buttons-container">
+          <View className="flex-row gap-3" testID="add-settings-row">
             <TouchableOpacity
               className="flex-1 bg-white rounded-xl py-4 items-center border border-gray-200 flex-row justify-center"
               onPress={openAddCardModal}
+              testID="add-card-button"
             >
               <Plus size={20} color="#4B5563" />
-              <Text className="text-gray-800 font-bold ml-2">{cardsData.length === 0 ? "Add Your First Card" : "Add Card"}</Text>
+              <Text className="text-gray-800 font-bold ml-2" testID="add-card-button-text">{cardsData.length === 0 ? "Add Your First Card" : "Add Card"}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               className="flex-1 bg-white rounded-xl py-4 items-center border border-gray-200 flex-row justify-center"
               onPress={() => setShowSettingsModal(true)}
+              testID="settings-button"
             >
               <Settings size={20} color="#4B5563" />
-              <Text className="text-gray-800 font-bold ml-2">Settings</Text>
+              <Text className="text-gray-800 font-bold ml-2" testID="settings-button-text">Settings</Text>
             </TouchableOpacity>
           </View>
           {isEditing && (
             <TouchableOpacity
               className="bg-red-50 rounded-xl py-4 items-center border border-red-200 flex-row justify-center"
               onPress={deleteSubject}
+              testID="delete-subject-button"
             >
               <Trash2 size={20} color="#EF4444" />
-              <Text className="text-red-600 font-bold ml-2">
+              <Text className="text-red-600 font-bold ml-2" testID="delete-subject-button-text">
                 Delete Subject
               </Text>
             </TouchableOpacity>
@@ -372,18 +379,18 @@ const SubjectDetailScreen = () => {
       </View>
 
       {/* Card List */}
-      <View className="mt-6 px-4 flex-1">
-        <View className="flex-row justify-between items-center mb-3">
-          <Text className="text-gray-700 font-bold">Cards in this subject</Text>
-          <Text className="text-gray-500 text-sm">
+      <View className="mt-6 px-4 flex-1" testID="card-list-container">
+        <View className="flex-row justify-between items-center mb-3" testID="card-list-header">
+          <Text className="text-gray-700 font-bold" testID="card-list-title">Cards in this subject</Text>
+          <Text className="text-gray-500 text-sm" testID="card-list-count">
             {cardsData.length} cards
           </Text>
         </View>
 
         {cardsData.length === 0 ? (
-          <View className="flex-1 items-center justify-center py-12">
+          <View className="flex-1 items-center justify-center py-12" testID="empty-cards-container">
             <BookOpen size={48} color="#9CA3AF" />
-            <Text className="text-gray-500 mt-4 text-center">
+            <Text className="text-gray-500 mt-4 text-center" testID="empty-cards-text">
               No cards in this subject yet
             </Text>
           </View>
@@ -391,29 +398,32 @@ const SubjectDetailScreen = () => {
           <FlatList
             data={cardsData}
             keyExtractor={(item) => item.id}
+            testID="cards-flatlist"
             renderItem={({ item, index }) => (
-              <View className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-100">
+              <View className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-100" testID={`card-item-${item.id}`}>
                 {isEditing ? (
                   <>
-                    <View className="flex-row justify-between">
-                      <View className="flex-1">
-                        <Text className="text-gray-800 font-medium">
+                    <View className="flex-row justify-between" testID={`card-edit-container-${item.id}`}>
+                      <View className="flex-1" testID={`card-content-${item.id}`}>
+                        <Text className="text-gray-800 font-medium" testID={`card-front-${item.id}`}>
                           {item.front}
                         </Text>
-                        <Text className="text-gray-500 text-sm mt-1">
+                        <Text className="text-gray-500 text-sm mt-1" testID={`card-back-${item.id}`}>
                           {item.back}
                         </Text>
                       </View>
-                      <View className="flex-row">
+                      <View className="flex-row" testID={`card-actions-${item.id}`}>
                         <TouchableOpacity
                           className="p-2 ml-2"
                           onPress={() => openEditCardModal(item)}
+                          testID={`edit-card-button-${item.id}`}
                         >
                           <Edit3 size={18} color="#4B5563" />
                         </TouchableOpacity>
                         <TouchableOpacity
                           className="p-2"
                           onPress={() => deleteExistCard(item.id)}
+                          testID={`delete-card-button-${item.id}`}
                         >
                           <Trash2 size={18} color="#EF4444" />
                         </TouchableOpacity>
@@ -423,9 +433,10 @@ const SubjectDetailScreen = () => {
                       <TouchableOpacity
                         className="mt-3 flex-row items-center justify-center py-2 border-t border-gray-100"
                         onPress={openAddCardModal}
+                        testID="add-another-card-button"
                       >
                         <Plus size={16} color="#4F46E5" />
-                        <Text className="text-indigo-600 font-medium ml-1">
+                        <Text className="text-indigo-600 font-medium ml-1" testID="add-another-card-text">
                           Add Another Card
                         </Text>
                       </TouchableOpacity>
@@ -433,10 +444,10 @@ const SubjectDetailScreen = () => {
                   </>
                 ) : (
                   <>
-                    <Text className="text-gray-800 font-medium">
+                    <Text className="text-gray-800 font-medium" testID={`card-front-${item.id}`}>
                       {item.front}
                     </Text>
-                    <Text className="text-gray-500 text-sm mt-1">
+                    <Text className="text-gray-500 text-sm mt-1" testID={`card-back-${item.id}`}>
                       {item.back}
                     </Text>
                   </>
@@ -453,23 +464,25 @@ const SubjectDetailScreen = () => {
         transparent={true}
         animationType="slide"
         onRequestClose={() => setShowAddCardModal(false)}
+        testID="add-edit-card-modal"
       >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-2xl p-6">
-            <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-xl font-bold text-gray-800">
+        <View className="flex-1 bg-black/50 justify-end" testID="modal-backdrop">
+          <View className="bg-white rounded-t-2xl p-6" testID="modal-content">
+            <View className="flex-row justify-between items-center mb-4" testID="modal-header">
+              <Text className="text-xl font-bold text-gray-800" testID="modal-title">
                 {editingCardId ? "Edit Card" : "Add New Card"}
               </Text>
               <TouchableOpacity
                 className="p-2"
                 onPress={() => setShowAddCardModal(false)}
+                testID="modal-close-button"
               >
                 <X size={24} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
 
-            <View className="mb-4">
-              <Text className="text-gray-700 font-medium mb-2">Front</Text>
+            <View className="mb-4" testID="front-input-container">
+              <Text className="text-gray-700 font-medium mb-2" testID="front-label">Front</Text>
               <TextInput
                 className="border border-gray-300 rounded-lg p-3 bg-gray-50"
                 placeholder="Enter question or term"
@@ -482,11 +495,12 @@ const SubjectDetailScreen = () => {
                 }
                 multiline
                 numberOfLines={3}
+                testID="front-input"
               />
             </View>
 
-            <View className="mb-6">
-              <Text className="text-gray-700 font-medium mb-2">Back</Text>
+            <View className="mb-6" testID="back-input-container">
+              <Text className="text-gray-700 font-medium mb-2" testID="back-label">Back</Text>
               <TextInput
                 className="border border-gray-300 rounded-lg p-3 bg-gray-50"
                 placeholder="Enter answer or definition"
@@ -502,6 +516,7 @@ const SubjectDetailScreen = () => {
                 }
                 multiline
                 numberOfLines={3}
+                testID="back-input"
               />
             </View>
 
@@ -517,8 +532,9 @@ const SubjectDetailScreen = () => {
                 !editCard.back.trim()
               }
               onPress={editingCardId !== '' ? updateExitCard : addNewCard}
+              testID="submit-card-button"
             >
-              <Text className="text-white font-bold">
+              <Text className="text-white font-bold" testID="submit-card-button-text">
                 {editingCardId ? "Update Card" : "Add Card"}
               </Text>
             </TouchableOpacity>
@@ -532,23 +548,25 @@ const SubjectDetailScreen = () => {
         transparent={true}
         animationType="slide"
         onRequestClose={() => setShowSettingsModal(false)}
+        testID="settings-modal"
       >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-2xl p-6">
-            <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-xl font-bold text-gray-800">
+        <View className="flex-1 bg-black/50 justify-end" testID="settings-modal-backdrop">
+          <View className="bg-white rounded-t-2xl p-6" testID="settings-modal-content">
+            <View className="flex-row justify-between items-center mb-4" testID="settings-modal-header">
+              <Text className="text-xl font-bold text-gray-800" testID="settings-modal-title">
                 Study Settings
               </Text>
               <TouchableOpacity
                 className="p-2"
                 onPress={() => setShowSettingsModal(false)}
+                testID="settings-modal-close-button"
               >
                 <X size={24} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
 
-            <View className="mb-4">
-              <Text className="text-gray-700 font-medium mb-2">
+            <View className="mb-4" testID="daily-limit-container">
+              <Text className="text-gray-700 font-medium mb-2" testID="daily-limit-label">
                 Daily Card Limit
               </Text>
               <TextInput
@@ -563,14 +581,15 @@ const SubjectDetailScreen = () => {
                     });
                 }}
                 keyboardType="numeric"
+                testID="daily-limit-input"
               />
-              <Text className="text-gray-500 text-sm mt-1">
+              <Text className="text-gray-500 text-sm mt-1" testID="daily-limit-hint">
                 Maximum cards to study per day
               </Text>
             </View>
 
-            <View className="mb-4">
-              <Text className="text-gray-700 font-medium mb-2">
+            <View className="mb-4" testID="new-cards-container">
+              <Text className="text-gray-700 font-medium mb-2" testID="new-cards-label">
                 New Cards Per Day
               </Text>
               <TextInput
@@ -585,14 +604,15 @@ const SubjectDetailScreen = () => {
                     });
                 }}
                 keyboardType="numeric"
+                testID="new-cards-input"
               />
-              <Text className="text-gray-500 text-sm mt-1">
+              <Text className="text-gray-500 text-sm mt-1" testID="new-cards-hint">
                 Maximum new cards to introduce per day
               </Text>
             </View>
 
-            <View className="mb-6">
-              <Text className="text-gray-700 font-medium mb-2">
+            <View className="mb-6" testID="interval-container">
+              <Text className="text-gray-700 font-medium mb-2" testID="interval-label">
                 Interval Modifier (%)
               </Text>
               <TextInput
@@ -607,8 +627,9 @@ const SubjectDetailScreen = () => {
                     });
                 }}
                 keyboardType="numeric"
+                testID="interval-input"
               />
-              <Text className="text-gray-500 text-sm mt-1">
+              <Text className="text-gray-500 text-sm mt-1" testID="interval-hint">
                 Adjust how quickly intervals increase
               </Text>
             </View>
@@ -616,8 +637,9 @@ const SubjectDetailScreen = () => {
             <TouchableOpacity
               className="bg-indigo-600 rounded-xl py-4 items-center"
               onPress={saveSettings}
+              testID="save-settings-button"
             >
-              <Text className="text-white font-bold">Save Settings</Text>
+              <Text className="text-white font-bold" testID="save-settings-button-text">Save Settings</Text>
             </TouchableOpacity>
           </View>
         </View>
