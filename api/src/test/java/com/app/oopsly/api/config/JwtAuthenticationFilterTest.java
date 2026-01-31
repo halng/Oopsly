@@ -186,9 +186,9 @@ class JwtAuthenticationFilterTest {
     void doFilterInternal_BearerWithSpaces() throws ServletException, IOException {
         // Arrange
         setupRequestId();
-        String token = " token"; // token with leading space
-        when(request.getHeader("authorization")).thenReturn("Bearer" + token); // This results in "Bearer token" with 2 spaces
-        when(jwtUtils.extractUserId(token)).thenThrow(new RuntimeException("Invalid token"));
+        String tokenWithLeadingSpace = " token"; // token with leading space
+        when(request.getHeader("authorization")).thenReturn("Bearer " + tokenWithLeadingSpace); // Results in "Bearer  token" with double space
+        when(jwtUtils.extractUserId(tokenWithLeadingSpace)).thenThrow(new RuntimeException("Invalid token"));
         
         // Mock the response writer for error handling
         java.io.PrintWriter writer = mock(java.io.PrintWriter.class);
