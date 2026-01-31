@@ -66,13 +66,16 @@ jobs:
           echo "Creating issue…"
 
           gh api \
-            --method POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "/repos/${REPO}/issues" \
-            -f title="🤖 QA Automation Task for PR #$PR_NUMBER" \
-            -f body="$BODY_CONTENT" \
-            -f labels='["qa","automation","copilot"]'
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          "/repos/${REPO}/issues" \
+          -f title="🤖 QA Automation Task for PR #$PR_NUMBER" \
+          -f body="$BODY_CONTENT" \
+          -f labels[]="qa" \
+          -f labels[]="automation" \
+          -f labels[]="copilot"
+
 
 
           echo "✅ QA task created successfully"
