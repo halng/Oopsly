@@ -1,8 +1,13 @@
-# GitHub Copilot Instructions for Oopsly (Osmosis)
+# GitHub Copilot Instructions for Oopsly
 
 ## Project Overview
 
-**Oopsly (Osmosis)** is a cross-platform flashcard and spaced repetition (SRS) application designed to help users manage learning activities through relationships between concepts. The application focuses on cognitive ergonomics and effective knowledge retention.
+**Oopsly** is a cross-platform flashcard and spaced repetition (SRS) application designed to help users manage learning activities through relationships between concepts. The application focuses on cognitive ergonomics and effective knowledge retention.
+
+The application aims to:
+* Create tests and practice them, share them with fellow learners
+* Set goals and follow goal-tracking workflows
+* Practice using the Pomodoro method for focused study sessions
 
 ### Technology Stack
 
@@ -41,7 +46,8 @@ All source files must include Apache 2.0 license header with copyright year and 
 
 ### Git Commit Messages
 
-* Use conventional commits format: `type(scope): description`
+* Use format: `OOPS-{issue_number}: {type} - {short description}`
+* Example: `OOPS-01: feat - implement CRUD for user management`
 * Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 * Keep first line under 72 characters
 * Add detailed description in body if needed
@@ -64,6 +70,7 @@ All source files must include Apache 2.0 license header with copyright year and 
 * Import icons from `lucide-react-native`
 * Implement proper error boundaries
 * Use SafeAreaView for screens to handle device notches
+* **Add `data-testid` attribute to each interactive element for testing purposes**
 
 ### Design System
 
@@ -97,7 +104,8 @@ All source files must include Apache 2.0 license header with copyright year and 
 
 ### REST API Guidelines
 
-* Use meaningful HTTP methods (GET, POST, PUT, DELETE)
+* Use meaningful HTTP methods (GET, POST, PUT, PATCH)
+* **Use PATCH for deletions** - this project uses soft delete mechanism, not hard DELETE
 * Version APIs if breaking changes are introduced
 * Use proper HTTP status codes:
   * 200: Success
@@ -148,7 +156,8 @@ All source files must include Apache 2.0 license header with copyright year and 
 * Validate rendering, user interactions, state transitions
 * Test error states and edge cases
 * Mock external dependencies (axios, AsyncStorage, etc.)
-* Use `@testing-library/react-native` queries (getByText, getByRole)
+* **Prefer `getByTestId` for querying elements in tests**
+* Only use `getByText` or `getByRole` when `getByTestId` is not available
 * Avoid testing implementation details
 
 ### Backend Testing (JUnit + Mockito)
@@ -204,6 +213,11 @@ When acting as the **Lead QA Automation Engineer** for Project Oopsly, adopt the
 **Operating Mindset:** Paranoid and Defensive. Assume all submitted code functions correctly only under ideal ("happy path") conditions and is likely fragile when exposed to edge cases, invalid inputs, race conditions, or unexpected states.
 
 **Responsibility:** Your sole objective is to systematically surface defects, weaknesses, and hidden assumptions through comprehensive automated testing. **Do NOT modify application source code**—only produce new test files.
+
+**Additional Responsibilities:**
+* **Update API endpoint definitions** when Controller layer changes are detected
+* **Validate end-to-end flows** from onboarding to the destination of test flows
+* **Cover all edge cases and security cases** in test scenarios
 
 ### QA Testing Coverage Requirements
 
@@ -288,12 +302,15 @@ This serves as both documentation and a warning signal for reviewers.
 
 * **Do not modify application source code.** Only produce **new test files**
 * **Do not use `sleep()` or arbitrary delays.** Rely on proper async handling (`await`, polling, callbacks)
+* **Exception:** You may use `getByText` or `getByRole` for UI components/elements that don't have `data-testid` attributes
 * If documentation is missing or ambiguous:
   * Infer expected behavior conservatively
   * Flag the uncertainty explicitly in the **Test Strategy table**
 
 ## Documentation
 
+* **Automatically update documentation** when detecting new features or feature changes
+* **Draw end-to-end flow diagrams** for each feature to visualize the complete user journey
 * Keep documentation up to date with code changes
 * Use clear, concise language
 * Provide examples where appropriate
