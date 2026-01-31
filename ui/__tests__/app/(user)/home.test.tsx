@@ -78,8 +78,8 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      expect(screen.getByText('Oopsly')).toBeTruthy();
-      expect(screen.getByText('Create Shelf')).toBeTruthy();
+      expect(screen.getByTestId('app-title-text').props.children).toBe('Oopsly');
+      expect(screen.getByTestId('create-shelf-label-text').props.children).toBe('Create Shelf');
     });
 
     it('renders motivational quote', async () => {
@@ -89,8 +89,8 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      expect(screen.getByText('"The expert in anything was once a beginner."')).toBeTruthy();
-      expect(screen.getByText('- Helen Hayes')).toBeTruthy();
+      expect(screen.getByTestId('quote-text').props.children).toBe('"The expert in anything was once a beginner."');
+      expect(screen.getByTestId('quote-author-text').props.children).toBe('- Helen Hayes');
     });
 
     it('renders navigation menu items', async () => {
@@ -100,9 +100,9 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      expect(screen.getByText('Tasks')).toBeTruthy();
-      expect(screen.getByText('Notes')).toBeTruthy();
-      expect(screen.getByText('Planner')).toBeTruthy();
+      expect(screen.getByTestId('tasks-label-text').props.children).toBe('Tasks');
+      expect(screen.getByTestId('notes-label-text').props.children).toBe('Notes');
+      expect(screen.getByTestId('planner-label-text').props.children).toBe('Planner');
     });
   });
 
@@ -139,8 +139,8 @@ describe('OopslyApp (Home Page)', () => {
       render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('Test Shelf 1')).toBeTruthy();
-        expect(screen.getByText('Test Shelf 2')).toBeTruthy();
+        expect(screen.getByTestId('shelf-name-text-1').props.children).toBe('Test Shelf 1');
+        expect(screen.getByTestId('shelf-name-text-2').props.children).toBe('Test Shelf 2');
       });
     });
 
@@ -182,12 +182,12 @@ describe('OopslyApp (Home Page)', () => {
       render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('Calculus')).toBeTruthy();
-        expect(screen.getByText('Algebra')).toBeTruthy();
-        expect(screen.getByText('5 due')).toBeTruthy();
-        expect(screen.getByText('0 due')).toBeTruthy();
-        expect(screen.getByText('75%')).toBeTruthy();
-        expect(screen.getByText('100%')).toBeTruthy();
+        expect(screen.getByTestId('subject-name-text-subject-1').props.children).toBe('Calculus');
+        expect(screen.getByTestId('subject-name-text-subject-2').props.children).toBe('Algebra');
+        expect(screen.getByTestId('subject-due-text-subject-1').props.children).toEqual([5, ' due']);
+        expect(screen.getByTestId('subject-due-text-subject-2').props.children).toEqual([0, ' due']);
+        expect(screen.getByTestId('subject-progress-text-subject-1').props.children).toEqual([75, '%']);
+        expect(screen.getByTestId('subject-progress-text-subject-2').props.children).toEqual([100, '%']);
       });
     });
 
@@ -214,8 +214,8 @@ describe('OopslyApp (Home Page)', () => {
       render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('Management')).toBeTruthy();
-        expect(screen.getByText('Tap to manage')).toBeTruthy();
+        expect(screen.getByTestId('manage-shelf-title-text-shelf-1').props.children).toBe('Management');
+        expect(screen.getByTestId('manage-shelf-subtitle-text-shelf-1').props.children).toBe('Tap to manage');
       });
     });
   });
@@ -228,12 +228,12 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      const createButton = screen.getByText('Create Shelf');
+      const createButton = screen.getByTestId('create-shelf-button');
       fireEvent.press(createButton);
       
       await waitFor(() => {
-        expect(screen.getByText('Create New Shelf')).toBeTruthy();
-        expect(screen.getByPlaceholderText('Enter shelf name')).toBeTruthy();
+        expect(screen.getByTestId('create-shelf-modal-title-text').props.children).toBe('Create New Shelf');
+        expect(screen.getByTestId('shelf-name-input').props.placeholder).toBe('Enter shelf name');
       });
     });
 
@@ -244,22 +244,14 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      fireEvent.press(screen.getByText('Create Shelf'));
+      fireEvent.press(screen.getByTestId('create-shelf-button'));
       
       await waitFor(() => {
-        expect(screen.getByText('Create New Shelf')).toBeTruthy();
+        expect(screen.getByTestId('create-shelf-modal-title-text').props.children).toBe('Create New Shelf');
       });
       
-      // Find and click the X button (close button)
-      const closeButtons = screen.getAllByRole('button');
-      const xButton = closeButtons.find(btn => {
-        // The X button is a TouchableOpacity with an X icon
-        return true; // We'll click the first close button we find
-      });
-      
-      if (xButton) {
-        fireEvent.press(xButton);
-      }
+      const closeButton = screen.getByTestId('create-shelf-modal-close-button');
+      fireEvent.press(closeButton);
     });
 
     it('shows alert when trying to create shelf with empty name', async () => {
@@ -269,13 +261,13 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      fireEvent.press(screen.getByText('Create Shelf'));
+      fireEvent.press(screen.getByTestId('create-shelf-button'));
       
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Enter shelf name')).toBeTruthy();
+        expect(screen.getByTestId('shelf-name-input').props.placeholder).toBe('Enter shelf name');
       });
       
-      const createButton = screen.getAllByText('Create Shelf')[1]; // Modal button
+      const createButton = screen.getByTestId('create-shelf-submit-button');
       fireEvent.press(createButton);
       
       expect(global.alert).toHaveBeenCalledWith('Please enter a shelf name');
@@ -301,19 +293,19 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      fireEvent.press(screen.getByText('Create Shelf'));
+      fireEvent.press(screen.getByTestId('create-shelf-button'));
       
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Enter shelf name')).toBeTruthy();
+        expect(screen.getByTestId('shelf-name-input').props.placeholder).toBe('Enter shelf name');
       });
       
-      const nameInput = screen.getByPlaceholderText('Enter shelf name');
+      const nameInput = screen.getByTestId('shelf-name-input');
       fireEvent.changeText(nameInput, 'New Shelf');
       
-      const descriptionInput = screen.getByPlaceholderText('Enter shelf description (optional)');
+      const descriptionInput = screen.getByTestId('shelf-description-input');
       fireEvent.changeText(descriptionInput, 'New Description');
       
-      const createButton = screen.getAllByText('Create Shelf')[1];
+      const createButton = screen.getByTestId('create-shelf-submit-button');
       fireEvent.press(createButton);
       
       await waitFor(() => {
@@ -336,16 +328,16 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      fireEvent.press(screen.getByText('Create Shelf'));
+      fireEvent.press(screen.getByTestId('create-shelf-button'));
       
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Enter shelf name')).toBeTruthy();
+        expect(screen.getByTestId('shelf-name-input').props.placeholder).toBe('Enter shelf name');
       });
       
-      const nameInput = screen.getByPlaceholderText('Enter shelf name');
+      const nameInput = screen.getByTestId('shelf-name-input');
       fireEvent.changeText(nameInput, 'New Shelf');
       
-      const createButton = screen.getAllByText('Create Shelf')[1];
+      const createButton = screen.getByTestId('create-shelf-submit-button');
       fireEvent.press(createButton);
       
       await waitFor(() => {
@@ -360,14 +352,14 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      fireEvent.press(screen.getByText('Create Shelf'));
+      fireEvent.press(screen.getByTestId('create-shelf-button'));
       
       await waitFor(() => {
-        expect(screen.getByText('Tap to change')).toBeTruthy();
+        expect(screen.getByTestId('icon-selector-hint-text').props.children).toBe('Tap to change');
       });
       
-      const iconSelector = screen.getByText('Tap to change');
-      fireEvent.press(iconSelector.parent);
+      const iconSelector = screen.getByTestId('icon-selector-button');
+      fireEvent.press(iconSelector);
       
       // Icon picker should be visible after toggle
       // This is tested by the presence of multiple icon options
@@ -398,11 +390,11 @@ describe('OopslyApp (Home Page)', () => {
       render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('Management')).toBeTruthy();
+        expect(screen.getByTestId('manage-shelf-title-text-shelf-1')).toBeTruthy();
       });
       
-      const managementCard = screen.getByText('Management');
-      fireEvent.press(managementCard.parent);
+      const managementCard = screen.getByTestId('manage-shelf-button-shelf-1');
+      fireEvent.press(managementCard);
     });
 
     it('creates subject successfully', async () => {
@@ -438,7 +430,7 @@ describe('OopslyApp (Home Page)', () => {
       render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('Test Shelf')).toBeTruthy();
+        expect(screen.getByTestId('shelf-name-text-shelf-1').props.children).toBe('Test Shelf');
       });
     });
 
@@ -482,7 +474,7 @@ describe('OopslyApp (Home Page)', () => {
       render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('Test Shelf')).toBeTruthy();
+        expect(screen.getByTestId('shelf-name-text-shelf-1').props.children).toBe('Test Shelf');
       });
     });
 
@@ -543,11 +535,11 @@ describe('OopslyApp (Home Page)', () => {
       render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('Math')).toBeTruthy();
+        expect(screen.getByTestId('subject-name-text-subject-1')).toBeTruthy();
       });
       
-      const subjectCard = screen.getByText('Math');
-      fireEvent.press(subjectCard.parent);
+      const subjectCard = screen.getByTestId('subject-card-subject-1');
+      fireEvent.press(subjectCard);
       
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith('shelf-1/subject/subject-1');
@@ -561,8 +553,8 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      const tasksButton = screen.getByText('Tasks');
-      fireEvent.press(tasksButton.parent);
+      const tasksButton = screen.getByTestId('tasks-button');
+      fireEvent.press(tasksButton);
       
       expect(mockPush).toHaveBeenCalledWith('/tasks-list');
     });
@@ -574,8 +566,8 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      const notesButton = screen.getByText('Notes');
-      fireEvent.press(notesButton.parent);
+      const notesButton = screen.getByTestId('notes-button');
+      fireEvent.press(notesButton);
       
       expect(mockPush).toHaveBeenCalledWith('/notes');
     });
@@ -587,8 +579,8 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      const plannerButton = screen.getByText('Planner');
-      fireEvent.press(plannerButton.parent);
+      const plannerButton = screen.getByTestId('planner-button');
+      fireEvent.press(plannerButton);
       
       expect(mockPush).toHaveBeenCalledWith('/study-planner');
     });
@@ -666,8 +658,8 @@ describe('OopslyApp (Home Page)', () => {
       render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('New Subject')).toBeTruthy();
-        expect(screen.getByText('0%')).toBeTruthy();
+        expect(screen.getByTestId('subject-name-text-subject-1').props.children).toBe('New Subject');
+        expect(screen.getByTestId('subject-progress-text-subject-1').props.children).toEqual([0, '%']);
       });
     });
 
@@ -702,7 +694,7 @@ describe('OopslyApp (Home Page)', () => {
       render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('Subject No Progress')).toBeTruthy();
+        expect(screen.getByTestId('subject-name-text-subject-1').props.children).toBe('Subject No Progress');
       });
     });
 
@@ -729,7 +721,7 @@ describe('OopslyApp (Home Page)', () => {
       render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('Test Shelf')).toBeTruthy();
+        expect(screen.getByTestId('shelf-name-text-shelf-1').props.children).toBe('Test Shelf');
       });
     });
 
@@ -741,7 +733,7 @@ describe('OopslyApp (Home Page)', () => {
       });
       
       // Should render without errors
-      expect(screen.getByText('Oopsly')).toBeTruthy();
+      expect(screen.getByTestId('app-title-text').props.children).toBe('Oopsly');
     });
 
     it('handles undefined shelves', async () => {
@@ -752,7 +744,7 @@ describe('OopslyApp (Home Page)', () => {
       });
       
       // Should render without errors even with undefined shelves
-      expect(screen.getByText('Oopsly')).toBeTruthy();
+      expect(screen.getByTestId('app-title-text').props.children).toBe('Oopsly');
     });
   });
 
@@ -770,16 +762,16 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      fireEvent.press(screen.getByText('Create Shelf'));
+      fireEvent.press(screen.getByTestId('create-shelf-button'));
       
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Enter shelf name')).toBeTruthy();
+        expect(screen.getByTestId('shelf-name-input').props.placeholder).toBe('Enter shelf name');
       });
       
-      const nameInput = screen.getByPlaceholderText('Enter shelf name');
+      const nameInput = screen.getByTestId('shelf-name-input');
       fireEvent.changeText(nameInput, 'Failed Shelf');
       
-      const createButton = screen.getAllByText('Create Shelf')[1];
+      const createButton = screen.getByTestId('create-shelf-submit-button');
       fireEvent.press(createButton);
       
       await waitFor(() => {
@@ -806,19 +798,19 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
       
-      fireEvent.press(screen.getByText('Create Shelf'));
+      fireEvent.press(screen.getByTestId('create-shelf-button'));
       
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Enter shelf name')).toBeTruthy();
+        expect(screen.getByTestId('shelf-name-input').props.placeholder).toBe('Enter shelf name');
       });
       
-      const nameInput = screen.getByPlaceholderText('Enter shelf name');
+      const nameInput = screen.getByTestId('shelf-name-input');
       fireEvent.changeText(nameInput, 'New Shelf');
       
-      const descInput = screen.getByPlaceholderText('Enter shelf description (optional)');
+      const descInput = screen.getByTestId('shelf-description-input');
       fireEvent.changeText(descInput, 'Desc');
       
-      const createButton = screen.getAllByText('Create Shelf')[1];
+      const createButton = screen.getByTestId('create-shelf-submit-button');
       fireEvent.press(createButton);
       
       await waitFor(() => {
@@ -861,8 +853,8 @@ describe('OopslyApp (Home Page)', () => {
       render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('Coding Shelf')).toBeTruthy();
-        expect(screen.getByText('Language Shelf')).toBeTruthy();
+        expect(screen.getByTestId('shelf-name-text-shelf-1').props.children).toBe('Coding Shelf');
+        expect(screen.getByTestId('shelf-name-text-shelf-2').props.children).toBe('Language Shelf');
       });
     });
 
@@ -911,10 +903,10 @@ describe('OopslyApp (Home Page)', () => {
       render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('Subject 1')).toBeTruthy();
-        expect(screen.getByText('Subject 2')).toBeTruthy();
-        expect(screen.getByText('Subject 3')).toBeTruthy();
-        expect(screen.getByText('100%')).toBeTruthy();
+        expect(screen.getByTestId('subject-name-text-subject-1').props.children).toBe('Subject 1');
+        expect(screen.getByTestId('subject-name-text-subject-2').props.children).toBe('Subject 2');
+        expect(screen.getByTestId('subject-name-text-subject-3').props.children).toBe('Subject 3');
+        expect(screen.getByTestId('subject-progress-text-subject-3').props.children).toEqual([100, '%']);
       });
     });
   });
@@ -961,7 +953,7 @@ describe('OopslyApp (Home Page)', () => {
       const { toJSON } = render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('Coding')).toBeTruthy();
+        expect(screen.getByTestId('shelf-name-text-shelf-1').props.children).toBe('Coding');
       });
 
       expect(toJSON()).toMatchSnapshot();
@@ -974,10 +966,10 @@ describe('OopslyApp (Home Page)', () => {
         expect(mockFetchShelves).toHaveBeenCalled();
       });
 
-      fireEvent.press(screen.getByText('Create Shelf'));
+      fireEvent.press(screen.getByTestId('create-shelf-button'));
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Enter shelf name')).toBeTruthy();
+        expect(screen.getByTestId('shelf-name-input').props.placeholder).toBe('Enter shelf name');
       });
 
       expect(toJSON()).toMatchSnapshot();
@@ -1033,7 +1025,7 @@ describe('OopslyApp (Home Page)', () => {
       const { toJSON } = render(<OopslyApp />);
       
       await waitFor(() => {
-        expect(screen.getByText('Math')).toBeTruthy();
+        expect(screen.getByTestId('subject-name-text-subject-1').props.children).toBe('Math');
       });
 
       expect(toJSON()).toMatchSnapshot();

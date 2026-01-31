@@ -3,18 +3,23 @@
 exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf modal 1`] = `
 <View
   className="flex-1 bg-gray-50"
+  testID="home-container"
 >
   <View
     className="bg-white pt-12 pb-4 px-4 shadow-sm"
+    testID="header-container"
   >
     <View
       className="flex-row justify-between items-center"
+      testID="header-top-container"
     >
       <View
         className="flex-row items-center"
+        testID="header-logo-container"
       >
         <View
           className="w-10 h-10 rounded-full bg-indigo-100 items-center justify-center mr-3"
+          testID="profile-image-container"
         >
           <Image
             className="w-8 h-8 rounded-full"
@@ -23,16 +28,19 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
                 "uri": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D",
               }
             }
+            testID="profile-image"
           />
         </View>
         <Text
           className="text-2xl font-bold text-gray-800"
+          testID="app-title-text"
         >
           Oopsly
         </Text>
       </View>
       <View
         className="flex-row items-center bg-orange-50 px-3 py-1 rounded-full"
+        testID="streak-container"
       >
         <RNSVGSvgView
           align="xMidYMid"
@@ -123,6 +131,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
         </RNSVGSvgView>
         <Text
           className="ml-1 font-bold text-orange-700"
+          testID="streak-count-text"
         >
           7
         </Text>
@@ -130,20 +139,24 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
     </View>
     <View
       className="mt-4 p-4 bg-indigo-50 rounded-xl"
+      testID="motivational-quote-container"
     >
       <Text
         className="text-indigo-800 text-lg font-medium italic text-center"
+        testID="quote-text"
       >
         "The expert in anything was once a beginner."
       </Text>
       <Text
         className="text-indigo-600 text-sm text-center mt-1"
+        testID="quote-author-text"
       >
         - Helen Hayes
       </Text>
     </View>
     <View
       className="flex-row justify-around mt-4 pt-3 border-t border-gray-100"
+      testID="navigation-menu-container"
     >
       <View
         accessibilityState={
@@ -178,9 +191,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
             "opacity": 1,
           }
         }
+        testID="create-shelf-button"
       >
         <View
           className="bg-indigo-100 p-3 rounded-full mb-1"
+          testID="create-shelf-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -308,6 +323,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="create-shelf-label-text"
         >
           Create Shelf
         </Text>
@@ -345,9 +361,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
             "opacity": 1,
           }
         }
+        testID="tasks-button"
       >
         <View
           className="bg-blue-100 p-3 rounded-full mb-1"
+          testID="tasks-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -451,6 +469,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="tasks-label-text"
         >
           Tasks
         </Text>
@@ -488,9 +507,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
             "opacity": 1,
           }
         }
+        testID="notes-button"
       >
         <View
           className="bg-green-100 p-3 rounded-full mb-1"
+          testID="notes-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -594,6 +615,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="notes-label-text"
         >
           Notes
         </Text>
@@ -631,9 +653,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
             "opacity": 1,
           }
         }
+        testID="planner-button"
       >
         <View
           className="bg-purple-100 p-3 rounded-full mb-1"
+          testID="planner-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -785,6 +809,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="planner-label-text"
         >
           Planner
         </Text>
@@ -793,16 +818,19 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
   </View>
   <RCTScrollView
     className="flex-1"
+    testID="shelves-scrollview"
   >
     <View>
       <View
         className="h-24"
+        testID="bottom-spacer"
       />
     </View>
   </RCTScrollView>
   <Modal
     animationType="fade"
     onRequestClose={[Function]}
+    testID="create-shelf-modal"
     transparent={true}
     visible={true}
   >
@@ -837,6 +865,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
       onResponderTerminate={[Function]}
       onResponderTerminationRequest={[Function]}
       onStartShouldSetResponder={[Function]}
+      testID="create-shelf-modal-backdrop"
     >
       <View
         accessibilityState={
@@ -869,12 +898,15 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
         onResponderTerminate={[Function]}
         onResponderTerminationRequest={[Function]}
         onStartShouldSetResponder={[Function]}
+        testID="create-shelf-modal-content"
       >
         <View
           className="flex-row justify-between items-center p-6 pb-4 border-b border-gray-100"
+          testID="create-shelf-modal-header"
         >
           <Text
             className="text-xl font-bold text-gray-800"
+            testID="create-shelf-modal-title-text"
           >
             Create New Shelf
           </Text>
@@ -911,6 +943,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
                 "opacity": 1,
               }
             }
+            testID="create-shelf-modal-close-button"
           >
             <RNSVGSvgView
               align="xMidYMid"
@@ -1020,13 +1053,16 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
               "maxHeight": 500,
             }
           }
+          testID="create-shelf-form-scrollview"
         >
           <View>
             <View
               className="mb-5"
+              testID="icon-selector-container"
             >
               <Text
                 className="text-gray-700 font-semibold mb-3"
+                testID="icon-label-text"
               >
                 Icon
               </Text>
@@ -1063,9 +1099,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
                     "opacity": 1,
                   }
                 }
+                testID="icon-selector-button"
               >
                 <View
                   className="flex-row items-center"
+                  testID="selected-icon-container"
                 >
                   <RNSVGSvgView
                     align="xMidYMid"
@@ -1168,12 +1206,14 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
                   </RNSVGSvgView>
                   <Text
                     className="text-gray-800 ml-3 font-medium"
+                    testID="selected-icon-name-text"
                   >
                     Code
                   </Text>
                 </View>
                 <Text
                   className="text-gray-400"
+                  testID="icon-selector-hint-text"
                 >
                   Tap to change
                 </Text>
@@ -1181,9 +1221,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
             </View>
             <View
               className="mb-5"
+              testID="shelf-name-input-container"
             >
               <Text
                 className="text-gray-700 font-semibold mb-3"
+                testID="shelf-name-label-text"
               >
                 Name
               </Text>
@@ -1192,14 +1234,17 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
                 onChangeText={[Function]}
                 placeholder="Enter shelf name"
                 placeholderTextColor="#9CA3AF"
+                testID="shelf-name-input"
                 value=""
               />
             </View>
             <View
               className="mb-5"
+              testID="shelf-description-input-container"
             >
               <Text
                 className="text-gray-700 font-semibold mb-3"
+                testID="shelf-description-label-text"
               >
                 Description
               </Text>
@@ -1215,12 +1260,14 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
                     "minHeight": 100,
                   }
                 }
+                testID="shelf-description-input"
                 textAlignVertical="top"
                 value=""
               />
             </View>
             <View
               className="flex-row gap-3 mt-2"
+              testID="create-shelf-actions-container"
             >
               <View
                 accessibilityState={
@@ -1255,9 +1302,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
                     "opacity": 1,
                   }
                 }
+                testID="create-shelf-cancel-button"
               >
                 <Text
                   className="text-gray-700 font-bold"
+                  testID="create-shelf-cancel-text"
                 >
                   Cancel
                 </Text>
@@ -1295,9 +1344,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
                     "opacity": 1,
                   }
                 }
+                testID="create-shelf-submit-button"
               >
                 <Text
                   className="text-white font-bold"
+                  testID="create-shelf-submit-text"
                 >
                   Create Shelf
                 </Text>
@@ -1314,18 +1365,23 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for create shelf 
 exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial render 1`] = `
 <View
   className="flex-1 bg-gray-50"
+  testID="home-container"
 >
   <View
     className="bg-white pt-12 pb-4 px-4 shadow-sm"
+    testID="header-container"
   >
     <View
       className="flex-row justify-between items-center"
+      testID="header-top-container"
     >
       <View
         className="flex-row items-center"
+        testID="header-logo-container"
       >
         <View
           className="w-10 h-10 rounded-full bg-indigo-100 items-center justify-center mr-3"
+          testID="profile-image-container"
         >
           <Image
             className="w-8 h-8 rounded-full"
@@ -1334,16 +1390,19 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial rende
                 "uri": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D",
               }
             }
+            testID="profile-image"
           />
         </View>
         <Text
           className="text-2xl font-bold text-gray-800"
+          testID="app-title-text"
         >
           Oopsly
         </Text>
       </View>
       <View
         className="flex-row items-center bg-orange-50 px-3 py-1 rounded-full"
+        testID="streak-container"
       >
         <RNSVGSvgView
           align="xMidYMid"
@@ -1434,6 +1493,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial rende
         </RNSVGSvgView>
         <Text
           className="ml-1 font-bold text-orange-700"
+          testID="streak-count-text"
         >
           7
         </Text>
@@ -1441,20 +1501,24 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial rende
     </View>
     <View
       className="mt-4 p-4 bg-indigo-50 rounded-xl"
+      testID="motivational-quote-container"
     >
       <Text
         className="text-indigo-800 text-lg font-medium italic text-center"
+        testID="quote-text"
       >
         "The expert in anything was once a beginner."
       </Text>
       <Text
         className="text-indigo-600 text-sm text-center mt-1"
+        testID="quote-author-text"
       >
         - Helen Hayes
       </Text>
     </View>
     <View
       className="flex-row justify-around mt-4 pt-3 border-t border-gray-100"
+      testID="navigation-menu-container"
     >
       <View
         accessibilityState={
@@ -1489,9 +1553,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial rende
             "opacity": 1,
           }
         }
+        testID="create-shelf-button"
       >
         <View
           className="bg-indigo-100 p-3 rounded-full mb-1"
+          testID="create-shelf-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -1619,6 +1685,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial rende
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="create-shelf-label-text"
         >
           Create Shelf
         </Text>
@@ -1656,9 +1723,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial rende
             "opacity": 1,
           }
         }
+        testID="tasks-button"
       >
         <View
           className="bg-blue-100 p-3 rounded-full mb-1"
+          testID="tasks-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -1762,6 +1831,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial rende
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="tasks-label-text"
         >
           Tasks
         </Text>
@@ -1799,9 +1869,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial rende
             "opacity": 1,
           }
         }
+        testID="notes-button"
       >
         <View
           className="bg-green-100 p-3 rounded-full mb-1"
+          testID="notes-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -1905,6 +1977,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial rende
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="notes-label-text"
         >
           Notes
         </Text>
@@ -1942,9 +2015,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial rende
             "opacity": 1,
           }
         }
+        testID="planner-button"
       >
         <View
           className="bg-purple-100 p-3 rounded-full mb-1"
+          testID="planner-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -2096,6 +2171,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial rende
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="planner-label-text"
         >
           Planner
         </Text>
@@ -2104,10 +2180,12 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial rende
   </View>
   <RCTScrollView
     className="flex-1"
+    testID="shelves-scrollview"
   >
     <View>
       <View
         className="h-24"
+        testID="bottom-spacer"
       />
     </View>
   </RCTScrollView>
@@ -2117,18 +2195,23 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot for initial rende
 exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf list 1`] = `
 <View
   className="flex-1 bg-gray-50"
+  testID="home-container"
 >
   <View
     className="bg-white pt-12 pb-4 px-4 shadow-sm"
+    testID="header-container"
   >
     <View
       className="flex-row justify-between items-center"
+      testID="header-top-container"
     >
       <View
         className="flex-row items-center"
+        testID="header-logo-container"
       >
         <View
           className="w-10 h-10 rounded-full bg-indigo-100 items-center justify-center mr-3"
+          testID="profile-image-container"
         >
           <Image
             className="w-8 h-8 rounded-full"
@@ -2137,16 +2220,19 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf 
                 "uri": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D",
               }
             }
+            testID="profile-image"
           />
         </View>
         <Text
           className="text-2xl font-bold text-gray-800"
+          testID="app-title-text"
         >
           Oopsly
         </Text>
       </View>
       <View
         className="flex-row items-center bg-orange-50 px-3 py-1 rounded-full"
+        testID="streak-container"
       >
         <RNSVGSvgView
           align="xMidYMid"
@@ -2237,6 +2323,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf 
         </RNSVGSvgView>
         <Text
           className="ml-1 font-bold text-orange-700"
+          testID="streak-count-text"
         >
           7
         </Text>
@@ -2244,20 +2331,24 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf 
     </View>
     <View
       className="mt-4 p-4 bg-indigo-50 rounded-xl"
+      testID="motivational-quote-container"
     >
       <Text
         className="text-indigo-800 text-lg font-medium italic text-center"
+        testID="quote-text"
       >
         "The expert in anything was once a beginner."
       </Text>
       <Text
         className="text-indigo-600 text-sm text-center mt-1"
+        testID="quote-author-text"
       >
         - Helen Hayes
       </Text>
     </View>
     <View
       className="flex-row justify-around mt-4 pt-3 border-t border-gray-100"
+      testID="navigation-menu-container"
     >
       <View
         accessibilityState={
@@ -2292,9 +2383,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf 
             "opacity": 1,
           }
         }
+        testID="create-shelf-button"
       >
         <View
           className="bg-indigo-100 p-3 rounded-full mb-1"
+          testID="create-shelf-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -2422,6 +2515,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf 
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="create-shelf-label-text"
         >
           Create Shelf
         </Text>
@@ -2459,9 +2553,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf 
             "opacity": 1,
           }
         }
+        testID="tasks-button"
       >
         <View
           className="bg-blue-100 p-3 rounded-full mb-1"
+          testID="tasks-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -2565,6 +2661,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf 
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="tasks-label-text"
         >
           Tasks
         </Text>
@@ -2602,9 +2699,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf 
             "opacity": 1,
           }
         }
+        testID="notes-button"
       >
         <View
           className="bg-green-100 p-3 rounded-full mb-1"
+          testID="notes-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -2708,6 +2807,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf 
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="notes-label-text"
         >
           Notes
         </Text>
@@ -2745,9 +2845,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf 
             "opacity": 1,
           }
         }
+        testID="planner-button"
       >
         <View
           className="bg-purple-100 p-3 rounded-full mb-1"
+          testID="planner-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -2899,6 +3001,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf 
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="planner-label-text"
         >
           Planner
         </Text>
@@ -2907,10 +3010,12 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf 
   </View>
   <RCTScrollView
     className="flex-1"
+    testID="shelves-scrollview"
   >
     <View>
       <View
         className="h-24"
+        testID="bottom-spacer"
       />
     </View>
   </RCTScrollView>
@@ -2920,18 +3025,23 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with empty shelf 
 exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple shelves 1`] = `
 <View
   className="flex-1 bg-gray-50"
+  testID="home-container"
 >
   <View
     className="bg-white pt-12 pb-4 px-4 shadow-sm"
+    testID="header-container"
   >
     <View
       className="flex-row justify-between items-center"
+      testID="header-top-container"
     >
       <View
         className="flex-row items-center"
+        testID="header-logo-container"
       >
         <View
           className="w-10 h-10 rounded-full bg-indigo-100 items-center justify-center mr-3"
+          testID="profile-image-container"
         >
           <Image
             className="w-8 h-8 rounded-full"
@@ -2940,16 +3050,19 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
                 "uri": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D",
               }
             }
+            testID="profile-image"
           />
         </View>
         <Text
           className="text-2xl font-bold text-gray-800"
+          testID="app-title-text"
         >
           Oopsly
         </Text>
       </View>
       <View
         className="flex-row items-center bg-orange-50 px-3 py-1 rounded-full"
+        testID="streak-container"
       >
         <RNSVGSvgView
           align="xMidYMid"
@@ -3040,6 +3153,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
         </RNSVGSvgView>
         <Text
           className="ml-1 font-bold text-orange-700"
+          testID="streak-count-text"
         >
           7
         </Text>
@@ -3047,20 +3161,24 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
     </View>
     <View
       className="mt-4 p-4 bg-indigo-50 rounded-xl"
+      testID="motivational-quote-container"
     >
       <Text
         className="text-indigo-800 text-lg font-medium italic text-center"
+        testID="quote-text"
       >
         "The expert in anything was once a beginner."
       </Text>
       <Text
         className="text-indigo-600 text-sm text-center mt-1"
+        testID="quote-author-text"
       >
         - Helen Hayes
       </Text>
     </View>
     <View
       className="flex-row justify-around mt-4 pt-3 border-t border-gray-100"
+      testID="navigation-menu-container"
     >
       <View
         accessibilityState={
@@ -3095,9 +3213,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
             "opacity": 1,
           }
         }
+        testID="create-shelf-button"
       >
         <View
           className="bg-indigo-100 p-3 rounded-full mb-1"
+          testID="create-shelf-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -3225,6 +3345,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="create-shelf-label-text"
         >
           Create Shelf
         </Text>
@@ -3262,9 +3383,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
             "opacity": 1,
           }
         }
+        testID="tasks-button"
       >
         <View
           className="bg-blue-100 p-3 rounded-full mb-1"
+          testID="tasks-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -3368,6 +3491,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="tasks-label-text"
         >
           Tasks
         </Text>
@@ -3405,9 +3529,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
             "opacity": 1,
           }
         }
+        testID="notes-button"
       >
         <View
           className="bg-green-100 p-3 rounded-full mb-1"
+          testID="notes-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -3511,6 +3637,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="notes-label-text"
         >
           Notes
         </Text>
@@ -3548,9 +3675,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
             "opacity": 1,
           }
         }
+        testID="planner-button"
       >
         <View
           className="bg-purple-100 p-3 rounded-full mb-1"
+          testID="planner-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -3702,6 +3831,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="planner-label-text"
         >
           Planner
         </Text>
@@ -3710,16 +3840,20 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
   </View>
   <RCTScrollView
     className="flex-1"
+    testID="shelves-scrollview"
   >
     <View>
       <View
         className="mb-6"
+        testID="shelf-item-shelf-1"
       >
         <View
           className="flex-row items-center px-4 mb-3 mt-2"
+          testID="shelf-header-shelf-1"
         >
           <View
             className="mr-2"
+            testID="shelf-icon-container-shelf-1"
           >
             <RNSVGSvgView
               align="xMidYMid"
@@ -3823,6 +3957,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
           </View>
           <Text
             className="text-lg font-bold text-gray-800"
+            testID="shelf-name-text-shelf-1"
           >
             Coding
           </Text>
@@ -3831,10 +3966,12 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
           className="max-h-40"
           horizontal={true}
           showsHorizontalScrollIndicator={false}
+          testID="subjects-scrollview-shelf-1"
         >
           <View>
             <View
               className="flex-row gap-4 px-4 pb-2"
+              testID="subjects-container-shelf-1"
             >
               <View
                 accessibilityState={
@@ -3869,17 +4006,21 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
                     "opacity": 1,
                   }
                 }
+                testID="manage-shelf-button-shelf-1"
               >
                 <View
                   className="mb-1"
+                  testID="manage-shelf-content-shelf-1"
                 >
                   <Text
                     className="text-gray-600 font-semibold"
+                    testID="manage-shelf-title-text-shelf-1"
                   >
                     Management
                   </Text>
                   <Text
                     className="text-gray-400 text-xs mt-1"
+                    testID="manage-shelf-subtitle-text-shelf-1"
                   >
                     Tap to manage
                   </Text>
@@ -3891,12 +4032,15 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
       </View>
       <View
         className="mb-6"
+        testID="shelf-item-shelf-2"
       >
         <View
           className="flex-row items-center px-4 mb-3 mt-2"
+          testID="shelf-header-shelf-2"
         >
           <View
             className="mr-2"
+            testID="shelf-icon-container-shelf-2"
           >
             <RNSVGSvgView
               align="xMidYMid"
@@ -4088,6 +4232,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
           </View>
           <Text
             className="text-lg font-bold text-gray-800"
+            testID="shelf-name-text-shelf-2"
           >
             Languages
           </Text>
@@ -4096,10 +4241,12 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
           className="max-h-40"
           horizontal={true}
           showsHorizontalScrollIndicator={false}
+          testID="subjects-scrollview-shelf-2"
         >
           <View>
             <View
               className="flex-row gap-4 px-4 pb-2"
+              testID="subjects-container-shelf-2"
             >
               <View
                 accessibilityState={
@@ -4134,17 +4281,21 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
                     "opacity": 1,
                   }
                 }
+                testID="manage-shelf-button-shelf-2"
               >
                 <View
                   className="mb-1"
+                  testID="manage-shelf-content-shelf-2"
                 >
                   <Text
                     className="text-gray-600 font-semibold"
+                    testID="manage-shelf-title-text-shelf-2"
                   >
                     Management
                   </Text>
                   <Text
                     className="text-gray-400 text-xs mt-1"
+                    testID="manage-shelf-subtitle-text-shelf-2"
                   >
                     Tap to manage
                   </Text>
@@ -4156,6 +4307,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
       </View>
       <View
         className="h-24"
+        testID="bottom-spacer"
       />
     </View>
   </RCTScrollView>
@@ -4165,18 +4317,23 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with multiple she
 exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves containing subjects 1`] = `
 <View
   className="flex-1 bg-gray-50"
+  testID="home-container"
 >
   <View
     className="bg-white pt-12 pb-4 px-4 shadow-sm"
+    testID="header-container"
   >
     <View
       className="flex-row justify-between items-center"
+      testID="header-top-container"
     >
       <View
         className="flex-row items-center"
+        testID="header-logo-container"
       >
         <View
           className="w-10 h-10 rounded-full bg-indigo-100 items-center justify-center mr-3"
+          testID="profile-image-container"
         >
           <Image
             className="w-8 h-8 rounded-full"
@@ -4185,16 +4342,19 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
                 "uri": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D",
               }
             }
+            testID="profile-image"
           />
         </View>
         <Text
           className="text-2xl font-bold text-gray-800"
+          testID="app-title-text"
         >
           Oopsly
         </Text>
       </View>
       <View
         className="flex-row items-center bg-orange-50 px-3 py-1 rounded-full"
+        testID="streak-container"
       >
         <RNSVGSvgView
           align="xMidYMid"
@@ -4285,6 +4445,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
         </RNSVGSvgView>
         <Text
           className="ml-1 font-bold text-orange-700"
+          testID="streak-count-text"
         >
           7
         </Text>
@@ -4292,20 +4453,24 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
     </View>
     <View
       className="mt-4 p-4 bg-indigo-50 rounded-xl"
+      testID="motivational-quote-container"
     >
       <Text
         className="text-indigo-800 text-lg font-medium italic text-center"
+        testID="quote-text"
       >
         "The expert in anything was once a beginner."
       </Text>
       <Text
         className="text-indigo-600 text-sm text-center mt-1"
+        testID="quote-author-text"
       >
         - Helen Hayes
       </Text>
     </View>
     <View
       className="flex-row justify-around mt-4 pt-3 border-t border-gray-100"
+      testID="navigation-menu-container"
     >
       <View
         accessibilityState={
@@ -4340,9 +4505,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
             "opacity": 1,
           }
         }
+        testID="create-shelf-button"
       >
         <View
           className="bg-indigo-100 p-3 rounded-full mb-1"
+          testID="create-shelf-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -4470,6 +4637,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="create-shelf-label-text"
         >
           Create Shelf
         </Text>
@@ -4507,9 +4675,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
             "opacity": 1,
           }
         }
+        testID="tasks-button"
       >
         <View
           className="bg-blue-100 p-3 rounded-full mb-1"
+          testID="tasks-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -4613,6 +4783,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="tasks-label-text"
         >
           Tasks
         </Text>
@@ -4650,9 +4821,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
             "opacity": 1,
           }
         }
+        testID="notes-button"
       >
         <View
           className="bg-green-100 p-3 rounded-full mb-1"
+          testID="notes-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -4756,6 +4929,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="notes-label-text"
         >
           Notes
         </Text>
@@ -4793,9 +4967,11 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
             "opacity": 1,
           }
         }
+        testID="planner-button"
       >
         <View
           className="bg-purple-100 p-3 rounded-full mb-1"
+          testID="planner-icon-container"
         >
           <RNSVGSvgView
             align="xMidYMid"
@@ -4947,6 +5123,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
         </View>
         <Text
           className="text-xs text-gray-600"
+          testID="planner-label-text"
         >
           Planner
         </Text>
@@ -4955,16 +5132,20 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
   </View>
   <RCTScrollView
     className="flex-1"
+    testID="shelves-scrollview"
   >
     <View>
       <View
         className="mb-6"
+        testID="shelf-item-shelf-1"
       >
         <View
           className="flex-row items-center px-4 mb-3 mt-2"
+          testID="shelf-header-shelf-1"
         >
           <View
             className="mr-2"
+            testID="shelf-icon-container-shelf-1"
           >
             <RNSVGSvgView
               align="xMidYMid"
@@ -5068,6 +5249,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
           </View>
           <Text
             className="text-lg font-bold text-gray-800"
+            testID="shelf-name-text-shelf-1"
           >
             Test Shelf
           </Text>
@@ -5076,10 +5258,12 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
           className="max-h-40"
           horizontal={true}
           showsHorizontalScrollIndicator={false}
+          testID="subjects-scrollview-shelf-1"
         >
           <View>
             <View
               className="flex-row gap-4 px-4 pb-2"
+              testID="subjects-container-shelf-1"
             >
               <View
                 accessibilityState={
@@ -5114,20 +5298,25 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
                     "opacity": 1,
                   }
                 }
+                testID="subject-card-subject-1"
               >
                 <View
                   className="flex-row justify-between items-start mb-2"
+                  testID="subject-header-subject-1"
                 >
                   <Text
                     className="font-bold text-gray-800 text-lg"
+                    testID="subject-name-text-subject-1"
                   >
                     Math
                   </Text>
                   <View
                     className="bg-blue-50 rounded-full px-2 py-1"
+                    testID="subject-due-badge-subject-1"
                   >
                     <Text
                       className="text-blue-600 text-xs font-semibold"
+                      testID="subject-due-text-subject-1"
                     >
                       5
                        due
@@ -5136,12 +5325,15 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
                 </View>
                 <View
                   className="mt-2"
+                  testID="subject-progress-container-subject-1"
                 >
                   <View
                     className="flex-row items-center"
+                    testID="subject-progress-bar-container-subject-1"
                   >
                     <View
                       className="flex-1 bg-gray-200 rounded-full h-2"
+                      testID="subject-progress-background-subject-1"
                     >
                       <View
                         className="bg-blue-500 h-2 rounded-full"
@@ -5150,10 +5342,12 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
                             "width": "75%",
                           }
                         }
+                        testID="subject-progress-fill-subject-1"
                       />
                     </View>
                     <Text
                       className="text-gray-500 text-xs ml-2"
+                      testID="subject-progress-text-subject-1"
                     >
                       75
                       %
@@ -5194,17 +5388,21 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
                     "opacity": 1,
                   }
                 }
+                testID="manage-shelf-button-shelf-1"
               >
                 <View
                   className="mb-1"
+                  testID="manage-shelf-content-shelf-1"
                 >
                   <Text
                     className="text-gray-600 font-semibold"
+                    testID="manage-shelf-title-text-shelf-1"
                   >
                     Management
                   </Text>
                   <Text
                     className="text-gray-400 text-xs mt-1"
+                    testID="manage-shelf-subtitle-text-shelf-1"
                   >
                     Tap to manage
                   </Text>
@@ -5216,6 +5414,7 @@ exports[`OopslyApp (Home Page) Snapshot Tests matches snapshot with shelves cont
       </View>
       <View
         className="h-24"
+        testID="bottom-spacer"
       />
     </View>
   </RCTScrollView>
