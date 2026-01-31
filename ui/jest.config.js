@@ -33,6 +33,7 @@ module.exports = {
     '!**/app/study/**',
     '!**/app/\\(user\\)/**',
     '!**/types/**',
+    '!**/temp/**',
   ],
   coverageThreshold: {
     global: {
