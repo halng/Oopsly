@@ -918,4 +918,125 @@ describe('OopslyApp (Home Page)', () => {
       });
     });
   });
+
+  describe('Snapshot Tests', () => {
+    it('matches snapshot for initial render', async () => {
+      const { toJSON } = render(<OopslyApp />);
+      
+      await waitFor(() => {
+        expect(mockFetchShelves).toHaveBeenCalled();
+      });
+
+      expect(toJSON()).toMatchSnapshot();
+    });
+
+    it('matches snapshot with multiple shelves', async () => {
+      const mockShelves = [
+        {
+          id: 'shelf-1',
+          name: 'Coding',
+          description: 'Programming courses',
+          icon: 'Code',
+          color: '#4F46E5',
+          subjects: [],
+        },
+        {
+          id: 'shelf-2',
+          name: 'Languages',
+          description: 'Language learning',
+          icon: 'Languages',
+          color: '#10B981',
+          subjects: [],
+        },
+      ];
+
+      mockFetchShelves.mockResolvedValue({
+        ...mockShelvesData,
+        data: {
+          ...mockShelvesData.data,
+          entities: mockShelves,
+        },
+      });
+
+      const { toJSON } = render(<OopslyApp />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Coding')).toBeTruthy();
+      });
+
+      expect(toJSON()).toMatchSnapshot();
+    });
+
+    it('matches snapshot for create shelf modal', async () => {
+      const { toJSON } = render(<OopslyApp />);
+      
+      await waitFor(() => {
+        expect(mockFetchShelves).toHaveBeenCalled();
+      });
+
+      fireEvent.press(screen.getByText('Create Shelf'));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Enter shelf name')).toBeTruthy();
+      });
+
+      expect(toJSON()).toMatchSnapshot();
+    });
+
+    it('matches snapshot with empty shelf list', async () => {
+      mockFetchShelves.mockResolvedValue({
+        ...mockShelvesData,
+        data: {
+          ...mockShelvesData.data,
+          entities: [],
+          totalElements: 0,
+        },
+      });
+
+      const { toJSON } = render(<OopslyApp />);
+      
+      await waitFor(() => {
+        expect(mockFetchShelves).toHaveBeenCalled();
+      });
+
+      expect(toJSON()).toMatchSnapshot();
+    });
+
+    it('matches snapshot with shelves containing subjects', async () => {
+      const mockShelves = [
+        {
+          id: 'shelf-1',
+          name: 'Test Shelf',
+          description: 'Description',
+          icon: 'Code',
+          color: '#4F46E5',
+          subjects: [
+            {
+              id: 'subject-1',
+              name: 'Math',
+              description: 'Math course',
+              overdue: 5,
+              completedPercent: 75,
+            },
+          ],
+        },
+      ];
+
+      mockFetchShelves.mockResolvedValue({
+        ...mockShelvesData,
+        data: {
+          ...mockShelvesData.data,
+          entities: mockShelves,
+        },
+      });
+
+      const { toJSON } = render(<OopslyApp />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Math')).toBeTruthy();
+      });
+
+      expect(toJSON()).toMatchSnapshot();
+    });
+  });
 });
