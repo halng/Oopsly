@@ -1,9 +1,15 @@
 
-# Osmosis
+# Oopsly
 
 ## Project Description
 
-Osmosis is an intelligent test generation application designed to help students create customized assessments for effective studying. With features to generate tests from topics, documents, or manually create flashcards, users can tailor their learning experience to any subject matter.
+Oopsly is a cross-platform flashcard and spaced repetition (SRS) application designed to help users manage learning activities through relationships between concepts. The application focuses on cognitive ergonomics and effective knowledge retention.
+
+The application aims to:
+
+- Create tests and practice them, share them with fellow learners
+- Set goals and follow goal-tracking workflows
+- Practice using the Pomodoro method for focused study sessions
 
 ## Style Guide
 
@@ -88,56 +94,46 @@ For detailed information about the project, see:
 
 The app provides helpful tips throughout the creation process to ensure optimal results.
 
-### For Developers
+## Development
 
-#### Prerequisites
-- Node.js 18+
-- Java 21
-- Docker & Docker Compose
-- Expo CLI
+### Getting Started
 
-#### Setup
+#### Frontend (React Native)
 
 ```bash
-# Clone the repository
-git clone https://github.com/halng/Oopsly.git
-cd Oopsly
-
-# Backend setup
-cd api
-./gradlew bootRun
-
-# Frontend setup (in a new terminal)
 cd ui
-npm install
-npx expo start
-
-# Database (in a new terminal)
-docker-compose up postgres
+pnpm install
+pnpm start
 ```
 
-#### Running Tests
+#### Backend (Spring Boot)
 
 ```bash
-# Backend tests
 cd api
-./gradlew test
+./gradlew bootRun
+```
 
-# Frontend tests
-cd ui
-npm test
+#### Integration Tests
 
-# Integration tests
+```bash
 cd test
 pytest
 ```
 
-## Project Structure
+### Contributing
 
-```
-Oopsly/
-├── api/           # Spring Boot backend API
-├── ui/            # React Native mobile app
-├── test/          # Integration and E2E tests
-└── docs/          # Documentation
-```
+This project uses GitHub Copilot to assist with development. For comprehensive coding guidelines, best practices, and testing requirements, please refer to:
+
+📘 **[GitHub Copilot Instructions](.github/copilot-instructions.md)**
+
+This document includes:
+
+- Project architecture and tech stack overview
+- Coding standards for TypeScript, Java, and Python
+- Testing strategy and coverage requirements
+- Security and performance best practices
+- Code review guidelines
+
+### License
+
+Licensed under the Apache License 2.0. See source files for full license headers.
