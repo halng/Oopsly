@@ -258,7 +258,6 @@ run_integration_tests() {
     # Always create .env file with correct test values
     echo "CI::Creating .env file with test configuration..."
     cat > .env << 'EOF'
-SPRING_PROFILES_ACTIVE=itest
 GOOGLE_CLIENT_ID=dummy.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=dummy
 DB_HOST=localhost
