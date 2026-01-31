@@ -220,6 +220,13 @@ run_integration_tests() {
     echo "CI::Building backend Docker image for integration tests..."
     if [ -d "api" ]; then
         cd api
+        
+        # Create temporary .env file for build if it doesn't exist
+        if [ ! -f ".env" ]; then
+            echo "CI::Creating temporary .env file for build..."
+            cp .env.example .env
+        fi
+        
         echo "CI::Building local Docker image..."
         ./gradlew bootBuildImage --imageName=ghcr.io/halng/oopsly-api:latest
         cd ..
