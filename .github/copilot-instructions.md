@@ -309,6 +309,8 @@ This serves as both documentation and a warning signal for reviewers.
 
 ## Documentation
 
+* **All documentation must be written in markdown format** and pass `markdownlint-cli2` validation
+* **The CI pipeline checks markdown linting** - ensure all `.md` files comply with markdownlint rules
 * **Automatically update documentation** when detecting new features or feature changes
 * **Draw end-to-end flow diagrams** for each feature to visualize the complete user journey
 * Keep documentation up to date with code changes
