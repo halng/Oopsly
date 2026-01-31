@@ -1,9 +1,14 @@
 
-# Osmosis
+# Oopsly
 
 ## Project Description
 
-Osmosis is an intelligent test generation application designed to help students create customized assessments for effective studying. With features to generate tests from topics, documents, or manually create flashcards, users can tailor their learning experience to any subject matter.
+Oopsly is a cross-platform flashcard and spaced repetition (SRS) application designed to help users manage learning activities through relationships between concepts. The application focuses on cognitive ergonomics and effective knowledge retention.
+
+The application aims to:
+- Create tests and practice them, share them with fellow learners
+- Set goals and follow goal-tracking workflows
+- Practice using the Pomodoro method for focused study sessions
 
 ## Style Guide
 
