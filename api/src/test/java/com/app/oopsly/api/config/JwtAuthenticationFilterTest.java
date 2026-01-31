@@ -126,7 +126,7 @@ class JwtAuthenticationFilterTest {
         String token = "valid.jwt.token";
         String userId = "user123";
         String role = "ROLE_USER";
-        
+
         when(request.getHeader("authorization")).thenReturn("Bearer " + token);
         when(jwtUtils.extractUserId(token)).thenReturn(userId);
         when(jwtUtils.extractUserRole(token)).thenReturn(role);
@@ -187,9 +187,14 @@ class JwtAuthenticationFilterTest {
         // Arrange
         setupRequestId();
         String tokenWithLeadingSpace = " token"; // token with leading space
-        when(request.getHeader("authorization")).thenReturn("Bearer " + tokenWithLeadingSpace); // Results in "Bearer  token" with double space
-        when(jwtUtils.extractUserId(tokenWithLeadingSpace)).thenThrow(new RuntimeException("Invalid token"));
-        
+        when(request.getHeader("authorization"))
+                .thenReturn(
+                        "Bearer "
+                                + tokenWithLeadingSpace); // Results in "Bearer  token" with double
+        // space
+        when(jwtUtils.extractUserId(tokenWithLeadingSpace))
+                .thenThrow(new RuntimeException("Invalid token"));
+
         // Mock the response writer for error handling
         java.io.PrintWriter writer = mock(java.io.PrintWriter.class);
         when(response.getWriter()).thenReturn(writer);
