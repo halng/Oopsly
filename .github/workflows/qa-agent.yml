@@ -59,13 +59,12 @@ jobs:
             --input - <<< '{
             "title": "🤖 QA Task: Generate Tests for PR #$PR_NUMBER",
             "body": "$BODY",
-            "assignees": ["copilot-swe-agent[bot]"],
-            "agent_assignment": {
-              "target_repo": "halng/Oopsly",
-              "base_branch": "main",
-              "custom_instructions": "$(cat ./.github/copilot-instructions.md)",
-              "custom_agent": "",
-              "model": ""
-            }
+            "assignees": [
+              "copilot-swe-agent[bot]"
+            ],
+            "labels": [
+              "testing",
+              "automation"
+            ]
           }'
 
