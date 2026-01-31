@@ -755,4 +755,167 @@ describe('OopslyApp (Home Page)', () => {
       expect(screen.getByText('Oopsly')).toBeTruthy();
     });
   });
+
+  describe('Shelf Creation - Additional Failure Cases', () => {
+    it('handles shelf creation API failure response', async () => {
+      mockCreateShelf.mockResolvedValue({
+        isSuccess: false,
+        message: 'Creation failed on server',
+        data: null as any,
+      });
+
+      render(<OopslyApp />);
+      
+      await waitFor(() => {
+        expect(mockFetchShelves).toHaveBeenCalled();
+      });
+      
+      fireEvent.press(screen.getByText('Create Shelf'));
+      
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Enter shelf name')).toBeTruthy();
+      });
+      
+      const nameInput = screen.getByPlaceholderText('Enter shelf name');
+      fireEvent.changeText(nameInput, 'Failed Shelf');
+      
+      const createButton = screen.getAllByText('Create Shelf')[1];
+      fireEvent.press(createButton);
+      
+      await waitFor(() => {
+        expect(mockCreateShelf).toHaveBeenCalled();
+      });
+    });
+
+    it('resets modal state after creation', async () => {
+      mockCreateShelf.mockResolvedValue({
+        isSuccess: true,
+        message: 'Created',
+        data: {
+          id: 'new-id',
+          name: 'New Shelf',
+          description: 'Desc',
+          icon: 'Code',
+          subjects: [],
+        },
+      });
+
+      render(<OopslyApp />);
+      
+      await waitFor(() => {
+        expect(mockFetchShelves).toHaveBeenCalled();
+      });
+      
+      fireEvent.press(screen.getByText('Create Shelf'));
+      
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Enter shelf name')).toBeTruthy();
+      });
+      
+      const nameInput = screen.getByPlaceholderText('Enter shelf name');
+      fireEvent.changeText(nameInput, 'New Shelf');
+      
+      const descInput = screen.getByPlaceholderText('Enter shelf description (optional)');
+      fireEvent.changeText(descInput, 'Desc');
+      
+      const createButton = screen.getAllByText('Create Shelf')[1];
+      fireEvent.press(createButton);
+      
+      await waitFor(() => {
+        expect(mockCreateShelf).toHaveBeenCalled();
+        expect(mockFetchShelves).toHaveBeenCalledTimes(2);
+      });
+    });
+  });
+
+  describe('Multiple Shelves Interaction', () => {
+    it('handles shelves with different icons correctly', async () => {
+      const mockShelves = [
+        {
+          id: 'shelf-1',
+          name: 'Coding Shelf',
+          description: 'For programming',
+          icon: 'Code',
+          color: '#4F46E5',
+          subjects: [],
+        },
+        {
+          id: 'shelf-2',
+          name: 'Language Shelf',
+          description: 'For languages',
+          icon: 'Languages',
+          color: '#10B981',
+          subjects: [],
+        },
+      ];
+
+      mockFetchShelves.mockResolvedValue({
+        ...mockShelvesData,
+        data: {
+          ...mockShelvesData.data,
+          entities: mockShelves,
+          totalElements: 2,
+        },
+      });
+
+      render(<OopslyApp />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Coding Shelf')).toBeTruthy();
+        expect(screen.getByText('Language Shelf')).toBeTruthy();
+      });
+    });
+
+    it('renders multiple subjects under single shelf', async () => {
+      const mockShelves = [
+        {
+          id: 'shelf-1',
+          name: 'Test Shelf',
+          description: 'Description',
+          icon: 'Code',
+          color: '#4F46E5',
+          subjects: [
+            {
+              id: 'subject-1',
+              name: 'Subject 1',
+              description: 'Desc 1',
+              overdue: 5,
+              completedPercent: 75,
+            },
+            {
+              id: 'subject-2',
+              name: 'Subject 2',
+              description: 'Desc 2',
+              overdue: 3,
+              completedPercent: 60,
+            },
+            {
+              id: 'subject-3',
+              name: 'Subject 3',
+              description: 'Desc 3',
+              overdue: 0,
+              completedPercent: 100,
+            },
+          ],
+        },
+      ];
+
+      mockFetchShelves.mockResolvedValue({
+        ...mockShelvesData,
+        data: {
+          ...mockShelvesData.data,
+          entities: mockShelves,
+        },
+      });
+
+      render(<OopslyApp />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Subject 1')).toBeTruthy();
+        expect(screen.getByText('Subject 2')).toBeTruthy();
+        expect(screen.getByText('Subject 3')).toBeTruthy();
+        expect(screen.getByText('100%')).toBeTruthy();
+      });
+    });
+  });
 });

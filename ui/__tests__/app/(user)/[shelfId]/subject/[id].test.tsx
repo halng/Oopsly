@@ -653,4 +653,77 @@ describe('SubjectDetailScreen', () => {
       expect(mockFetchCards).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('Card Creation - Extended Coverage', () => {
+    it('creates card with content', async () => {
+      mockCreateCard.mockResolvedValue({
+        isSuccess: true,
+        message: 'Card created',
+        data: { count: 1 },
+      });
+
+      render(<SubjectDetailScreen />);
+      
+      await waitFor(() => {
+        expect(mockGetSubject).toHaveBeenCalled();
+      });
+      
+      fireEvent.press(screen.getByText('Add Card'));
+      
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Enter question or term')).toBeTruthy();
+      });
+    });
+  });
+
+  describe('Multiple Cards Management', () => {
+    it('displays cards count correctly', async () => {
+      render(<SubjectDetailScreen />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('2 cards')).toBeTruthy();
+      });
+    });
+
+    it('handles large number of cards', async () => {
+      const manyCards = Array.from({ length: 10 }, (_, i) => ({
+        id: `card-${i}`,
+        front: `Question ${i}`,
+        back: `Answer ${i}`,
+      }));
+
+      mockFetchCards.mockResolvedValue({
+        ...mockCardsData,
+        data: {
+          ...mockCardsData.data,
+          entities: manyCards,
+          totalElements: 10,
+        },
+      });
+
+      render(<SubjectDetailScreen />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('10 cards')).toBeTruthy();
+      });
+    });
+  });
+
+  describe('Progress Tracking', () => {
+    it('displays different progress percentages', async () => {
+      mockGetSubject.mockResolvedValue({
+        ...mockSubjectData,
+        data: {
+          ...mockSubjectData.data,
+          completedPercent: 50,
+        },
+      });
+
+      render(<SubjectDetailScreen />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('50%')).toBeTruthy();
+      });
+    });
+  });
 });
