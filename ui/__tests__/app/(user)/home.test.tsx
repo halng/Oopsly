@@ -310,7 +310,7 @@ describe('OopslyApp (Home Page)', () => {
       const nameInput = screen.getByPlaceholderText('Enter shelf name');
       fireEvent.changeText(nameInput, 'New Shelf');
       
-      const descriptionInput = screen.getByPlaceholderText('Add a description (optional)');
+      const descriptionInput = screen.getByPlaceholderText('Enter shelf description (optional)');
       fireEvent.changeText(descriptionInput, 'New Description');
       
       const createButton = screen.getAllByText('Create Shelf')[1];
