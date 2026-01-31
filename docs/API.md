@@ -1224,8 +1224,10 @@ EASY, MEDIUM, HARD
 
 #### Question Types
 ```
-MULTIPLE_CHOICE, TRUE_FALSE, SHORT_ANSWER, FILL_IN_BLANK
+MULTIPLE_CHOICE, TRUE_FALSE, SHORT_ANSWER
 ```
+
+**Note:** `FILL_IN_BLANK` is planned for future implementation.
 
 ---
 

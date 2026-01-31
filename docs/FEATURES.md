@@ -2,15 +2,22 @@
 
 ## Overview
 
-Oopsly (formerly Osmosis) is a comprehensive learning platform that combines intelligent test generation, flashcard management, and study planning to help students learn more effectively. The application supports both AI-powered content generation and manual creation, with robust progress tracking and analytics.
+Oopsly (formerly Osmosis) is a comprehensive learning platform that combines intelligent test generation, flashcard management, and study planning to help students learn more effectively. The application supports both AI-powered content generation (in development) and manual creation, with robust progress tracking and analytics.
+
+## Implementation Status
+
+**Legend:**
+- ✅ **Fully Implemented**: Feature is complete with both UI and backend
+- 🔄 **In Development**: UI completed, backend API in progress
+- 📋 **Planned**: Feature is designed but not yet implemented
 
 ---
 
 ## Core Features
 
-### 1. User Management & Authentication
+### 1. User Management & Authentication ✅
 
-#### 1.1 OTP-Based Authentication
+#### 1.1 OTP-Based Authentication ✅
 - **Email-based OTP system**: Secure passwordless authentication
 - **OTP Generation**: Send one-time passwords to registered email addresses
 - **OTP Validation**: Verify OTP codes for secure login
@@ -33,19 +40,21 @@ Oopsly (formerly Osmosis) is a comprehensive learning platform that combines int
 
 #### 2.1 Multiple Creation Methods
 
-**A. Topic-Based Generation (AI-Powered)**
+**A. Topic-Based Generation (AI-Powered) - 🔄 In Development**
 - Input a topic or subject area
 - AI generates relevant questions automatically
 - Customizable difficulty levels
 - Adjustable question count (1-50 questions)
+- **Status:** UI implemented, backend AI integration in development
 
-**B. Document Upload Generation**
+**B. Document Upload Generation - 🔄 In Development**
 - Upload documents (PDF, images, etc.)
 - AI extracts content and generates questions
 - Automatic topic identification
 - Context-aware question generation
+- **Status:** UI implemented, backend document processing in development
 
-**C. Manual Test Creation**
+**C. Manual Test Creation ✅**
 - Create custom questions from scratch
 - Full control over question content
 - Support for multiple question types
@@ -56,7 +65,8 @@ Oopsly (formerly Osmosis) is a comprehensive learning platform that combines int
 - Multiple Choice Questions (MCQ)
 - True/False Questions
 - Short Answer Questions
-- Fill-in-the-blank (Cloze)
+
+**Note:** Fill-in-the-blank (Cloze) is planned for future implementation.
 
 **Configuration Options:**
 - Question count: 1-50 questions per test
@@ -75,9 +85,9 @@ Oopsly (formerly Osmosis) is a comprehensive learning platform that combines int
 
 ---
 
-### 3. Flashcard System
+### 3. Flashcard System ✅
 
-#### 3.1 Card Management
+#### 3.1 Card Management ✅
 
 **Card Creation:**
 - Create individual flashcards
@@ -114,9 +124,9 @@ Oopsly (formerly Osmosis) is a comprehensive learning platform that combines int
 
 ---
 
-### 4. Collections & Shelves
+### 4. Collections & Shelves ✅
 
-#### 4.1 Shelve Management
+#### 4.1 Shelve Management ✅
 
 **Organization:**
 - Create collections (shelves) for related content
@@ -153,7 +163,7 @@ Oopsly (formerly Osmosis) is a comprehensive learning platform that combines int
 
 ### 5. Study Tools
 
-#### 5.1 Pomodoro Timer (Focus Flow)
+#### 5.1 Pomodoro Timer (Focus Flow) ✅
 
 **Timer Features:**
 - 25-minute focus sessions
@@ -267,17 +277,19 @@ Oopsly (formerly Osmosis) is a comprehensive learning platform that combines int
 
 ### 9. Document Management
 
-#### 9.1 Document Upload
+#### 9.1 Document Upload - 🔄 In Development
 - PDF upload and processing
 - Image upload support
 - Document parsing for content extraction
 - AI-powered content analysis
+- **Status:** UI implemented, backend API in development
 
-#### 9.2 Resource Library
+#### 9.2 Resource Library - 📋 Planned
 - File management for uploaded documents
 - PDF viewer integration
 - Highlight-to-flashcard creation
 - Document organization
+- **Status:** Planned for future implementation
 
 ---
 

@@ -95,7 +95,7 @@ Oopsly (Osmosis) is a cross-platform learning application built with a modern, s
 | **API Style** | REST | - | HTTP-based API |
 | **ORM** | Spring Data JPA | Latest | Database abstraction |
 | **Security** | Spring Security | Latest | Authentication & authorization |
-| **AI** | Spring AI | Latest | AI/ML integration |
+| **AI** | Spring AI | Latest (planned) | AI/ML integration (in development) |
 | **Build Tool** | Gradle | Latest | Build automation |
 | **API Docs** | SpringDoc OpenAPI | Latest | Auto-generated API documentation |
 
@@ -586,14 +586,17 @@ Question {
    - Email templates
    - Delivery tracking
 
-2. **AI Service**: Spring AI integration (planned)
-   - Gemini 1.5 Flash for text generation
-   - Question generation
-   - Content analysis
+2. **AI Service**: Spring AI integration (in development)
+   - Gemini 1.5 Flash for text generation (planned)
+   - Question generation from topics
+   - Document content extraction
+   - Context-aware question creation
    - Cost control with rate limiting
+   - **Status**: Dependencies configured but not yet integrated
 
 3. **Storage Service**: File uploads (planned)
    - Cloud Storage for documents
+   - PDF processing capabilities
    - Image optimization
    - CDN delivery
 
