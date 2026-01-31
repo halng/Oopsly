@@ -204,6 +204,85 @@ run_test_style_check() {
     fi
 }
 
+# Integration Tests (test directory)
+run_integration_tests() {
+    echo "CI::"
+    echo "CI::====================================="
+    echo "CI::Running Integration Tests"
+    echo "CI::====================================="
+    
+    if [ ! -d "test" ]; then
+        echo "CI::Warning: test directory not found, skipping integration tests"
+        return 0
+    fi
+    
+    # Build backend Docker image for integration tests
+    echo "CI::Building backend Docker image for integration tests..."
+    if [ -d "api" ]; then
+        cd api
+        echo "CI::Building local Docker image..."
+        ./gradlew bootBuildImage --imageName=ghcr.io/halng/oopsly-api:latest
+        cd ..
+    else
+        echo "CI::Error: api directory not found, cannot build backend image"
+        return 1
+    fi
+    
+    cd test
+    
+    # Check if docker-compose config exists
+    if [ ! -f "tests/config/docker-compose-integration.yaml" ]; then
+        echo "CI::Warning: docker-compose-integration.yaml not found, skipping integration tests"
+        cd ..
+        return 0
+    fi
+    
+    echo "CI::Installing Python test dependencies..."
+    python -m pip install --upgrade pip
+    pip install -r config/requirement.txt
+    
+    echo "CI::Starting Docker Compose services for integration tests..."
+    docker compose -f tests/config/docker-compose-integration.yaml up -d
+    
+    # Wait for services to be healthy
+    echo "CI::Waiting for services to be healthy..."
+    sleep 10
+    
+    # Check service health
+    local max_retries=30
+    local retry_count=0
+    while [ $retry_count -lt $max_retries ]; do
+        if docker compose -f tests/config/docker-compose-integration.yaml ps | grep -q "healthy"; then
+            echo "CI::Services are healthy!"
+            break
+        fi
+        echo "CI::Waiting for services... ($retry_count/$max_retries)"
+        sleep 2
+        retry_count=$((retry_count + 1))
+    done
+    
+    if [ $retry_count -eq $max_retries ]; then
+        echo "CI::Warning: Timeout waiting for services to be healthy"
+        docker compose -f tests/config/docker-compose-integration.yaml logs
+    fi
+    
+    echo "CI::Running integration tests..."
+    python -m tests.integration.main
+    local test_exit_code=$?
+    
+    echo "CI::Stopping Docker Compose services..."
+    docker compose -f tests/config/docker-compose-integration.yaml down -v
+    
+    cd ..
+    
+    if [ $test_exit_code -ne 0 ]; then
+        echo "CI::Integration tests failed with exit code $test_exit_code"
+        exit 1
+    fi
+    
+    echo "CI::Integration tests completed successfully!"
+}
+
 # Security Scans (Snyk)
 run_security_scans() {
     echo "CI::"
@@ -281,6 +360,7 @@ main() {
     run_markdown_lint
     run_frontend_ci # Temporarily disabled
     run_test_style_check
+    run_integration_tests
     
     if [ "$SKIP_SECURITY" = false ]; then
         run_security_scans
