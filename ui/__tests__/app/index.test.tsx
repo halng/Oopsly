@@ -36,7 +36,7 @@ describe('WelcomeScreen', () => {
     render(<WelcomeScreen />);
     
     // Check Title & Subtitle
-    expect(screen.getByText('Welcome to Osmisis')).toBeTruthy();
+    expect(screen.getByText('Welcome to Oopsly')).toBeTruthy();
     expect(screen.getByText('The smart way to study and retain information efficiently')).toBeTruthy();
     
     const backButton = screen.getByTestId('back-button');
@@ -68,7 +68,7 @@ describe('WelcomeScreen', () => {
     const backButton = screen.getByTestId('back-button');
     fireEvent.press(backButton); // Back to Slide 1
 
-    expect(screen.getByText('Welcome to Osmisis')).toBeTruthy();
+    expect(screen.getByText('Welcome to Oopsly')).toBeTruthy();
   });
 
   it('navigates to /onboard when clicking Skip', () => {
