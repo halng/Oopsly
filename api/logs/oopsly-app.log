@@ -4259,3 +4259,1075 @@ Caused by: com.fasterxml.jackson.databind.exc.MismatchedInputException: Cannot d
 2026-01-30 21:16:38,105 [34mINFO [0;39m [[34mSpringApplicationShutdownHook[0;39m] [33m[XID:][0;39m [32mo.s.o.j.LocalContainerEntityManagerFactoryBean[0;39m - Closing JPA EntityManagerFactory for persistence unit 'default'
 2026-01-30 21:16:38,114 [34mINFO [0;39m [[34mSpringApplicationShutdownHook[0;39m] [33m[XID:][0;39m [32mcom.zaxxer.hikari.HikariDataSource[0;39m - HikariPool-1 - Shutdown initiated...
 2026-01-30 21:16:38,119 [34mINFO [0;39m [[34mSpringApplicationShutdownHook[0;39m] [33m[XID:][0;39m [32mcom.zaxxer.hikari.HikariDataSource[0;39m - HikariPool-1 - Shutdown completed.
+2026-01-31 01:10:35,300 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.t.context.aot.TestClassScanner[0;39m - Scanning for Spring test classes in all packages in classpath roots [/home/runner/work/Oopsly/Oopsly/api/build/classes/java/test]
+2026-01-31 01:10:35,862 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.t.c.s.AnnotationConfigContextLoaderUtils[0;39m - Could not detect default configuration classes for test class [com.app.oopsly.api.integration.SubjectCascadeDeleteIntegrationTest]: SubjectCascadeDeleteIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-01-31 01:10:36,015 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.b.t.c.SpringBootTestContextBootstrapper[0;39m - Found @SpringBootConfiguration com.app.oopsly.api.ApiApplication for test class com.app.oopsly.api.integration.SubjectCascadeDeleteIntegrationTest
+2026-01-31 01:10:36,649 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mc.a.o.a.i.SubjectCascadeDeleteIntegrationTest[0;39m - Starting SubjectCascadeDeleteIntegrationTest using Java 21.0.10 with PID 3963 (/home/runner/work/Oopsly/Oopsly/api/build/classes/java/test started by runner in /home/runner/work/Oopsly/Oopsly/api)
+2026-01-31 01:10:36,652 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mc.a.o.a.i.SubjectCascadeDeleteIntegrationTest[0;39m - The following 1 profile is active: "test"
+2026-01-31 01:10:38,609 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationDelegate[0;39m - Multiple Spring Data modules found, entering strict repository configuration mode
+2026-01-31 01:10:38,611 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationDelegate[0;39m - Bootstrapping Spring Data JDBC repositories in DEFAULT mode.
+2026-01-31 01:10:38,661 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationExtensionSupport[0;39m - Spring Data JDBC - Could not safely identify store assignment for repository candidate interface com.app.oopsly.api.repository.CardRepository; If you want this repository to be a JDBC repository, consider annotating your entities with one of these annotations: org.springframework.data.relational.core.mapping.Table.
+2026-01-31 01:10:38,662 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationExtensionSupport[0;39m - Spring Data JDBC - Could not safely identify store assignment for repository candidate interface com.app.oopsly.api.repository.QuestionRepository; If you want this repository to be a JDBC repository, consider annotating your entities with one of these annotations: org.springframework.data.relational.core.mapping.Table.
+2026-01-31 01:10:38,750 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationExtensionSupport[0;39m - Spring Data JDBC - Could not safely identify store assignment for repository candidate interface com.app.oopsly.api.repository.ShelfRepository; If you want this repository to be a JDBC repository, consider annotating your entities with one of these annotations: org.springframework.data.relational.core.mapping.Table.
+2026-01-31 01:10:38,751 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationExtensionSupport[0;39m - Spring Data JDBC - Could not safely identify store assignment for repository candidate interface com.app.oopsly.api.repository.SubjectRepository; If you want this repository to be a JDBC repository, consider annotating your entities with one of these annotations: org.springframework.data.relational.core.mapping.Table.
+2026-01-31 01:10:38,753 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationExtensionSupport[0;39m - Spring Data JDBC - Could not safely identify store assignment for repository candidate interface com.app.oopsly.api.repository.TestSuiteRepository; If you want this repository to be a JDBC repository, consider annotating your entities with one of these annotations: org.springframework.data.relational.core.mapping.Table.
+2026-01-31 01:10:38,782 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationDelegate[0;39m - Finished Spring Data repository scanning in 164 ms. Found 2 JDBC repository interfaces.
+2026-01-31 01:10:38,810 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationDelegate[0;39m - Multiple Spring Data modules found, entering strict repository configuration mode
+2026-01-31 01:10:38,811 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationDelegate[0;39m - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-01-31 01:10:38,855 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.b.f.s.DefaultListableBeanFactory[0;39m - Overriding bean definition for bean 'settingRepository' with a different definition: replacing [Root bean: class=org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean; scope=; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; fallback=false; factoryBeanName=null; factoryMethodName=null; initMethodNames=null; destroyMethodNames=null; defined in com.app.oopsly.api.repository.SettingRepository defined in @EnableJdbcRepositories declared on JdbcRepositoriesRegistrar.EnableJdbcRepositoriesConfiguration] with [Root bean: class=org.springframework.data.jpa.repository.support.JpaRepositoryFactoryBean; scope=; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; fallback=false; factoryBeanName=null; factoryMethodName=null; initMethodNames=null; destroyMethodNames=null; defined in com.app.oopsly.api.repository.SettingRepository defined in @EnableJpaRepositories declared on JpaRepositoriesRegistrar.EnableJpaRepositoriesConfiguration]
+2026-01-31 01:10:38,859 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.b.f.s.DefaultListableBeanFactory[0;39m - Overriding bean definition for bean 'userRepository' with a different definition: replacing [Root bean: class=org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean; scope=; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; fallback=false; factoryBeanName=null; factoryMethodName=null; initMethodNames=null; destroyMethodNames=null; defined in com.app.oopsly.api.repository.UserRepository defined in @EnableJdbcRepositories declared on JdbcRepositoriesRegistrar.EnableJdbcRepositoriesConfiguration] with [Root bean: class=org.springframework.data.jpa.repository.support.JpaRepositoryFactoryBean; scope=; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; fallback=false; factoryBeanName=null; factoryMethodName=null; initMethodNames=null; destroyMethodNames=null; defined in com.app.oopsly.api.repository.UserRepository defined in @EnableJpaRepositories declared on JpaRepositoriesRegistrar.EnableJpaRepositoriesConfiguration]
+2026-01-31 01:10:38,860 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationDelegate[0;39m - Finished Spring Data repository scanning in 43 ms. Found 7 JPA repository interfaces.
+2026-01-31 01:10:38,873 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationDelegate[0;39m - Multiple Spring Data modules found, entering strict repository configuration mode
+2026-01-31 01:10:38,875 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationDelegate[0;39m - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-01-31 01:10:38,888 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationExtensionSupport[0;39m - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.app.oopsly.api.repository.CardRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-01-31 01:10:38,889 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationExtensionSupport[0;39m - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.app.oopsly.api.repository.QuestionRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-01-31 01:10:38,889 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationExtensionSupport[0;39m - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.app.oopsly.api.repository.SettingRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-01-31 01:10:38,889 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationExtensionSupport[0;39m - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.app.oopsly.api.repository.ShelfRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-01-31 01:10:38,890 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationExtensionSupport[0;39m - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.app.oopsly.api.repository.SubjectRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-01-31 01:10:38,890 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationExtensionSupport[0;39m - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.app.oopsly.api.repository.TestSuiteRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-01-31 01:10:38,890 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationExtensionSupport[0;39m - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.app.oopsly.api.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-01-31 01:10:38,890 [34mINFO [0;39m [[34mmain[0;39m] [33m[XID:][0;39m [32mo.s.d.r.c.RepositoryConfigurationDelegate[0;39m - Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2026-01-31 01:10:58,676 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:b44bb685-7c2e-4b72-9f98-5775ad2a3017][0;39m [32mc.a.oopsly.api.config.LoggingConfig[0;39m - Request: GET /api/health | Status: 200 | 3 ms
+2026-01-31 01:10:58,693 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:6cfaccf2-5917-4f96-8e46-f266baa9f6ec][0;39m [32mc.a.oopsly.api.config.LoggingConfig[0;39m - Request: POST /api/test | Failed after 1 ms | Error: boom
+jakarta.servlet.ServletException: boom
+	at com.app.oopsly.api.config.LoggingConfig.doFilter(LoggingConfig.java:57)
+	at com.app.oopsly.api.config.LoggingConfigTest.lambda$givenLoggingConfig_withFilterThrowingException_thenLogsErrorAndRethrows$1(LoggingConfigTest.java:105)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:53)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3128)
+	at com.app.oopsly.api.config.LoggingConfigTest.givenLoggingConfig_withFilterThrowingException_thenLogsErrorAndRethrows(LoggingConfigTest.java:103)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:775)
+	at org.junit.platform.commons.support.ReflectionSupport.invokeMethod(ReflectionSupport.java:479)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:161)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:152)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:91)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:112)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:94)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:87)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:216)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:212)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:137)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:156)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:201)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:170)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:94)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:59)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:142)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.junit.platform.launcher.core.InterceptingLauncher.lambda$execute$1(InterceptingLauncher.java:39)
+	at org.junit.platform.launcher.core.ClasspathAlignmentCheckingLauncherInterceptor.intercept(ClasspathAlignmentCheckingLauncherInterceptor.java:25)
+	at org.junit.platform.launcher.core.InterceptingLauncher.execute(InterceptingLauncher.java:38)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.processAllTestClasses(JUnitPlatformTestClassProcessor.java:124)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.access$000(JUnitPlatformTestClassProcessor.java:99)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor.stop(JUnitPlatformTestClassProcessor.java:94)
+	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.stop(SuiteTestClassProcessor.java:63)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)
+	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)
+	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:92)
+	at jdk.proxy2/jdk.proxy2.$Proxy6.stop(Unknown Source)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:200)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:132)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:103)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:63)
+	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:122)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:72)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+2026-01-31 01:11:00,686 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.api.controller.CardController[0;39m - Getting card: 488b5a43-00f6-4eaa-84c7-8b422ef02914 from subject: 845a8ae8-3184-49d6-9c74-6b526cd20b9b in shelve: 866fbbd8-52d2-4772-bf21-e8dc6262d910
+2026-01-31 01:11:00,693 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.api.controller.CardController[0;39m - Deleting card: 16691478-823b-4c35-9683-3f02e6045447 from collection: a935cdde-8174-4786-96eb-06844a16623d in deck: f2e27d2e-0595-41c3-b949-5221aeb0ead8
+2026-01-31 01:11:00,697 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.api.controller.CardController[0;39m - Creating cards for subject: 170bdeb2-1ccb-4af1-8157-6ba7d9b061b7 in shelve: 6c42fe14-741e-4598-b671-32199f5b20d2
+2026-01-31 01:11:00,702 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.api.controller.CardController[0;39m - Getting all cards for subject: 99ff8e7c-acba-4ef0-8ac3-57db85dfff56 in shelve: c93c3c31-39ba-4a65-94ff-bfe0d05e62b3 with page: 1 and size: 20
+2026-01-31 01:11:00,707 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.api.controller.CardController[0;39m - Updating difficulty for cards in subject: 38ebbce3-773f-4a9d-9601-caf8886c7af1 in shelve: 61571309-ddf7-4c98-a774-949b77f9682b
+2026-01-31 01:11:00,711 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.api.controller.CardController[0;39m - Creating cards for subject: 44eabd7d-1c43-4a35-9ef7-29e9f3dadfa0 in shelve: c5535be6-c457-4ba4-a916-7d6dd132e2ad
+2026-01-31 01:11:00,716 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.api.controller.CardController[0;39m - Getting all cards for subject: 3590198f-b56f-4412-ad52-b4c50b35eaa5 in shelve: 0afa9f11-54b4-49da-92fc-3120bffa58d5 with page: 0 and size: 10
+2026-01-31 01:11:01,210 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.controller.SubjectController[0;39m - Getting all subjects for shelf: 936a5cae-108b-4cdc-b395-0f6a0f21820c with page: 1 and size: 20
+2026-01-31 01:11:01,216 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.controller.SubjectController[0;39m - Getting subject: ce6c006d-84b2-4c05-aaff-afaeb973de94 from shelve: 95216ac0-7535-48e4-83ac-61a604c2a828
+2026-01-31 01:11:01,221 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.controller.SubjectController[0;39m - Creating subject for shelve: 0b30c113-aa21-4c99-8fc7-b2e851d5c6e0
+2026-01-31 01:11:01,224 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.controller.SubjectController[0;39m - Deleting subject: cce755fd-0b82-41c5-acfa-70775a28bc26 from shelve: 5c8fd89d-ccfc-4559-8f5c-e5c1038a118f
+2026-01-31 01:11:01,227 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.controller.SubjectController[0;39m - Updating subject: 317d35f5-46ee-4f39-b016-57fd4e4c4bbd in shelve: 9d9ca112-f063-45d2-9939-1eb2584b6a19
+2026-01-31 01:11:01,231 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.controller.SubjectController[0;39m - Getting all subjects for shelf: 1ff17e26-cf2f-4831-bda1-b87e5e1e24f0 with page: 0 and size: 10
+2026-01-31 01:11:01,494 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.e.GlobalExceptionHandler[0;39m - Generic internal server error: Generic error
+java.lang.Exception: Generic error
+	at com.app.oopsly.api.exception.GlobalExceptionHandlerTest.handleGenericException_returnsInternalError(GlobalExceptionHandlerTest.java:156)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:775)
+	at org.junit.platform.commons.support.ReflectionSupport.invokeMethod(ReflectionSupport.java:479)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:161)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:152)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:91)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:112)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:94)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:87)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:216)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:212)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:137)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:156)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:201)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:170)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:94)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:59)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:142)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.junit.platform.launcher.core.InterceptingLauncher.lambda$execute$1(InterceptingLauncher.java:39)
+	at org.junit.platform.launcher.core.ClasspathAlignmentCheckingLauncherInterceptor.intercept(ClasspathAlignmentCheckingLauncherInterceptor.java:25)
+	at org.junit.platform.launcher.core.InterceptingLauncher.execute(InterceptingLauncher.java:38)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.processAllTestClasses(JUnitPlatformTestClassProcessor.java:124)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.access$000(JUnitPlatformTestClassProcessor.java:99)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor.stop(JUnitPlatformTestClassProcessor.java:94)
+	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.stop(SuiteTestClassProcessor.java:63)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)
+	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)
+	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:92)
+	at jdk.proxy2/jdk.proxy2.$Proxy6.stop(Unknown Source)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:200)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:132)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:103)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:63)
+	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:122)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:72)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+2026-01-31 01:11:01,521 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.e.GlobalExceptionHandler[0;39m - Authentication provider error: Auth provider failed
+com.app.oopsly.api.exception.AuthProviderException: Auth provider failed
+	at com.app.oopsly.api.exception.GlobalExceptionHandlerTest.handleAuthProviderException_returnsUnauthorized(GlobalExceptionHandlerTest.java:75)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:775)
+	at org.junit.platform.commons.support.ReflectionSupport.invokeMethod(ReflectionSupport.java:479)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:161)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:152)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:91)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:112)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:94)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:87)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:216)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:212)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:137)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:156)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:201)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:170)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:94)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:59)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:142)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.junit.platform.launcher.core.InterceptingLauncher.lambda$execute$1(InterceptingLauncher.java:39)
+	at org.junit.platform.launcher.core.ClasspathAlignmentCheckingLauncherInterceptor.intercept(ClasspathAlignmentCheckingLauncherInterceptor.java:25)
+	at org.junit.platform.launcher.core.InterceptingLauncher.execute(InterceptingLauncher.java:38)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.processAllTestClasses(JUnitPlatformTestClassProcessor.java:124)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.access$000(JUnitPlatformTestClassProcessor.java:99)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor.stop(JUnitPlatformTestClassProcessor.java:94)
+	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.stop(SuiteTestClassProcessor.java:63)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)
+	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)
+	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:92)
+	at jdk.proxy2/jdk.proxy2.$Proxy6.stop(Unknown Source)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:200)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:132)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:103)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:63)
+	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:122)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:72)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+2026-01-31 01:11:01,546 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.e.GlobalExceptionHandler[0;39m - Email sending failed: Email failed
+com.app.oopsly.api.exception.SendEmailException: Email failed
+	at com.app.oopsly.api.exception.GlobalExceptionHandlerTest.handleSendEmailException_returnsInternalError(GlobalExceptionHandlerTest.java:85)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:775)
+	at org.junit.platform.commons.support.ReflectionSupport.invokeMethod(ReflectionSupport.java:479)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:161)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:152)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:91)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:112)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:94)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:87)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:216)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:212)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:137)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:156)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:201)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:170)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:94)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:59)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:142)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.junit.platform.launcher.core.InterceptingLauncher.lambda$execute$1(InterceptingLauncher.java:39)
+	at org.junit.platform.launcher.core.ClasspathAlignmentCheckingLauncherInterceptor.intercept(ClasspathAlignmentCheckingLauncherInterceptor.java:25)
+	at org.junit.platform.launcher.core.InterceptingLauncher.execute(InterceptingLauncher.java:38)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.processAllTestClasses(JUnitPlatformTestClassProcessor.java:124)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.access$000(JUnitPlatformTestClassProcessor.java:99)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor.stop(JUnitPlatformTestClassProcessor.java:94)
+	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.stop(SuiteTestClassProcessor.java:63)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)
+	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)
+	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:92)
+	at jdk.proxy2/jdk.proxy2.$Proxy6.stop(Unknown Source)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:200)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:132)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:103)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:63)
+	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:122)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:72)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+2026-01-31 01:11:01,563 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.e.GlobalExceptionHandler[0;39m - Generic internal server error: Null pointer
+java.lang.NullPointerException: Null pointer
+	at com.app.oopsly.api.exception.GlobalExceptionHandlerTest.handleGenericException_withNullPointerException_returnsInternalError(GlobalExceptionHandlerTest.java:176)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:775)
+	at org.junit.platform.commons.support.ReflectionSupport.invokeMethod(ReflectionSupport.java:479)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:161)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:152)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:91)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:112)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:94)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:87)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:216)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:212)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:137)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:156)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:201)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:170)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:94)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:59)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:142)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.junit.platform.launcher.core.InterceptingLauncher.lambda$execute$1(InterceptingLauncher.java:39)
+	at org.junit.platform.launcher.core.ClasspathAlignmentCheckingLauncherInterceptor.intercept(ClasspathAlignmentCheckingLauncherInterceptor.java:25)
+	at org.junit.platform.launcher.core.InterceptingLauncher.execute(InterceptingLauncher.java:38)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.processAllTestClasses(JUnitPlatformTestClassProcessor.java:124)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.access$000(JUnitPlatformTestClassProcessor.java:99)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor.stop(JUnitPlatformTestClassProcessor.java:94)
+	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.stop(SuiteTestClassProcessor.java:63)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)
+	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)
+	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:92)
+	at jdk.proxy2/jdk.proxy2.$Proxy6.stop(Unknown Source)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:200)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:132)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:103)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:63)
+	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:122)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:72)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+2026-01-31 01:11:01,579 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.e.GlobalExceptionHandler[0;39m - Unauthenticated access attempt: Not authenticated with causes: [com.app.oopsly.api.exception.GlobalExceptionHandlerTest.handleUnauthenticatedException_returnsUnauthorized(GlobalExceptionHandlerTest.java:65), java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103), java.base/java.lang.reflect.Method.invoke(Method.java:580), org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:775), org.junit.platform.commons.support.ReflectionSupport.invokeMethod(ReflectionSupport.java:479), org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60), org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131), org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:161), org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:152), org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:91), org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:112), org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:94), org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106), org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64), org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45), org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37), org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:93), org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:87), org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:216), org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73), org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:212), org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:137), org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69), org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:156), org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73), org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146), org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137), org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144), org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73), org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143), org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100), java.base/java.util.ArrayList.forEach(ArrayList.java:1596), org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41), org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160), org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73), org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146), org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137), org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144), org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73), org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143), org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100), java.base/java.util.ArrayList.forEach(ArrayList.java:1596), org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41), org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160), org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73), org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146), org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137), org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144), org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73), org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143), org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100), org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35), org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57), org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54), org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:201), org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:170), org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:94), org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:59), org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:142), org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:58), org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103), org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85), org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47), org.junit.platform.launcher.core.InterceptingLauncher.lambda$execute$1(InterceptingLauncher.java:39), org.junit.platform.launcher.core.ClasspathAlignmentCheckingLauncherInterceptor.intercept(ClasspathAlignmentCheckingLauncherInterceptor.java:25), org.junit.platform.launcher.core.InterceptingLauncher.execute(InterceptingLauncher.java:38), org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47), org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.processAllTestClasses(JUnitPlatformTestClassProcessor.java:124), org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.access$000(JUnitPlatformTestClassProcessor.java:99), org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor.stop(JUnitPlatformTestClassProcessor.java:94), org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.stop(SuiteTestClassProcessor.java:63), java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103), java.base/java.lang.reflect.Method.invoke(Method.java:580), org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36), org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24), org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33), org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:92), jdk.proxy2/jdk.proxy2.$Proxy6.stop(Unknown Source), org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:200), org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:132), org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:103), org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:63), org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56), org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:122), org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:72), worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69), worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)]
+2026-01-31 01:11:01,585 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.e.GlobalExceptionHandler[0;39m - Servlet error occurred: Servlet error
+jakarta.servlet.ServletException: Servlet error
+	at com.app.oopsly.api.exception.GlobalExceptionHandlerTest.handleServletException_returnsBadRequest(GlobalExceptionHandlerTest.java:136)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:775)
+	at org.junit.platform.commons.support.ReflectionSupport.invokeMethod(ReflectionSupport.java:479)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:161)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:152)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:91)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:112)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:94)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:87)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:216)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:212)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:137)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:156)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:201)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:170)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:94)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:59)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:142)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.junit.platform.launcher.core.InterceptingLauncher.lambda$execute$1(InterceptingLauncher.java:39)
+	at org.junit.platform.launcher.core.ClasspathAlignmentCheckingLauncherInterceptor.intercept(ClasspathAlignmentCheckingLauncherInterceptor.java:25)
+	at org.junit.platform.launcher.core.InterceptingLauncher.execute(InterceptingLauncher.java:38)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.processAllTestClasses(JUnitPlatformTestClassProcessor.java:124)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.access$000(JUnitPlatformTestClassProcessor.java:99)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor.stop(JUnitPlatformTestClassProcessor.java:94)
+	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.stop(SuiteTestClassProcessor.java:63)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)
+	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)
+	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:92)
+	at jdk.proxy2/jdk.proxy2.$Proxy6.stop(Unknown Source)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:200)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:132)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:103)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:63)
+	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:122)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:72)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+2026-01-31 01:11:01,703 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.e.GlobalExceptionHandler[0;39m - Expired JWT access attempt: Token expired
+2026-01-31 01:11:01,708 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.e.GlobalExceptionHandler[0;39m - Servlet error occurred: java.lang.IllegalArgumentException: Invalid argument
+jakarta.servlet.ServletException: java.lang.IllegalArgumentException: Invalid argument
+	at com.app.oopsly.api.exception.GlobalExceptionHandlerTest.handleIllegalArgumentException_returnsBadRequest(GlobalExceptionHandlerTest.java:148)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:775)
+	at org.junit.platform.commons.support.ReflectionSupport.invokeMethod(ReflectionSupport.java:479)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:161)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:152)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:91)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:112)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:94)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:87)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:216)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:212)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:137)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:156)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:201)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:170)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:94)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:59)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:142)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.junit.platform.launcher.core.InterceptingLauncher.lambda$execute$1(InterceptingLauncher.java:39)
+	at org.junit.platform.launcher.core.ClasspathAlignmentCheckingLauncherInterceptor.intercept(ClasspathAlignmentCheckingLauncherInterceptor.java:25)
+	at org.junit.platform.launcher.core.InterceptingLauncher.execute(InterceptingLauncher.java:38)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.processAllTestClasses(JUnitPlatformTestClassProcessor.java:124)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.access$000(JUnitPlatformTestClassProcessor.java:99)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor.stop(JUnitPlatformTestClassProcessor.java:94)
+	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.stop(SuiteTestClassProcessor.java:63)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)
+	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)
+	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:92)
+	at jdk.proxy2/jdk.proxy2.$Proxy6.stop(Unknown Source)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:200)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:132)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:103)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:63)
+	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:122)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:72)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.lang.IllegalArgumentException: Invalid argument
+	at com.app.oopsly.api.exception.GlobalExceptionHandlerTest.handleIllegalArgumentException_returnsBadRequest(GlobalExceptionHandlerTest.java:146)
+	... 86 common frames omitted
+2026-01-31 01:11:01,730 [31mWARN [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.e.GlobalExceptionHandler[0;39m - Resource not found: Resource not found
+2026-01-31 01:11:01,732 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.e.GlobalExceptionHandler[0;39m - IO error occurred: IO error
+java.io.IOException: IO error
+	at com.app.oopsly.api.exception.GlobalExceptionHandlerTest.handleIOException_returnsInternalError(GlobalExceptionHandlerTest.java:126)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:775)
+	at org.junit.platform.commons.support.ReflectionSupport.invokeMethod(ReflectionSupport.java:479)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:161)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:152)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:91)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:112)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:94)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:87)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:216)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:212)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:137)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:156)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:201)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:170)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:94)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:59)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:142)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.junit.platform.launcher.core.InterceptingLauncher.lambda$execute$1(InterceptingLauncher.java:39)
+	at org.junit.platform.launcher.core.ClasspathAlignmentCheckingLauncherInterceptor.intercept(ClasspathAlignmentCheckingLauncherInterceptor.java:25)
+	at org.junit.platform.launcher.core.InterceptingLauncher.execute(InterceptingLauncher.java:38)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.processAllTestClasses(JUnitPlatformTestClassProcessor.java:124)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.access$000(JUnitPlatformTestClassProcessor.java:99)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor.stop(JUnitPlatformTestClassProcessor.java:94)
+	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.stop(SuiteTestClassProcessor.java:63)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)
+	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)
+	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:92)
+	at jdk.proxy2/jdk.proxy2.$Proxy6.stop(Unknown Source)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:200)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:132)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:103)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:63)
+	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:122)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:72)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+2026-01-31 01:11:01,743 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.e.GlobalExceptionHandler[0;39m - Generic internal server error: Runtime error
+java.lang.RuntimeException: Runtime error
+	at com.app.oopsly.api.exception.GlobalExceptionHandlerTest.handleGenericException_withRuntimeException_returnsInternalError(GlobalExceptionHandlerTest.java:166)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:775)
+	at org.junit.platform.commons.support.ReflectionSupport.invokeMethod(ReflectionSupport.java:479)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:161)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:152)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:91)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:112)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:94)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:87)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:216)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:212)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:137)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:156)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:160)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:146)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:144)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:143)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:100)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:201)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:170)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:94)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:59)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:142)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:58)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.junit.platform.launcher.core.InterceptingLauncher.lambda$execute$1(InterceptingLauncher.java:39)
+	at org.junit.platform.launcher.core.ClasspathAlignmentCheckingLauncherInterceptor.intercept(ClasspathAlignmentCheckingLauncherInterceptor.java:25)
+	at org.junit.platform.launcher.core.InterceptingLauncher.execute(InterceptingLauncher.java:38)
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.processAllTestClasses(JUnitPlatformTestClassProcessor.java:124)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.access$000(JUnitPlatformTestClassProcessor.java:99)
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor.stop(JUnitPlatformTestClassProcessor.java:94)
+	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.stop(SuiteTestClassProcessor.java:63)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)
+	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)
+	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:92)
+	at jdk.proxy2/jdk.proxy2.$Proxy6.stop(Unknown Source)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:200)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:132)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:103)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:63)
+	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:122)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:72)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+2026-01-31 01:11:01,752 [31mWARN [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.e.GlobalExceptionHandler[0;39m - Bad credentials provided: Invalid credentials
+2026-01-31 01:11:02,808 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Getting card: f015e3c1-2096-4d30-ac3e-c49ecc933b2f from subject: cf63ce4e-4f0a-4cd4-ab57-8766195cf3b2 in shelve: bb67fdee-bf12-4862-916b-e8690cd46f09
+2026-01-31 01:11:02,812 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Successfully retrieved card: f015e3c1-2096-4d30-ac3e-c49ecc933b2f
+2026-01-31 01:11:02,820 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Updating difficulty for cards in subject: ac05dde6-7d71-49c4-b562-f8688bd18c16 in shelve: c69a5ca5-ea18-4f32-8f04-1e6579549cc3. Total cards: 1
+2026-01-31 01:11:02,823 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Successfully updated difficulty for all cards in subject: ac05dde6-7d71-49c4-b562-f8688bd18c16
+2026-01-31 01:11:02,825 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Updating difficulty for cards in subject: ac05dde6-7d71-49c4-b562-f8688bd18c16 in shelve: c69a5ca5-ea18-4f32-8f04-1e6579549cc3. Total cards: 1
+2026-01-31 01:11:02,827 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Successfully updated difficulty for all cards in subject: ac05dde6-7d71-49c4-b562-f8688bd18c16
+2026-01-31 01:11:02,828 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Updating difficulty for cards in subject: ac05dde6-7d71-49c4-b562-f8688bd18c16 in shelve: c69a5ca5-ea18-4f32-8f04-1e6579549cc3. Total cards: 1
+2026-01-31 01:11:02,830 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Successfully updated difficulty for all cards in subject: ac05dde6-7d71-49c4-b562-f8688bd18c16
+2026-01-31 01:11:02,831 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Updating difficulty for cards in subject: ac05dde6-7d71-49c4-b562-f8688bd18c16 in shelve: c69a5ca5-ea18-4f32-8f04-1e6579549cc3. Total cards: 1
+2026-01-31 01:11:02,832 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Successfully updated difficulty for all cards in subject: ac05dde6-7d71-49c4-b562-f8688bd18c16
+2026-01-31 01:11:02,837 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Card service unavailable during delete: Database connection lost, shelfId=db30d88d-8b65-418d-af57-1c2864efa5d9, subjectId=6cb343bc-d7f9-48d0-8e7d-7fbe65b651fc, cardId=6d3e546b-4bdc-4f78-8523-38a99b89d5c4
+2026-01-31 01:11:02,843 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Creating 1 cards for subject: 98dab165-81f0-440c-a998-10f9656c230f in shelve: 3fd37a76-36eb-4026-8400-8f31b90dbcb2
+2026-01-31 01:11:02,850 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Card service unavailable during getAllCardsBySubject: Service degraded, shelfId=77583429-a443-4d00-af43-0960f6b539f4, subjectId=70c4032f-1589-48ad-80d8-6d0b83a9f453, page=0, size=10
+2026-01-31 01:11:02,854 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Card service unavailable during create: Service unavailable, shelfId=138bf493-4813-484f-b4c6-1e41f95a4c80, subjectId=3a7a439b-95cd-4ae2-840f-c3048ce24fed
+2026-01-31 01:11:02,860 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Card service unavailable during updateCard: Network error, shelfId=cefbeb66-d2ea-4a0e-b5b9-f55ea31ccd74, subjectId=4d5983e5-dabc-4f1f-8d3c-bc88c8ed88cc, cardId=439dfce2-ddac-49a4-9784-ab785715102d
+2026-01-31 01:11:02,866 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Updating difficulty for cards in subject: 58239f6d-89dc-47a1-9103-b481b04aeda2 in shelve: 46f16ec5-dba6-4bae-8bf5-1d817c1646fc. Total cards: 1
+2026-01-31 01:11:02,875 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Getting card: 3a4f802a-378c-4c8e-9896-e7363476f55c from subject: 5d77ecd4-859b-4af7-be74-aa63a5cfc7dd in shelve: 0b38807d-0f56-4044-820b-5bced6c93dfc
+2026-01-31 01:11:02,880 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Updating difficulty for cards in subject: 8294b442-7cbb-4371-82bb-8ad9414fe41f in shelve: 0d11cb5b-ad9d-47ab-93d6-263ce7550060. Total cards: 1
+2026-01-31 01:11:02,885 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Creating 2 cards for subject: 64bd29ae-7fcb-4e14-9779-b98878ee53c8 in shelve: 1a07c67a-b22c-45e0-a7b2-007bb23cb4a7
+2026-01-31 01:11:02,887 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Successfully created 2 cards for subject: 64bd29ae-7fcb-4e14-9779-b98878ee53c8
+2026-01-31 01:11:02,893 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Card service unavailable during create: Internal error, shelfId=0c722835-cf3f-4a2e-a9c3-f454475a761f, subjectId=c328d712-427a-4f36-9805-af5947a459d3
+2026-01-31 01:11:02,895 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Card service unavailable during delete: Internal error, shelfId=0c722835-cf3f-4a2e-a9c3-f454475a761f, subjectId=c328d712-427a-4f36-9805-af5947a459d3, cardId=000bb23d-37af-4dde-8bf7-5060c956ccf0
+2026-01-31 01:11:02,911 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Getting all cards for subject: cca85b84-8818-42e9-9d26-f38bec5913f7 in shelve: 7e097105-8d08-4f2c-b08a-ff4e231df27f with page: 0 and size: 10
+2026-01-31 01:11:02,915 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Successfully retrieved 3 cards for subject: cca85b84-8818-42e9-9d26-f38bec5913f7 (total: 3)
+2026-01-31 01:11:02,919 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Card service unavailable during updateDifficulty: Timeout, shelfId=7a0dd864-8202-4ff6-8096-772bcfdc535d, subjectId=1dd416de-1d9a-4d4c-bdd6-608a526e2eef
+2026-01-31 01:11:02,930 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Getting card: a43c6c94-9823-441b-a86d-8b5f83013a0c from subject: 2c135fe4-ce70-4312-a23b-1d15f29295b1 in shelve: 7884ab99-1a8b-4ba8-ac58-ddc2d12ff682
+2026-01-31 01:11:02,937 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Deleting card: 6fe15ade-1b91-42df-b2cb-3d8fa56fcf83 from subject: 44df0b84-5270-4a71-be0f-3ad5ffc10389 in shelve: fc761ad2-07ad-45ba-8519-dccafb1553c2
+2026-01-31 01:11:02,942 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Updating difficulty for cards in subject: 096f7ac5-7461-4be1-a56a-a8c8c606e34f in shelve: 0cc7824a-3950-462c-802e-17057b067805. Total cards: 1
+2026-01-31 01:11:02,948 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Card service unavailable during getById: Circuit breaker triggered, shelfId=c1b24afe-f131-4636-97f8-2b4cbed76a80, subjectId=e97bfc2c-651e-4b81-a3cd-49aad7b3174f, cardId=4ae24718-9ec9-4bb6-b717-9650bc05a5c2
+2026-01-31 01:11:02,957 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Deleting card: 1ff8c88e-d223-48fe-8c38-703a97fc2059 from subject: c9b0bb24-94e8-45fc-953e-e5b8b2de7cf3 in shelve: a2d5fc5b-91ee-4a45-9935-61d1a1d53e43
+2026-01-31 01:11:02,958 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Successfully deleted card: 1ff8c88e-d223-48fe-8c38-703a97fc2059
+2026-01-31 01:11:02,963 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Deleting card: ee32b5f7-3590-4959-a701-255439a4a6cb from subject: 00fd2e9b-84ea-402d-ac4a-81106d72259a in shelve: f6cc0f17-bbe3-4de3-b428-484b58ffab14
+2026-01-31 01:11:02,969 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Deleting card: 852dc1b7-a886-4ecc-90e1-c2f35d2fef63 from subject: c7bea940-a77c-4035-8323-b61425efc462 in shelve: 51fe1367-b307-4f9b-b0bc-3be699ba6eba
+2026-01-31 01:11:02,973 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Getting all cards for subject: bb5d6687-1862-45a1-88cb-695881f06626 in shelve: 745132a7-263b-4326-adf7-dd5066712644 with page: 0 and size: 10
+2026-01-31 01:11:02,984 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Card service unavailable during create: Database error, shelfId=3b968b80-dc9b-4277-a35e-48e9b3e83f4e, subjectId=eb1c288d-1922-4ca0-9348-6cd248c67a28
+2026-01-31 01:11:02,989 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Creating 1 cards for subject: a747c6d0-c142-4caa-a97d-7abd41db3add in shelve: b1904137-9930-4b04-b760-823896e79847
+2026-01-31 01:11:03,000 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Updating difficulty for cards in subject: 769792a2-4b95-4e28-a881-a7099bb867cc in shelve: 7d48372a-e932-483a-8336-14d8be2ce9ef. Total cards: 1
+2026-01-31 01:11:03,001 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Successfully updated difficulty for all cards in subject: 769792a2-4b95-4e28-a881-a7099bb867cc
+2026-01-31 01:11:03,014 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Getting all cards for subject: 4296f2a0-3c60-43e9-8995-1673a4e31ab4 in shelve: 1ddb68b1-e566-499a-b8cc-810b80a97551 with page: 0 and size: 10
+2026-01-31 01:11:03,020 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.CardServiceImpl[0;39m - Getting card: 6c4150aa-ce89-4d05-b627-ca0eac6d3638 from subject: 14bbe641-bd1b-468c-9c54-37fe3c60ad82 in shelve: 47c2e2fa-8a8c-41c0-8490-43216e0025b3
+2026-01-31 01:11:03,876 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Checking OTP for user
+2026-01-31 01:11:03,883 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP service unavailable during verifyOTP
+2026-01-31 01:11:03,890 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Checking OTP for user
+2026-01-31 01:11:03,898 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Sending OTP email to u*******************m
+2026-01-31 01:11:03,902 [34mINFO [0;39m [[34mThread-4[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Async: OTP email sent successfully to u*******************m
+2026-01-31 01:11:03,903 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP process completed for u*******************m
+2026-01-31 01:11:03,910 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP service unavailable during sendOTP: Database connection failed
+2026-01-31 01:11:03,911 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP service unavailable during sendOTP: Email server unreachable
+2026-01-31 01:11:03,911 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP service unavailable during sendOTP: Network timeout
+2026-01-31 01:11:03,916 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Sending OTP email to u**************m
+2026-01-31 01:11:03,919 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP process completed for u**************m
+2026-01-31 01:11:03,919 [34mINFO [0;39m [[34mThread-5[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Async: OTP email sent successfully to u**************m
+2026-01-31 01:11:03,923 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP service unavailable during sendOTP: Internal service error
+2026-01-31 01:11:03,923 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP service unavailable during verifyOTP
+2026-01-31 01:11:03,927 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Sending OTP email to u**************m
+2026-01-31 01:11:03,927 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP process completed for u**************m
+2026-01-31 01:11:03,929 [34mINFO [0;39m [[34mThread-6[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Async: OTP email sent successfully to u**************m
+2026-01-31 01:11:03,934 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Checking OTP for user
+2026-01-31 01:11:03,935 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Authentication successful for u**************m. Generating token..
+2026-01-31 01:11:03,935 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Generating JWT token for u**************m
+2026-01-31 01:11:03,936 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Saving refresh token into cache for user u**************m
+2026-01-31 01:11:03,941 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP service unavailable during sendOTP: Email service error
+2026-01-31 01:11:03,944 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP service unavailable during sendOTP: OTP service unavailable
+2026-01-31 01:11:03,948 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP service unavailable during sendOTP: Service error
+2026-01-31 01:11:03,952 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Sending OTP email to u**************m
+2026-01-31 01:11:03,953 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Failed to store OTP in Redis for user@example.com: Redis error
+2026-01-31 01:11:03,953 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP process completed for u**************m
+2026-01-31 01:11:03,955 [34mINFO [0;39m [[34mThread-7[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Async: OTP email sent successfully to u**************m
+2026-01-31 01:11:03,957 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP service unavailable during verifyOTP
+2026-01-31 01:11:03,962 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Checking OTP for user
+2026-01-31 01:11:03,968 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Checking OTP for user
+2026-01-31 01:11:03,972 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Sending OTP email to u**************m
+2026-01-31 01:11:03,972 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP process completed for u**************m
+2026-01-31 01:11:03,973 [34mINFO [0;39m [[34mThread-8[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Async: OTP email sent successfully to u**************m
+2026-01-31 01:11:04,091 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Checking OTP for user
+2026-01-31 01:11:04,092 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Authentication successful for u**************m. Generating token..
+2026-01-31 01:11:04,093 [31mWARN [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - User not found for email u**************m
+2026-01-31 01:11:04,093 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Generating JWT token for u**************m
+2026-01-31 01:11:04,094 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Saving refresh token into cache for user u**************m
+2026-01-31 01:11:04,101 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Checking OTP for user
+2026-01-31 01:11:04,102 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Authentication successful for u**************m. Generating token..
+2026-01-31 01:11:04,102 [31mWARN [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - User not found for email u**************m
+2026-01-31 01:11:04,102 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Generating JWT token for u**************m
+2026-01-31 01:11:04,103 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Saving refresh token into cache for user u**************m
+2026-01-31 01:11:04,108 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Sending OTP email to u**************m
+2026-01-31 01:11:04,110 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - OTP process completed for u**************m
+2026-01-31 01:11:04,115 [34mINFO [0;39m [[34mThread-9[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.OTPServiceImpl[0;39m - Async: OTP email sent successfully to u**************m
+2026-01-31 01:11:05,522 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Fetching all questions for test suite f6ea9de2-664d-483c-bda1-a09ac9c6d150
+2026-01-31 01:11:05,533 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Question service unavailable during getAllByTestSuite: Database connection failed
+2026-01-31 01:11:05,536 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Creating question for test suite d6bfe01f-f0c5-4266-bb83-510236928f53
+2026-01-31 01:11:05,629 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Creating question for test suite 68671a06-023f-4eb7-a115-0fe105db1a50
+2026-01-31 01:11:05,635 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Creating question for test suite f0c1db62-ea80-49b3-9064-32fa20c6a29b
+2026-01-31 01:11:05,643 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Updating question e470bb7e-4bd9-43a0-80b5-b54fd4392e7a for test suite 923dafdb-4448-45a9-a6a8-0682e055be71
+2026-01-31 01:11:05,653 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Updating question b6b76439-e772-4256-90a6-6cf91f907ba0 for test suite 4a326911-d5fc-433b-8fd3-aab943214a63
+2026-01-31 01:11:05,658 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Deleting question 5041f33f-e443-4acd-a499-1a01772becb6 for test suite f58feca9-a708-47c5-b20e-2a5f0998a1d3
+2026-01-31 01:11:05,661 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Creating question for test suite eb85cb5a-119f-4aa2-8bb9-1420ee37a226
+2026-01-31 01:11:05,673 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Fetching question 8bd75fb7-0a0d-4dff-bd3d-6fc4bb5e0487 for test suite 2836e332-5300-4336-aba9-5c2812b75408
+2026-01-31 01:11:05,678 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Creating question for test suite a7e71181-c600-4ced-b889-2f576903d3b2
+2026-01-31 01:11:05,685 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Question service unavailable during update: Database connection failed
+2026-01-31 01:11:05,688 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Question service unavailable during create: Database connection failed
+2026-01-31 01:11:05,692 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Deleting question 72c3539d-4682-4dc0-a706-799e9b3abd0c for test suite f1407a45-847b-450b-82e0-f7cd56f5eb73
+2026-01-31 01:11:05,697 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Fetching question 6dd64bf2-50d0-4fdd-9f4e-ecb2ac7d871b for test suite a99e1e73-6609-4a67-9f8f-ec07b6d60810
+2026-01-31 01:11:05,701 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Creating question for test suite 2d9476e1-f4ae-4e0c-a1f6-537e71b87285
+2026-01-31 01:11:05,708 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Creating question for test suite 1fffca20-73f3-4bdb-822a-689e3f0b4bbf
+2026-01-31 01:11:05,714 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Creating question for test suite 7fcb0ddd-2845-495d-b93b-8ea0308c17bc
+2026-01-31 01:11:05,719 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Question service unavailable during delete: Database connection failed
+2026-01-31 01:11:05,723 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Question service unavailable during getById: Database connection failed
+2026-01-31 01:11:05,727 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.QuestionServiceImpl[0;39m - Creating question for test suite 465f813b-5899-43d6-9505-6207d4537e8d
+2026-01-31 01:11:05,741 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Shelve service unavailable during delete: Circuit breaker open
+2026-01-31 01:11:05,745 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Shelve service unavailable during create
+2026-01-31 01:11:05,748 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,748 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Creating shelve for user null
+2026-01-31 01:11:05,749 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,753 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Shelve service unavailable during update: Database connection failed
+2026-01-31 01:11:05,756 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,757 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Deleting shelve 2c957b1b-29c5-434c-ab4d-450a0ce86f42 for user null
+2026-01-31 01:11:05,757 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,760 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,761 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Updating shelve 02293274-e4bd-48da-b9b9-c887dbf80971 for user null
+2026-01-31 01:11:05,761 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,764 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,764 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Deleting shelve b5c91ec4-eeee-4178-a2c3-98094ca95a4d for user null
+2026-01-31 01:11:05,764 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,767 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Shelve service unavailable during getById: Service degraded
+2026-01-31 01:11:05,770 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,773 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Updating shelve 39f4bf31-a576-43a6-8e94-bf363aa3bf80 for user null
+2026-01-31 01:11:05,773 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,777 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Shelve service unavailable during create
+2026-01-31 01:11:05,777 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Shelve service unavailable during update: Internal error
+2026-01-31 01:11:05,777 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Shelve service unavailable during delete: Internal error
+2026-01-31 01:11:05,781 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,782 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Fetching shelves page 0 size 10 for user null
+2026-01-31 01:11:05,782 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,785 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,785 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Fetching shelve ec3c2af7-9217-47e6-90ab-16c43b1ef78c for user null
+2026-01-31 01:11:05,786 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,789 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Shelve service unavailable during create
+2026-01-31 01:11:05,791 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,792 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Updating shelve 68685504-5767-4dd8-9bbe-c87627e66efd for user null
+2026-01-31 01:11:05,793 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,797 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,797 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Deleting shelve e6e00cf4-8616-43df-8ee4-d102755b7e96 for user null
+2026-01-31 01:11:05,797 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,801 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Shelve service unavailable during getAll: Network timeout
+2026-01-31 01:11:05,803 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,804 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Fetching shelve 7b2d6e6a-2aa2-4663-8e96-dd745df41d25 for user null
+2026-01-31 01:11:05,804 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,807 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,808 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Creating shelve for user null
+2026-01-31 01:11:05,808 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,808 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,809 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Creating shelve for user null
+2026-01-31 01:11:05,809 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Retrieving current user info from UserService
+2026-01-31 01:11:05,813 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.ShelfServiceImpl[0;39m - Shelve service unavailable during create
+2026-01-31 01:11:05,823 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Updating subject: 7aba994c-721b-4ea9-8188-35afa719aa2d in shelf: a7e4346f-e772-46ac-9996-b6e38d91cf62
+2026-01-31 01:11:05,828 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Updating subject: 2d4fb35a-d6b2-4f92-a3f7-03a4efb95256 in shelf: b06703b5-65c9-4d77-b2cc-aff03b460b73
+2026-01-31 01:11:05,830 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Updating subject: cd64b1ad-9681-4108-8cc5-1cfdd79ddb0f in shelf: 7b65c180-0b1a-4088-90fd-2f7173c54963
+2026-01-31 01:11:05,831 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Successfully updated subject: cd64b1ad-9681-4108-8cc5-1cfdd79ddb0f
+2026-01-31 01:11:05,835 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Subject service unavailable during delete: Network timeout
+2026-01-31 01:11:05,838 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Creating subject for shelf: 6d3ec92c-ae1b-4347-9a11-ddd325034bce
+2026-01-31 01:11:05,845 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Subject service unavailable during create: Service unavailable
+2026-01-31 01:11:05,849 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Subject service unavailable during update: Database error
+2026-01-31 01:11:05,853 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Getting subject: 6ac3c817-b8a6-4992-a075-5555a887f19b from shelf: 2c46087a-3502-4856-9053-5752ab18c6ce
+2026-01-31 01:11:05,856 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Successfully retrieved subject: 6ac3c817-b8a6-4992-a075-5555a887f19b
+2026-01-31 01:11:05,861 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Updating subject: c31a77fe-3f3f-4fb0-a317-7437d267f6db in shelf: ef303a60-ab29-4efe-8e5e-de6832dcd082
+2026-01-31 01:11:05,866 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Getting subject: 893e6239-4782-472a-82b1-adbbbd605b15 from shelf: 8da79bcd-f946-49a5-81d6-3bf353a6d7d7
+2026-01-31 01:11:05,873 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Subject service unavailable during getById: Circuit breaker open
+2026-01-31 01:11:05,877 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Updating subject: f91b9a83-9d0a-4910-92aa-54a2b899175e in shelf: 8da8994f-9f06-489b-9719-f3d33fed7305
+2026-01-31 01:11:05,880 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Subject service unavailable during create: Internal error
+2026-01-31 01:11:05,884 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Deleting subject: 2fb99f82-6e01-4af0-aa23-d0bdbc59b105 from shelf: 7c3cc9d1-602b-4e2f-83ed-fb5e3692f883
+2026-01-31 01:11:05,888 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Getting all subjects for shelf: aa2c7b1a-fbc6-40ff-aa68-b2a4346ab244 with page: 0 and size: 10
+2026-01-31 01:11:05,891 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Successfully retrieved 3 subjects for shelf: aa2c7b1a-fbc6-40ff-aa68-b2a4346ab244 (total: 3)
+2026-01-31 01:11:05,893 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Deleting subject: 6e1b614f-07f1-4005-ba4d-72c46418c6e8 from shelf: 80a3d130-17b6-4646-8fce-c8eca9def53e
+2026-01-31 01:11:05,898 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Creating subject for shelf: ba858952-c4cb-4675-81a7-29d7681aaa56
+2026-01-31 01:11:05,899 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Successfully created subject: de1ed47d-0b53-4de8-b19a-056ce9573d86
+2026-01-31 01:11:05,901 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Subject service unavailable during getAllByShelve: Service degraded
+2026-01-31 01:11:05,906 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Getting all subjects for shelf: f13145c3-ae9c-4272-b3b6-7e3b4ebde71a with page: 0 and size: 10
+2026-01-31 01:11:05,908 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Getting subject: 3f58f2ec-11d5-47c1-b5d7-f57d6e29b31b from shelf: 3845c6a5-083a-4899-87ac-7b0414433e5a
+2026-01-31 01:11:05,912 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Deleting subject: 35acc955-16cf-442e-8db0-4c9943a452c6 from shelf: 76f77a5b-e3b8-4614-ba6b-3bc022070cc3
+2026-01-31 01:11:05,913 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.SubjectServiceImpl[0;39m - Successfully deleted subject: 35acc955-16cf-442e-8db0-4c9943a452c6 and associated cards
+2026-01-31 01:11:05,923 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Creating test suite for shelve 5f178d9a-acaa-45f8-9487-1e582fbfdca6
+2026-01-31 01:11:05,929 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Creating test suite for shelve dc99a912-7e73-44a1-b45f-c58819343bb2
+2026-01-31 01:11:05,932 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Fetching all test suites for shelve d37cc514-d0f0-465e-9246-cbc1faeafa84
+2026-01-31 01:11:05,935 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Deleting test suite a4f5b704-d949-43ba-b70b-ef09519a0bb0 for shelve dab920cf-2615-4e1c-b3a1-2fb7112364bf
+2026-01-31 01:11:05,939 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Updating test suite 38a8af7f-6566-4720-8126-1e9e2b30f0d8 for shelve fbb15eeb-433a-49b9-9989-4f5bdac55584
+2026-01-31 01:11:05,943 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Test suite service unavailable during getAllByShelve: Database connection failed
+2026-01-31 01:11:05,945 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Deleting test suite 32e2f06a-408c-4e74-b302-b37dca50df48 for shelve 5b45f8ae-5267-43dc-8eee-e5d023925165
+2026-01-31 01:11:05,948 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Test suite service unavailable during update: Database connection failed
+2026-01-31 01:11:05,951 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Test suite service unavailable during create: Database connection failed
+2026-01-31 01:11:05,954 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Fetching test suite f2b33257-c840-4450-b3b1-1e40d35e3985 for shelve 18120788-afae-427c-8db7-4c101b19aa06
+2026-01-31 01:11:05,958 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Creating test suite for shelve d4cfe24c-d0b1-44d7-b49d-c67e55d4eb53
+2026-01-31 01:11:05,961 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Fetching test suite b9c67d9a-214a-423b-b82f-a2f6d7d63ca0 for shelve 3463ce7f-a3c3-4c09-98b0-4e4d5e483f0b
+2026-01-31 01:11:05,964 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Test suite service unavailable during delete: Database connection failed
+2026-01-31 01:11:05,966 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Test suite service unavailable during getById: Database connection failed
+2026-01-31 01:11:05,970 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.s.impl.TestSuiteServiceImpl[0;39m - Updating test suite 12fca942-beb1-4ca3-ac92-b46ef60bc61c for shelve 4c4c56d5-7fea-4ac0-b7d3-29b166e8f55b
+2026-01-31 01:11:06,118 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Logout service unavailable
+2026-01-31 01:11:06,141 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Logout service unavailable
+2026-01-31 01:11:06,149 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Processing refresh token request for user t**************m
+2026-01-31 01:11:06,150 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Successfully refreshed tokens for user t**************m
+2026-01-31 01:11:06,172 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Processing refresh token request for user t**************m
+2026-01-31 01:11:06,173 [31mWARN [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Refresh token mismatch for user t**************m
+2026-01-31 01:11:06,188 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Processing logout request for user ID: 923b02a3-98b6-4670-b55d-42d33d52651a
+2026-01-31 01:11:06,188 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Cleared security context for user ID: 923b02a3-98b6-4670-b55d-42d33d52651a success false
+2026-01-31 01:11:06,195 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Processing logout request for user ID: f0acf011-c0f0-4b5a-80ff-0547a67321c4
+2026-01-31 01:11:06,195 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Cleared security context for user ID: f0acf011-c0f0-4b5a-80ff-0547a67321c4 success true
+2026-01-31 01:11:06,202 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Refresh token service unavailable for user t**************m
+2026-01-31 01:11:06,205 [1;31mERROR[0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Refresh token service unavailable for user t**************m
+2026-01-31 01:11:06,220 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Processing refresh token request for user t**************m
+2026-01-31 01:11:06,221 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Successfully refreshed tokens for user t**************m
+2026-01-31 01:11:06,233 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Processing refresh token request for user t**************m
+2026-01-31 01:11:06,235 [31mWARN [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Invalid refresh token for user t**************m
+2026-01-31 01:11:06,244 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Processing refresh token request for user t**************m
+2026-01-31 01:11:06,244 [31mWARN [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Refresh token mismatch for user t**************m
+2026-01-31 01:11:06,248 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Processing refresh token request for user null
+2026-01-31 01:11:06,248 [31mWARN [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Invalid refresh token for user null
+2026-01-31 01:11:06,255 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Processing refresh token request for user t**************m
+2026-01-31 01:11:06,280 [34mINFO [0;39m [[34mTest worker[0;39m] [33m[XID:][0;39m [32mc.a.o.a.service.impl.UserServiceImpl[0;39m - Processing logout request for user ID: 2930029f-fecd-4032-a9e4-e852e437acd7
