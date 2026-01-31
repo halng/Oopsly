@@ -1,0 +1,54 @@
+name: Oopsly QA Agent (Copilot)
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+  pull-requests: read
+  contents: read
+
+jobs:
+  delegate-to-copilot:
+    # Only run if the comment is on a PR and contains "/approve-qa"
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '/approve-qa')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Trigger Copilot Agent
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_URL: ${{ github.event.issue.html_url }}
+          REPO: ${{ github.repository }}
+        run: |
+          # 1. Define the Prompt for Copilot
+          # We embed the instruction to "Define Tasks" first, then "Implement".
+          BODY="Please act as the QA Lead for **Project Oopsly**.
+          
+          Context:
+          The user has requested a QA review for Pull Request $PR_URL.
+          
+          **Your Task:**
+          1. Analyze the changes in the linked PR.
+          2. Create a checklist of test cases (Happy Path, Edge Cases, Security).
+          3. Implement these tests in a new test file (using our project's testing framework).
+          4. Open a PR with these changes.
+          
+          **Constraints:**
+          - Be defensive. Assume inputs can be malicious or null.
+          - Do not modify existing implementation code, only add tests."
+
+          # 2. Create the Issue and Assign to @copilot
+          # Note: 'app/github-copilot' is often the bot name, but assignment usually requires the user handle 'copilot'.
+          # If strict assignment fails via API, mentioning @copilot in the body often triggers the notification hooks.
+          
+          gh issue create \
+            --title "🤖 QA Task: Generate Tests for PR #$PR_NUMBER" \
+            --body "$BODY" \
+            --repo "$REPO" \
+            --assignee "copilot"
