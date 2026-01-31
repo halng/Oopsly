@@ -22,7 +22,7 @@ jobs:
       - name: Trigger Copilot Agent
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
         run: |
           # 1. Fetch PR Details (URL is needed for the body)
