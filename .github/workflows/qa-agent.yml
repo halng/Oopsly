@@ -22,11 +22,17 @@ jobs:
       - name: Trigger Copilot Agent
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
         run: |
-          BODY="@copilot Please act as the QA Lead for **Project Oopsly**.
+          # 1. Fetch PR Details (URL is needed for the body)
+          echo "Fetching details for PR #$PR_NUMBER..."
+          PR_URL=$(gh pr view $PR_NUMBER --json url -q .url)
+
+          # 2. Define the Body Text
+          # We use a Here-Doc (EOF) to safely store the multi-line string in a variable
+          read -r -d '' BODY_CONTENT <<EOF
+          @copilot Please act as the QA Lead for **Project Oopsly**.
           
           Context:
           The user has requested a QA review for Pull Request $PR_URL.
@@ -34,28 +40,31 @@ jobs:
           **Your Task:**
           1. Analyze the changes in the linked PR.
           2. Create a checklist of test cases (Happy Path, Edge Cases, Security).
-          3. Implement these tests in a new test file (using our project's testing framework).
+          3. Implement these tests in a new test file.
           4. Open a PR with these changes.
           
           **Constraints:**
           - Be defensive. Assume inputs can be malicious or null.
           - Do not modify existing implementation code, only add tests.
-          - Check for existing tests to avoid duplication.
-          - Prioritize high-impact tests if time is limited.
-          - Follow the project's coding standards and best practices.
-          - Follow the instructions in ./.github/copilot-instructions.md"
-          
+          - Follow the instructions in ./.github/copilot-instructions.md
+          EOF
+
+          # 3. Create Safe JSON Payload using jq
+          # --arg passes the bash variable into jq safely (handling newlines/quotes)
+          jq -n \
+            --arg body "$BODY_CONTENT" \
+            --arg title "🤖 QA Task: Generate Tests for PR #$PR_NUMBER" \
+            '{
+              title: $title,
+              body: $body,
+              labels: ["testing", "automation"]
+            }' > payload.json
+
+          # 4. Send API Request
           gh api \
             --method POST \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/halng/Oopsly/issues \
-            --input - <<< '{
-            "title": "🤖 QA Task: Generate Tests for PR $PR_NUMBER",
-            "body": $BODY,       
-            "labels": [
-              "testing",
-              "automation"
-            ]
-          }'
+            "/repos/$REPO/issues" \
+            --input payload.json
 
