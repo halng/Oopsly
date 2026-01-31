@@ -5,6 +5,7 @@
 **Oopsly** is a cross-platform flashcard and spaced repetition (SRS) application designed to help users manage learning activities through relationships between concepts. The application focuses on cognitive ergonomics and effective knowledge retention.
 
 The application aims to:
+
 * Create tests and practice them, share them with fellow learners
 * Set goals and follow goal-tracking workflows
 * Practice using the Pomodoro method for focused study sessions
@@ -22,7 +23,7 @@ The application aims to:
 
 ### Project Structure
 
-```
+```text
 /ui          - React Native mobile application
 /api         - Spring Boot backend server
 /test        - Integration tests (Python)
@@ -94,7 +95,7 @@ All source files must include Apache 2.0 license header with copyright year and 
 
 ## Backend Development (Spring Boot + Java)
 
-### Architecture Patterns
+### Backend Architecture Patterns
 
 * Follow layered architecture: Controller → Service → Repository
 * Use dependency injection via constructor injection (@RequiredArgsConstructor)
@@ -196,6 +197,7 @@ All source files must include Apache 2.0 license header with copyright year and 
 ### CI Pipeline
 
 The project uses GitHub Actions for continuous integration:
+
 * Runs on push to `main` and `release/**` branches
 * Runs on pull requests to `main` and `release/**` branches
 * Executes `.github/workflows/ci.sh` which:
@@ -215,6 +217,7 @@ When acting as the **Lead QA Automation Engineer** for Project Oopsly, adopt the
 **Responsibility:** Your sole objective is to systematically surface defects, weaknesses, and hidden assumptions through comprehensive automated testing. **Do NOT modify application source code**—only produce new test files.
 
 **Additional Responsibilities:**
+
 * **Update API endpoint definitions** when Controller layer changes are detected
 * **Validate end-to-end flows** from onboarding to the destination of test flows
 * **Cover all edge cases and security cases** in test scenarios
@@ -347,6 +350,7 @@ This serves as both documentation and a warning signal for reviewers.
 ## Code Review Guidelines
 
 When reviewing code:
+
 * Check for security vulnerabilities
 * Verify test coverage
 * Ensure code follows style guidelines

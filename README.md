@@ -6,6 +6,7 @@
 Oopsly is a cross-platform flashcard and spaced repetition (SRS) application designed to help users manage learning activities through relationships between concepts. The application focuses on cognitive ergonomics and effective knowledge retention.
 
 The application aims to:
+
 - Create tests and practice them, share them with fellow learners
 - Set goals and follow goal-tracking workflows
 - Practice using the Pomodoro method for focused study sessions
@@ -83,20 +84,23 @@ The app provides helpful tips throughout the creation process to ensure optimal 
 
 ### Getting Started
 
-**Frontend (React Native)**
+#### Frontend (React Native)
+
 ```bash
 cd ui
 pnpm install
 pnpm start
 ```
 
-**Backend (Spring Boot)**
+#### Backend (Spring Boot)
+
 ```bash
 cd api
 ./gradlew bootRun
 ```
 
-**Integration Tests**
+#### Integration Tests
+
 ```bash
 cd test
 pytest
@@ -109,6 +113,7 @@ This project uses GitHub Copilot to assist with development. For comprehensive c
 📘 **[GitHub Copilot Instructions](.github/copilot-instructions.md)**
 
 This document includes:
+
 - Project architecture and tech stack overview
 - Coding standards for TypeScript, Java, and Python
 - Testing strategy and coverage requirements
