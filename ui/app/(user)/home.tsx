@@ -232,6 +232,7 @@ const OopslyApp = () => {
         horizontal
         showsHorizontalScrollIndicator={false}
         className="max-h-40"
+        testID={`subject-scroll-view-${shelfId}`}
       >
         <View className="flex-row gap-4 px-4 pb-2">
           {subjects.map((subject) => (
@@ -239,13 +240,14 @@ const OopslyApp = () => {
               key={subject.id}
               className="bg-white rounded-xl p-4 w-60 shadow-sm border border-gray-100"
               onPress={() => router.push(`${shelfId}/subject/${subject.id}`)}
+              testID={`subject-card-${subject.id}`}
             >
               <View className="flex-row justify-between items-start mb-2">
-                <Text className="font-bold text-gray-800 text-lg">
+                <Text className="font-bold text-gray-800 text-lg" testID={`subject-name-text-${subject.id}`}>
                   {subject.name}
                 </Text>
                 <View className="bg-blue-50 rounded-full px-2 py-1">
-                  <Text className="text-blue-600 text-xs font-semibold">
+                  <Text className="text-blue-600 text-xs font-semibold" testID={`subject-due-text-${subject.id}`}>
                     {subject.overdue} due
                   </Text>
                 </View>
@@ -259,9 +261,10 @@ const OopslyApp = () => {
                       style={{
                         width: `${subject.completedPercent ? subject.completedPercent : 0}%`,
                       }}
+                      testID={`subject-progress-bar-${subject.id}`}
                     />
                   </View>
-                  <Text className="text-gray-500 text-xs ml-2">
+                  <Text className="text-gray-500 text-xs ml-2" testID={`subject-progress-text-${subject.id}`}>
                     {subject.completedPercent ? subject.completedPercent : 0}%
                   </Text>
                 </View>
@@ -272,10 +275,11 @@ const OopslyApp = () => {
           <TouchableOpacity
             className="bg-white rounded-xl p-4 w-60 shadow-sm border-2 border-dashed border-gray-300 justify-center items-center"
             onPress={() => openContentTypeModal(shelfId)}
+            testID={`manage-shelf-button-${shelfId}`}
           >
             <View className="mb-1">
-              <Text className="text-gray-600 font-semibold">Management</Text>
-              <Text className="text-gray-400 text-xs mt-1">Tap to manage</Text>
+              <Text className="text-gray-600 font-semibold" testID={`manage-shelf-title-text-${shelfId}`}>Management</Text>
+              <Text className="text-gray-400 text-xs mt-1" testID={`manage-shelf-subtitle-text-${shelfId}`}>Tap to manage</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -293,9 +297,9 @@ const OopslyApp = () => {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-gray-50" testID="home-container">
       {/* Header */}
-      <View className="bg-white pt-12 pb-4 px-4 shadow-sm">
+      <View className="bg-white pt-12 pb-4 px-4 shadow-sm" testID="header-container">
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center">
             <View className="w-10 h-10 rounded-full bg-indigo-100 items-center justify-center mr-3">
@@ -304,79 +308,84 @@ const OopslyApp = () => {
                   uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D",
                 }}
                 className="w-8 h-8 rounded-full"
+                testID="user-avatar"
               />
             </View>
-            <Text className="text-2xl font-bold text-gray-800">Oopsly</Text>
+            <Text className="text-2xl font-bold text-gray-800" testID="app-title-text">Oopsly</Text>
           </View>
 
-          <View className="flex-row items-center bg-orange-50 px-3 py-1 rounded-full">
+          <View className="flex-row items-center bg-orange-50 px-3 py-1 rounded-full" testID="streak-container">
             <Flame size={16} color="#EA580C" fill="#EA580C" />
-            <Text className="ml-1 font-bold text-orange-700">7</Text>
+            <Text className="ml-1 font-bold text-orange-700" testID="streak-count-text">7</Text>
           </View>
         </View>
 
         {/* Motivational Quote */}
-        <View className="mt-4 p-4 bg-indigo-50 rounded-xl">
-          <Text className="text-indigo-800 text-lg font-medium italic text-center">
+        <View className="mt-4 p-4 bg-indigo-50 rounded-xl" testID="quote-container">
+          <Text className="text-indigo-800 text-lg font-medium italic text-center" testID="quote-text">
             "The expert in anything was once a beginner."
           </Text>
-          <Text className="text-indigo-600 text-sm text-center mt-1">
+          <Text className="text-indigo-600 text-sm text-center mt-1" testID="quote-author-text">
             - Helen Hayes
           </Text>
         </View>
 
         {/* Navigation Menu - Reordered with Create Shelf first */}
-        <View className="flex-row justify-around mt-4 pt-3 border-t border-gray-100">
+        <View className="flex-row justify-around mt-4 pt-3 border-t border-gray-100" testID="navigation-menu">
           <TouchableOpacity
             className="items-center"
             onPress={() => setModalVisible(true)}
+            testID="create-shelf-button"
           >
             <View className="bg-indigo-100 p-3 rounded-full mb-1">
               <PlusCircle size={24} color="#4F46E5" />
             </View>
-            <Text className="text-xs text-gray-600">Create Shelf</Text>
+            <Text className="text-xs text-gray-600" testID="create-shelf-label-text">Create Shelf</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             className="items-center"
             onPress={() => router.push("/tasks-list")}
+            testID="tasks-button"
           >
             <View className="bg-blue-100 p-3 rounded-full mb-1">
               <CheckSquare size={24} color="#3B82F6" />
             </View>
-            <Text className="text-xs text-gray-600">Tasks</Text>
+            <Text className="text-xs text-gray-600" testID="tasks-label-text">Tasks</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             className="items-center"
             onPress={() => router.push("/notes")}
+            testID="notes-button"
           >
             <View className="bg-green-100 p-3 rounded-full mb-1">
               <StickyNote size={24} color="#10B981" />
             </View>
-            <Text className="text-xs text-gray-600">Notes</Text>
+            <Text className="text-xs text-gray-600" testID="notes-label-text">Notes</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             className="items-center"
             onPress={() => router.push("/study-planner")}
+            testID="planner-button"
           >
             <View className="bg-purple-100 p-3 rounded-full mb-1">
               <Calendar size={24} color="#8B5CF6" />
             </View>
-            <Text className="text-xs text-gray-600">Planner</Text>
+            <Text className="text-xs text-gray-600" testID="planner-label-text">Planner</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Main Content */}
-      <ScrollView className="flex-1">
+      <ScrollView className="flex-1" testID="shelves-scroll-view">
         {Array.from(shelves ?? []).map((shelf) => (
-          <View key={shelf.id} className="mb-6">
-            <View className="flex-row items-center px-4 mb-3 mt-2">
+          <View key={shelf.id} className="mb-6" testID={`shelf-item-${shelf.id}`}>
+            <View className="flex-row items-center px-4 mb-3 mt-2" testID={`shelf-header-${shelf.id}`}>
               <View className="mr-2">{renderIconComponent(shelf.icon)}</View>
 
-              <Text className="text-lg font-bold text-gray-800">
+              <Text className="text-lg font-bold text-gray-800" testID={`shelf-name-text-${shelf.id}`}>
                 {shelf.name}
               </Text>
             </View>
@@ -394,23 +403,27 @@ const OopslyApp = () => {
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
+        testID="create-shelf-modal"
       >
         <Pressable
           className="flex-1 bg-black/50 justify-center items-center px-6"
           onPress={() => setModalVisible(false)}
+          testID="create-shelf-modal-overlay"
         >
           <Pressable
             className="bg-white rounded-2xl w-full max-w-md"
             onPress={(e) => e.stopPropagation()}
+            testID="create-shelf-modal-content"
           >
             {/* Modal Header */}
             <View className="flex-row justify-between items-center p-6 pb-4 border-b border-gray-100">
-              <Text className="text-xl font-bold text-gray-800">
+              <Text className="text-xl font-bold text-gray-800" testID="create-shelf-modal-title-text">
                 Create New Shelf
               </Text>
               <TouchableOpacity
                 onPress={() => setModalVisible(false)}
                 className="p-1"
+                testID="create-shelf-modal-close-button"
               >
                 <X size={24} color="#6B7280" />
               </TouchableOpacity>
@@ -423,6 +436,7 @@ const OopslyApp = () => {
                 <TouchableOpacity
                   className="flex-row items-center justify-between bg-gray-50 rounded-xl p-4 border border-gray-200"
                   onPress={() => setShowIconPicker(!showIconPicker)}
+                  testID="icon-selector-button"
                 >
                   <View className="flex-row items-center">
                     {React.createElement(selectedIcon.component, {
@@ -433,7 +447,7 @@ const OopslyApp = () => {
                       {selectedIcon.name}
                     </Text>
                   </View>
-                  <Text className="text-gray-400">Tap to change</Text>
+                  <Text className="text-gray-400" testID="icon-selector-hint-text">Tap to change</Text>
                 </TouchableOpacity>
 
                 {/* Icon Picker Grid */}
@@ -473,6 +487,7 @@ const OopslyApp = () => {
                   placeholderTextColor="#9CA3AF"
                   value={shelfName}
                   onChangeText={setShelfName}
+                  testID="shelf-name-input"
                 />
               </View>
 
@@ -491,6 +506,7 @@ const OopslyApp = () => {
                   numberOfLines={4}
                   textAlignVertical="top"
                   style={{ minHeight: 100 }}
+                  testID="shelf-description-input"
                 />
               </View>
 
@@ -499,6 +515,7 @@ const OopslyApp = () => {
                 <TouchableOpacity
                   className="flex-1 bg-gray-200 rounded-xl py-4 items-center"
                   onPress={() => setModalVisible(false)}
+                  testID="create-shelf-cancel-button"
                 >
                   <Text className="text-gray-700 font-bold">Cancel</Text>
                 </TouchableOpacity>
@@ -506,6 +523,7 @@ const OopslyApp = () => {
                 <TouchableOpacity
                   className="flex-1 bg-indigo-600 rounded-xl py-4 items-center"
                   onPress={handleCreateShelf}
+                  testID="create-shelf-submit-button"
                 >
                   <Text className="text-white font-bold">Create Shelf</Text>
                 </TouchableOpacity>
@@ -521,6 +539,7 @@ const OopslyApp = () => {
         transparent={true}
         visible={contentTypeModalVisible}
         onRequestClose={() => setContentTypeModalVisible(false)}
+        testID="content-type-modal"
       >
         <Pressable
           className="flex-1 bg-black/50 justify-center items-center px-6"
