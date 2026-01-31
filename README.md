@@ -1,9 +1,15 @@
 
-# Osmosis
+# Oopsly
 
 ## Project Description
 
-Osmosis is an intelligent test generation application designed to help students create customized assessments for effective studying. With features to generate tests from topics, documents, or manually create flashcards, users can tailor their learning experience to any subject matter.
+Oopsly is a cross-platform flashcard and spaced repetition (SRS) application designed to help users manage learning activities through relationships between concepts. The application focuses on cognitive ergonomics and effective knowledge retention.
+
+The application aims to:
+
+- Create tests and practice them, share them with fellow learners
+- Set goals and follow goal-tracking workflows
+- Practice using the Pomodoro method for focused study sessions
 
 ## Style Guide
 
@@ -73,3 +79,47 @@ Osmosis is an intelligent test generation application designed to help students 
 5. Take the test or save it for later
 
 The app provides helpful tips throughout the creation process to ensure optimal results.
+
+## Development
+
+### Getting Started
+
+#### Frontend (React Native)
+
+```bash
+cd ui
+pnpm install
+pnpm start
+```
+
+#### Backend (Spring Boot)
+
+```bash
+cd api
+./gradlew bootRun
+```
+
+#### Integration Tests
+
+```bash
+cd test
+pytest
+```
+
+### Contributing
+
+This project uses GitHub Copilot to assist with development. For comprehensive coding guidelines, best practices, and testing requirements, please refer to:
+
+📘 **[GitHub Copilot Instructions](.github/copilot-instructions.md)**
+
+This document includes:
+
+- Project architecture and tech stack overview
+- Coding standards for TypeScript, Java, and Python
+- Testing strategy and coverage requirements
+- Security and performance best practices
+- Code review guidelines
+
+### License
+
+Licensed under the Apache License 2.0. See source files for full license headers.
