@@ -26,7 +26,7 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
           REPO: ${{ github.repository }}
         run: |
-          BODY="@copilot Please act as the QA Lead for **Project Oopsly**.
+          export BODY="@copilot Please act as the QA Lead for **Project Oopsly**.
           
           Context:
           The user has requested a QA review for Pull Request $PR_URL.
@@ -44,12 +44,6 @@ jobs:
           - Prioritize high-impact tests if time is limited.
           - Follow the project's coding standards and best practices.
           - Follow the instructions in ./.github/copilot-instructions.md"
-          
-          # gh issue create \
-          #   --title "🤖 QA Task: Generate Tests for PR #$PR_NUMBER" \
-          #   --body "$BODY" \
-          #   --repo "$REPO" \
-          #   --assignee "@copilot"
           
           gh api \
             --method POST \
