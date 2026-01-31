@@ -58,7 +58,21 @@ Osmosis is an intelligent test generation application designed to help students 
 - **Lucide Icons**: Lightweight SVG icon library
 - **Expo Router**: File-based routing system
 
-## Usage Instructions
+## Documentation
+
+For detailed information about the project, see:
+
+- **[Features Documentation](./docs/FEATURES.md)** - Comprehensive guide to all features
+- **[API Documentation](./docs/API.md)** - REST API endpoints and usage
+- **[Architecture Documentation](./docs/ARCHITECTURE.md)** - System architecture and technical design
+- **[Initiative Document](./docs/initiative.md)** - Project vision and goals
+- **[Story & Design](./docs/story.md)** - Design philosophy and narrative
+- **[Screen Specifications](./docs/screen.md)** - UI/UX screen details
+- **[Theme & Colors](./docs/theme-color.md)** - Visual design guide
+
+## Quick Start
+
+### For Users
 
 1. Launch the application
 2. Choose a creation method from the main screen:
@@ -73,3 +87,57 @@ Osmosis is an intelligent test generation application designed to help students 
 5. Take the test or save it for later
 
 The app provides helpful tips throughout the creation process to ensure optimal results.
+
+### For Developers
+
+#### Prerequisites
+- Node.js 18+
+- Java 21
+- Docker & Docker Compose
+- Expo CLI
+
+#### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/halng/Oopsly.git
+cd Oopsly
+
+# Backend setup
+cd api
+./gradlew bootRun
+
+# Frontend setup (in a new terminal)
+cd ui
+npm install
+npx expo start
+
+# Database (in a new terminal)
+docker-compose up postgres
+```
+
+#### Running Tests
+
+```bash
+# Backend tests
+cd api
+./gradlew test
+
+# Frontend tests
+cd ui
+npm test
+
+# Integration tests
+cd test
+pytest
+```
+
+## Project Structure
+
+```
+Oopsly/
+├── api/           # Spring Boot backend API
+├── ui/            # React Native mobile app
+├── test/          # Integration and E2E tests
+└── docs/          # Documentation
+```
