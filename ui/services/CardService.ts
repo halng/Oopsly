@@ -16,7 +16,7 @@ import { create } from 'zustand';
  */
 
 import { ApiResponse } from "@/types/ApiRes";
-import { CardCreateRequest, CardPaginatedResponse } from "@/types/Card";
+import { CardCreateRequest, CardPaginatedResponse, ReviewedFlashcard } from "@/types/Card";
 import { apiClient } from ".";
 
 const CARD_ENDPOINTS = {
@@ -74,4 +74,14 @@ const deleteCard = async (
   return response.data;
 }
 
-export { fetchCardsDataBySubjectAndShelf, createNewCard, updateCard, deleteCard };
+const updateDifficultyLevels = async (
+  shelfId: string,
+  subjectId: string,
+  reviewedFlashcards: ReviewedFlashcard[],
+): Promise<ApiResponse<any>> => {
+  const endpoint = `${CARD_ENDPOINTS.BASE(shelfId, subjectId)}/difficulty`;
+  const response = await apiClient.put(endpoint, reviewedFlashcards );
+  return response.data;
+}
+
+export { fetchCardsDataBySubjectAndShelf, createNewCard, updateCard, deleteCard, updateDifficultyLevels };

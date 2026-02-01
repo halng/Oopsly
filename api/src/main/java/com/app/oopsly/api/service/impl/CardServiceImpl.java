@@ -169,12 +169,13 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public Pair<Integer, Double> getShortPracticeStats(SubjectEntity subject) {
+        log.info("Calculating short practice stats for subject: {}", subject.getId());
         long totalCards = cardRepository.countBySubjectAndDeletedFalse(subject);
         long dueCards = cardRepository.countOverdue(subject);
         if (totalCards == 0) {
             return Pair.of(0, 0.0);
         }
-        double percentage = (dueCards * 100.0) / totalCards;
+        double percentage = 100.0 - (dueCards * 100.0) / totalCards;
         return Pair.of((int) dueCards, percentage);
     }
 

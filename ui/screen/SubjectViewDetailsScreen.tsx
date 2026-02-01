@@ -35,13 +35,11 @@ import {
 } from "@/services/SubjectService";
 
 
-const SubjectDetailScreen = () => {
+const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjectId: string }) => {
   const logger = Logger.extend("SubjectDetailScreen");
 
   const router = useRouter();
   const params = useLocalSearchParams();
-  const _shelfId = params.shelfId as string;
-  const _subjectId = params.id as string;
 
   const [isEditing, setIsEditing] = useState(false);
   const [subjectName, setSubjectName] = useState("");
@@ -325,7 +323,7 @@ const SubjectDetailScreen = () => {
         {!isEditing && 
         <TouchableOpacity
           className="bg-indigo-600 rounded-xl py-5 mb-4 items-center shadow-sm"
-          onPress={() => router.push(`/study/${subjectStatsData?.id}`)}
+          onPress={() => router.push(`/${_shelfId}/review/${_subjectId}`)}
           testID="review-due-cards-button"
         >
           <Text className="text-white text-lg font-bold" testID="review-due-cards-title">Review Due Cards</Text>

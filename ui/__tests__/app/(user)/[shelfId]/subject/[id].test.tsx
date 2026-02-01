@@ -18,7 +18,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Alert } from 'react-native';
 import React from 'react';
-import SubjectDetailScreen from '../../../../../app/(user)/[shelfId]/subject/[id]';
+import SubjectDetailScreen from '../../../../../app/(user)/[shelfId]/view/[id]';
 import * as CardService from '../../../../../services/CardService';
 import * as SubjectService from '../../../../../services/SubjectService';
 

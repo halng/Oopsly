@@ -35,9 +35,14 @@ export interface CardUpdateRequest {
 
 export interface CardPaginatedResponse {
   entities: CardRes[];
-  totalElements: number;
   totalPages: number;
   currentPage: number;
   totalItems: number;
   hasNextPage?: boolean;
+}
+
+
+export interface ReviewedFlashcard {
+  cardId: string;
+  newLevel: 'HARD' | 'GOOD' | 'EASY' | 'AGAIN';
 }

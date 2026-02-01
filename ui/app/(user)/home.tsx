@@ -239,7 +239,7 @@ const OopslyApp = () => {
             <TouchableOpacity
               key={subject.id}
               className="bg-white rounded-xl p-4 w-60 shadow-sm border border-gray-100"
-              onPress={() => router.push(`${shelfId}/subject/${subject.id}`)}
+              onPress={() => router.push(`${shelfId}/view/${subject.id}`)}
               testID={`subject-card-${subject.id}`}
             >
               <View className="flex-row justify-between items-start mb-2">

@@ -24,6 +24,7 @@ import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.ShelfRepository;
 import com.app.oopsly.api.repository.SubjectRepository;
+import com.app.oopsly.api.service.CardService;
 import com.app.oopsly.api.service.SubjectService;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.util.StringUtils;
@@ -48,6 +49,7 @@ public class SubjectServiceImpl implements SubjectService {
     private final SubjectRepository subjectRepository;
     private final ShelfRepository shelfRepository;
     private final UserService userService;
+    private final CardService cardService;
 
     @Override
     @CircuitBreaker(name = "subjectServiceCircuitBreaker", fallbackMethod = "createFallback")
@@ -197,12 +199,13 @@ public class SubjectServiceImpl implements SubjectService {
     }
 
     private SubjectRes toSubjectRes(SubjectEntity entity) {
+        var stats = cardService.getShortPracticeStats(entity);
         return new SubjectRes(
                 entity.getId(),
                 entity.getName(),
                 entity.getDescription(),
-                0,
-                0.0,
+                stats.getLeft(),
+                stats.getRight(),
                 entity.getDailyLimit(),
                 entity.getNewCardsPerDay(),
                 entity.getInterval());
