@@ -1,0 +1,2658 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:9009/api/v1/oopsly",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Question",
+      "description": "Question management APIs for creating, updating, retrieving and deleting questions within test suites"
+    },
+    {
+      "name": "Subject",
+      "description": "Subject management APIs for creating, updating, retrieving and deleting subjects within shelves"
+    },
+    {
+      "name": "User Profile",
+      "description": "User profile and settings management APIs"
+    },
+    {
+      "name": "Shelf",
+      "description": "Shelf management APIs for creating, updating, retrieving and deleting shelfs"
+    },
+    {
+      "name": "Test Suite",
+      "description": "Test Suite management APIs for creating, updating, retrieving and deleting test suites within shelves"
+    },
+    {
+      "name": "Card",
+      "description": "Card management APIs for creating, updating, retrieving and deleting cards within subjects"
+    },
+    {
+      "name": "Users",
+      "description": "User management APIs"
+    },
+    {
+      "name": "OTP",
+      "description": "OTP management APIs for generating and validating one-time passwords"
+    }
+  ],
+  "paths": {
+    "/test-suites/{testSuiteId}/questions/{id}": {
+      "get": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Get question by ID",
+        "description": "Retrieves a specific question from a test suite by its ID",
+        "operationId": "getById",
+        "parameters": [
+          {
+            "name": "testSuiteId",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Question ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Question retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Question or test suite not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Update question",
+        "description": "Updates an existing question in a specific test suite",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "testSuiteId",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Question ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Question updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or metadata validation failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Question or test suite not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Delete question",
+        "description": "Soft deletes a question from a specific test suite",
+        "operationId": "deleteById",
+        "parameters": [
+          {
+            "name": "testSuiteId",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Question ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Question deleted successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Question or test suite not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shelves/{shelveId}/test-suites/{id}": {
+      "get": {
+        "tags": [
+          "Test Suite"
+        ],
+        "summary": "Get test suite by ID",
+        "description": "Retrieves a specific test suite from a shelve by its ID",
+        "operationId": "getById_1",
+        "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Test suite or shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Test suite retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Test Suite"
+        ],
+        "summary": "Update test suite",
+        "description": "Updates an existing test suite in a specific shelve",
+        "operationId": "update_1",
+        "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestSuiteReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Test suite or shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Test suite updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Test Suite"
+        ],
+        "summary": "Delete test suite",
+        "description": "Soft deletes a test suite and all its questions from a specific shelve",
+        "operationId": "deleteById_1",
+        "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test suite deleted successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Test suite or shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shelves/{shelveId}/subjects/{subjectId}/cards/{id}": {
+      "get": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Get card by ID",
+        "description": "Retrieves a specific card from a subject by its ID",
+        "operationId": "getById_2",
+        "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "subjectId",
+            "in": "path",
+            "description": "Subject ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Card ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174002"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Card retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Card or subject not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Update card",
+        "description": "Updates an existing card in a specific subject",
+        "operationId": "updateCard",
+        "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "subjectId",
+            "in": "path",
+            "description": "Subject ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Card ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174002"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardItemReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Card updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Card or subject not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Delete card",
+        "description": "Soft deletes a card from a specific collection",
+        "operationId": "deleteById_2",
+        "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Deck ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "subjectId",
+            "in": "path",
+            "description": "Collection ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Card ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174002"
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Card or collection not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Card deleted successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shelves/{shelveId}/subjects/{subjectId}/cards/difficulty": {
+      "put": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Update card difficulty",
+        "description": "Updates the difficulty level for multiple cards in a subject",
+        "operationId": "updateDifficulty",
+        "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "subjectId",
+            "in": "path",
+            "description": "Subject ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "description": "List of difficulty update requests",
+                "items": {
+                  "$ref": "#/components/schemas/UpdateDifficultyReq"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Difficulty updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subject not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shelves/{shelfId}/subjects/{id}": {
+      "get": {
+        "tags": [
+          "Subject"
+        ],
+        "summary": "Get subject by ID",
+        "description": "Retrieves a specific subject from a shelve by its ID",
+        "operationId": "getById_3",
+        "parameters": [
+          {
+            "name": "shelfId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Subject ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Subject retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subject or shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Subject"
+        ],
+        "summary": "Update subject",
+        "description": "Updates an existing subject in a specific shelve",
+        "operationId": "update_2",
+        "parameters": [
+          {
+            "name": "shelfId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Subject ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubjectReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Subject updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subject or shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Subject"
+        ],
+        "summary": "Delete subject",
+        "description": "Soft deletes a subject and all its cards from a specific shelve",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "shelfId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Subject ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subject deleted successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subject or shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shelves/{shelfId}/subjects/{id}/settings": {
+      "put": {
+        "tags": [
+          "Subject"
+        ],
+        "operationId": "updateSetting",
+        "parameters": [
+          {
+            "name": "shelfId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Subject ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubjectSettingReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shelves/{id}": {
+      "get": {
+        "tags": [
+          "Shelf"
+        ],
+        "summary": "Get shelf by ID",
+        "description": "Retrieves a shelf by its unique identifier",
+        "operationId": "getById_4",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Shelve retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Shelf"
+        ],
+        "summary": "Update shelf",
+        "description": "Updates an existing shelf by ID",
+        "operationId": "update_3",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShelfReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Shelve updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or ID",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Shelf"
+        ],
+        "summary": "Delete shelf",
+        "description": "Soft deletes a shelf by ID",
+        "operationId": "deleteById_3",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Shelve deleted successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/refresh-token": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Refresh Access Token",
+        "description": "Generates a new access token and refresh token using a valid refresh token",
+        "operationId": "refreshToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid input - validation failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Token refreshed successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or expired refresh token",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/logout": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Logout",
+        "description": "Logs out the current user by invalidating their refresh token",
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "description": "Logged out successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - user not authenticated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/test-suites/{testSuiteId}/questions": {
+      "get": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Get all questions by test suite",
+        "description": "Retrieves a list of all questions for a specific test suite",
+        "operationId": "getAllByTestSuite",
+        "parameters": [
+          {
+            "name": "testSuiteId",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Questions retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Test suite not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Question"
+        ],
+        "summary": "Create question",
+        "description": "Creates a new question within a specific test suite with type-specific metadata validation",
+        "operationId": "create",
+        "parameters": [
+          {
+            "name": "testSuiteId",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Test suite not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or metadata validation failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Question created successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shelves": {
+      "get": {
+        "tags": [
+          "Shelf"
+        ],
+        "summary": "Get all shelves",
+        "description": "Retrieves a paginated list of all shelves",
+        "operationId": "getAll",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Shelves retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Shelf"
+        ],
+        "summary": "Create shelf",
+        "description": "Creates a new shelf with the provided information",
+        "operationId": "create_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShelfReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Shelf created successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shelves/{shelveId}/test-suites": {
+      "get": {
+        "tags": [
+          "Test Suite"
+        ],
+        "summary": "Get all test suites by shelve",
+        "description": "Retrieves a list of all test suites for a specific shelve",
+        "operationId": "getAllByShelve",
+        "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test suites retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Test Suite"
+        ],
+        "summary": "Create test suite",
+        "description": "Creates a new test suite within a specific shelve",
+        "operationId": "create_2",
+        "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestSuiteReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Test suite created successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shelves/{shelveId}/subjects/{subjectId}/cards": {
+      "get": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Get all cards by subject",
+        "description": "Retrieves a paginated list of all cards for a specific subject",
+        "operationId": "getAllCardsBySubject",
+        "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "subjectId",
+            "in": "path",
+            "description": "Subject ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (starts from 0)",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid pagination parameters",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subject not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Cards retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Create cards",
+        "description": "Creates new cards for a specific subject",
+        "operationId": "create_3",
+        "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "subjectId",
+            "in": "path",
+            "description": "Subject ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Cards created successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subject not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shelves/{shelfId}/subjects": {
+      "get": {
+        "tags": [
+          "Subject"
+        ],
+        "summary": "Get all subjects by shelve",
+        "description": "Retrieves a paginated list of all subjects for a specific shelve",
+        "operationId": "getAllByShelve_1",
+        "parameters": [
+          {
+            "name": "shelfId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (starts from 0)",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subjects retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Subject"
+        ],
+        "summary": "Create subject",
+        "description": "Creates a new subject within a specific shelve",
+        "operationId": "create_4",
+        "parameters": [
+          {
+            "name": "shelfId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubjectReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Subject created successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/otp": {
+      "post": {
+        "tags": [
+          "OTP"
+        ],
+        "summary": "Generate OTP",
+        "description": "Generates and sends a one-time password to the specified email address",
+        "operationId": "createOTP",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Email address to send OTP",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$"
+            },
+            "example": "user@example.com"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid email format",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OTP sent successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/otp/validate": {
+      "post": {
+        "tags": [
+          "OTP"
+        ],
+        "summary": "Validate OTP",
+        "description": "Verifies the one-time password for the given email address",
+        "operationId": "validateOTP",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OTPReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid OTP or request format",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "OTP expired or incorrect",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OTP validated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/settings": {
+      "patch": {
+        "tags": [
+          "User Profile"
+        ],
+        "summary": "Update user settings",
+        "description": "Updates the current user's application settings",
+        "operationId": "updateSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingsReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Settings updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/profile": {
+      "get": {
+        "tags": [
+          "User Profile"
+        ],
+        "summary": "Get user profile",
+        "description": "Retrieves the current user's profile and settings",
+        "operationId": "getProfile",
+        "responses": {
+          "200": {
+            "description": "Profile retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profile not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "User Profile"
+        ],
+        "summary": "Update user profile",
+        "description": "Updates the current user's profile information",
+        "operationId": "updateProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "QuestionReq": {
+        "type": "object",
+        "description": "Question creation request",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "MULTIPLE_CHOICE",
+              "MULTIPLE_RESPONSE",
+              "TRUE_FALSE",
+              "FILL_IN_THE_BLANK",
+              "MATCHING",
+              "ORDERING"
+            ]
+          },
+          "metadata": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "metadata",
+          "text",
+          "type"
+        ]
+      },
+      "Res": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object"
+          },
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TestSuiteReq": {
+        "type": "object",
+        "description": "Test suite creation request",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "CardItemReq": {
+        "type": "object",
+        "description": "Card update request",
+        "properties": {
+          "front": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1
+          },
+          "back": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "back",
+          "front"
+        ]
+      },
+      "UpdateDifficultyReq": {
+        "type": "object",
+        "properties": {
+          "cardId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "newLevel": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cardId",
+          "newLevel"
+        ]
+      },
+      "SubjectReq": {
+        "type": "object",
+        "description": "Subject creation request",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "SubjectSettingReq": {
+        "type": "object",
+        "description": "Subject Setting update request",
+        "properties": {
+          "dailyLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newCardsPerDay": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "interval": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ShelfReq": {
+        "type": "object",
+        "description": "Shelf creation request",
+        "properties": {
+          "icon": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 10
+          }
+        }
+      },
+      "RefreshTokenReq": {
+        "type": "object",
+        "description": "Refresh token request containing refresh token, user email, and user ID",
+        "properties": {
+          "refresh_token": {
+            "type": "string"
+          },
+          "user_email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token",
+          "user_email"
+        ]
+      },
+      "CardReq": {
+        "type": "object",
+        "description": "Card creation request",
+        "properties": {
+          "cards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CardItemReq"
+            }
+          }
+        },
+        "required": [
+          "cards"
+        ]
+      },
+      "OTPReq": {
+        "type": "object",
+        "description": "OTP validation request containing email and OTP code",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "otp": {
+            "type": "string",
+            "maxLength": 2147483647,
+            "minLength": 6
+          }
+        }
+      },
+      "SpaceConfigReq": {
+        "type": "object",
+        "properties": {
+          "AGAIN": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 365,
+            "minimum": 0
+          },
+          "HARD": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 365,
+            "minimum": 0
+          },
+          "GOOD": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 365,
+            "minimum": 0
+          },
+          "EASY": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 365,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "AGAIN",
+          "EASY",
+          "GOOD",
+          "HARD"
+        ]
+      },
+      "UpdateSettingsReq": {
+        "type": "object",
+        "description": "Settings update request",
+        "properties": {
+          "theme": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "spaceConfig": {
+            "$ref": "#/components/schemas/SpaceConfigReq"
+          }
+        },
+        "required": [
+          "language",
+          "spaceConfig",
+          "theme"
+        ]
+      },
+      "UpdateProfileReq": {
+        "type": "object",
+        "description": "Profile update request",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "bio": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 120,
+            "minimum": 1
+          }
+        },
+        "required": [
+          "displayName"
+        ]
+      }
+    }
+  }
+}

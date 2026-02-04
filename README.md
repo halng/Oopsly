@@ -64,7 +64,24 @@ The application aims to:
 - **Lucide Icons**: Lightweight SVG icon library
 - **Expo Router**: File-based routing system
 
-## Usage Instructions
+## Documentation
+
+📚 **[Complete Documentation Index](./docs/README.md)**
+
+For detailed information about the project, see:
+
+- **[Features](./docs/features/)** - Individual feature documentation with definitions and acceptance criteria
+- **[API Documentation](./docs/API.md)** - REST API endpoints and usage
+- **[Architecture](./docs/ARCHITECTURE.md)** - System architecture and technical design
+- **[Flow Diagrams](./docs/flows/)** - End-to-end user journey visualizations
+- **[Initiative Document](./docs/initiative.md)** - Project vision and goals
+- **[Story & Design](./docs/story.md)** - Design philosophy and narrative
+- **[Screen Specifications](./docs/screen.md)** - UI/UX screen details
+- **[Theme & Colors](./docs/theme-color.md)** - Visual design guide
+
+## Quick Start
+
+### For Users
 
 1. Launch the application
 2. Choose a creation method from the main screen:
