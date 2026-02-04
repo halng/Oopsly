@@ -40,16 +40,27 @@ export default function RootLayout() {
       logger.debug("Checking auth status...");
       
       try {
-        // Wait for store to hydrate
+        // Wait for store to hydrate with timeout
         if (!useAuthStore.persist.hasHydrated()) {
           logger.debug("Waiting for store hydration...");
-          await new Promise<void>((resolve) => {
+          
+          const hydrationPromise = new Promise<void>((resolve) => {
             const unsub = useAuthStore.persist.onFinishHydration(() => {
               logger.debug("Store hydrated");
               unsub();
               resolve();
             });
           });
+
+          const timeoutPromise = new Promise<void>((resolve) => {
+            setTimeout(() => {
+              logger.warn("Store hydration timeout after 5 seconds");
+              resolve();
+            }, 5000);
+          });
+
+          // Wait for either hydration or timeout
+          await Promise.race([hydrationPromise, timeoutPromise]);
         }
 
         const currentAccessToken = useAuthStore.getState().accessToken;
