@@ -15,11 +15,14 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import "react-native-reanimated";
 import "@/global.css";
 import { useAuthStore } from "@/store";
 import { Logger } from "@/utils";
+import { AuthService } from "@/services/AuthService";
+import { View, ActivityIndicator, Text } from "react-native";
+
 const logger = Logger.extend("RootLayout");
 
 export const unstable_settings = {
@@ -27,27 +30,111 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  // const [isReady, setIsReady] = useState(false);
-  // const hydrated = useAuthStore.persist.hasHydrated();
-  const isAuthenticated = useAuthStore(((state) => state.isAuthenticated));
-  logger.debug("RootLayout rendered");
+  const [isReady, setIsReady] = useState(false);
+  const router = useRouter();
+  const segments = useSegments();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  // useEffect(() => {
-  //   logger.debug("Checking auth store hydration status...");
-  //   const unsub = useAuthStore.persist.onFinishHydration(() => {
-  //     setIsReady(true);
-  //     logger.debug("Auth store hydrated. isAuthenticated:", isAuthenticated);
-  //   });
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      logger.debug("Checking auth status...");
+      
+      try {
+        // Wait for store to hydrate
+        if (!useAuthStore.persist.hasHydrated()) {
+          logger.debug("Waiting for store hydration...");
+          await new Promise<void>((resolve) => {
+            const unsub = useAuthStore.persist.onFinishHydration(() => {
+              logger.debug("Store hydrated");
+              unsub();
+              resolve();
+            });
+          });
+        }
 
-  //   if (hydrated) {
-  //     setIsReady(true);
-  //     logger.debug("Auth store hydrated. isAuthenticated:", isAuthenticated);
-  //   }
+        const currentAccessToken = useAuthStore.getState().accessToken;
+        const currentRefreshToken = useAuthStore.getState().refreshToken;
+        const clearAuth = useAuthStore.getState().clearAuth;
+        const setAuthTokens = useAuthStore.getState().setAuthTokens;
 
-  //   return () => unsub();
-  // }, [hydrated]);
+        if (!currentAccessToken || !currentRefreshToken) {
+          logger.debug("No tokens found in storage");
+          setIsReady(true);
+          return;
+        }
 
-  //TODO: add theme provider when themes are ready
+        logger.debug("Tokens found, validating...");
+        
+        try {
+          // Try to validate the current access token
+          await AuthService.ValidateToken();
+          logger.info("Access token is valid");
+          setIsReady(true);
+        } catch {
+          logger.warn("Access token validation failed, attempting refresh...");
+          
+          try {
+            // Try to refresh the token
+            const response = await AuthService.RefreshToken(currentRefreshToken);
+            
+            if (response.isSuccess && response.data) {
+              const { access_token, refresh_token } = response.data;
+              setAuthTokens(access_token, refresh_token);
+              logger.info("Token refreshed successfully");
+            } else {
+              logger.error("Token refresh failed:", response.message);
+              clearAuth();
+            }
+          } catch (refreshError) {
+            logger.error("Token refresh error:", refreshError);
+            clearAuth();
+          }
+          
+          setIsReady(true);
+        }
+      } catch (error) {
+        logger.error("Error checking auth status:", error);
+        const clearAuth = useAuthStore.getState().clearAuth;
+        clearAuth();
+        setIsReady(true);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
+  // Redirect based on authentication status
+  useEffect(() => {
+    if (!isReady) return;
+
+    const inAuthGroup = segments[0] === "(user)";
+
+    if (!isAuthenticated && inAuthGroup) {
+      // Redirect to onboarding if not authenticated
+      router.replace("/");
+    } else if (isAuthenticated && !inAuthGroup) {
+      // Redirect to home if authenticated
+      router.replace("/home");
+    }
+  }, [isAuthenticated, segments, isReady, router]);
+
+  // Show loading screen while checking auth
+  if (!isReady) {
+    return (
+      <View
+        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        testID="auth-loading-screen"
+      >
+        <ActivityIndicator size="large" color="#5B5BFD" testID="auth-loading-spinner" />
+        <Text style={{ marginTop: 16, color: "#6B7280" }} testID="auth-loading-text">
+          Loading...
+        </Text>
+      </View>
+    );
+  }
+
+  logger.debug("RootLayout rendered, isAuthenticated:", isAuthenticated);
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={isAuthenticated}>

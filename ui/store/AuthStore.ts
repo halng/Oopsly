@@ -51,7 +51,7 @@ interface AuthState {
 
 // 3. Create the Store
 export const useAuthStore = create<AuthState>()(
-  // persist(
+  persist(
     (set) => ({
       isAuthenticated: false,
       userEmail: "",
@@ -80,9 +80,9 @@ export const useAuthStore = create<AuthState>()(
       setUserEmail: (email) => set({ userEmail: email }),
       setIsAuthenticated: (auth) => set({ isAuthenticated: auth }),
     }),
-  //   {
-  //     name: "auth-storage",
-  //     storage: createJSONStorage(() => storageAdapter),
-  //   }
-  // )
+    {
+      name: "auth-storage",
+      storage: createJSONStorage(() => storageAdapter),
+    }
+  )
 );

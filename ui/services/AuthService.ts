@@ -27,6 +27,16 @@ const AUTH_PATHS = {
     url: "/otp/validate",
     description: "Validate OTP from email",
   },
+  VALIDATE_TOKEN: {
+    method: "GET",
+    url: "/users/validate",
+    description: "Validate access token",
+  },
+  REFRESH_TOKEN: {
+    method: "POST",
+    url: "/users/refresh-token",
+    description: "Refresh access token",
+  },
 };
 
 const CreateOTP = async (email: string) => {
@@ -43,7 +53,29 @@ const ValidateOTP = async (email: string, otp: string) => {
   return response.data;
 };
 
+const ValidateToken = async () => {
+  try {
+    const response = await apiClient.get(AUTH_PATHS.VALIDATE_TOKEN.url);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const RefreshToken = async (refreshToken: string) => {
+  try {
+    const response = await apiClient.post(AUTH_PATHS.REFRESH_TOKEN.url, {
+      refreshToken,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const AuthService = {
   CreateOTP,
   ValidateOTP,
+  ValidateToken,
+  RefreshToken,
 };
