@@ -121,14 +121,14 @@ Oopsly (Osmosis) is a cross-platform learning application built with a modern, s
 
 ### Testing Infrastructure
 
-| Component               | Technology            | Purpose               |
-| ----------------------- | --------------------- | --------------------- |
-| **UI Testing**          | Jest                  | Unit testing          |
-| **UI Testing**          | React Testing Library | Component testing     |
-| **API Testing**         | JUnit                 | Unit testing          |
-| **API Testing**         | Mockito               | Mocking framework     |
-| **Integration Testing** | Pytest                | Integration testing (separate test/ folder) |
-| **E2E Testing**         | Playwright            | End-to-end testing (separate test/ folder)    |
+| Component               | Technology            | Purpose                                          |
+| ----------------------- | --------------------- | ------------------------------------------------ |
+| **UI Testing**          | Jest                  | Unit testing                                     |
+| **UI Testing**          | React Testing Library | Component testing                                |
+| **API Testing**         | JUnit                 | Unit testing                                     |
+| **API Testing**         | Mockito               | Mocking framework                                |
+| **Integration Testing** | Pytest                | Integration testing (separate test/ folder)      |
+| **E2E Testing**         | Playwright            | End-to-end testing (separate test/ folder)       |
 
 ### DevOps & Infrastructure
 

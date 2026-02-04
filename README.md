@@ -66,12 +66,14 @@ The application aims to:
 
 ## Documentation
 
+📚 **[Complete Documentation Index](./docs/README.md)**
+
 For detailed information about the project, see:
 
-- **[Features Documentation](./docs/FEATURES.md)** - Comprehensive guide to all features
+- **[Features](./docs/features/)** - Individual feature documentation with definitions and acceptance criteria
 - **[API Documentation](./docs/API.md)** - REST API endpoints and usage
-- **[Architecture Documentation](./docs/ARCHITECTURE.md)** - System architecture and technical design
-- **[Flow Diagrams](./docs/FLOW_DIAGRAMS.md)** - End-to-end user journey visualizations
+- **[Architecture](./docs/ARCHITECTURE.md)** - System architecture and technical design
+- **[Flow Diagrams](./docs/flows/)** - End-to-end user journey visualizations
 - **[Initiative Document](./docs/initiative.md)** - Project vision and goals
 - **[Story & Design](./docs/story.md)** - Design philosophy and narrative
 - **[Screen Specifications](./docs/screen.md)** - UI/UX screen details

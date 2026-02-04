@@ -6,13 +6,10 @@ Welcome to the Oopsly (Osmosis) project documentation! This index will help you 
 
 ### For Users & Product Managers
 
-- **[FEATURES.md](./FEATURES.md)** - Comprehensive guide to all implemented and planned features
-  - User authentication and management
-  - Test and quiz generation (manual and AI-powered)
-  - Flashcard system with spaced repetition
-  - Study tools (Pomodoro, planning, goals)
-  - Progress tracking and analytics
-  - Implementation status for each feature (✅ 🔄 📋)
+- **[features/](./features/)** - Individual feature documentation
+  - Each feature has its own file with definition, scope, and acceptance criteria
+  - Implementation status indicators (✅ implemented, 🔄 in development, 📋 planned)
+  - See [features/README.md](./features/README.md) for complete index
 
 ### For Developers
 
@@ -31,12 +28,10 @@ Welcome to the Oopsly (Osmosis) project documentation! This index will help you 
   - Deployment strategy
   - Performance considerations
 
-- **[FLOW_DIAGRAMS.md](./FLOW_DIAGRAMS.md)** - End-to-end user flow diagrams
+- **[flows/](./flows/)** - End-to-end user flow diagrams
   - Complete user journeys for all features
   - Mermaid diagrams for visual understanding
-  - Authentication, flashcard review, test generation flows
-  - Study tools and goal tracking flows
-  - System integration overview
+  - See [flows/README.md](./flows/README.md) for complete index
 
 ### For Designers & Stakeholders
 
@@ -68,7 +63,7 @@ Welcome to the Oopsly (Osmosis) project documentation! This index will help you 
 ### I want to
 
 **...understand what Oopsly does**
-→ Start with [FEATURES.md](./FEATURES.md)
+→ Start with [features/README.md](./features/README.md)
 
 **...integrate with the API**
 → Read [API.md](./API.md)
@@ -77,7 +72,7 @@ Welcome to the Oopsly (Osmosis) project documentation! This index will help you 
 → Check [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 **...see end-to-end user flows**
-→ Review [FLOW_DIAGRAMS.md](./FLOW_DIAGRAMS.md)
+→ Review [flows/README.md](./flows/README.md)
 
 **...learn about the project vision**
 → Review [initiative.md](./initiative.md)
