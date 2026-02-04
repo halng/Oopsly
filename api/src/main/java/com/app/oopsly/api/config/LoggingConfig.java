@@ -30,6 +30,8 @@ import org.springframework.stereotype.Component;
 public class LoggingConfig implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoggingConfig.class);
     private static final String REQUEST_ID_HEADER = "X-Request-ID";
+    private static final String REQUEST_PLATFORM_HEADER = "X-Platform";
+    private static final String MDC_REQUEST_PLATFORM_KEY = "XP";
     private static final String MDC_REQUEST_ID_KEY = "XID";
 
     @Override
@@ -43,11 +45,15 @@ public class LoggingConfig implements Filter {
             throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) servletRequest;
         String requestId = httpRequest.getHeader(REQUEST_ID_HEADER);
+        String platform = httpRequest.getHeader(REQUEST_PLATFORM_HEADER);
 
         if (requestId == null || requestId.isEmpty()) {
             requestId = UUID.randomUUID().toString();
         }
         MDC.put(MDC_REQUEST_ID_KEY, requestId);
+        if (platform != null && !platform.isEmpty()) {
+            MDC.put(MDC_REQUEST_PLATFORM_KEY, platform);
+        }
 
         long startTime = System.currentTimeMillis();
         String method = httpRequest.getMethod();

@@ -22,7 +22,7 @@
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
             <Pattern>
-                %d{ISO8601} %highlight(%-5level) [%blue(%t)] %yellow([XID:%X{XID}]) %green(%logger{36}) - %msg%n
+                %d{ISO8601} %highlight(%-5level) [%blue(%t)] %yellow([%X{XP}:%X{XID}]) %green(%logger{36}) - %msg%n
             </Pattern>
         </layout>
     </appender>
@@ -31,7 +31,7 @@
         <file>${LOGS}/${APP_NAME}.log</file>
 
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>%d{ISO8601} %highlight(%-5level) [%blue(%t)] %yellow([XID:%X{XID}]) %green(%logger{36}) - %msg%n</Pattern>
+            <Pattern>%d{ISO8601} %highlight(%-5level) [%blue(%t)] %yellow([%X{XP}:%X{XID}]) %green(%logger{36}) - %msg%n</Pattern>
         </encoder>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">

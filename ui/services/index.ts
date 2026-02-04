@@ -19,11 +19,11 @@ import { ApiErrorResponse } from "@/types/ApiRes";
 import { useAuthStore } from "@/store";
 import { Logger } from "@/utils";
 import { Platform } from "react-native";
-import uuid from 'react-native-uuid';
-
+import {ulid } from 'ulid';
 
 const logger = Logger.extend("apiClient");
 const XRequestIdHeader = "X-Request-ID";
+const XPlatformHeader = "X-Platform";
 interface IPathConfig {
   method: "GET" | "POST" | "PUT" | "DELETE";
   url: string;
@@ -60,17 +60,12 @@ const apiClient = axios.create({
   },
 });
 
-const generateId = () => {
-    const timestamp = Date.now();
-    return `${Platform.OS}-${uuid.v4()}-${timestamp}`;
-};
-
-// Output: "android-l8k9j2z-8x7a1b"
-
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    let requestId = generateId()
+    let requestId = ulid();
+    config.headers.set(XRequestIdHeader, requestId);
+    config.headers.set(XPlatformHeader, Platform.OS);
 
     logger.debug(
       "Request interceptor triggered for ",
@@ -90,8 +85,6 @@ apiClient.interceptors.request.use(
       logger.debug(
         "Public path detected, skipping Authorization header addition",
       );
-      requestId = "p" + requestId;
-      config.headers.set(XRequestIdHeader, requestId);
 
       return config;
     }
@@ -100,9 +93,7 @@ apiClient.interceptors.request.use(
     if (accessToken) {
       config.headers.set("Authorization", `Bearer ${accessToken}`);
       logger.debug("Added Authorization header");
-      requestId = "a" + requestId;
     }
-    config.headers.set(XRequestIdHeader, requestId);
     return config;
   },
   (error) => {
