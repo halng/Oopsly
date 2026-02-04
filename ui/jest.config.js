@@ -31,8 +31,8 @@ module.exports = {
     '!**/components/**',
     '!**/app/subject/**',
     '!**/app/study/**',
-    '!**/app/\\(user\\)/**',
     '!**/types/**',
+    '!**/temp/**',
   ],
   coverageThreshold: {
     global: {

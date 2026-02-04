@@ -33,4 +33,11 @@ public interface CardRepository extends JpaRepository<CardEntity, UUID> {
 
     @Query("SELECT c FROM cards c WHERE c.subject = ?1 AND c.deleted = false")
     Page<CardEntity> findAllBySubject(SubjectEntity subject, Pageable pageable);
+
+    long countBySubjectAndDeletedFalse(SubjectEntity subject);
+
+    @Query(
+            "SELECT COUNT(c) FROM cards c WHERE c.subject = ?1 AND c.nextPracticeTime <"
+                    + " CURRENT_DATE AND c.deleted = false")
+    long countOverdue(SubjectEntity subject);
 }

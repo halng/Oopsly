@@ -20,13 +20,17 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 @Component
 public class LoggingConfig implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoggingConfig.class);
+    private static final String REQUEST_ID_HEADER = "X-Request-ID";
+    private static final String MDC_REQUEST_ID_KEY = "XID";
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -37,9 +41,15 @@ public class LoggingConfig implements Filter {
     public void doFilter(
             ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
             throws IOException, ServletException {
-        long startTime = System.currentTimeMillis();
-
         HttpServletRequest httpRequest = (HttpServletRequest) servletRequest;
+        String requestId = httpRequest.getHeader(REQUEST_ID_HEADER);
+
+        if (requestId == null || requestId.isEmpty()) {
+            requestId = UUID.randomUUID().toString();
+        }
+        MDC.put(MDC_REQUEST_ID_KEY, requestId);
+
+        long startTime = System.currentTimeMillis();
         String method = httpRequest.getMethod();
         String path = httpRequest.getRequestURI();
 
@@ -64,6 +74,8 @@ public class LoggingConfig implements Filter {
                     e.getMessage(),
                     e);
             throw e;
+        } finally {
+            MDC.clear();
         }
     }
 

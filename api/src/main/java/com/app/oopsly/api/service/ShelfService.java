@@ -17,13 +17,13 @@
 package com.app.oopsly.api.service;
 
 import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.ShelveReq;
+import com.app.oopsly.api.viewmodel.ShelfReq;
 import java.util.UUID;
 
-public interface ShelveService {
-    ApiRes create(ShelveReq request);
+public interface ShelfService {
+    ApiRes create(ShelfReq request);
 
-    ApiRes update(ShelveReq request, UUID id);
+    ApiRes update(ShelfReq request, UUID id);
 
     ApiRes delete(UUID id);
 

@@ -16,7 +16,7 @@
 
 package com.app.oopsly.api.repository;
 
-import com.app.oopsly.api.entity.ShelveEntity;
+import com.app.oopsly.api.entity.ShelfEntity;
 import com.app.oopsly.api.entity.User;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,10 +27,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ShelveRepository extends JpaRepository<ShelveEntity, UUID> {
-    @Query("SELECT e FROM ShelveEntity e WHERE e.id = ?1 AND e.user = ?2 AND e.deleted = false")
-    Optional<ShelveEntity> findByIdAndUser(UUID id, User user);
+public interface ShelfRepository extends JpaRepository<ShelfEntity, UUID> {
+    @Query("SELECT e FROM ShelfEntity e WHERE e.id = ?1 AND e.user = ?2 AND e.deleted = false")
+    Optional<ShelfEntity> findByIdAndUser(UUID id, User user);
 
-    @Query("SELECT e FROM ShelveEntity e WHERE e.user = ?1 AND e.deleted = false")
-    Page<ShelveEntity> findAllByUser(User user, Pageable pageable);
+    @Query("SELECT e FROM ShelfEntity e WHERE e.user = ?1 AND e.deleted = false")
+    Page<ShelfEntity> findAllByUser(User user, Pageable pageable);
 }

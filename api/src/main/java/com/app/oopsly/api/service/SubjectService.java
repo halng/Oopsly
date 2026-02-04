@@ -18,12 +18,15 @@ package com.app.oopsly.api.service;
 
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.SubjectReq;
+import com.app.oopsly.api.viewmodel.SubjectSettingReq;
 import java.util.UUID;
 
 public interface SubjectService {
     ApiRes create(UUID shelveId, SubjectReq request);
 
     ApiRes update(UUID shelveId, UUID subjectId, SubjectReq request);
+
+    ApiRes updateSetting(UUID shelveId, UUID subjectId, SubjectSettingReq request);
 
     ApiRes delete(UUID shelveId, UUID subjectId);
 
