@@ -1,21 +1,9 @@
 import { create } from "zustand";
 import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
-import * as SecureStore from "expo-secure-store";
 import { Platform } from 'react-native';
 
 // 1. Define the Storage Adapter FIRST
-const nativeStorage: StateStorage = {
-  getItem: async (name: string): Promise<string | null> => {
-    return await SecureStore.getItemAsync(name);
-  },
-  setItem: async (name: string, value: string): Promise<void> => {
-    await SecureStore.setItemAsync(name, value);
-  },
-  removeItem: async (name: string): Promise<void> => {
-    await SecureStore.deleteItemAsync(name);
-  },
-};
-
+// For web platform, use localStorage
 const webStorage: StateStorage = {
   getItem: (name: string): string | null => {
     // localStorage is synchronous, but Zustand handles it fine
@@ -26,6 +14,33 @@ const webStorage: StateStorage = {
   },
   removeItem: (name: string): void => {
     localStorage.removeItem(name);
+  },
+};
+
+// For native platforms, use SecureStore (dynamically imported to avoid web issues)
+const nativeStorage: StateStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    if (Platform.OS === 'web') {
+      return webStorage.getItem(name);
+    }
+    const SecureStore = require("expo-secure-store");
+    return await SecureStore.getItemAsync(name);
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    if (Platform.OS === 'web') {
+      webStorage.setItem(name, value);
+      return;
+    }
+    const SecureStore = require("expo-secure-store");
+    await SecureStore.setItemAsync(name, value);
+  },
+  removeItem: async (name: string): Promise<void> => {
+    if (Platform.OS === 'web') {
+      webStorage.removeItem(name);
+      return;
+    }
+    const SecureStore = require("expo-secure-store");
+    await SecureStore.deleteItemAsync(name);
   },
 };
 
