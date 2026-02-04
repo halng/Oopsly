@@ -23,11 +23,11 @@ if (!isReady) {
     </View>
   );
 }
-```
+```text
 
 ### Visual Description
 
-```
+```text
 ┌─────────────────────────────────┐
 │                                 │
 │                                 │
@@ -41,29 +41,32 @@ if (!isReady) {
 │                                 │
 │                                 │
 └─────────────────────────────────┘
-```
+```text
 
 ## Authentication Check Flow
 
 ### Scenario 1: Valid Tokens Found
 
 **Console Output:**
-```
+
+```text
 DEBUG | RootLayout | Checking auth status...
 DEBUG | RootLayout | Tokens found, validating...
 DEBUG | AuthService | Validating access token...
 DEBUG | AuthService | Access token validation successful
 INFO  | RootLayout | Access token is valid
 DEBUG | RootLayout | RootLayout rendered, isAuthenticated: true
-```
+```text
 
 **Result:**
+
 - User is automatically redirected to `/home`
 - No login required
 - Seamless experience
 
 **Visual Flow:**
-```
+
+```text
 Launch App
     ↓
 Show Loading Screen (< 1 sec)
@@ -71,12 +74,13 @@ Show Loading Screen (< 1 sec)
 Validate Token ✓
     ↓
 Redirect to Home Dashboard
-```
+```text
 
 ### Scenario 2: Expired Access Token, Valid Refresh Token
 
 **Console Output:**
-```
+
+```text
 DEBUG | RootLayout | Checking auth status...
 DEBUG | RootLayout | Tokens found, validating...
 DEBUG | AuthService | Validating access token...
@@ -86,15 +90,17 @@ DEBUG | AuthService | Attempting to refresh access token...
 DEBUG | AuthService | Token refresh successful
 INFO  | RootLayout | Token refreshed successfully
 DEBUG | RootLayout | RootLayout rendered, isAuthenticated: true
-```
+```text
 
 **Result:**
+
 - Tokens automatically refreshed
 - User stays logged in
 - Redirected to `/home`
 
 **Visual Flow:**
-```
+
+```text
 Launch App
     ↓
 Show Loading Screen (< 2 sec)
@@ -106,20 +112,21 @@ Refresh Token ✓
 Update Stored Tokens
     ↓
 Redirect to Home Dashboard
-```
+```text
 
 ### Scenario 3: No Tokens or Invalid Tokens
 
 **Console Output:**
-```
+
+```text
 DEBUG | RootLayout | Checking auth status...
 DEBUG | RootLayout | No tokens found in storage
 DEBUG | RootLayout | RootLayout rendered, isAuthenticated: false
-```
+```text
 
 OR (for invalid tokens):
 
-```
+```text
 DEBUG | RootLayout | Checking auth status...
 DEBUG | RootLayout | Tokens found, validating...
 DEBUG | AuthService | Validating access token...
@@ -129,15 +136,17 @@ DEBUG | AuthService | Attempting to refresh access token...
 DEBUG | AuthService | Token refresh failed
 ERROR | RootLayout | Token refresh error: [error details]
 DEBUG | RootLayout | RootLayout rendered, isAuthenticated: false
-```
+```text
 
 **Result:**
+
 - Tokens cleared from storage
 - User redirected to onboarding
 - Fresh login required
 
 **Visual Flow:**
-```
+
+```text
 Launch App
     ↓
 Show Loading Screen (< 1 sec)
@@ -147,13 +156,13 @@ No Tokens Found / Validation Failed
 Clear Stored Credentials
     ↓
 Redirect to Onboarding Screen
-```
+```text
 
 ## Onboarding Screen Flow
 
 When redirected to onboarding, users see the welcome carousel:
 
-```
+```text
 ┌─────────────────────────────────┐
 │                        [Skip]   │
 │                                 │
@@ -168,11 +177,11 @@ When redirected to onboarding, users see the welcome carousel:
 │                                 │
 │      [◀]         [▶]           │
 └─────────────────────────────────┘
-```
+```text
 
 Then proceed to email input screen:
 
-```
+```text
 ┌─────────────────────────────────┐
 │  [←]                            │
 │                                 │
@@ -189,13 +198,13 @@ Then proceed to email input screen:
 │  │      Continue            │  │
 │  └──────────────────────────┘  │
 └─────────────────────────────────┘
-```
+```text
 
 ## Home Dashboard (Authenticated State)
 
 After successful authentication, users see the home dashboard:
 
-```
+```text
 ┌─────────────────────────────────┐
 │  Home        [Profile] [Menu]   │
 │                                 │
@@ -212,28 +221,34 @@ After successful authentication, users see the home dashboard:
 │  • Created card - 5 hrs ago    │
 │                                 │
 └─────────────────────────────────┘
-```
+```text
 
 ## Key UI Features
 
 ### 1. Loading Indicator
+
 - **Color:** Purple (#5B5BFD) matching app theme
 - **Duration:** < 2 seconds in most cases
 - **Purpose:** Prevents flash of wrong screen
 
 ### 2. Smooth Transitions
+
 - No jarring redirects
 - Loading state prevents screen flashing
 - Navigation happens after auth check completes
 
 ### 3. Error States
+
 All handled gracefully:
+
 - Network errors → retry with refresh token
 - Invalid tokens → clear and redirect
 - No tokens → show onboarding
 
 ### 4. Persistence Indicators
+
 Users can verify persistence by:
+
 1. Logging in
 2. Refreshing browser (web) or restarting app (native)
 3. Observing they stay logged in (see loading screen briefly, then home)
@@ -272,12 +287,12 @@ Users can verify persistence by:
 
 ## Visual States Summary
 
-| State | Loading Screen | Destination | Duration |
-|-------|---------------|-------------|----------|
-| Valid tokens | Yes | Home | ~1s |
-| Expired access, valid refresh | Yes | Home | ~2s |
-| No tokens | Yes | Onboarding | ~1s |
-| Invalid tokens | Yes | Onboarding | ~2s |
-| Network error | Yes | Onboarding | ~3s |
+| State                          | Loading Screen | Destination | Duration |
+|--------------------------------|----------------|-------------|----------|
+| Valid tokens                   | Yes            | Home        | ~1s      |
+| Expired access, valid refresh  | Yes            | Home        | ~2s      |
+| No tokens                      | Yes            | Onboarding  | ~1s      |
+| Invalid tokens                 | Yes            | Onboarding  | ~2s      |
+| Network error                  | Yes            | Onboarding  | ~3s      |
 
 All states provide feedback through console logs for debugging.
