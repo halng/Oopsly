@@ -14,7 +14,7 @@ Oopsly (Osmosis) is a cross-platform learning application built with a modern, s
 ┌─────────────────────────────────────────────────────────────┐
 │                      Client Layer                            │
 ├─────────────────────────────────────────────────────────────┤
-│  React Native Mobile App (iOS/Android)                       │
+│  React Native Cross-Platform App (iOS/Android/Web)           │
 │  - Expo Framework                                            │
 │  - TypeScript                                                │
 │  - NativeWind (Tailwind CSS)                                 │
@@ -81,7 +81,7 @@ Oopsly (Osmosis) is a cross-platform learning application built with a modern, s
 
 **Key Frontend Features:**
 
-- Cross-platform support (iOS, Android, Web planned)
+- Cross-platform support (iOS, Android, Web)
 - Type-safe development with TypeScript
 - Hot reload for fast development
 - Native performance with Expo
@@ -127,8 +127,8 @@ Oopsly (Osmosis) is a cross-platform learning application built with a modern, s
 | **UI Testing**          | React Testing Library | Component testing     |
 | **API Testing**         | JUnit                 | Unit testing          |
 | **API Testing**         | Mockito               | Mocking framework     |
-| **Integration Testing** | Pytest                | End-to-end testing    |
-| **E2E Testing**         | Playwright            | Browser automation    |
+| **Integration Testing** | Pytest                | Integration testing (separate test/ folder) |
+| **E2E Testing**         | Playwright            | End-to-end testing (separate test/ folder)    |
 
 ### DevOps & Infrastructure
 
@@ -161,7 +161,7 @@ ui/
 │   │   ├── notes.tsx             # Note-taking
 │   │   ├── study-planner.tsx     # Study planning
 │   │   ├── goal-tracker.tsx      # Goal tracking
-│   │   ├── shelve-management.tsx # Collection management
+│   │   ├── shelf-management.tsx # Collection management
 │   │   └── ...                   # Other screens
 │   ├── index.tsx                 # Landing page
 │   ├── onboard.tsx               # Onboarding flow
@@ -189,7 +189,7 @@ api/
 │   │   │   │   ├── CardController.java
 │   │   │   │   ├── QuestionController.java
 │   │   │   │   ├── TestSuiteController.java
-│   │   │   │   ├── ShelveController.java
+│   │   │   │   ├── ShelfController.java
 │   │   │   │   ├── SubjectController.java
 │   │   │   │   └── UserProfileController.java
 │   │   │   ├── service/             # Business logic
@@ -255,7 +255,7 @@ test/
        │ 1:N
        │
 ┌──────▼──────┐
-│   Shelve    │ (Top-level collection)
+│   Shelf    │ (Top-level collection)
 └──────┬──────┘
        │ 1:N
        ├────────────────────────┐
@@ -287,10 +287,10 @@ User {
 }
 ```
 
-#### Shelve (Collection)
+#### Shelf (Collection)
 
 ```java
-Shelve {
+Shelf {
   UUID id
   UUID userId (foreign key)
   String name
@@ -310,7 +310,7 @@ Shelve {
 ```java
 Subject {
   UUID id
-  UUID shelveId (foreign key)
+  UUID shelfId (foreign key)
   String name
   String description
   String color
@@ -344,7 +344,7 @@ Card {
 ```java
 TestSuite {
   UUID id
-  UUID shelveId (foreign key)
+  UUID shelfId (foreign key)
   String title
   String description
   Enum difficulty
@@ -383,23 +383,23 @@ Question {
 1. **Hierarchical URLs**: Reflect data relationships
 
    ```text
-   /shelves/{shelveId}/subjects/{subjectId}/cards/{cardId}
+   /shelfs/{shelfId}/subjects/{subjectId}/cards/{cardId}
    ```
 
 2. **HTTP Methods**: Standard CRUD operations
    - `GET`: Retrieve resources
    - `POST`: Create resources
    - `PUT`: Full update
-   - `PATCH`: Partial update or soft delete
-   - `DELETE`: Hard delete
+   - `PATCH`: Soft delete (mark as deleted)
 
 3. **Standard Response Format**:
 
    ```json
    {
-     "success": boolean,
+     "isSuccess": boolean,
      "message": string,
      "data": object,
+     "status": number,
      "timestamp": ISO-8601
    }
    ```
@@ -488,12 +488,12 @@ Question {
   logout: () => void
 }
 
-// Shelve Store
+// Shelf Store
 {
-  shelves: Shelve[],
-  currentShelve: Shelve | null,
-  fetchShelves: () => Promise<void>,
-  createShelve: (data) => Promise<void>
+  shelfs: Shelf[],
+  currentShelf: Shelf | null,
+  fetchShelfs: () => Promise<void>,
+  createShelf: (data) => Promise<void>
 }
 
 // Card Store

@@ -39,9 +39,10 @@ All API responses follow a standard wrapper format:
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Operation completed successfully",
   "data": { /* response payload */ },
+  "status": 200,
   "timestamp": "2026-01-31T07:52:25.932Z"
 }
 ```
@@ -50,12 +51,10 @@ All API responses follow a standard wrapper format:
 
 ```json
 {
-  "success": false,
+  "isSuccess": false,
   "message": "Error description",
-  "error": {
-    "code": "ERROR_CODE",
-    "details": "Detailed error information"
-  },
+  "data": null,
+  "status": 400,
   "timestamp": "2026-01-31T07:52:25.932Z"
 }
 ```
@@ -69,18 +68,14 @@ All API responses follow a standard wrapper format:
 #### Generate OTP
 
 ```http
-POST /otp
+POST /otp?email=user@example.com
 ```
 
 **Description:** Generate and send a one-time password to the specified email address.
 
-**Request Body:**
+**Request Parameters:**
 
-```json
-{
-  "email": "user@example.com"
-}
-```
+- `email` (query parameter, required): Email address to send OTP
 
 **Validation:**
 
@@ -90,12 +85,10 @@ POST /otp
 
 ```json
 {
-  "success": true,
-  "message": "OTP sent to email",
-  "data": {
-    "email": "user@example.com",
-    "expiresIn": 300
-  }
+  "isSuccess": true,
+  "message": "OTP sent successfully",
+  "data": null,
+  "status": 200
 }
 ```
 
@@ -122,14 +115,15 @@ POST /otp/validate
 
 ```json
 {
-  "success": true,
-  "message": "Authentication successful",
+  "isSuccess": true,
+  "message": "OTP validated successfully",
   "data": {
     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "tokenType": "Bearer",
     "expiresIn": 3600
-  }
+  },
+  "status": 200
 }
 ```
 
@@ -149,7 +143,8 @@ POST /users/refresh-token
 
 ```json
 {
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user_email": "user@example.com"
 }
 ```
 
@@ -157,14 +152,15 @@ POST /users/refresh-token
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Token refreshed successfully",
   "data": {
     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "tokenType": "Bearer",
     "expiresIn": 3600
-  }
+  },
+  "status": 200
 }
 ```
 
@@ -184,20 +180,14 @@ POST /users/logout
 Authorization: Bearer <access_token>
 ```
 
-**Request Body:**
-
-```json
-{
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
 **Response:**
 
 ```json
 {
-  "success": true,
-  "message": "Logout successful"
+  "isSuccess": true,
+  "message": "Logged out successfully",
+  "data": null,
+  "status": 200
 }
 ```
 
@@ -225,7 +215,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "data": {
     "id": "uuid",
     "email": "user@example.com",
@@ -269,7 +259,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Profile updated successfully",
   "data": {
     "id": "uuid",
@@ -311,7 +301,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Settings updated successfully"
 }
 ```
@@ -353,7 +343,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Shelve created successfully",
   "data": {
     "id": "uuid",
@@ -391,7 +381,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "data": {
     "content": [
       {
@@ -430,7 +420,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "data": {
     "id": "uuid",
     "name": "Biology Collection",
@@ -475,7 +465,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Shelve updated successfully",
   "data": {
     "id": "uuid",
@@ -505,7 +495,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Shelve deleted successfully"
 }
 ```
@@ -546,7 +536,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Subject created successfully",
   "data": {
     "id": "uuid",
@@ -583,7 +573,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "data": {
     "content": [
       {
@@ -621,7 +611,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "data": {
     "id": "uuid",
     "name": "Cell Biology",
@@ -666,7 +656,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Subject updated successfully"
 }
 ```
@@ -691,7 +681,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Subject and associated cards deleted successfully"
 }
 ```
@@ -737,7 +727,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Cards created successfully",
   "data": {
     "createdCount": 1,
@@ -778,7 +768,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "data": {
     "content": [
       {
@@ -817,7 +807,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "data": {
     "id": "uuid",
     "front": "What is mitochondria?",
@@ -862,7 +852,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Card updated successfully"
 }
 ```
@@ -904,7 +894,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Card difficulties updated successfully",
   "data": {
     "updatedCount": 2
@@ -932,7 +922,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Card deleted successfully"
 }
 ```
@@ -975,7 +965,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Test suite created successfully",
   "data": {
     "id": "uuid",
@@ -1006,7 +996,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "data": [
     {
       "id": "uuid",
@@ -1039,7 +1029,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "data": {
     "id": "uuid",
     "title": "Biology Midterm Practice",
@@ -1086,7 +1076,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Test suite updated successfully"
 }
 ```
@@ -1111,7 +1101,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Test suite and associated questions deleted successfully"
 }
 ```
@@ -1190,7 +1180,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Question created successfully",
   "data": {
     "id": "uuid",
@@ -1222,7 +1212,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "data": [
     {
       "id": "uuid",
@@ -1255,7 +1245,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "data": {
     "id": "uuid",
     "questionText": "What is the powerhouse of the cell?",
@@ -1301,7 +1291,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Question updated successfully"
 }
 ```
@@ -1326,7 +1316,7 @@ Authorization: Bearer <access_token>
 
 ```json
 {
-  "success": true,
+  "isSuccess": true,
   "message": "Question deleted successfully"
 }
 ```
