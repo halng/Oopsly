@@ -15,6 +15,9 @@
  */
 
 import { apiClient } from ".";
+import { Logger } from "@/utils";
+
+const logger = Logger.extend("AuthService");
 
 const AUTH_PATHS = {
   CREATE_OTP: {
@@ -55,20 +58,26 @@ const ValidateOTP = async (email: string, otp: string) => {
 
 const ValidateToken = async () => {
   try {
+    logger.debug("Validating access token...");
     const response = await apiClient.get(AUTH_PATHS.VALIDATE_TOKEN.url);
+    logger.debug("Access token validation successful");
     return response.data;
   } catch (error) {
+    logger.debug("Access token validation failed:", error);
     throw error;
   }
 };
 
 const RefreshToken = async (refreshToken: string) => {
   try {
+    logger.debug("Attempting to refresh access token...");
     const response = await apiClient.post(AUTH_PATHS.REFRESH_TOKEN.url, {
       refreshToken,
     });
+    logger.debug("Token refresh successful");
     return response.data;
   } catch (error) {
+    logger.debug("Token refresh failed:", error);
     throw error;
   }
 };
