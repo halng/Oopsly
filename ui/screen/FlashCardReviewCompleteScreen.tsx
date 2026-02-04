@@ -14,12 +14,6 @@ import Animated, {
 import { useSearchParams } from 'expo-router/build/hooks';
 import Logger from '@/utils/Logger';
 
-type SessionStats = {
-  cardsStudied: number;
-  accuracy: number;
-  timeSpent: number; // in minutes
-};
-
 
 // Animated Icon Component
 const FloatingIcon = ({ 
