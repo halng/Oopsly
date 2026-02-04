@@ -36,8 +36,10 @@ describe('WelcomeScreen', () => {
     render(<WelcomeScreen />);
     
     // Check Title & Subtitle
-    expect(screen.getByText('Welcome to Osmisis')).toBeTruthy();
-    expect(screen.getByText('The smart way to study and retain information efficiently')).toBeTruthy();
+    expect(screen.getByTestId('content-view-title')).toBeTruthy();
+    expect(screen.getByTestId('content-view-title').props.children).toBe('Welcome to Oopsly');
+    expect(screen.getByTestId('content-view-subtitle')).toBeTruthy();
+    expect(screen.getByTestId('content-view-subtitle').props.children).toBe('The smart way to study and retain information efficiently');
     
     const backButton = screen.getByTestId('back-button');
     expect(backButton.props.style.opacity).toBe(1); 
@@ -51,7 +53,8 @@ describe('WelcomeScreen', () => {
     fireEvent.press(nextButton);
 
     // Should show second slide content
-    expect(screen.getByText('Learn Smarter')).toBeTruthy();
+    expect(screen.getByTestId('content-view-title')).toBeTruthy();
+    expect(screen.getByTestId('content-view-title').props.children).toBe('Learn Smarter');
     
     // Back button should now be enabled
     const backButton = screen.getByTestId('back-button');
@@ -68,13 +71,14 @@ describe('WelcomeScreen', () => {
     const backButton = screen.getByTestId('back-button');
     fireEvent.press(backButton); // Back to Slide 1
 
-    expect(screen.getByText('Welcome to Osmisis')).toBeTruthy();
+    expect(screen.getByTestId('content-view-title')).toBeTruthy();
+    expect(screen.getByTestId('content-view-title').props.children).toBe('Welcome to Oopsly');
   });
 
   it('navigates to /onboard when clicking Skip', () => {
     render(<WelcomeScreen />);
     
-    fireEvent.press(screen.getByText('Skip'));
+    fireEvent.press(screen.getByTestId('skip-button'));
     expect(mockPush).toHaveBeenCalledWith('/onboard');
   });
 
@@ -88,7 +92,8 @@ describe('WelcomeScreen', () => {
     fireEvent.press(nextButton); // To Slide 3
 
     // Check for "Get Started" text
-    expect(screen.getByText('Get Started')).toBeTruthy();
+    expect(screen.getByTestId('get-started-text')).toBeTruthy();
+    expect(screen.getByTestId('get-started-text').props.children).toBe('Get Started');
 
     // Click it
     fireEvent.press(nextButton);

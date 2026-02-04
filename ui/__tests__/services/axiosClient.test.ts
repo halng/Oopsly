@@ -18,7 +18,7 @@ import { apiClient } from '@/services'
 import MockAdapter from 'axios-mock-adapter';
 
 const API_CONFIG = {
-  BASE_URL: 'http://localhost:9009/api/v1/osmosis',
+  BASE_URL: 'http://localhost:9009/api/v1/oopsly',
 };
 
 describe('axiosClient', () => {

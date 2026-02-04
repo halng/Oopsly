@@ -133,29 +133,30 @@ export default function OTPVerification() {
   const isOtpComplete = otp.every((digit) => digit !== "");
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-white" testID="verification-screen">
       {/* Header */}
-      <View className="p-4 flex-row items-center">
+      <View className="p-4 flex-row items-center" testID="header-container">
         <TouchableOpacity
           onPress={() => router.push("/onboard")}
           className="p-2"
           accessibilityLabel="Go back"
+          testID="back-button"
         >
           <ArrowLeft size={24} color="#1F2937" />
         </TouchableOpacity>
       </View>
 
       {/* Content */}
-      <View className="px-6 pt-6">
-        <Text className="text-2xl font-bold text-gray-900">
+      <View className="px-6 pt-6" testID="content-container">
+        <Text className="text-2xl font-bold text-gray-900" testID="title-text">
           Verify your email
         </Text>
-        <Text className="mt-2 text-gray-600">
-          Enter the code sent to <Text style={{ fontWeight: 'bold' }}>{userEmail.split("@")[0]}</Text>
+        <Text className="mt-2 text-gray-600" testID="description-text">
+          Enter the code sent to <Text style={{ fontWeight: 'bold' }} testID="user-email-display">{userEmail.split("@")[0]}</Text>
         </Text>
 
         {/* OTP Input Grid */}
-        <View className="flex-row justify-between mt-8">
+        <View className="flex-row justify-between mt-8" testID="otp-input-container">
           {otp.map((digit, index) => (
             <TextInput
               key={index}
@@ -172,19 +173,21 @@ export default function OTPVerification() {
               onChangeText={(text) => handleOtpChange(text, index)}
               onKeyPress={(e) => handleKeyPress(e, index)}
               accessibilityLabel={`OTP digit ${index + 1}`}
+              testID={`otp-input-${index}`}
             />
           ))}
         </View>
 
         {/* Timer and Resend */}
-        <View className="flex-row items-center justify-center mt-8 space-x-1">
-          <Text className="text-gray-600">{formatTime(timer)}</Text>
-          <Text className="text-gray-600">I didn't receive code.</Text>
-          <TouchableOpacity onPress={handleResend} disabled={!isResendActive}>
+        <View className="flex-row items-center justify-center mt-8 space-x-1" testID="timer-resend-container">
+          <Text className="text-gray-600" testID="timer-text">{formatTime(timer)}</Text>
+          <Text className="text-gray-600" testID="resend-label">I didn't receive code.</Text>
+          <TouchableOpacity onPress={handleResend} disabled={!isResendActive} testID="resend-button">
             <Text
               className={`${
                 isResendActive ? "text-indigo-600" : "text-gray-400"
               }`}
+              testID="resend-button-text"
             >
               Resend
             </Text>
@@ -193,15 +196,16 @@ export default function OTPVerification() {
       </View>
 
       {/* Footer */}
-      <View className="px-6 absolute bottom-8 w-full">
+      <View className="px-6 absolute bottom-8 w-full" testID="footer-container">
         <TouchableOpacity
           onPress={handleVerify}
           disabled={!isOtpComplete}
           className={`py-4 rounded-xl items-center
             ${isOtpComplete ? "bg-indigo-600" : "bg-gray-300"}`}
           accessibilityLabel="Verify and create account"
+          testID="verify-button"
         >
-          <Text className="text-white font-semibold">
+          <Text className="text-white font-semibold" testID="verify-button-text">
             Verify & Create Account
           </Text>
         </TouchableOpacity>

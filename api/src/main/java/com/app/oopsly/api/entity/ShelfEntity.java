@@ -28,8 +28,9 @@ import lombok.*;
 @NoArgsConstructor
 @Table(name = "shelves")
 @Entity
-public class ShelveEntity extends Audit {
+public class ShelfEntity extends Audit {
 
+    private String icon;
     private String name;
     private String description;
 
@@ -38,10 +39,11 @@ public class ShelveEntity extends Audit {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToMany(mappedBy = "shelve", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    @OneToMany(mappedBy = "shelf", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestSuiteEntity> testSuites;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "shelve", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "shelf", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<SubjectEntity> subjects;
 }

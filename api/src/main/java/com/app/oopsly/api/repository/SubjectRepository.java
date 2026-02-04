@@ -16,7 +16,7 @@
 
 package com.app.oopsly.api.repository;
 
-import com.app.oopsly.api.entity.ShelveEntity;
+import com.app.oopsly.api.entity.ShelfEntity;
 import com.app.oopsly.api.entity.SubjectEntity;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,10 +29,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SubjectRepository extends JpaRepository<SubjectEntity, UUID> {
     @Query(
-            "SELECT c FROM SubjectEntity c WHERE c.id = ?1 AND c.shelve = ?2 AND c.deleted ="
+            "SELECT c FROM SubjectEntity c WHERE c.id = ?1 AND c.shelf = ?2 AND c.deleted ="
                     + " false")
-    Optional<SubjectEntity> findByIdAndShelve(UUID id, ShelveEntity shelve);
+    Optional<SubjectEntity> findByIdAndShelve(UUID id, ShelfEntity shelve);
 
-    @Query("SELECT c FROM SubjectEntity c WHERE c.shelve = ?1 AND c.deleted = false")
-    Page<SubjectEntity> findAllByShelve(ShelveEntity shelve, Pageable pageable);
+    @Query("SELECT c FROM SubjectEntity c WHERE c.shelf = ?1 AND c.deleted = false")
+    Page<SubjectEntity> findAllByShelve(ShelfEntity shelve, Pageable pageable);
 }

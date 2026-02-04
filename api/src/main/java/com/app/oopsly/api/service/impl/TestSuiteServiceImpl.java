@@ -16,12 +16,12 @@
 
 package com.app.oopsly.api.service.impl;
 
-import com.app.oopsly.api.entity.ShelveEntity;
+import com.app.oopsly.api.entity.ShelfEntity;
 import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
-import com.app.oopsly.api.repository.ShelveRepository;
+import com.app.oopsly.api.repository.ShelfRepository;
 import com.app.oopsly.api.repository.TestSuiteRepository;
 import com.app.oopsly.api.service.TestSuiteService;
 import com.app.oopsly.api.service.UserService;
@@ -45,7 +45,7 @@ import org.springframework.stereotype.Service;
 public class TestSuiteServiceImpl implements TestSuiteService {
 
     private final TestSuiteRepository testSuiteRepository;
-    private final ShelveRepository shelveRepository;
+    private final ShelfRepository shelfRepository;
     private final UserService userService;
 
     @Override
@@ -53,10 +53,10 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID deckId, TestSuiteReq request) {
         log.info("Creating test suite for shelve {}", deckId);
-        ShelveEntity shelve = this.findShelveByIdAndUser(deckId);
+        ShelfEntity shelve = this.findShelveByIdAndUser(deckId);
 
         TestSuiteEntity testSuite = this.toEntity(request, null);
-        testSuite.setShelve(shelve);
+        testSuite.setShelf(shelve);
         TestSuiteEntity savedEntity = testSuiteRepository.save(testSuite);
 
         return ApiRes.created("Test suite created successfully", this.toViewModel(savedEntity));
@@ -71,7 +71,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(UUID deckId, UUID testSuiteId, TestSuiteReq request) {
         log.info("Updating test suite {} for shelve {}", testSuiteId, deckId);
-        ShelveEntity shelve = this.findShelveByIdAndUser(deckId);
+        ShelfEntity shelve = this.findShelveByIdAndUser(deckId);
         TestSuiteEntity existingTestSuite =
                 testSuiteRepository
                         .findByIdAndShelve(testSuiteId, shelve)
@@ -95,7 +95,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID deckId, UUID testSuiteId) {
         log.info("Deleting test suite {} for shelve {}", testSuiteId, deckId);
-        ShelveEntity shelve = this.findShelveByIdAndUser(deckId);
+        ShelfEntity shelve = this.findShelveByIdAndUser(deckId);
         TestSuiteEntity testSuite =
                 testSuiteRepository
                         .findByIdAndShelve(testSuiteId, shelve)
@@ -115,7 +115,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID deckId, UUID testSuiteId) {
         log.info("Fetching test suite {} for shelve {}", testSuiteId, deckId);
-        ShelveEntity shelve = this.findShelveByIdAndUser(deckId);
+        ShelfEntity shelve = this.findShelveByIdAndUser(deckId);
         TestSuiteEntity testSuite =
                 testSuiteRepository
                         .findByIdAndShelve(testSuiteId, shelve)
@@ -134,7 +134,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
             fallbackMethod = "getAllByShelveFallback")
     public ApiRes getAllByShelve(UUID shelveId) {
         log.info("Fetching all test suites for shelve {}", shelveId);
-        ShelveEntity shelve = this.findShelveByIdAndUser(shelveId);
+        ShelfEntity shelve = this.findShelveByIdAndUser(shelveId);
         List<TestSuiteEntity> testSuites = testSuiteRepository.findAllByShelve(shelve);
         List<TestSuiteRes> responses = testSuites.stream().map(this::toViewModel).toList();
 
@@ -160,9 +160,9 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         return new TestSuiteRes(from.getId(), from.getTitle(), from.getIsActive());
     }
 
-    private ShelveEntity findShelveByIdAndUser(UUID deckId) {
+    private ShelfEntity findShelveByIdAndUser(UUID deckId) {
         User currentUser = userService.getCurrentUser();
-        return shelveRepository
+        return shelfRepository
                 .findByIdAndUser(deckId, currentUser)
                 .orElseThrow(() -> new NotFoundException("Shelve not found with id: " + deckId));
     }

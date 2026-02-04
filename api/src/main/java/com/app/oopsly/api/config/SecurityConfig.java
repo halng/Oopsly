@@ -18,6 +18,7 @@ package com.app.oopsly.api.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -54,6 +55,8 @@ public class SecurityConfig {
                                                 "/swagger-ui/**",
                                                 "/api-docs/**")
                                         .permitAll()
+                                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                                        .permitAll() // Allow OPTIONS everywhere
                                         .anyRequest()
                                         .authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -71,7 +74,7 @@ public class SecurityConfig {
                 corsRegistry
                         .addMapping("/**")
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "OPTIONS")
-                        .allowedOrigins(appConfig.getAllowedOrigins())
+                        .allowedOrigins("*")
                         .allowedHeaders("*");
             }
         };

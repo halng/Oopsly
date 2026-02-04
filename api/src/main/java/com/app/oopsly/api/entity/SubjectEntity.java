@@ -33,10 +33,14 @@ public class SubjectEntity extends Audit {
     private String name;
     private String description;
 
+    @Builder.Default private Integer dailyLimit = 20;
+    @Builder.Default private Integer newCardsPerDay = 5;
+    @Builder.Default private Double interval = 1.0;
+
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shelve_id", nullable = false)
-    private ShelveEntity shelve;
+    @JoinColumn(name = "shelf_id", nullable = false)
+    private ShelfEntity shelf;
 
     @JsonIgnore
     @OneToMany(mappedBy = "subject", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

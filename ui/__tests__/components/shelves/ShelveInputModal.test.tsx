@@ -14,24 +14,29 @@
  *    limitations under the License.
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import React from 'react';
-import { Alert } from 'react-native';
-import { ShelveInputModal } from '../../../components/shelves/ShelveInputModal';
-import { Shelve } from '../../../types/Shelve';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react-native";
+import React from "react";
+import { Alert } from "react-native";
+import { ShelveInputModal } from "../../../components/shelves/ShelveInputModal";
+import { Shelve } from "../../../types/Shelf";
 
-jest.spyOn(Alert, 'alert');
+jest.spyOn(Alert, "alert");
 
-describe('ShelveInputModal', () => {
+describe("ShelveInputModal", () => {
   const mockOnClose = jest.fn();
   const mockOnSubmit = jest.fn();
 
   const mockShelve: Shelve = {
-    id: 'shelve-123',
-    name: 'Japanese Vocabulary',
-    description: 'Basic Japanese words for beginners',
-    createdAt: '2025-12-14T10:00:00.000Z',
-    updatedAt: '2025-12-14T15:30:00.000Z',
+    id: "shelve-123",
+    name: "Japanese Vocabulary",
+    description: "Basic Japanese words for beginners",
+    createdAt: "2025-12-14T10:00:00.000Z",
+    updatedAt: "2025-12-14T15:30:00.000Z",
   };
 
   beforeEach(() => {
@@ -39,33 +44,33 @@ describe('ShelveInputModal', () => {
     mockOnSubmit.mockResolvedValue(undefined);
   });
 
-  describe('Create Mode', () => {
+  describe("Create Mode", () => {
     it('renders with "Create New Shelve" title when no shelve is provided', () => {
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
-      expect(screen.getByText('Create New Shelve')).toBeTruthy();
+      expect(screen.getByText("Create New Shelve")).toBeTruthy();
     });
 
-    it('renders empty input fields in create mode', () => {
+    it("renders empty input fields in create mode", () => {
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
-      const nameInput = screen.getByTestId('shelve-name-input');
-      const descriptionInput = screen.getByTestId('shelve-description-input');
+      const nameInput = screen.getByTestId("shelve-name-input");
+      const descriptionInput = screen.getByTestId("shelve-description-input");
 
-      expect(nameInput.props.value).toBe('');
-      expect(descriptionInput.props.value).toBe('');
+      expect(nameInput.props.value).toBe("");
+      expect(descriptionInput.props.value).toBe("");
     });
 
     it('shows "Create" button text in create mode', () => {
@@ -74,109 +79,112 @@ describe('ShelveInputModal', () => {
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
-      expect(screen.getByText('Create')).toBeTruthy();
+      expect(screen.getByText("Create")).toBeTruthy();
     });
 
-    it('validates name is required', async () => {
+    it("validates name is required", async () => {
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
-      const submitButton = screen.getByTestId('modal-submit-button');
+      const submitButton = screen.getByTestId("modal-submit-button");
       fireEvent.press(submitButton);
 
       await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith('Validation Error', 'Shelve name is required');
+        expect(Alert.alert).toHaveBeenCalledWith(
+          "Validation Error",
+          "Shelve name is required",
+        );
       });
 
       expect(mockOnSubmit).not.toHaveBeenCalled();
     });
 
-    it('calls onSubmit with correct data when form is valid', async () => {
+    it("calls onSubmit with correct data when form is valid", async () => {
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
-      const nameInput = screen.getByTestId('shelve-name-input');
-      const descriptionInput = screen.getByTestId('shelve-description-input');
+      const nameInput = screen.getByTestId("shelve-name-input");
+      const descriptionInput = screen.getByTestId("shelve-description-input");
 
-      fireEvent.changeText(nameInput, 'New Shelve');
-      fireEvent.changeText(descriptionInput, 'New description');
+      fireEvent.changeText(nameInput, "New Shelve");
+      fireEvent.changeText(descriptionInput, "New description");
 
-      const submitButton = screen.getByTestId('modal-submit-button');
+      const submitButton = screen.getByTestId("modal-submit-button");
       fireEvent.press(submitButton);
 
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledWith({
-          name: 'New Shelve',
-          description: 'New description',
+          name: "New Shelve",
+          description: "New description",
         });
       });
     });
 
-    it('trims whitespace from inputs', async () => {
+    it("trims whitespace from inputs", async () => {
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
-      const nameInput = screen.getByTestId('shelve-name-input');
-      const descriptionInput = screen.getByTestId('shelve-description-input');
+      const nameInput = screen.getByTestId("shelve-name-input");
+      const descriptionInput = screen.getByTestId("shelve-description-input");
 
-      fireEvent.changeText(nameInput, '  Trimmed Name  ');
-      fireEvent.changeText(descriptionInput, '  Trimmed Description  ');
+      fireEvent.changeText(nameInput, "  Trimmed Name  ");
+      fireEvent.changeText(descriptionInput, "  Trimmed Description  ");
 
-      const submitButton = screen.getByTestId('modal-submit-button');
+      const submitButton = screen.getByTestId("modal-submit-button");
       fireEvent.press(submitButton);
 
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledWith({
-          name: 'Trimmed Name',
-          description: 'Trimmed Description',
+          name: "Trimmed Name",
+          description: "Trimmed Description",
         });
       });
     });
 
-    it('submits with undefined description when empty', async () => {
+    it("submits with undefined description when empty", async () => {
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
-      const nameInput = screen.getByTestId('shelve-name-input');
+      const nameInput = screen.getByTestId("shelve-name-input");
 
-      fireEvent.changeText(nameInput, 'New Shelve');
+      fireEvent.changeText(nameInput, "New Shelve");
 
-      const submitButton = screen.getByTestId('modal-submit-button');
+      const submitButton = screen.getByTestId("modal-submit-button");
       fireEvent.press(submitButton);
 
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledWith({
-          name: 'New Shelve',
+          name: "New Shelve",
           description: undefined,
         });
       });
     });
   });
 
-  describe('Edit Mode', () => {
+  describe("Edit Mode", () => {
     it('renders with "Edit Shelve" title when shelve is provided', () => {
       render(
         <ShelveInputModal
@@ -184,27 +192,29 @@ describe('ShelveInputModal', () => {
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
           shelve={mockShelve}
-        />
+        />,
       );
 
-      expect(screen.getByText('Edit Shelve')).toBeTruthy();
+      expect(screen.getByText("Edit Shelve")).toBeTruthy();
     });
 
-    it('pre-fills input fields with shelve data', () => {
+    it("pre-fills input fields with shelve data", () => {
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
           shelve={mockShelve}
-        />
+        />,
       );
 
-      const nameInput = screen.getByTestId('shelve-name-input');
-      const descriptionInput = screen.getByTestId('shelve-description-input');
+      const nameInput = screen.getByTestId("shelve-name-input");
+      const descriptionInput = screen.getByTestId("shelve-description-input");
 
-      expect(nameInput.props.value).toBe('Japanese Vocabulary');
-      expect(descriptionInput.props.value).toBe('Basic Japanese words for beginners');
+      expect(nameInput.props.value).toBe("Japanese Vocabulary");
+      expect(descriptionInput.props.value).toBe(
+        "Basic Japanese words for beginners",
+      );
     });
 
     it('shows "Update" button text in edit mode', () => {
@@ -214,13 +224,13 @@ describe('ShelveInputModal', () => {
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
           shelve={mockShelve}
-        />
+        />,
       );
 
-      expect(screen.getByText('Update')).toBeTruthy();
+      expect(screen.getByText("Update")).toBeTruthy();
     });
 
-    it('handles shelve with null description', () => {
+    it("handles shelve with null description", () => {
       const shelveWithNullDesc: Shelve = {
         ...mockShelve,
         description: null,
@@ -232,58 +242,58 @@ describe('ShelveInputModal', () => {
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
           shelve={shelveWithNullDesc}
-        />
+        />,
       );
 
-      const descriptionInput = screen.getByTestId('shelve-description-input');
-      expect(descriptionInput.props.value).toBe('');
+      const descriptionInput = screen.getByTestId("shelve-description-input");
+      expect(descriptionInput.props.value).toBe("");
     });
   });
 
-  describe('Modal Actions', () => {
-    it('calls onClose when close button is pressed', () => {
+  describe("Modal Actions", () => {
+    it("calls onClose when close button is pressed", () => {
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
-      const closeButton = screen.getByTestId('modal-close-button');
+      const closeButton = screen.getByTestId("modal-close-button");
       fireEvent.press(closeButton);
 
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
 
-    it('calls onClose when cancel button is pressed', () => {
+    it("calls onClose when cancel button is pressed", () => {
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
-      const cancelButton = screen.getByTestId('modal-cancel-button');
+      const cancelButton = screen.getByTestId("modal-cancel-button");
       fireEvent.press(cancelButton);
 
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
 
-    it('clears form when closed', () => {
+    it("clears form when closed", () => {
       const { rerender } = render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
-      const nameInput = screen.getByTestId('shelve-name-input');
-      fireEvent.changeText(nameInput, 'Test Name');
+      const nameInput = screen.getByTestId("shelve-name-input");
+      fireEvent.changeText(nameInput, "Test Name");
 
-      const cancelButton = screen.getByTestId('modal-cancel-button');
+      const cancelButton = screen.getByTestId("modal-cancel-button");
       fireEvent.press(cancelButton);
 
       // Rerender with visible true to see if form is cleared
@@ -292,60 +302,60 @@ describe('ShelveInputModal', () => {
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
-      const nameInputAfter = screen.getByTestId('shelve-name-input');
-      expect(nameInputAfter.props.value).toBe('');
+      const nameInputAfter = screen.getByTestId("shelve-name-input");
+      expect(nameInputAfter.props.value).toBe("");
     });
   });
 
-  describe('Loading State', () => {
-    it('disables inputs when loading', () => {
+  describe("Loading State", () => {
+    it("disables inputs when loading", () => {
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
           isLoading={true}
-        />
+        />,
       );
 
-      const nameInput = screen.getByTestId('shelve-name-input');
-      const descriptionInput = screen.getByTestId('shelve-description-input');
+      const nameInput = screen.getByTestId("shelve-name-input");
+      const descriptionInput = screen.getByTestId("shelve-description-input");
 
       expect(nameInput.props.editable).toBe(false);
       expect(descriptionInput.props.editable).toBe(false);
     });
 
-    it('disables close button when loading', () => {
+    it("disables close button when loading", () => {
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
           isLoading={true}
-        />
+        />,
       );
 
-      const closeButton = screen.getByTestId('modal-close-button');
+      const closeButton = screen.getByTestId("modal-close-button");
       fireEvent.press(closeButton);
 
       // onClose should not be called when loading
       expect(mockOnClose).not.toHaveBeenCalled();
     });
 
-    it('disables cancel button when loading', () => {
+    it("disables cancel button when loading", () => {
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
           isLoading={true}
-        />
+        />,
       );
 
-      const cancelButton = screen.getByTestId('modal-cancel-button');
+      const cancelButton = screen.getByTestId("modal-cancel-button");
       fireEvent.press(cancelButton);
 
       // onClose should not be called when loading
@@ -353,62 +363,62 @@ describe('ShelveInputModal', () => {
     });
   });
 
-  describe('Error Handling', () => {
-    it('displays error message when onSubmit throws', async () => {
-      mockOnSubmit.mockRejectedValue(new Error('Failed to create shelve'));
+  describe("Error Handling", () => {
+    it("displays error message when onSubmit throws", async () => {
+      mockOnSubmit.mockRejectedValue(new Error("Failed to create shelve"));
 
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
-      const nameInput = screen.getByTestId('shelve-name-input');
-      fireEvent.changeText(nameInput, 'Test Shelve');
+      const nameInput = screen.getByTestId("shelve-name-input");
+      fireEvent.changeText(nameInput, "Test Shelve");
 
-      const submitButton = screen.getByTestId('modal-submit-button');
+      const submitButton = screen.getByTestId("modal-submit-button");
       fireEvent.press(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Failed to create shelve')).toBeTruthy();
+        expect(screen.getByText("Failed to create shelve")).toBeTruthy();
       });
     });
 
-    it('displays generic error message when error is not an Error instance', async () => {
-      mockOnSubmit.mockRejectedValue('Something went wrong');
+    it("displays generic error message when error is not an Error instance", async () => {
+      mockOnSubmit.mockRejectedValue("Something went wrong");
 
       render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
-      const nameInput = screen.getByTestId('shelve-name-input');
-      fireEvent.changeText(nameInput, 'Test Shelve');
+      const nameInput = screen.getByTestId("shelve-name-input");
+      fireEvent.changeText(nameInput, "Test Shelve");
 
-      const submitButton = screen.getByTestId('modal-submit-button');
+      const submitButton = screen.getByTestId("modal-submit-button");
       fireEvent.press(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText('An error occurred')).toBeTruthy();
+        expect(screen.getByText("An error occurred")).toBeTruthy();
       });
     });
 
-    it('clears error when modal is reopened', () => {
+    it("clears error when modal is reopened", () => {
       const { rerender } = render(
         <ShelveInputModal
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
       // Try to submit without name to show error
-      const submitButton = screen.getByTestId('modal-submit-button');
+      const submitButton = screen.getByTestId("modal-submit-button");
       fireEvent.press(submitButton);
 
       // Rerender with new visible state to simulate reopening
@@ -417,7 +427,7 @@ describe('ShelveInputModal', () => {
           visible={false}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
       rerender(
@@ -425,11 +435,11 @@ describe('ShelveInputModal', () => {
           visible={true}
           onClose={mockOnClose}
           onSubmit={mockOnSubmit}
-        />
+        />,
       );
 
       // Error should be cleared
-      expect(screen.queryByText('Shelve name is required')).toBeNull();
+      expect(screen.queryByText("Shelve name is required")).toBeNull();
     });
   });
 });

@@ -25,6 +25,9 @@ import java.io.IOException;
 import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,6 +37,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtUtils jwtUtils;
 
     @Override
@@ -42,24 +46,48 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
-        final String authHeader = request.getHeader("Authorization");
+        final String requestId = request.getHeader("X-Request-ID");
+        MDC.put("XID", requestId);
+        LOGGER.info("Filtering request: {}", request.getRequestURI());
+        final String authHeader = request.getHeader("authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            LOGGER.warn("Authorization header not present");
             filterChain.doFilter(request, response);
             return;
         }
 
         String jwt = authHeader.substring(7);
-        String userId = jwtUtils.extractUserId(jwt);
-        String userRole = jwtUtils.extractUserRole(jwt);
+        try {
+            LOGGER.info("Attempting to authenticate using jwt");
+            String userId = jwtUtils.extractUserId(jwt);
+            String userRole = jwtUtils.extractUserRole(jwt);
 
-        if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(
-                            userId, null, List.of((GrantedAuthority) () -> userRole));
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                userId, null, List.of((GrantedAuthority) () -> userRole));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+                LOGGER.info("User {} authenticated with role {}", userId, userRole);
+            }
+            filterChain.doFilter(request, response);
+        } catch (Exception e) {
+            LOGGER.error(
+                    "JWT authentication failed with exception {} and message: {}",
+                    e.getClass().getSimpleName(),
+                    e.getMessage());
+            sendErrorResponse(response, "EXPIRED_OR_INVALID_JWT");
+        } finally {
+            MDC.clear();
         }
-        filterChain.doFilter(request, response);
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, String message)
+            throws IOException {
+        LOGGER.info("Sending error response: {}", message);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"error\": \"" + message + "\"}");
     }
 }

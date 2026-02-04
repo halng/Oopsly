@@ -16,8 +16,4 @@
 
 package com.app.oopsly.api.viewmodel;
 
-import jakarta.validation.constraints.Size;
-import lombok.NonNull;
-
-public record ShelveReq(
-        @NonNull String name, @NonNull @Size(min = 10, max = 100) String description) {}
+public record SubjectSettingReq(int dailyLimit, int newCardsPerDay, double interval) {}

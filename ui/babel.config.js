@@ -17,6 +17,7 @@ module.exports = function (api) {
         },
       ],
       'react-native-worklets/plugin',
+      'babel-plugin-transform-import-meta'
     ],
   };
 };
