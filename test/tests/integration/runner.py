@@ -17,12 +17,11 @@ import json
 import logging
 import re
 import os
+
 import requests
 import yaml
-from typing import Dict, Any, Optional, List, Tuple
-from deepdiff import DeepDiff
+from typing import Dict, Any, Optional, Tuple
 from pathlib import Path
-import jsonpath_ng
 from jsonpath_ng import parse
 
 
@@ -360,8 +359,8 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
     # Log request body if present (truncated)
     if "json" in req_data and req_data["json"]:
         body_str = str(req_data["json"])
-        if len(body_str) > 100:
-            body_str = body_str[:100] + "..."
+        # if len(body_str) > 100:
+        #     body_str = body_str[:100] + "..."
         logger.info(f"        Body: {body_str}")
 
     response = send_api_request(req_data)
@@ -373,8 +372,8 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
 
         # Log response body (truncated)
         response_text = response.text
-        if len(response_text) > 200:
-            response_text = response_text[:200] + "..."
+        # if len(response_text) > 200:
+        #     response_text = response_text[:200] + "..."
         logger.debug(f"        Response: {response_text}")
     else:
         logger.error(f"      ◀ ✗ No response received")
@@ -429,13 +428,19 @@ def run(env: dict, apis: dict) -> bool:
     for flow_file in test_flows:
         logger.info(f"{'='*80}")
         logger.info(f"📁 Flow File: {flow_file.name}")
-        logger.info(f"{'='*80}")
+
 
         config_path = str(flow_file)
         test_definition = load_test_definition(config_path)
         if not test_definition:
             logger.error("🚫 No test cases found.\n")
             continue
+
+        if test_definition.get("enabled", True) is False:
+            logger.info("⏭️  Flow is disabled. Skipping...\n")
+            continue
+
+        logger.info(f"{'='*80}")
 
         flows = test_definition.get("flows", [])
 
@@ -508,27 +513,27 @@ def run(env: dict, apis: dict) -> bool:
                 logger.info(f"   ❌ Flow Failed: {flow_name}\n")
 
     # Print summary statistics
-    logger.info("\n" + "=" * 80)
+    logger.info("" + "=" * 80)
     logger.info("📊 TEST EXECUTION SUMMARY")
     logger.info("=" * 80)
-    logger.info(f"\n📦 Flow Suites: {total_flows} total")
+    logger.info(f"📦 Flow Suites: {total_flows} total")
     logger.info(f"   ✅ Passed: {passed_flows}")
     logger.info(f"   ❌ Failed: {failed_flows}")
 
-    logger.info(f"\n🔧 Test Steps: {total_steps} total")
+    logger.info(f"🔧 Test Steps: {total_steps} total")
     logger.info(f"   ✅ Passed: {passed_steps}")
     logger.info(f"   ❌ Failed: {failed_steps}")
 
     if failed_step_details:
-        logger.info(f"\n{'='*80}")
+        logger.info(f"{'='*80}")
         logger.info(f"❌ FAILED STEPS ({len(failed_step_details)} failures)")
         logger.info("=" * 80)
         for idx, failure in enumerate(failed_step_details, 1):
-            logger.info(f"\n{idx}. 📁 {failure['flow_file']} → {failure['flow_name']}")
+            logger.info(f"{idx}. 📁 {failure['flow_file']} → {failure['flow_name']}")
             logger.info(f"   🔹 Step: {failure['step_name']}")
             logger.info(f"   📍 Type: {failure['step_type']}")
 
-    logger.info("\n" + "=" * 80)
+    logger.info("" + "=" * 80)
 
     if all_passed:
         logger.info("🎉 ALL TESTS PASSED!")

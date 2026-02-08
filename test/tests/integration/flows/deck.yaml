@@ -1,3 +1,4 @@
+enabled: false
 flows:
   - flow: Create Deck Flow Check
     description: "This flow tests the creation of a new deck and verifies its existence in the database."

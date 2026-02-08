@@ -60,7 +60,7 @@ public class OTPServiceImpl implements OTPService {
     @Override
     @CircuitBreaker(name = "otpServiceCircuitBreaker", fallbackMethod = "sendOTPFallback")
     public ApiRes sendOTP(String email) {
-        if (email.equals(appConfig.getTestEmail())) {
+        if (appConfig.isTestEmail(email)) {
             log.info("Test email detected. Skipping OTP send for {}", StringUtils.masked(email));
             return ApiRes.ok("OTP sent successfully to " + email);
         }
@@ -96,7 +96,7 @@ public class OTPServiceImpl implements OTPService {
     @Override
     @CircuitBreaker(name = "otpServiceCircuitBreaker", fallbackMethod = "verifyOTPFallback")
     public ApiRes verifyOTP(OTPReq otpReq) {
-        if (otpReq.email().equals(appConfig.getTestEmail()) && otpReq.otp().equals("000000")) {
+        if (appConfig.isTestEmail(otpReq.email()) && otpReq.otp().equals("000000")) {
             log.info(
                     "Test email and OTP detected. Skipping OTP verification for {}",
                     StringUtils.masked(otpReq.email()));

@@ -28,16 +28,6 @@ configs:
           constraints:
             length: 6
             nullable: false
-    - name: REFRESH_AUTH_TOKEN
-      method: POST
-      endpoint: /auth/refresh-token
-      headers:
-        Content-Type: "application/json"
-      body:
-        refresh_token:
-          value: $REFRESH_TOKEN
-          constraints:
-            nullable: false
 #    USER AUTHENTICATION AND PROFILE APIS
     - name: TOKEN_REFRESH
       method: POST
@@ -345,16 +335,12 @@ configs:
       headers:
         Content-Type: "application/json"
       body:
-        refreshToken:
+        refresh_token:
           value: $REFRESH_TOKEN
           constraints:
             nullable: false
-        userEmail:
+        user_email:
           value: $USER_EMAIL
-          constraints:
-            nullable: false
-        userId:
-          value: $USER_ID
           constraints:
             nullable: false
     - name: USER_LOGOUT

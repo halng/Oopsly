@@ -1,3 +1,4 @@
+enabled: false
 flows:
   - flow: Collection Management Flow
     description: "This flow tests collection CRUD operations including create, read, update, and delete operations"

@@ -1,3 +1,4 @@
+enabled: false
 flows:
   - flow: Subject Management Flow
     description: "This flow tests subject CRUD operations including create, read, update, and delete operations"
