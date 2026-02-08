@@ -20,7 +20,7 @@ import com.app.oopsly.api.config.AppConfig;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.SendEmailException;
-import com.app.oopsly.api.messaging.EmailSender;
+import com.app.oopsly.api.messaging.IEmailSender;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.service.OTPService;
 import com.app.oopsly.api.util.Constant;
@@ -50,7 +50,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class OTPServiceImpl implements OTPService {
 
-    private final EmailSender emailSender;
+    private final IEmailSender emailSender;
     private final UserRepository userRepository;
     private final StringRedisTemplate stringRedisTemplate;
     private final JwtUtils jwtUtils;
