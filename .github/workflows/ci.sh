@@ -208,6 +208,7 @@ run_integration_tests() {
     black --check test/
     
     echo "CI::Test style check completed successfully!"
+    cd test
     
     export SKIP_DOCKER_SETUP=false
     python -m tests.integration.main

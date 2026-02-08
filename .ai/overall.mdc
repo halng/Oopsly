@@ -1,4 +1,4 @@
-# GitHub Copilot Instructions for Oopsly
+# Instructions for Oopsly
 
 ## Project Overview
 
@@ -16,7 +16,10 @@ The application aims to:
 * **UI Framework:** NativeWind 4.2 (Tailwind CSS for React Native)
 * **State Management:** Zustand 5.0
 * **Backend:** Java 21, Spring Boot 3.5.8
-* **Database:** PostgreSQL
+* **Database:** PostgreSQL, Redis
+* **ORM:** Spring Data JPA, Hibernate
+* **Authentication:** Spring Security, JWT
+* **API Communication:** RESTful APIs using Spring Web
 * **API Documentation:** SpringDoc OpenAPI 2.8
 * **Testing:** Jest (UI), JUnit + Mockito (API), Python (Integration)
 * **Code Quality:** Spotless (Java), ESLint (TypeScript), JaCoCo (Coverage)
