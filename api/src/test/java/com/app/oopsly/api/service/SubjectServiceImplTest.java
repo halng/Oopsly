@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,7 +61,6 @@ class SubjectServiceImplTest {
     @Mock private CardService cardService;
 
     @InjectMocks private SubjectServiceImpl subjectService;
-
 
     private User currentUser;
     private ShelfEntity shelve;
@@ -125,7 +123,8 @@ class SubjectServiceImplTest {
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
         when(subjectRepository.save(any(SubjectEntity.class))).thenReturn(subject);
-        when(cardService.getShortPracticeStats(any(SubjectEntity.class))).thenReturn(Pair.of(1, 1.0));
+        when(cardService.getShortPracticeStats(any(SubjectEntity.class)))
+                .thenReturn(Pair.of(1, 1.0));
         ApiRes result = subjectService.update(shelveId, subjectId, updateReq);
 
         assertNotNull(result);
@@ -282,7 +281,8 @@ class SubjectServiceImplTest {
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(shelve));
         when(subjectRepository.findAllByShelve(eq(shelve), any(Pageable.class))).thenReturn(page);
-        when(cardService.getShortPracticeStats(any(SubjectEntity.class))).thenReturn(Pair.of(1, 1.0));
+        when(cardService.getShortPracticeStats(any(SubjectEntity.class)))
+                .thenReturn(Pair.of(1, 1.0));
 
         ApiRes result = subjectService.getAllByShelve(shelveId, 0, 10);
 

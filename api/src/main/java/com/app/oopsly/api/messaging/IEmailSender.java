@@ -17,9 +17,8 @@
 package com.app.oopsly.api.messaging;
 
 import jakarta.mail.MessagingException;
-
 import java.io.IOException;
 
 public interface IEmailSender {
-	void sendEmail(String to, String otp) throws IOException, MessagingException;
+    void sendEmail(String to, String otp) throws IOException, MessagingException;
 }

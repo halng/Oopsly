@@ -17,19 +17,18 @@
 package com.app.oopsly.api.messaging;
 
 import jakarta.mail.MessagingException;
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
 
 @Component
 @Profile("test")
 @Slf4j
 public class NoOpIEmailSender implements IEmailSender {
 
-	@Override
-	public void sendEmail(String to, String otp) throws IOException, MessagingException {
-		log.info("NoOpEmailSender: Skipping email send to {} with OTP {} (test mode)", to, otp);
-	}
+    @Override
+    public void sendEmail(String to, String otp) throws IOException, MessagingException {
+        log.info("NoOpEmailSender: Skipping email send to {} with OTP {} (test mode)", to, otp);
+    }
 }

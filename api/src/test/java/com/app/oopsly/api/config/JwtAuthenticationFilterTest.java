@@ -25,8 +25,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.UUID;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -58,7 +56,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @BeforeEach
-    void setup(){
+    void setup() {
         lenient().when(request.getHeader("X-Request-ID")).thenReturn("test-request-id");
         lenient().when(request.getHeader("X-Platform")).thenReturn("test-platform");
     }
