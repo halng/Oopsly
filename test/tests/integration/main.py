@@ -141,8 +141,12 @@ def setup_app() -> Optional[subprocess.Popen]:
                     logger.info("✅ Application is UP! Proceeding to tests...")
                     is_healthy = True
                     break
-            except requests.ConnectionError:
-                # App isn't listening yet, keep waiting
+            except (requests.ConnectionError, requests.Timeout, requests.RequestException):
+                # App isn't listening yet or health check failed, keep waiting
+                pass
+            except Exception as e:
+                # Log unexpected errors but continue waiting
+                logger.debug(f"Health check attempt failed: {e}")
                 pass
             logger.info(f"Waiting for application to be healthy... ({i + 1}/20)")
             time.sleep(5)
