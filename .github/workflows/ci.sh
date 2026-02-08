@@ -426,7 +426,7 @@ main() {
     # Run all CI steps
     run_backend_ci
     run_markdown_lint
-    # run_frontend_ci # Temporarily disabled
+    run_frontend_ci
     run_test_style_check
     run_integration_tests
     
