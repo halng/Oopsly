@@ -64,6 +64,7 @@ public class AppConfig {
         private boolean authWithGoogle;
         private boolean authWithJwt;
     }
+
     public boolean isTestEmail(String email) {
         if (testEmails == null) {
             return false;

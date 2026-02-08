@@ -183,27 +183,6 @@ run_markdown_lint() {
     fi
 }
 
-# Python Test Style Check (test directory)
-run_test_style_check() {
-    echo "CI::"
-    echo "CI::====================================="
-    echo "CI::Running Test Style Check (Python)"
-    echo "CI::====================================="
-    
-    if [ -d "test" ]; then
-        echo "CI::Installing Python dependencies..."
-        python -m pip install --upgrade pip
-        pip install -r test/config/requirement.txt
-        
-        echo "CI::Running black style check..."
-        black --check test/
-        
-        echo "CI::Test style check completed successfully!"
-    else
-        echo "CI::Warning: test directory not found, skipping test style check"
-    fi
-}
-
 # Integration Tests (test directory)
 run_integration_tests() {
     echo "CI::"
@@ -220,6 +199,15 @@ run_integration_tests() {
         echo "CI::ERROR: api directory not found"
         return 1
     fi
+
+    echo "CI::Installing Python dependencies..."
+    python -m pip install --upgrade pip
+    pip install -r test/config/requirement.txt
+    
+    echo "CI::Running black style check..."
+    black --check test/
+    
+    echo "CI::Test style check completed successfully!"
     
     export SKIP_DOCKER_SETUP=false
     python -m tests.integration.main
@@ -310,7 +298,6 @@ main() {
     run_backend_ci
     run_markdown_lint
     run_frontend_ci
-    run_test_style_check
     run_integration_tests
     
     if [ "$SKIP_SECURITY" = false ]; then
