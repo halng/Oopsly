@@ -21,6 +21,17 @@ import RootLayout from '../../app/_layout';
 import { useAuthStore } from '../../store/AuthStore';
 import { AuthService } from '@/services/AuthService';
 
+// Mock AsyncStorage for tests
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    getItem: jest.fn(() => Promise.resolve(null)),
+    setItem: jest.fn(() => Promise.resolve()),
+    removeItem: jest.fn(() => Promise.resolve()),
+    clear: jest.fn(() => Promise.resolve()),
+  },
+}));
+
 // Mock dependencies
 jest.mock('expo-router', () => {
   const React = require('react');
