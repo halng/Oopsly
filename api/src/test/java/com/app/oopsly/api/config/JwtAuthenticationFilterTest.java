@@ -25,7 +25,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,16 +57,16 @@ class JwtAuthenticationFilterTest {
         SecurityContextHolder.clearContext();
     }
 
-    private void setupRequestId() {
-        // The filter always calls getHeader("X-Request-ID") first
+    @BeforeEach
+    void setup(){
         lenient().when(request.getHeader("X-Request-ID")).thenReturn("test-request-id");
+        lenient().when(request.getHeader("X-Platform")).thenReturn("test-platform");
     }
 
     @Test
     @DisplayName("Should pass through filter chain when Authorization header is missing")
     void doFilterInternal_MissingHeader() throws ServletException, IOException {
         // Arrange
-        setupRequestId();
         when(request.getHeader("authorization")).thenReturn(null);
 
         // Act
@@ -79,7 +82,6 @@ class JwtAuthenticationFilterTest {
     @DisplayName("Should pass through filter chain when Authorization header format is invalid")
     void doFilterInternal_InvalidHeaderFormat() throws ServletException, IOException {
         // Arrange
-        setupRequestId();
         when(request.getHeader("authorization")).thenReturn("Basic 123456");
 
         // Act
@@ -95,7 +97,6 @@ class JwtAuthenticationFilterTest {
     @DisplayName("Should authenticate user when Token is valid and Context is empty")
     void doFilterInternal_ValidToken_NewAuth() throws ServletException, IOException {
         // Arrange
-        setupRequestId();
         String token = "valid.jwt.token";
         String userId = "user123";
         String role = "ROLE_USER";
@@ -122,7 +123,6 @@ class JwtAuthenticationFilterTest {
     @DisplayName("Should NOT re-authenticate if SecurityContext already has authentication")
     void doFilterInternal_UserAlreadyAuthenticated() throws ServletException, IOException {
         // Arrange
-        setupRequestId();
         String token = "valid.jwt.token";
         String userId = "user123";
         String role = "ROLE_USER";
@@ -153,7 +153,6 @@ class JwtAuthenticationFilterTest {
     @DisplayName("Should not authenticate if userId extraction returns null (Invalid Token)")
     void doFilterInternal_InvalidToken_NullUserId() throws ServletException, IOException {
         // Arrange
-        setupRequestId();
         String token = "invalid.token";
         when(request.getHeader("authorization")).thenReturn("Bearer " + token);
         when(jwtUtils.extractUserId(token)).thenReturn(null); // Simulate extraction fail
@@ -170,7 +169,6 @@ class JwtAuthenticationFilterTest {
     @DisplayName("Should handle empty Bearer token gracefully")
     void doFilterInternal_EmptyBearerToken() throws ServletException, IOException {
         // Arrange
-        setupRequestId();
         when(request.getHeader("authorization")).thenReturn("Bearer ");
 
         // Act
@@ -185,7 +183,6 @@ class JwtAuthenticationFilterTest {
     @DisplayName("Should handle Bearer with extra spaces")
     void doFilterInternal_BearerWithSpaces() throws ServletException, IOException {
         // Arrange
-        setupRequestId();
         String tokenWithLeadingSpace = " token"; // token with leading space
         when(request.getHeader("authorization"))
                 .thenReturn(
@@ -212,7 +209,6 @@ class JwtAuthenticationFilterTest {
     @DisplayName("Should handle null role from JWT")
     void doFilterInternal_NullRole() throws ServletException, IOException {
         // Arrange
-        setupRequestId();
         String token = "valid.token";
         String userId = "user123";
 
@@ -234,7 +230,6 @@ class JwtAuthenticationFilterTest {
     @DisplayName("Should handle filterChain exception")
     void doFilterInternal_FilterChainException() throws ServletException, IOException {
         // Arrange
-        setupRequestId();
         when(request.getHeader("authorization")).thenReturn(null);
         doThrow(new ServletException("Chain error")).when(filterChain).doFilter(request, response);
 
@@ -248,7 +243,6 @@ class JwtAuthenticationFilterTest {
     @DisplayName("Should handle different Bearer case variations")
     void doFilterInternal_BearerCaseInsensitive() throws ServletException, IOException {
         // Arrange - lowercase bearer
-        setupRequestId();
         when(request.getHeader("authorization")).thenReturn("bearer token");
 
         // Act

@@ -37,6 +37,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,7 +59,10 @@ class SubjectServiceImplTest {
 
     @Mock private UserService userService;
 
+    @Mock private CardService cardService;
+
     @InjectMocks private SubjectServiceImpl subjectService;
+
 
     private User currentUser;
     private ShelfEntity shelve;
@@ -92,6 +97,7 @@ class SubjectServiceImplTest {
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(shelve));
         when(subjectRepository.save(any(SubjectEntity.class))).thenReturn(subject);
+        when(cardService.getShortPracticeStats(subject)).thenReturn(Pair.of(1, 1.0));
 
         ApiRes result = subjectService.create(shelveId, subjectReq);
 
@@ -119,7 +125,7 @@ class SubjectServiceImplTest {
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
         when(subjectRepository.save(any(SubjectEntity.class))).thenReturn(subject);
-
+        when(cardService.getShortPracticeStats(any(SubjectEntity.class))).thenReturn(Pair.of(1, 1.0));
         ApiRes result = subjectService.update(shelveId, subjectId, updateReq);
 
         assertNotNull(result);
@@ -231,6 +237,7 @@ class SubjectServiceImplTest {
                 .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
+        when(cardService.getShortPracticeStats(subject)).thenReturn(Pair.of(1, 1.0));
 
         ApiRes result = subjectService.getById(shelveId, subjectId);
 
@@ -275,6 +282,7 @@ class SubjectServiceImplTest {
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(shelve));
         when(subjectRepository.findAllByShelve(eq(shelve), any(Pageable.class))).thenReturn(page);
+        when(cardService.getShortPracticeStats(any(SubjectEntity.class))).thenReturn(Pair.of(1, 1.0));
 
         ApiRes result = subjectService.getAllByShelve(shelveId, 0, 10);
 
