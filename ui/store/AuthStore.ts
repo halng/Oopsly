@@ -1,66 +1,6 @@
 import { create } from "zustand";
-import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
-import { Platform } from 'react-native';
-
-// 1. Define the Storage Adapter based on platform
-let storageAdapter: StateStorage;
-
-if (Platform.OS === 'web') {
-  // For web platform, use localStorage directly (synchronous)
-  storageAdapter = {
-    getItem: (name: string): string | null => {
-      try {
-        return localStorage.getItem(name);
-      } catch (error) {
-        console.error('Error reading from localStorage:', error);
-        return null;
-      }
-    },
-    setItem: (name: string, value: string): void => {
-      try {
-        localStorage.setItem(name, value);
-      } catch (error) {
-        console.error('Error writing to localStorage:', error);
-      }
-    },
-    removeItem: (name: string): void => {
-      try {
-        localStorage.removeItem(name);
-      } catch (error) {
-        console.error('Error removing from localStorage:', error);
-      }
-    },
-  };
-} else {
-  // For native platforms (iOS/Android), use SecureStore (asynchronous)
-  storageAdapter = {
-    getItem: async (name: string): Promise<string | null> => {
-      try {
-        const SecureStore = require("expo-secure-store");
-        return await SecureStore.getItemAsync(name);
-      } catch (error) {
-        console.error('Error reading from SecureStore:', error);
-        return null;
-      }
-    },
-    setItem: async (name: string, value: string): Promise<void> => {
-      try {
-        const SecureStore = require("expo-secure-store");
-        await SecureStore.setItemAsync(name, value);
-      } catch (error) {
-        console.error('Error writing to SecureStore:', error);
-      }
-    },
-    removeItem: async (name: string): Promise<void> => {
-      try {
-        const SecureStore = require("expo-secure-store");
-        await SecureStore.deleteItemAsync(name);
-      } catch (error) {
-        console.error('Error removing from SecureStore:', error);
-      }
-    },
-  };
-}
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 2. Define your Interface
 interface AuthState {
@@ -113,7 +53,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      storage: createJSONStorage(() => storageAdapter),
+      storage: createJSONStorage(() => AsyncStorage),
     }
   )
 );
