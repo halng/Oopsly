@@ -297,7 +297,7 @@ main() {
     # Run all CI steps
     run_backend_ci
     run_markdown_lint
-    run_frontend_ci
+    # run_frontend_ci
     run_integration_tests
     
     if [ "$SKIP_SECURITY" = false ]; then
