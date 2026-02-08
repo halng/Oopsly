@@ -1,6 +1,6 @@
 flows:
   - flow: Test Suite Management Flow
-    description: "This flow tests test suite CRUD operations within shelves"
+    description: "This flow tests test suite CRUD operations within decks"
     before-all:
       - name: Generate OTP
         api: GENERATE_OTP
@@ -20,23 +20,23 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-      - name: Create Test Shelve
-        api: SHELVE_CREATION
+      - name: Create Test Deck
+        api: DECK_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_NAME: "Test Shelve for Test Suites"
-          SHELVE_DESCRIPTION: "Shelve created for test suite testing"
+          DECK_NAME: "Test Deck for Test Suites"
+          DECK_DESCRIPTION: "Deck created for test suite testing"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          SHELVE_ID: $.data.id
+          DECK_ID: $.data.id
     steps:
       - name: "1. Create a New Test Suite"
         api: TESTSUITE_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          DECK_ID: ${DECK_ID}
           TESTSUITE_NAME: "Unit Test Suite"
           TESTSUITE_DESCRIPTION: "Test suite for unit testing"
         assertions:
@@ -58,7 +58,7 @@ flows:
         api: TESTSUITE_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          DECK_ID: ${DECK_ID}
           TESTSUITE_ID: ${TESTSUITE_ID}
         assertions:
           - path: $.isSuccess
@@ -78,7 +78,7 @@ flows:
         api: TESTSUITE_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          DECK_ID: ${DECK_ID}
           TESTSUITE_ID: ${TESTSUITE_ID}
           TESTSUITE_NAME: "Updated Test Suite"
           TESTSUITE_DESCRIPTION: "Updated description"
@@ -93,11 +93,11 @@ flows:
             type: equals
             value: "Updated Test Suite"
       
-      - name: "4. Get All Test Suites by Shelve"
-        api: TESTSUITE_GET_ALL_BY_SHELVE
+      - name: "4. Get All Test Suites by Deck"
+        api: TESTSUITE_GET_ALL_BY_DECK
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          DECK_ID: ${DECK_ID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -112,7 +112,7 @@ flows:
         api: TESTSUITE_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          DECK_ID: ${DECK_ID}
           TESTSUITE_ID: ${TESTSUITE_ID}
         assertions:
           - path: $.isSuccess
@@ -126,7 +126,7 @@ flows:
         api: TESTSUITE_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          DECK_ID: ${DECK_ID}
           TESTSUITE_ID: ${TESTSUITE_ID}
         assertions:
           - path: $.isSuccess
@@ -157,23 +157,23 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-      - name: Create Test Shelve
-        api: SHELVE_CREATION
+      - name: Create Test Deck
+        api: DECK_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_NAME: "Edge Case Shelve"
-          SHELVE_DESCRIPTION: "Shelve for edge case testing"
+          DECK_NAME: "Edge Case Deck"
+          DECK_DESCRIPTION: "Deck for edge case testing"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          SHELVE_ID: $.data.id
+          DECK_ID: $.data.id
     steps:
       - name: "1. Get Test Suite with Invalid ID"
         api: TESTSUITE_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          DECK_ID: ${DECK_ID}
           TESTSUITE_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess
@@ -187,7 +187,7 @@ flows:
         api: TESTSUITE_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          DECK_ID: ${DECK_ID}
           TESTSUITE_ID: "00000000-0000-0000-0000-000000000000"
           TESTSUITE_NAME: "Should Fail"
           TESTSUITE_DESCRIPTION: "Should not work"
@@ -203,7 +203,7 @@ flows:
         api: TESTSUITE_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          DECK_ID: ${DECK_ID}
           TESTSUITE_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess
@@ -213,11 +213,11 @@ flows:
             type: equals
             value: 404
       
-      - name: "4. Create Test Suite with Invalid Shelve ID"
+      - name: "4. Create Test Suite with Invalid Deck ID"
         api: TESTSUITE_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: "00000000-0000-0000-0000-000000000000"
+          DECK_ID: "00000000-0000-0000-0000-000000000000"
           TESTSUITE_NAME: "Should Fail"
           TESTSUITE_DESCRIPTION: "Should not work"
         assertions:

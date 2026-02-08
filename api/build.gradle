@@ -129,7 +129,7 @@ jacocoTestCoverageVerification {
 	classDirectories.setFrom(
 			files(
 					sourceSets.main.output.classesDirs.asFileTree.matching {
-						exclude '**/ApiApplication**', '**/Constant**', '**/viewmodel/**', '**/NoOpEmailSender**'
+						exclude '**/ApiApplication**', '**/Constant**', '**/viewmodel/**', '**/NoOpIEmailSender**'
 					}
 			)
 	)

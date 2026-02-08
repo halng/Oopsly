@@ -1,0 +1,57 @@
+flows:
+  - flow: Create Deck Flow Check
+    description: "This flow tests the creation of a new deck and verifies its existence in the database."
+    before-all:
+      - name: Generate OTP
+        api: GENERATE_OTP
+        with:
+          EMAIL: test@oopsly.com
+        assertions:
+          - path: $.status
+            type: equals
+            value: 200
+          - path: $.message
+            type: contains
+            value: 'OTP sent successfully to test@oopsly.com'
+      - name: Verify OTP and Obtain Tokens
+        api: VERIFY_OTP
+        with:
+          EMAIL: test@oopsly.com
+          OTP_CODE: "000000"
+        assertions:
+          - path: $.status
+            type: equals
+            value: 200
+          - path: $.message
+            type: contains
+            value: 'Authentication successful.'
+          - path: $.data.access_token
+            type: not-null
+          - path: $.data.refresh_token
+            type: not-null
+          - path: $.isSuccess
+            type: equals
+            value: true
+        env-vars:
+          AUTH_TOKEN: $.data.access_token
+          REFRESH_TOKEN: $.data.refresh_token
+    steps:
+      - name: "1. Create a New Deck"
+        api: DECK_CREATION
+        with:
+            AUTH_TOKEN: ${AUTH_TOKEN}
+            DECK_NAME: "Integration Test Deck"
+            DECK_DESCRIPTION: "This deck is created during integration testing."
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 201
+          - type: contains
+            value: "Integration Test Deck"
+          - type: contains
+            value: "This deck is created during integration testing."
+          - type: status-code
+            value: 201

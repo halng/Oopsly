@@ -1,6 +1,6 @@
 flows:
-  - flow: Card Management Flow
-    description: "This flow tests card CRUD operations within collections"
+  - flow: Collection Management Flow
+    description: "This flow tests collection CRUD operations including create, read, update, and delete operations"
     before-all:
       - name: Generate OTP
         api: GENERATE_OTP
@@ -16,6 +16,9 @@ flows:
           EMAIL: test@oopsly.com
           OTP_CODE: "000000"
         assertions:
+          - path: $.status
+            type: equals
+            value: 200
           - path: $.data.access_token
             type: not-null
         env-vars:
@@ -24,40 +27,85 @@ flows:
         api: DECK_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_NAME: "Test Deck for Cards"
-          DECK_DESCRIPTION: "Deck created for card testing"
+          DECK_NAME: "Test Deck for Collections"
+          DECK_DESCRIPTION: "Deck created for collection testing"
         assertions:
+          - path: $.status
+            type: equals
+            value: 201
           - path: $.data.id
             type: not-null
         env-vars:
           DECK_ID: $.data.id
-      - name: Create Test Collection
+    steps:
+      - name: "1. Create a New Collection"
         api: COLLECTION_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DECK_ID: ${DECK_ID}
-          COLLECTION_NAME: "Test Collection for Cards"
-          COLLECTION_DESCRIPTION: "Collection for card testing"
+          COLLECTION_NAME: "Test Collection"
+          COLLECTION_DESCRIPTION: "Collection for testing"
         assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 200
           - path: $.data.id
             type: not-null
+          - path: $.data.name
+            type: equals
+            value: "Test Collection"
         env-vars:
           COLLECTION_ID: $.data.id
-    steps:
-      - name: "1. Create Cards in Collection"
-        api: CARD_CREATE
+      
+      - name: "2. Get Collection by ID"
+        api: COLLECTION_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DECK_ID: ${DECK_ID}
           COLLECTION_ID: ${COLLECTION_ID}
-          CARDS_ARRAY: >
-            [
-              {
-                "question": "What is the capital of France?",
-                "answer": "Paris",
-                "hint": "City of lights"
-              }
-            ]
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 200
+          - path: $.data.id
+            type: equals
+            value: ${COLLECTION_ID}
+          - path: $.data.name
+            type: equals
+            value: "Test Collection"
+      
+      - name: "3. Update Collection"
+        api: COLLECTION_UPDATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          DECK_ID: ${DECK_ID}
+          COLLECTION_ID: ${COLLECTION_ID}
+          COLLECTION_NAME: "Updated Collection"
+          COLLECTION_DESCRIPTION: "Updated description"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 200
+          - path: $.data.name
+            type: equals
+            value: "Updated Collection"
+      
+      - name: "4. Get All Collections with Pagination"
+        api: COLLECTION_GET_ALL_BY_DECK
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          DECK_ID: ${DECK_ID}
+          PAGE_NUM: "0"
+          PAGE_SIZE: "10"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -68,75 +116,12 @@ flows:
           - path: $.data
             type: not-null
       
-      - name: "2. Get All Cards in Collection with Pagination"
-        api: CARD_GET_ALL_BY_COLLECTION
+      - name: "5. Delete Collection"
+        api: COLLECTION_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DECK_ID: ${DECK_ID}
           COLLECTION_ID: ${COLLECTION_ID}
-          PAGE_NUM: "0"
-          PAGE_SIZE: "10"
-        assertions:
-          - path: $.isSuccess
-            type: equals
-            value: true
-          - path: $.status
-            type: equals
-            value: 200
-          - path: $.data.content
-            type: not-null
-        env-vars:
-          CARD_ID: $.data.content[0].id
-      
-      - name: "3. Get Card by ID"
-        api: CARD_GET_BY_ID
-        with:
-          AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
-          CARD_ID: ${CARD_ID}
-        assertions:
-          - path: $.isSuccess
-            type: equals
-            value: true
-          - path: $.status
-            type: equals
-            value: 200
-          - path: $.data.id
-            type: equals
-            value: ${CARD_ID}
-          - path: $.data.question
-            type: contains
-            value: "France"
-      
-      - name: "4. Update Card"
-        api: CARD_UPDATE
-        with:
-          AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
-          CARD_ID: ${CARD_ID}
-          CARD_QUESTION: "What is the capital of Germany?"
-          CARD_ANSWER: "Berlin"
-          CARD_HINT: "German capital"
-        assertions:
-          - path: $.isSuccess
-            type: equals
-            value: true
-          - path: $.status
-            type: equals
-            value: 200
-          - path: $.data.question
-            type: contains
-            value: "Germany"
-      
-      - name: "5. Delete Card"
-        api: CARD_DELETE
-        with:
-          AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
-          CARD_ID: ${CARD_ID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -145,13 +130,12 @@ flows:
             type: equals
             value: 200
       
-      - name: "6. Verify Card is Deleted"
-        api: CARD_GET_BY_ID
+      - name: "6. Verify Collection is Deleted (Get by ID should fail)"
+        api: COLLECTION_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DECK_ID: ${DECK_ID}
           COLLECTION_ID: ${COLLECTION_ID}
-          CARD_ID: ${CARD_ID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -160,8 +144,8 @@ flows:
             type: equals
             value: 404
 
-  - flow: Card Edge Cases
-    description: "Test edge cases for card operations"
+  - flow: Collection Edge Cases
+    description: "Test edge cases for collection operations"
     before-all:
       - name: Generate OTP
         api: GENERATE_OTP
@@ -192,26 +176,13 @@ flows:
             type: not-null
         env-vars:
           DECK_ID: $.data.id
-      - name: Create Test Collection
-        api: COLLECTION_CREATE
-        with:
-          AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_NAME: "Edge Case Collection"
-          COLLECTION_DESCRIPTION: "Collection for edge case testing"
-        assertions:
-          - path: $.data.id
-            type: not-null
-        env-vars:
-          COLLECTION_ID: $.data.id
     steps:
-      - name: "1. Get Card with Invalid ID"
-        api: CARD_GET_BY_ID
+      - name: "1. Get Collection with Invalid ID"
+        api: COLLECTION_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
-          CARD_ID: "00000000-0000-0000-0000-000000000000"
+          COLLECTION_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -220,16 +191,14 @@ flows:
             type: equals
             value: 404
       
-      - name: "2. Update Non-existent Card"
-        api: CARD_UPDATE
+      - name: "2. Update Non-existent Collection"
+        api: COLLECTION_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
-          CARD_ID: "00000000-0000-0000-0000-000000000000"
-          CARD_QUESTION: "Should fail"
-          CARD_ANSWER: "Should not work"
-          CARD_HINT: ""
+          COLLECTION_ID: "00000000-0000-0000-0000-000000000000"
+          COLLECTION_NAME: "Should Fail"
+          COLLECTION_DESCRIPTION: "Should not work"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -238,13 +207,12 @@ flows:
             type: equals
             value: 404
       
-      - name: "3. Delete Non-existent Card"
-        api: CARD_DELETE
+      - name: "3. Delete Non-existent Collection"
+        api: COLLECTION_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
-          CARD_ID: "00000000-0000-0000-0000-000000000000"
+          COLLECTION_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -252,19 +220,3 @@ flows:
           - path: $.status
             type: equals
             value: 404
-      
-      - name: "4. Get All Cards with Invalid Pagination"
-        api: CARD_GET_ALL_BY_COLLECTION
-        with:
-          AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
-          PAGE_NUM: "-1"
-          PAGE_SIZE: "10"
-        assertions:
-          - path: $.isSuccess
-            type: equals
-            value: false
-          - path: $.status
-            type: equals
-            value: 400

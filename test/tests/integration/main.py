@@ -30,9 +30,10 @@ from tests.integration import runner
 
 # --- CONFIGURATION ---
 DOCKER_COMPOSE_CMD = ["docker", "compose"]  # or ["docker-compose"] depending on version
-REQUIRED_SERVICES = ["postgres", "redis", "app"]  # Services we must wait for
-MAX_RETRIES = 30  # Wait up to 30 seconds
+REQUIRED_SERVICES = ["postgres", "redis", "oopsly-server"]  # Services we must wait for
+MAX_RETRIES = 120  # Wait up to 120 seconds (2 minutes) for services to be healthy
 SLEEP_INTERVAL = 1  # Check every 1 second
+COMPOSE_FILE = None  # Will be set in setup_docker()
 
 # --- LOGGING SETUP ---
 logging.basicConfig(
@@ -52,7 +53,7 @@ def check_container_health(service_name: str) -> bool:
     try:
         # Get the container ID for the service
         # This gets the ID of the first container for the service
-        cmd_id = DOCKER_COMPOSE_CMD + ["ps", "-q", service_name]
+        cmd_id = DOCKER_COMPOSE_CMD + ["-f", COMPOSE_FILE, "ps", "-q", service_name]
         container_id = subprocess.check_output(cmd_id, text=True).strip()
 
         if not container_id:
@@ -102,12 +103,25 @@ def setup_docker() -> bool:
     Set up Docker environment for integration tests.
     Returns True if successful, False otherwise.
     """
+    global COMPOSE_FILE
+
     logger.info("🚀 Starting Docker environment...")
+
+    # Use absolute path based on the main.py location
+    COMPOSE_FILE = os.path.join(
+        os.path.dirname(__file__), "../config/docker-compose-integration.yaml"
+    )
+
+    if not os.path.exists(COMPOSE_FILE):
+        logger.error(f"❌ Docker Compose file not found: {COMPOSE_FILE}")
+        return False
 
     try:
         # 1. Bring up containers (detached)
         # --wait implies waiting for healthy state, but strictly manual checking is often more reliable/debuggable
-        subprocess.run(DOCKER_COMPOSE_CMD + ["up", "-d", "--build"], check=True)
+        subprocess.run(
+            DOCKER_COMPOSE_CMD + ["-f", COMPOSE_FILE, "up", "-d", "--build"], check=True
+        )
 
         # 2. Health Check Loop
         logger.info(f"⏳ Waiting for services: {', '.join(REQUIRED_SERVICES)}...")
@@ -142,7 +156,14 @@ def setup_docker() -> bool:
 def tear_down_docker():
 
     logger.info("🧹 Tearing down Docker environment...")
-    subprocess.run(DOCKER_COMPOSE_CMD + ["down"], check=False)
+
+    if COMPOSE_FILE and os.path.exists(COMPOSE_FILE):
+        subprocess.run(DOCKER_COMPOSE_CMD + ["-f", COMPOSE_FILE, "down"], check=False)
+    else:
+        logger.warning(
+            "⚠️ Compose file not found for teardown, attempting default teardown"
+        )
+        subprocess.run(DOCKER_COMPOSE_CMD + ["down"], check=False)
 
 
 def load_file(file_path: str) -> Any:
@@ -177,23 +198,29 @@ def get_api_definitions() -> (Dict[str, str], Dict[str, any]):
         logger.error("❌ 'configs' section missing in API definitions.")
         exit(1)
 
-    enviroments = {}
+    environments = {}
     if "environments" in configs:
         for k, v in configs["environments"].items():
-            enviroments[k] = v
+            environments[k] = v
 
     apis = {}
     if "apis" in configs:
         for api in configs["apis"]:
             apis[api["name"]] = api
 
-    return enviroments, apis
+    return environments, apis
 
 
 def main() -> None:
     """Main entry point for running integration tests."""
+    skip_docker = os.getenv("SKIP_DOCKER_SETUP", "false").lower() == "true"
+
     try:
-        setup_success = True  # setup_docker()
+        if skip_docker:
+            logger.info("🐳 Skipping Docker setup (managed externally)")
+            setup_success = True
+        else:
+            setup_success = setup_docker()
 
         if not setup_success:
             logger.error("🛑 Aborting tests due to environment setup failure.")
@@ -216,7 +243,10 @@ def main() -> None:
         sys.exit(1)
 
     finally:
-        tear_down_docker()
+        if not skip_docker:
+            tear_down_docker()
+        else:
+            logger.info("🐳 Skipping Docker teardown (managed externally)")
 
 
 if __name__ == "__main__":
