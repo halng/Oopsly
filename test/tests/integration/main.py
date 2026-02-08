@@ -118,7 +118,7 @@ def setup_app() -> Optional[subprocess.Popen]:
             ["./gradlew", "bootRun", "--args=--spring.profiles.active=test"],
             cwd=app_dir,
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT
+            stderr=subprocess.STDOUT,
         )
 
         # 2. BLOCK the main thread here until healthy
@@ -134,7 +134,10 @@ def setup_app() -> Optional[subprocess.Popen]:
 
             try:
                 response = requests.get(HEALTH_CHECK_END_POINT, timeout=2)
-                if response.status_code == 200 and response.json().get("status") == "UP":
+                if (
+                    response.status_code == 200
+                    and response.json().get("status") == "UP"
+                ):
                     logger.info("✅ Application is UP! Proceeding to tests...")
                     is_healthy = True
                     break
@@ -155,6 +158,7 @@ def setup_app() -> Optional[subprocess.Popen]:
     except Exception as e:
         logger.error(f"❌ Failed to start application: {e}")
         return None
+
 
 def setup_docker() -> bool:
     """
