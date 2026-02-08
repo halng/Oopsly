@@ -1,0 +1,7 @@
+---
+description: Rules for the documents for the whole app
+globs: docs/**/*
+alwaysApply: true
+---
+
+# Document Guidelines

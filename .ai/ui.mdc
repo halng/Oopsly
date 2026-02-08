@@ -1,0 +1,7 @@
+---
+description: Rules for the React Native/Expo mobile app
+globs: ui/**/*
+alwaysApply: true
+---
+
+# UI Development Guidelines

@@ -1,0 +1,7 @@
+---
+description: Rules for the Api Spring Boot app
+globs: api/**/*
+alwaysApply: true
+---
+
+# API Development Guidelines

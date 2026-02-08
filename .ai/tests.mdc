@@ -1,0 +1,7 @@
+---
+description: Rules for the Test agent
+globs: tests/**/*
+alwaysApply: true
+---
+
+# Testing Guidelines
