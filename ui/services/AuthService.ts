@@ -68,11 +68,12 @@ const ValidateToken = async () => {
   }
 };
 
-const RefreshToken = async (refreshToken: string) => {
+const RefreshToken = async (refreshToken: string, userEmail: string) => {
   try {
     logger.debug("Attempting to refresh access token...");
     const response = await apiClient.post(AUTH_PATHS.REFRESH_TOKEN.url, {
-      refreshToken,
+      refresh_token: refreshToken,
+      user_email: userEmail,
     });
     logger.debug("Token refresh successful");
     return response.data;

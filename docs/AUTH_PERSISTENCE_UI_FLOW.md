@@ -23,7 +23,7 @@ if (!isReady) {
     </View>
   );
 }
-```text
+```
 
 ### Visual Description
 

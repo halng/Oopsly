@@ -46,10 +46,6 @@ const PUBLIC_PATHS: IPathConfig[] = [
     method: "POST",
     url: "users/refresh-token",
   },
-  {
-    method: "GET",
-    url: "users/validate",
-  },
 ];
 
 const apiClient = axios.create({

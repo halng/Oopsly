@@ -147,7 +147,6 @@ def setup_app() -> Optional[subprocess.Popen]:
             except Exception as e:
                 # Log unexpected errors but continue waiting
                 logger.debug(f"Health check attempt failed: {e}")
-                pass
             logger.info(f"Waiting for application to be healthy... ({i + 1}/20)")
             time.sleep(5)
 
@@ -280,6 +279,7 @@ def get_api_definitions() -> (Dict[str, str], Dict[str, any]):
 def main() -> None:
     """Main entry point for running integration tests."""
     skip_docker = os.getenv("SKIP_DOCKER_SETUP", "false").lower() == "true"
+    app_process = None  # Initialize to None to prevent UnboundLocalError
 
     try:
         if skip_docker:
@@ -311,7 +311,14 @@ def main() -> None:
         sys.exit(1)
 
     finally:
-        app_process.terminate()
+        # Safely terminate app process if it was started
+        if app_process is not None:
+            try:
+                app_process.terminate()
+                app_process.wait(timeout=5)
+            except Exception as e:
+                logger.warning(f"Error terminating app process: {e}")
+        
         if not skip_docker:
             tear_down_docker()
         else:

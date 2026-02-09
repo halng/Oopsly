@@ -115,8 +115,10 @@ sequenceDiagram
 - JWT access token (1 hour expiry)
 - Refresh token mechanism for seamless session renewal
 - **Secure token storage using:**
-  - SecureStore on native platforms (iOS/Android)
-  - localStorage on web platform
+  - AsyncStorage (React Native async-storage)
+  - Uses secure native storage on iOS/Android
+  - Uses localStorage on web platform
+  - Cross-platform compatible solution
 - **Automatic token refresh on expiry**
 - **Persistent authentication across app restarts**
 - **Token validation on app launch**

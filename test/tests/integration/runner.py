@@ -356,11 +356,17 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
     url = req_data.get("url", "")
     logger.info(f"      ▶ {method} {url}")
 
-    # Log request body if present (truncated)
+    # Log request body if present (truncated to avoid exposing sensitive data)
     if "json" in req_data and req_data["json"]:
         body_str = str(req_data["json"])
-        # if len(body_str) > 100:
-        #     body_str = body_str[:100] + "..."
+        # Redact sensitive fields
+        sensitive_fields = ["access_token", "refresh_token", "accessToken", "refreshToken", "password", "otp"]
+        for field in sensitive_fields:
+            if field in body_str:
+                body_str = body_str.replace(field, f"{field}[REDACTED]")
+        # Truncate if too long
+        if len(body_str) > 100:
+            body_str = body_str[:100] + "..."
         logger.info(f"        Body: {body_str}")
 
     response = send_api_request(req_data)
@@ -370,10 +376,24 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
         status_icon = "✓" if 200 <= response.status_code < 300 else "✗"
         logger.info(f"      ◀ {status_icon} Status {response.status_code}")
 
-        # Log response body (truncated)
+        # Log response body (truncated and redacted)
         response_text = response.text
-        # if len(response_text) > 200:
-        #     response_text = response_text[:200] + "..."
+        # Redact tokens from response
+        try:
+            import json
+            response_json = json.loads(response_text)
+            if isinstance(response_json, dict):
+                for field in ["access_token", "refresh_token", "accessToken", "refreshToken"]:
+                    if field in response_json:
+                        response_json[field] = "[REDACTED]"
+                    if isinstance(response_json.get("data"), dict) and field in response_json["data"]:
+                        response_json["data"][field] = "[REDACTED]"
+            response_text = json.dumps(response_json)
+        except:
+            pass
+        # Truncate if too long
+        if len(response_text) > 200:
+            response_text = response_text[:200] + "..."
         logger.debug(f"        Response: {response_text}")
     else:
         logger.error(f"      ◀ ✗ No response received")
