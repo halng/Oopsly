@@ -177,6 +177,7 @@ describe('RootLayout', () => {
       (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
         accessToken: 'expired-access-token',
         refreshToken: 'valid-refresh-token',
+        userEmail: 'test@example.com',
         clearAuth: mockClearAuth,
         setAuthTokens: mockSetAuthTokens,
       });
@@ -200,7 +201,7 @@ describe('RootLayout', () => {
       });
 
       expect(AuthService.ValidateToken).toHaveBeenCalled();
-      expect(AuthService.RefreshToken).toHaveBeenCalledWith('valid-refresh-token');
+      expect(AuthService.RefreshToken).toHaveBeenCalledWith('valid-refresh-token', 'test@example.com');
       expect(mockSetAuthTokens).toHaveBeenCalledWith('new-access-token', 'new-refresh-token');
       expect(mockClearAuth).not.toHaveBeenCalled();
     });

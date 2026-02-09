@@ -274,6 +274,7 @@ describe('AuthService', () => {
 
   describe('RefreshToken', () => {
     const mockRefreshToken = 'test-refresh-token';
+    const mockUserEmail = 'test@example.com';
 
     it('should successfully refresh access token', async () => {
       const mockAuthTokens: AuthTokens = {
@@ -292,10 +293,11 @@ describe('AuthService', () => {
 
       (apiClient.post as jest.Mock).mockResolvedValue({ data: mockResponse });
 
-      const result = await AuthService.RefreshToken(mockRefreshToken);
+      const result = await AuthService.RefreshToken(mockRefreshToken, mockUserEmail);
 
       expect(apiClient.post).toHaveBeenCalledWith('/users/refresh-token', {
-        refreshToken: mockRefreshToken,
+        refresh_token: mockRefreshToken,
+        user_email: mockUserEmail,
       });
       expect(result).toEqual(mockResponse);
       expect(result.data.access_token).toBe('new-access-token');
@@ -306,16 +308,17 @@ describe('AuthService', () => {
       const errorMessage = 'Refresh token is invalid or expired';
       (apiClient.post as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
-      await expect(AuthService.RefreshToken(mockRefreshToken)).rejects.toThrow(errorMessage);
+      await expect(AuthService.RefreshToken(mockRefreshToken, mockUserEmail)).rejects.toThrow(errorMessage);
       expect(apiClient.post).toHaveBeenCalledWith('/users/refresh-token', {
-        refreshToken: mockRefreshToken,
+        refresh_token: mockRefreshToken,
+        user_email: mockUserEmail,
       });
     });
 
     it('should handle network error when refreshing token', async () => {
       (apiClient.post as jest.Mock).mockRejectedValue(new Error('Network error. Please check your connection.'));
 
-      await expect(AuthService.RefreshToken(mockRefreshToken)).rejects.toThrow('Network error. Please check your connection.');
+      await expect(AuthService.RefreshToken(mockRefreshToken, mockUserEmail)).rejects.toThrow('Network error. Please check your connection.');
     });
 
     it('should handle empty refresh token', async () => {
@@ -324,7 +327,7 @@ describe('AuthService', () => {
       
       (apiClient.post as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
-      await expect(AuthService.RefreshToken(emptyToken)).rejects.toThrow(errorMessage);
+      await expect(AuthService.RefreshToken(emptyToken, mockUserEmail)).rejects.toThrow(errorMessage);
     });
 
     it('should handle malformed refresh token', async () => {
@@ -333,7 +336,7 @@ describe('AuthService', () => {
       
       (apiClient.post as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
-      await expect(AuthService.RefreshToken(malformedToken)).rejects.toThrow(errorMessage);
+      await expect(AuthService.RefreshToken(malformedToken, mockUserEmail)).rejects.toThrow(errorMessage);
     });
   });
 });
