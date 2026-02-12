@@ -117,8 +117,9 @@ def setup_app() -> Optional[subprocess.Popen]:
         process = subprocess.Popen(
             ["./gradlew", "bootRun", "--args=--spring.profiles.active=test"],
             cwd=app_dir,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
 
         # 2. BLOCK the main thread here until healthy
@@ -127,9 +128,16 @@ def setup_app() -> Optional[subprocess.Popen]:
         is_healthy = False
         for i in range(20):  # Give it ~60 seconds total
             # Check if the process died early (e.g., port already in use)
+            logger.info(f"...attempt {i + 1}/20...")
             if process.poll() is not None:
-                logger.error("❌ Spring Boot process exited prematurely.")
+                stdout, stderr = process.communicate(timeout=1)
+                logger.error(
+                    f"❌ Spring Boot process exited with code {process.returncode}"
+                )
+                logger.error(f"STDOUT: {stdout}")
+                logger.error(f"STDERR: {stderr}")
                 return None
+
             logger.info("...checking health status...")
 
             try:
