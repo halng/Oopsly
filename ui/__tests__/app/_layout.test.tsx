@@ -77,6 +77,7 @@ describe('RootLayout', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.clearAllTimers();
     (useRouter as jest.Mock).mockReturnValue({ replace: mockReplace });
     (useSegments as jest.Mock).mockReturnValue([]);
     
@@ -99,6 +100,10 @@ describe('RootLayout', () => {
       clearAuth: jest.fn(),
       setAuthTokens: jest.fn(),
     });
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
   });
 
   describe('Initial Loading State', () => {

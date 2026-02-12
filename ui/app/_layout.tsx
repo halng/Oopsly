@@ -36,7 +36,11 @@ export default function RootLayout() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    let isCancelled = false;
+
     const checkAuthStatus = async () => {
+      if (isCancelled) return;
       logger.debug("Checking auth status...");
       
       try {
@@ -53,14 +57,22 @@ export default function RootLayout() {
           });
 
           const timeoutPromise = new Promise<void>((resolve) => {
-            setTimeout(() => {
-              logger.warn("Store hydration timeout after 5 seconds");
-              resolve();
+            timeoutId = setTimeout(() => {
+              if (!isCancelled) {
+                logger.warn("Store hydration timeout after 5 seconds");
+                resolve();
+              }
             }, 5000);
           });
 
           // Wait for either hydration or timeout
           await Promise.race([hydrationPromise, timeoutPromise]);
+          
+          // Clean up timeout if hydration finished first
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
         }
 
         const currentAccessToken = useAuthStore.getState().accessToken;
@@ -113,6 +125,14 @@ export default function RootLayout() {
     };
 
     checkAuthStatus();
+
+    // Cleanup function to cancel async operations and clear timers
+    return () => {
+      isCancelled = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   // Redirect based on authentication status
