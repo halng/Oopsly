@@ -19,7 +19,7 @@ import { ApiErrorResponse } from "@/types/ApiRes";
 import { useAuthStore } from "@/store";
 import { Logger } from "@/utils";
 import { Platform } from "react-native";
-import {ulid } from 'ulid';
+import { ulid } from "ulid";
 
 const logger = Logger.extend("apiClient");
 const XRequestIdHeader = "X-Request-ID";

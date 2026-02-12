@@ -214,6 +214,9 @@ run_integration_tests() {
     python -m tests.integration.main
     TEST_EXIT_CODE=$?
     
+    # Return to repo root
+    cd ..
+    
     if [ $TEST_EXIT_CODE -eq 0 ]; then
         echo "CI::Integration tests completed successfully!"
         return 0
