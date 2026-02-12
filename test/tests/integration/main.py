@@ -141,7 +141,11 @@ def setup_app() -> Optional[subprocess.Popen]:
                     logger.info("✅ Application is UP! Proceeding to tests...")
                     is_healthy = True
                     break
-            except (requests.ConnectionError, requests.Timeout, requests.RequestException):
+            except (
+                requests.ConnectionError,
+                requests.Timeout,
+                requests.RequestException,
+            ):
                 # App isn't listening yet or health check failed, keep waiting
                 pass
             except Exception as e:
@@ -318,7 +322,7 @@ def main() -> None:
                 app_process.wait(timeout=5)
             except Exception as e:
                 logger.warning(f"Error terminating app process: {e}")
-        
+
         if not skip_docker:
             tear_down_docker()
         else:

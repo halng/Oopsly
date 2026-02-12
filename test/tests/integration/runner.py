@@ -360,7 +360,14 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
     if "json" in req_data and req_data["json"]:
         body_str = str(req_data["json"])
         # Redact sensitive fields
-        sensitive_fields = ["access_token", "refresh_token", "accessToken", "refreshToken", "password", "otp"]
+        sensitive_fields = [
+            "access_token",
+            "refresh_token",
+            "accessToken",
+            "refreshToken",
+            "password",
+            "otp",
+        ]
         for field in sensitive_fields:
             if field in body_str:
                 body_str = body_str.replace(field, f"{field}[REDACTED]")
@@ -381,12 +388,21 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
         # Redact tokens from response
         try:
             import json
+
             response_json = json.loads(response_text)
             if isinstance(response_json, dict):
-                for field in ["access_token", "refresh_token", "accessToken", "refreshToken"]:
+                for field in [
+                    "access_token",
+                    "refresh_token",
+                    "accessToken",
+                    "refreshToken",
+                ]:
                     if field in response_json:
                         response_json[field] = "[REDACTED]"
-                    if isinstance(response_json.get("data"), dict) and field in response_json["data"]:
+                    if (
+                        isinstance(response_json.get("data"), dict)
+                        and field in response_json["data"]
+                    ):
                         response_json["data"][field] = "[REDACTED]"
             response_text = json.dumps(response_json)
         except:
