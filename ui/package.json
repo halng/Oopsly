@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest",
-    "test:coverage": "jest --coverage",
+    "test:coverage": "jest --coverage 2>&1 | grep -E \"(PASS|FAIL|✓|✗)\"",
     "reset:deps": "rm -rf node_modules pnpm-lock.yaml .expo"
   },
   "dependencies": {
