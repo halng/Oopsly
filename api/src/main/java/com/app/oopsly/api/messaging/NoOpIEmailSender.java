@@ -29,6 +29,6 @@ public class NoOpIEmailSender implements IEmailSender {
 
     @Override
     public void sendEmail(String to, String otp) throws IOException, MessagingException {
-        log.info("NoOpEmailSender: Skipping email send to {} with OTP {} (test mode)", to, otp);
+        log.info("NoOpEmailSender: Skipping email send to {} (test mode)", to);
     }
 }
