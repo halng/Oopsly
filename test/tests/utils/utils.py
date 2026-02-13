@@ -409,7 +409,7 @@ def before_test():
 def after_test():
     try:
         logs_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "api", "logs")
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "api", "logs")
         )
         if os.path.isdir(logs_dir):
             logger.error("=== BEGIN API LOGS (%s) ===", logs_dir)
