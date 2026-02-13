@@ -20,24 +20,11 @@ All tests must be:
 
 ## Test Coverage Requirements
 
-* **UI Layer (Jest)**: ≥90% coverage
-* **API Layer (JUnit)**: ≥90% coverage
 * **Integration Layer (Python)**: Critical paths must have end-to-end tests
 
 ## Test Types
 
-### 1. Unit Tests
-
-**Purpose**: Test individual components, functions, or methods in isolation
-
-**Characteristics**:
-
-* Fast execution (< 1 second per test)
-* Mock all external dependencies
-* Test one thing at a time
-* No database, network, or file system access
-
-### 2. Integration Tests
+### 1. Integration Tests
 
 **Purpose**: Test interactions between components and external systems
 
@@ -47,9 +34,8 @@ All tests must be:
 * Use real database (test database)
 * Make actual HTTP requests
 * Validate API contracts
-* Test authentication flows
 
-### 3. End-to-End Tests
+### 2. End-to-End Tests
 
 **Purpose**: Test complete user journeys from UI to database
 
@@ -60,287 +46,22 @@ All tests must be:
 * Use real or staging environment
 * Validate UI, API, and database integration
 
-### 4. Performance Tests
+### 3. Performance Tests
 
 **Status**: Out of scope for now (can be added later)
 
-## Unit Testing (API Layer - JUnit + Mockito)
-
-### Test Class Structure
-
-```java
-@ExtendWith(MockitoExtension.class)
-class UserServiceTest {
-    
-    @Mock
-    private UserRepository userRepository;
-    
-    @Mock
-    private PasswordEncoder passwordEncoder;
-    
-    @InjectMocks
-    private UserService userService;
-    
-    @BeforeEach
-    void setUp() {
-        // Common setup for all tests
-    }
-    
-    @Test
-    @DisplayName("Should create user successfully when email is unique")
-    void createUser_whenEmailIsUnique_shouldCreateSuccessfully() {
-        // Arrange
-        // Act
-        // Assert
-    }
-}
-```
-
-### Naming Conventions
-
-**Test Methods**: `methodName_whenCondition_shouldExpectedOutcome`
-
-Examples:
-
-* `createUser_whenEmailIsUnique_shouldCreateSuccessfully`
-* `loginUser_whenPasswordIsInvalid_shouldThrowAuthenticationException`
-* `deleteUser_whenUserNotFound_shouldThrowNotFoundException`
-
-**DisplayName Requirement**: **All test methods MUST have `@DisplayName` annotations with clear, descriptive names**
-
-```java
-@Test
-@DisplayName("Should return 404 when user ID does not exist")
-void getUser_whenIdDoesNotExist_shouldReturn404() {
-    // Test implementation
-}
-```
-
-### Test Structure (AAA Pattern)
-
-```java
-@Test
-@DisplayName("Should update user email when new email is valid and unique")
-void updateUser_whenNewEmailIsValidAndUnique_shouldUpdateSuccessfully() {
-    // Arrange - Set up test data and mocks
-    UUID userId = UUID.randomUUID();
-    UpdateUserRequest request = new UpdateUserRequest("newemail@example.com");
-    User existingUser = User.builder()
-        .id(userId)
-        .email("oldemail@example.com")
-        .build();
-    
-    when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
-    when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
-    
-    // Act - Execute the method under test
-    ApiResponse<UserViewModel> response = userService.updateUserEmail(userId, request);
-    
-    // Assert - Verify the results
-    assertTrue(response.isSuccess());
-    assertEquals("newemail@example.com", response.getData().getEmail());
-    verify(userRepository).save(any(User.class));
-    verify(userRepository).findById(userId);
-}
-```
-
-### What to Test in Each Layer
-
-**Controller Tests**:
-
-* Request validation (invalid inputs)
-* Response status codes
-* Response body structure
-* Authentication/authorization
-* Exception handling
-
-**Service Tests**:
-
-* Business logic correctness
-* Edge cases and boundary conditions
-* Error handling and exception throwing
-* Interaction with repositories
-* Transaction behavior
-
-**Repository Tests**:
-
-* Custom query methods
-* Complex JOIN queries
-* Native SQL queries
-* (Standard Spring Data methods don't need tests)
-
-### Mocking Guidelines
-
-```java
-// Mock repository responses
-when(userRepository.findById(userId))
-    .thenReturn(Optional.of(user));
-
-when(userRepository.save(any(User.class)))
-    .thenAnswer(invocation -> invocation.getArgument(0));
-
-// Verify method calls
-verify(userRepository).save(any(User.class));
-verify(userRepository, times(1)).findById(userId);
-verify(userRepository, never()).delete(any());
-
-// Argument captors for complex verification
-ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-verify(userRepository).save(userCaptor.capture());
-assertEquals("expected@email.com", userCaptor.getValue().getEmail());
-```
-
-## Unit Testing (UI Layer - Jest + React Testing Library)
+## Integration Testing (Python)
 
 ### Test File Structure
 
-```typescript
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
-import { UserProfileScreen } from '../UserProfileScreen';
-
-// Mock dependencies
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  __esModule: true,
-  default: {
-    getItem: jest.fn(),
-    setItem: jest.fn(),
-  },
-}));
-
-describe('UserProfileScreen', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should display user name when data is loaded', async () => {
-    // Test implementation
-  });
-
-  it('should show error message when fetch fails', async () => {
-    // Test implementation
-  });
-});
-```
-
-### Naming Conventions
-
-**Test Descriptions**: Use descriptive `it()` or `test()` descriptions
-
-Examples:
-
-* `'should display loading spinner while fetching data'`
-* `'should navigate to login screen when user is not authenticated'`
-* `'should show error message when email is invalid'`
-
-### Testing User Interactions
-
-```typescript
-it('should submit form when user clicks submit button', async () => {
-  // Arrange
-  render(<LoginForm />);
-  const emailInput = screen.getByTestId('email-input');
-  const passwordInput = screen.getByTestId('password-input');
-  const submitButton = screen.getByTestId('submit-button');
-
-  // Act
-  fireEvent.changeText(emailInput, 'test@example.com');
-  fireEvent.changeText(passwordInput, 'password123');
-  fireEvent.press(submitButton);
-
-  // Assert
-  await waitFor(() => {
-    expect(screen.getByText('Login successful')).toBeTruthy();
-  });
-});
-```
-
-### Testing Async Operations
-
-```typescript
-it('should fetch and display user data on mount', async () => {
-  // Mock API response
-  const mockUser = { id: '123', name: 'John Doe', email: 'john@example.com' };
-  jest.spyOn(UserService, 'getUser').mockResolvedValue({
-    isSuccess: true,
-    data: mockUser,
-  });
-
-  // Render component
-  render(<UserProfile userId="123" />);
-
-  // Wait for async operations
-  await waitFor(() => {
-    expect(screen.getByText('John Doe')).toBeTruthy();
-    expect(screen.getByText('john@example.com')).toBeTruthy();
-  });
-});
-```
-
-### Test Data Queries
-
-**Preferred**: Use `getByTestId` for reliable element selection
-
-```typescript
-const button = screen.getByTestId('submit-button');
-const input = screen.getByTestId('email-input');
-```
-
-**Alternative** (when testId is not available):
-
-```typescript
-const button = screen.getByRole('button', { name: 'Submit' });
-const heading = screen.getByText('Welcome');
-```
-
-## Integration Testing (Python + Pytest)
-
-### Test File Structure
-
-```python
-import pytest
-import requests
-from typing import Dict, Any
-
-BASE_URL = "http://localhost:9009/api/v1"
-
-@pytest.fixture
-def auth_headers() -> Dict[str, str]:
-    """Get authentication headers with valid JWT token"""
-    # Login and get token
-    response = requests.post(f"{BASE_URL}/auth/login", json={
-        "email": "test@example.com",
-        "password": "password123"
-    })
-    token = response.json()["data"]["accessToken"]
-    return {"Authorization": f"Bearer {token}"}
-
-def test_create_user_success(auth_headers):
-    """Test creating a new user with valid data"""
-    # Arrange
-    payload = {
-        "email": "newuser@example.com",
-        "name": "New User",
-        "password": "SecurePass123!"
-    }
-    
-    # Act
-    response = requests.post(
-        f"{BASE_URL}/users",
-        json=payload,
-        headers=auth_headers
-    )
-    
-    # Assert
-    assert response.status_code == 201
-    data = response.json()
-    assert data["isSuccess"] is True
-    assert data["data"]["email"] == payload["email"]
-```
+- `test/tests/config/api.yaml`: define all the apis with request headers, body...
+- `test/tests/integration/flows`: define all the flows that need to be tested
+- `test/tests/integration/main.py`: entry point for execute integration tests
 
 ### How to Define a New API Test
 
 1. **Identify the Endpoint**: Determine URL, HTTP method, and authentication requirements
-2. **Create Test Function**: Name it descriptively (e.g., `test_create_user_when_email_exists_returns_409`)
+2. **Create Test Function**: Name it descriptively
 3. **Arrange**: Prepare test data, auth tokens, and preconditions
 4. **Act**: Make the HTTP request
 5. **Assert**: Verify response status, body structure, and data correctness
@@ -351,31 +72,75 @@ def test_create_user_success(auth_headers):
 
 Example - User Onboarding Flow:
 
-```python
-class TestUserOnboardingFlow:
-    """Test complete user onboarding workflow"""
-    
-    def test_complete_onboarding_flow(self):
-        # Step 1: Request OTP
-        otp_response = requests.post(f"{BASE_URL}/otp", json={
-            "email": "newuser@example.com"
-        })
-        assert otp_response.status_code == 200
-        
-        # Step 2: Validate OTP (use test OTP code)
-        validate_response = requests.post(f"{BASE_URL}/otp/validate", json={
-            "email": "newuser@example.com",
-            "otp": "123456"  # Test OTP
-        })
-        assert validate_response.status_code == 200
-        tokens = validate_response.json()["data"]
-        
-        # Step 3: Access protected resource
-        profile_response = requests.get(
-            f"{BASE_URL}/users/profile",
-            headers={"Authorization": f"Bearer {tokens['accessToken']}"}
-        )
-        assert profile_response.status_code == 200
+```yaml
+  - flow: User Authentication Flow
+    description: "This flow tests user authentication including token refresh and logout"
+    steps:
+      - name: "1. Generate OTP for User"
+        api: GENERATE_OTP
+        with:
+          EMAIL: test@oopsly.com
+        assertions:
+          - path: $.status
+            type: equals
+            value: 200
+          - path: $.message
+            type: contains
+            value: "OTP sent successfully"
+      
+      - name: "2. Verify OTP and Obtain Tokens"
+        api: VERIFY_OTP
+        with:
+          EMAIL: test@oopsly.com
+          OTP_CODE: "000000"
+        assertions:
+          - path: $.status
+            type: equals
+            value: 200
+          - path: $.data.access_token
+            type: not-null
+          - path: $.data.refresh_token
+            type: not-null
+          - path: $.isSuccess
+            type: equals
+            value: true
+        env-vars:
+          AUTH_TOKEN: $.data.access_token
+          REFRESH_TOKEN: $.data.refresh_token
+          USER_ID: $.data.user.id
+      
+      - name: "3. Refresh Access Token"
+        api: USER_REFRESH_TOKEN
+        with:
+          REFRESH_TOKEN: ${REFRESH_TOKEN}
+          USER_EMAIL: test@oopsly.com
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 200
+          - path: $.data.access_token
+            type: not-null
+          - path: $.data.refresh_token
+            type: not-null
+        env-vars:
+          AUTH_TOKEN: $.data.access_token
+          REFRESH_TOKEN: $.data.refresh_token
+      
+      - name: "4. Logout User"
+        api: USER_LOGOUT
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 200
+
 ```
 
 ### Test Categories
@@ -386,18 +151,6 @@ class TestUserOnboardingFlow:
 * Validate request/response contracts
 * Test authentication and authorization
 * Verify database state changes
-
-**E2E Tests** (`test/tests/e2e/`):
-
-* Test complete user workflows
-* Combine UI and API interactions
-* Validate business rules across layers
-
-**Performance Tests** (`test/tests/performance/`):
-
-* Load testing (currently out of scope)
-* Stress testing (currently out of scope)
-* Can be added in future iterations
 
 ## Testing Best Practices
 
@@ -421,89 +174,6 @@ class TestUserOnboardingFlow:
 ❌ **Don't test third-party code**: Trust that libraries work
 ❌ **Don't write overly complex tests**: If a test is hard to understand, simplify it
 
-## Test Data Management
-
-### Test Data Builders
-
-```java
-public class UserTestBuilder {
-    private String email = "test@example.com";
-    private String name = "Test User";
-    private boolean isDeleted = false;
-    
-    public UserTestBuilder withEmail(String email) {
-        this.email = email;
-        return this;
-    }
-    
-    public UserTestBuilder withName(String name) {
-        this.name = name;
-        return this;
-    }
-    
-    public UserTestBuilder deleted() {
-        this.isDeleted = true;
-        return this;
-    }
-    
-    public User build() {
-        return User.builder()
-            .email(email)
-            .name(name)
-            .isDeleted(isDeleted)
-            .createdAt(LocalDateTime.now())
-            .build();
-    }
-}
-
-// Usage
-User user = new UserTestBuilder()
-    .withEmail("custom@example.com")
-    .withName("Custom Name")
-    .build();
-```
-
-### Test Constants
-
-```java
-public class TestConstants {
-    public static final String TEST_USER_EMAIL = "test@example.com";
-    public static final String TEST_USER_NAME = "Test User";
-    public static final String VALID_JWT_TOKEN = "valid.jwt.token";
-    public static final UUID TEST_USER_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
-}
-```
-
-## Code Coverage
-
-### Measuring Coverage
-
-**UI (Jest)**:
-
-```bash
-cd ui
-npm test -- --coverage
-```
-
-**API (JaCoCo)**:
-
-```bash
-cd api
-./gradlew test jacocoTestReport
-```
-
-### Coverage Thresholds
-
-* **Statements**: ≥90%
-* **Branches**: ≥80%
-* **Functions**: ≥90%
-* **Lines**: ≥90%
-
-### Viewing Coverage Reports
-
-* **UI**: `ui/coverage/lcov-report/index.html`
-* **API**: `api/build/reports/jacoco/test/html/index.html`
-
 ## Test Maintenance
 
 ### When to Update Tests
@@ -519,37 +189,6 @@ cd api
 * Use test helpers for repetitive operations
 * Keep tests DRY (Don't Repeat Yourself) but not too abstract
 * Balance between reusability and readability
-
-## Debugging Tests
-
-### Jest Debugging
-
-```bash
-# Run specific test file
-npm test -- UserService.test.ts
-
-# Run tests matching pattern
-npm test -- --testNamePattern="should create user"
-
-# Run with verbose output
-npm test -- --verbose
-
-# Run in watch mode
-npm test -- --watch
-```
-
-### JUnit Debugging
-
-```bash
-# Run specific test class
-./gradlew test --tests UserServiceTest
-
-# Run specific test method
-./gradlew test --tests UserServiceTest.createUser_whenEmailIsUnique_shouldCreateSuccessfully
-
-# Run with info logging
-./gradlew test --info
-```
 
 ## CI/CD Integration
 
@@ -568,60 +207,6 @@ The CI pipeline (`.github/workflows/ci.sh`) automatically:
 * Test results are displayed in GitHub Actions logs
 * Coverage reports can be published as artifacts
 * Failed tests are highlighted in pull request checks
-
-## Common Testing Patterns
-
-### Testing Authentication
-
-```java
-@Test
-@DisplayName("Should return 401 when JWT token is missing")
-void getProtectedResource_whenTokenIsMissing_shouldReturn401() {
-    // Arrange
-    MockHttpServletRequest request = new MockHttpServletRequest();
-    // No Authorization header
-    
-    // Act
-    ResponseEntity<ApiResponse<?>> response = controller.getProtectedResource(request);
-    
-    // Assert
-    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-}
-```
-
-### Testing Validation
-
-```typescript
-it('should show error when email is invalid', async () => {
-  render(<RegistrationForm />);
-  
-  const emailInput = screen.getByTestId('email-input');
-  const submitButton = screen.getByTestId('submit-button');
-  
-  fireEvent.changeText(emailInput, 'invalid-email');
-  fireEvent.press(submitButton);
-  
-  await waitFor(() => {
-    expect(screen.getByText('Please enter a valid email')).toBeTruthy();
-  });
-});
-```
-
-### Testing Error Handling
-
-```python
-def test_create_user_with_duplicate_email_returns_409():
-    """Test that creating user with existing email returns conflict error"""
-    # First, create a user
-    payload = {"email": "duplicate@example.com", "name": "User One"}
-    response1 = requests.post(f"{BASE_URL}/users", json=payload)
-    assert response1.status_code == 201
-    
-    # Try to create another user with same email
-    response2 = requests.post(f"{BASE_URL}/users", json=payload)
-    assert response2.status_code == 409
-    assert "already exists" in response2.json()["message"].lower()
-```
 
 ## Reference
 

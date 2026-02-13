@@ -312,6 +312,136 @@ public class UserController {
 * Implement caching for expensive operations with `@Cacheable`
 * Use lazy loading for entity relationships when appropriate
 
+## Unit Testing (API Layer - JUnit + Mockito)
+
+### Code Coverage
+
+- Test coverage must be higher than 90%
+
+### Test Class Structure
+
+```java
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+    
+    @Mock
+    private UserRepository userRepository;
+    
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    
+    @InjectMocks
+    private UserService userService;
+    
+    @BeforeEach
+    void setUp() {
+        // Common setup for all tests
+    }
+    
+    @Test
+    @DisplayName("Should create user successfully when email is unique")
+    void createUser_whenEmailIsUnique_shouldCreateSuccessfully() {
+        // Arrange
+        // Act
+        // Assert
+    }
+}
+```
+
+### Naming Conventions
+
+**Test Methods**: `methodName_whenCondition_shouldExpectedOutcome`
+
+Examples:
+
+* `createUser_whenEmailIsUnique_shouldCreateSuccessfully`
+* `loginUser_whenPasswordIsInvalid_shouldThrowAuthenticationException`
+* `deleteUser_whenUserNotFound_shouldThrowNotFoundException`
+
+**DisplayName Requirement**: **All test methods MUST have `@DisplayName` annotations with clear, descriptive names**
+
+```java
+@Test
+@DisplayName("Should return 404 when user ID does not exist")
+void getUser_whenIdDoesNotExist_shouldReturn404() {
+    // Test implementation
+}
+```
+
+### Test Structure (AAA Pattern)
+
+```java
+@Test
+@DisplayName("Should update user email when new email is valid and unique")
+void updateUser_whenNewEmailIsValidAndUnique_shouldUpdateSuccessfully() {
+    // Arrange - Set up test data and mocks
+    UUID userId = UUID.randomUUID();
+    UpdateUserRequest request = new UpdateUserRequest("newemail@example.com");
+    User existingUser = User.builder()
+        .id(userId)
+        .email("oldemail@example.com")
+        .build();
+    
+    when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+    when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+    
+    // Act - Execute the method under test
+    ApiResponse<UserViewModel> response = userService.updateUserEmail(userId, request);
+    
+    // Assert - Verify the results
+    assertTrue(response.isSuccess());
+    assertEquals("newemail@example.com", response.getData().getEmail());
+    verify(userRepository).save(any(User.class));
+    verify(userRepository).findById(userId);
+}
+```
+
+### What to Test in Each Layer
+
+**Controller Tests**:
+
+* Request validation (invalid inputs)
+* Response status codes
+* Response body structure
+* Authentication/authorization
+* Exception handling
+
+**Service Tests**:
+
+* Business logic correctness
+* Edge cases and boundary conditions
+* Error handling and exception throwing
+* Interaction with repositories
+* Transaction behavior
+
+**Repository Tests**:
+
+* Custom query methods
+* Complex JOIN queries
+* Native SQL queries
+* (Standard Spring Data methods don't need tests)
+
+### Mocking Guidelines
+
+```java
+// Mock repository responses
+when(userRepository.findById(userId))
+    .thenReturn(Optional.of(user));
+
+when(userRepository.save(any(User.class)))
+    .thenAnswer(invocation -> invocation.getArgument(0));
+
+// Verify method calls
+verify(userRepository).save(any(User.class));
+verify(userRepository, times(1)).findById(userId);
+verify(userRepository, never()).delete(any());
+
+// Argument captors for complex verification
+ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+verify(userRepository).save(userCaptor.capture());
+assertEquals("expected@email.com", userCaptor.getValue().getEmail());
+```
+
 ## Common Patterns
 
 ### Soft Delete Pattern

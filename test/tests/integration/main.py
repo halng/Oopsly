@@ -311,6 +311,33 @@ def main() -> None:
         result = runner.run(env, apis)
 
         if not result:
+            # Print API logs for easier debugging (Path: api/logs)
+            try:
+                logs_dir = os.path.abspath(
+                    os.path.join(
+                        os.path.dirname(__file__), "..", "..", "..", "api", "logs"
+                    )
+                )
+                if os.path.isdir(logs_dir):
+                    logger.error("=== BEGIN API LOGS (%s) ===", logs_dir)
+                    for root, _, files in os.walk(logs_dir):
+                        for fname in sorted(files):
+                            fpath = os.path.join(root, fname)
+                            rel = os.path.relpath(fpath, logs_dir)
+                            logger.error("--- FILE: %s ---", rel)
+                            try:
+                                with open(
+                                    fpath, "r", encoding="utf-8", errors="replace"
+                                ) as fh:
+                                    for line in fh:
+                                        logger.error(line.rstrip())
+                            except Exception as e:
+                                logger.error("Could not read %s: %s", fpath, e)
+                    logger.error("=== END API LOGS ===")
+                else:
+                    logger.error("API logs directory not found: %s", logs_dir)
+            except Exception as e:
+                logger.exception("Failed to print API logs: %s", e)
             sys.exit(1)
 
         logger.info("🎉 Integration Tests Passed!")

@@ -595,6 +595,114 @@ function UserList({ users }: { users: User[] }) {
 }
 ```
 
+
+## Unit Testing (UI Layer - Jest + React Testing Library)
+
+### Coverage
+
+- Test coverage must be higher than 80%
+
+### Test File Structure
+
+```typescript
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { UserProfileScreen } from '../UserProfileScreen';
+
+// Mock dependencies
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    getItem: jest.fn(),
+    setItem: jest.fn(),
+  },
+}));
+
+describe('UserProfileScreen', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should display user name when data is loaded', async () => {
+    // Test implementation
+  });
+
+  it('should show error message when fetch fails', async () => {
+    // Test implementation
+  });
+});
+```
+
+### Naming Conventions
+
+**Test Descriptions**: Use descriptive `it()` or `test()` descriptions
+
+Examples:
+
+* `'should display loading spinner while fetching data'`
+* `'should navigate to login screen when user is not authenticated'`
+* `'should show error message when email is invalid'`
+
+### Testing User Interactions
+
+```typescript
+it('should submit form when user clicks submit button', async () => {
+  // Arrange
+  render(<LoginForm />);
+  const emailInput = screen.getByTestId('email-input');
+  const passwordInput = screen.getByTestId('password-input');
+  const submitButton = screen.getByTestId('submit-button');
+
+  // Act
+  fireEvent.changeText(emailInput, 'test@example.com');
+  fireEvent.changeText(passwordInput, 'password123');
+  fireEvent.press(submitButton);
+
+  // Assert
+  await waitFor(() => {
+    expect(screen.getByText('Login successful')).toBeTruthy();
+  });
+});
+```
+
+### Testing Async Operations
+
+```typescript
+it('should fetch and display user data on mount', async () => {
+  // Mock API response
+  const mockUser = { id: '123', name: 'John Doe', email: 'john@example.com' };
+  jest.spyOn(UserService, 'getUser').mockResolvedValue({
+    isSuccess: true,
+    data: mockUser,
+  });
+
+  // Render component
+  render(<UserProfile userId="123" />);
+
+  // Wait for async operations
+  await waitFor(() => {
+    expect(screen.getByText('John Doe')).toBeTruthy();
+    expect(screen.getByText('john@example.com')).toBeTruthy();
+  });
+});
+```
+
+### Test Data Queries
+
+**Preferred**: Use `getByTestId` for reliable element selection
+
+```typescript
+const button = screen.getByTestId('submit-button');
+const input = screen.getByTestId('email-input');
+```
+
+**Alternative** (when testId is not available):
+
+```typescript
+const button = screen.getByRole('button', { name: 'Submit' });
+const heading = screen.getByText('Welcome');
+```
+
+
 ## Accessibility
 
 * Use meaningful labels for interactive elements
