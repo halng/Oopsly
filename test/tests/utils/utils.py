@@ -75,7 +75,7 @@ def _substitute_variables(text: Any, context: Dict[str, Any]) -> Any:
     if match:
         key = match.group(1)
         return context.get(key, text)
-    
+
     simple_full_var_pattern = re.compile(r"^\$(\w+)$")
     match = simple_full_var_pattern.match(text)
     if match:
