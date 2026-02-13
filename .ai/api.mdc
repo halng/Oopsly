@@ -18,7 +18,7 @@ Follow strict separation of concerns:
 * **Service Layer (`@Service`)**: Implement business logic, transaction management, and coordinate between components
 * **Repository Layer (`@Repository`)**: Data access logic using Spring Data JPA
 * **Entity Layer**: Domain models mapped to database tables
-* **DTO/ViewModel Layer**: Request/Response data transfer objects
+* **ViewModel Layer**: Request/Response data transfer objects
 
 **Rule**: Never access repositories directly from controllers. Always go through service layer.
 
@@ -155,7 +155,7 @@ public class GlobalExceptionHandler {
 @Service
 public class AuthService {
     public ApiResponse<TokenResponse> login(LoginRequest request) {
-        log.debug("Login attempt for email: {}", request.getEmail());
+        log.debug("Login attempt for email: {}", masked(request.getEmail()));
         // ... business logic
         log.info("User {} logged in successfully", userId);
     }
@@ -167,30 +167,18 @@ public class AuthService {
 ### Entity Design
 
 * Use `@Entity` with meaningful table names via `@Table(name = "users")`
-* Use UUID for primary keys: `@Id @GeneratedValue(strategy = GenerationType.UUID)`
-* Implement soft deletes with `isDeleted` boolean field
-* Add audit fields: `createdAt`, `updatedAt`, `createdBy`, `updatedBy`
+* Use UUID v7 for primary keys: `@Id @GeneratedValue(strategy = GenerationType.UUID)`
+* Implement soft deletes with `isDeleted` boolean field. Already implemented in audit class
 * Use appropriate relationships: `@OneToMany`, `@ManyToOne`, `@ManyToMany`
 
 ```java
 @Entity
 @Table(name = "users")
 @Data
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+public class User extends AuditEntity{
     
     @Column(nullable = false, unique = true)
     private String email;
-    
-    private boolean isDeleted = false;
-    
-    @CreatedDate
-    private LocalDateTime createdAt;
-    
-    @LastModifiedDate
-    private LocalDateTime updatedAt;
 }
 ```
 
@@ -218,7 +206,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
 * Use Spring Security with JWT tokens
 * Implement `JwtAuthenticationFilter` for token validation
-* Use `@PreAuthorize` for method-level security
 * Store passwords with BCrypt: `passwordEncoder.encode(password)`
 
 ```java

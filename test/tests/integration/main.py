@@ -127,13 +127,6 @@ def setup_app() -> Optional[subprocess.Popen]:
 
         is_healthy = False
         for i in range(20):  # Give it ~60 seconds total
-            # Check if the process died early (e.g., port already in use)
-            logger.info(f"...attempt {i + 1}/20...")
-            stdout, stderr = process.communicate(timeout=1)
-            logger.info(f"The app is starting....")
-            logger.info(f"STDOUT: {stdout}")
-            logger.info(f"STDERR: {stderr}")
-
             if process.poll() is not None:
                 stdout, stderr = process.communicate(timeout=1)
                 logger.error(
