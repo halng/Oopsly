@@ -52,14 +52,7 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
           SUBJECT_ID: ${SUBJECT_ID}
-          CARDS_ARRAY: >
-            [
-              {
-                "question": "What is the capital of France?",
-                "answer": "Paris",
-                "hint": "City of lights"
-              }
-            ]
+          CARDS_ARRAY: '[{"front": "What is the capital of France?", "back": "Paris"}]' 
         assertions:
           - path: $.isSuccess
             type: equals
@@ -214,14 +207,7 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
           SUBJECT_ID: ${SUBJECT_ID}
-          CARDS_ARRAY: >
-            [
-              {
-                "question": "Edge case test question",
-                "answer": "Edge case test answer",
-                "hint": "Edge case hint"
-              }
-            ]
+          CARDS_ARRAY: '[{"front": "Edge case test question", "back": "Edge case test answer"}]' 
         assertions:
           - path: $.isSuccess
             type: equals
