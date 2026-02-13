@@ -286,10 +286,70 @@ def get_api_definitions() -> (Dict[str, str], Dict[str, any]):
     return environments, apis
 
 
+def before_test():
+    # Remove previous API log files to ensure test runs start with a clean slate
+    try:
+        logs_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "api", "logs")
+        )
+        if os.path.isdir(logs_dir):
+            logger.info("🧹 Clearing API logs in: %s", logs_dir)
+            # Remove files
+            for root, _, files in os.walk(logs_dir):
+                for fname in files:
+                    fpath = os.path.join(root, fname)
+                    try:
+                        os.remove(fpath)
+                        logger.debug("Removed log file: %s", fpath)
+                    except Exception as e:
+                        logger.warning("Could not remove log file %s: %s", fpath, e)
+            # Attempt to remove any empty subdirectories (but keep the logs_dir itself)
+            for root, dirs, _ in os.walk(logs_dir, topdown=False):
+                for d in dirs:
+                    dpath = os.path.join(root, d)
+                    try:
+                        os.rmdir(dpath)
+                        logger.debug("Removed empty log directory: %s", dpath)
+                    except OSError:
+                        # Directory not empty or removal failed; ignore
+                        pass
+        else:
+            logger.debug("No api logs directory to clear: %s", logs_dir)
+    except Exception as e:
+        logger.warning("Failed to clear API logs directory: %s", e)
+
+
+def after_test():
+    try:
+        logs_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "api", "logs")
+        )
+        if os.path.isdir(logs_dir):
+            logger.error("=== BEGIN API LOGS (%s) ===", logs_dir)
+            for root, _, files in os.walk(logs_dir):
+                for fname in sorted(files):
+                    fpath = os.path.join(root, fname)
+                    rel = os.path.relpath(fpath, logs_dir)
+                    logger.error("--- FILE: %s ---", rel)
+                    try:
+                        with open(fpath, "r", encoding="utf-8", errors="replace") as fh:
+                            for line in fh:
+                                logger.error(line.rstrip())
+                    except Exception as e:
+                        logger.error("Could not read %s: %s", fpath, e)
+            logger.error("=== END API LOGS ===")
+        else:
+            logger.error("API logs directory not found: %s", logs_dir)
+    except Exception as e:
+        logger.exception("Failed to print API logs: %s", e)
+
+
 def main() -> None:
     """Main entry point for running integration tests."""
     skip_docker = os.getenv("SKIP_DOCKER_SETUP", "false").lower() == "true"
     app_process = None  # Initialize to None to prevent UnboundLocalError
+
+    before_test()
 
     try:
         if skip_docker:
@@ -312,32 +372,7 @@ def main() -> None:
 
         if not result:
             # Print API logs for easier debugging (Path: api/logs)
-            try:
-                logs_dir = os.path.abspath(
-                    os.path.join(
-                        os.path.dirname(__file__), "..", "..", "..", "api", "logs"
-                    )
-                )
-                if os.path.isdir(logs_dir):
-                    logger.error("=== BEGIN API LOGS (%s) ===", logs_dir)
-                    for root, _, files in os.walk(logs_dir):
-                        for fname in sorted(files):
-                            fpath = os.path.join(root, fname)
-                            rel = os.path.relpath(fpath, logs_dir)
-                            logger.error("--- FILE: %s ---", rel)
-                            try:
-                                with open(
-                                    fpath, "r", encoding="utf-8", errors="replace"
-                                ) as fh:
-                                    for line in fh:
-                                        logger.error(line.rstrip())
-                            except Exception as e:
-                                logger.error("Could not read %s: %s", fpath, e)
-                    logger.error("=== END API LOGS ===")
-                else:
-                    logger.error("API logs directory not found: %s", logs_dir)
-            except Exception as e:
-                logger.exception("Failed to print API logs: %s", e)
+            after_test()
             sys.exit(1)
 
         logger.info("🎉 Integration Tests Passed!")
