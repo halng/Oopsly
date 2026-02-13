@@ -238,6 +238,7 @@ def setup_app() -> Optional[subprocess.Popen]:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            env={**os.environ, "SPRING_PROFILES_ACTIVE": "test"},
         )
 
         logger.info("⏳ Waiting for app to become healthy before starting tests...")
