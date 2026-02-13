@@ -1,7 +1,7 @@
 enabled: true
 flows:
   - flow: Card Management Flow
-    description: "This flow tests card CRUD operations within collections"
+    description: "This flow tests card CRUD operations within subjects"
     before-all:
       - name: Generate OTP
         api: GENERATE_OTP
