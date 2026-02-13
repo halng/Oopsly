@@ -41,6 +41,7 @@ flows:
         api: SHELVE_CREATION
         with:
             AUTH_TOKEN: ${AUTH_TOKEN}
+            SHELVE_ICON: "📚"
             SHELVE_NAME: "Integration Test Shelve"
             SHELVE_DESCRIPTION: "This shelve is created during integration testing."
         assertions:

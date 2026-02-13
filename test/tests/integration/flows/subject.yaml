@@ -28,6 +28,7 @@ flows:
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ICON: "📚"
           SHELVE_NAME: "Test Shelve for Subjects"
           SHELVE_DESCRIPTION: "Shelve created for subject testing"
         assertions:
@@ -170,6 +171,7 @@ flows:
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ICON: "📚"
           SHELVE_NAME: "Edge Case Shelve"
           SHELVE_DESCRIPTION: "Shelve for edge case testing"
         assertions:
