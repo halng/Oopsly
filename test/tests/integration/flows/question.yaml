@@ -21,11 +21,12 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
+          INVALID_UUID: ${INVALID_UUID}
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "📚"
+          SHELVE_ICON: "book"
           SHELVE_NAME: "Test Shelve for Questions"
           SHELVE_DESCRIPTION: "Shelve created for question testing"
         assertions:
@@ -181,11 +182,12 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
+          INVALID_UUID: ${INVALID_UUID}
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "📚"
+          SHELVE_ICON: "book"
           SHELVE_NAME: "Edge Case Shelve"
           SHELVE_DESCRIPTION: "Shelve for edge case testing"
         assertions:
@@ -250,7 +252,7 @@ flows:
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           TESTSUITE_ID: ${TESTSUITE_ID}
-          QUESTION_ID: "00000000-0000-0000-0000-000000000000"
+          QUESTION_ID: ${INVALID_UUID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -264,7 +266,7 @@ flows:
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           TESTSUITE_ID: ${TESTSUITE_ID}
-          QUESTION_ID: "00000000-0000-0000-0000-000000000000"
+          QUESTION_ID: ${INVALID_UUID}
           QUESTION_TEXT: "Should fail"
           QUESTION_TYPE: "MULTIPLE_CHOICE"
           QUESTION_METADATA: "{}"
@@ -281,7 +283,7 @@ flows:
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           TESTSUITE_ID: ${TESTSUITE_ID}
-          QUESTION_ID: "00000000-0000-0000-0000-000000000000"
+          QUESTION_ID: ${INVALID_UUID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -294,7 +296,7 @@ flows:
         api: QUESTION_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          TESTSUITE_ID: "00000000-0000-0000-0000-000000000000"
+          TESTSUITE_ID: ${INVALID_UUID}
           QUESTION_TEXT: "Should fail"
           QUESTION_TYPE: "MULTIPLE_CHOICE"
           QUESTION_METADATA: "{}"

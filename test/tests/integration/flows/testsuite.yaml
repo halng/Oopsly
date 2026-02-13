@@ -21,11 +21,12 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
+          INVALID_UUID: ${INVALID_UUID}
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "📚"
+          SHELVE_ICON: "book"
           SHELVE_NAME: "Test Shelve for Test Suites"
           SHELVE_DESCRIPTION: "Shelve created for test suite testing"
         assertions:
@@ -159,11 +160,12 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
+          INVALID_UUID: ${INVALID_UUID}
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "📚"
+          SHELVE_ICON: "book"
           SHELVE_NAME: "Edge Case Shelve"
           SHELVE_DESCRIPTION: "Shelve for edge case testing"
         assertions:
@@ -177,7 +179,7 @@ flows:
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
-          TESTSUITE_ID: "00000000-0000-0000-0000-000000000000"
+          TESTSUITE_ID: ${INVALID_UUID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -191,7 +193,7 @@ flows:
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
-          TESTSUITE_ID: "00000000-0000-0000-0000-000000000000"
+          TESTSUITE_ID: ${INVALID_UUID}
           TESTSUITE_NAME: "Should Fail"
           TESTSUITE_DESCRIPTION: "Should not work"
         assertions:
@@ -207,7 +209,7 @@ flows:
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
-          TESTSUITE_ID: "00000000-0000-0000-0000-000000000000"
+          TESTSUITE_ID: ${INVALID_UUID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -220,7 +222,7 @@ flows:
         api: TESTSUITE_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: "00000000-0000-0000-0000-000000000000"
+          SHELVE_ID: ${INVALID_UUID}
           TESTSUITE_NAME: "Should Fail"
           TESTSUITE_DESCRIPTION: "Should not work"
         assertions:

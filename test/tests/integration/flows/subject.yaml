@@ -24,11 +24,12 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
+          INVALID_UUID: ${INVALID_UUID}
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "📚"
+          SHELVE_ICON: "book"
           SHELVE_NAME: "Test Shelve for Subjects"
           SHELVE_DESCRIPTION: "Shelve created for subject testing"
         assertions:
@@ -167,11 +168,12 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
+          INVALID_UUID: ${INVALID_UUID}
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "📚"
+          SHELVE_ICON: "book"
           SHELVE_NAME: "Edge Case Shelve"
           SHELVE_DESCRIPTION: "Shelve for edge case testing"
         assertions:
@@ -185,7 +187,7 @@ flows:
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
-          SUBJECT_ID: "00000000-0000-0000-0000-000000000000"
+          SUBJECT_ID: ${INVALID_UUID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -199,7 +201,7 @@ flows:
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
-          SUBJECT_ID: "00000000-0000-0000-0000-000000000000"
+          SUBJECT_ID: ${INVALID_UUID}
           SUBJECT_NAME: "Should Fail"
           SUBJECT_DESCRIPTION: "Should not work"
         assertions:
@@ -215,7 +217,7 @@ flows:
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
-          SUBJECT_ID: "00000000-0000-0000-0000-000000000000"
+          SUBJECT_ID: ${INVALID_UUID}
         assertions:
           - path: $.isSuccess
             type: equals

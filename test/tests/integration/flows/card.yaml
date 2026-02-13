@@ -21,11 +21,12 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
+          INVALID_UUID: "00000000-0000-0000-0000-000000000000"
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "📚"
+          SHELVE_ICON: "book"
           SHELVE_NAME: "Test Shelve for Cards"
           SHELVE_DESCRIPTION: "Shelve created for card testing"
         assertions:
@@ -183,11 +184,12 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
+          INVALID_UUID: "00000000-0000-0000-0000-000000000000"
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "📚"
+          SHELVE_ICON: "book"
           SHELVE_NAME: "Edge Case Shelve"
           SHELVE_DESCRIPTION: "Shelve for edge case testing"
         assertions:
@@ -214,7 +216,7 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
           SUBJECT_ID: ${SUBJECT_ID}
-          CARD_ID: "00000000-0000-0000-0000-000000000000"
+          CARD_ID: ${INVALID_UUID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -229,7 +231,7 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
           SUBJECT_ID: ${SUBJECT_ID}
-          CARD_ID: "00000000-0000-0000-0000-000000000000"
+          CARD_ID: ${INVALID_UUID}
           CARD_QUESTION: "Should fail"
           CARD_ANSWER: "Should not work"
           CARD_HINT: ""
@@ -247,7 +249,7 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
           SUBJECT_ID: ${SUBJECT_ID}
-          CARD_ID: "00000000-0000-0000-0000-000000000000"
+          CARD_ID: ${INVALID_UUID}
         assertions:
           - path: $.isSuccess
             type: equals
