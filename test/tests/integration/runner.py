@@ -22,7 +22,7 @@ import yaml
 from typing import Dict, Any, Optional, Tuple
 from pathlib import Path
 from jsonpath_ng import parse
-
+from ulid import ULID
 
 # --- CONFIGURATION ---
 logger = logging.getLogger(__name__)
@@ -124,6 +124,7 @@ def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
         headers = {}
         for key, value in api_info.get("headers", {}).items():
             headers[key] = _substitute_variables(value)
+            headers.update(get_default_headers())
 
         # 3. Build Body with variable substitution
         body = None
@@ -160,6 +161,16 @@ def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
         CONTEXT.clear()
         CONTEXT.update(original_context)
 
+def get_default_headers() -> Dict[str, str]:
+    """
+    Return default headers for API requests.
+    """
+    return {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-Request-ID": str(ULID()),
+        "X-Platform": "integration-test-runner",
+    }
 
 def send_api_request(request_data: dict) -> Optional[requests.Response]:
     """
@@ -172,7 +183,7 @@ def send_api_request(request_data: dict) -> Optional[requests.Response]:
         logger.info(f"      📡 Sending {method} {url}")
 
         # requests.request handles json, headers, params kwargs automatically
-        response = requests.request(method, url, **request_data)
+        response = requests.request(method, url,**request_data)
         return response
     except requests.RequestException as e:
         logger.error(f"❌ Network Error: {e}")

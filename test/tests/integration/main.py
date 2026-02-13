@@ -370,9 +370,9 @@ def main() -> None:
         env, apis = get_api_definitions()
         result = runner.run(env, apis)
 
+        after_test()
+
         if not result:
-            # Print API logs for easier debugging (Path: api/logs)
-            after_test()
             sys.exit(1)
 
         logger.info("🎉 Integration Tests Passed!")
