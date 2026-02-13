@@ -63,10 +63,26 @@ def _substitute_variables(text: Any, context: Dict[str, Any]) -> Any:
     """
     Helper: Replace placeholders like ${user_id} or $user_id with values from provided context.
     Accepts non-string and returns it unchanged.
+    If the entire text is a single variable reference, returns the actual value (preserving type).
     """
     if not isinstance(text, str):
         return text
 
+    # Check if the entire string is just a variable reference (e.g., "$CARDS_ARRAY" or "${AUTH_TOKEN}")
+    # If so, return the actual value without string conversion to preserve lists/dicts
+    full_var_pattern = re.compile(r"^\$\{(\w+)\}$")
+    match = full_var_pattern.match(text)
+    if match:
+        key = match.group(1)
+        return context.get(key, text)
+    
+    simple_full_var_pattern = re.compile(r"^\$(\w+)$")
+    match = simple_full_var_pattern.match(text)
+    if match:
+        key = match.group(1)
+        return context.get(key, text)
+
+    # For partial substitution (e.g., "Hello ${name}"), convert to string
     # First, handle ${variable_name} format (e.g., ${AUTH_TOKEN})
     pattern = re.compile(r"\$\{(\w+)\}")
 
