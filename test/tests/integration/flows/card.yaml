@@ -21,12 +21,11 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-          INVALID_UUID: "00000000-0000-0000-0000-000000000000"
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "book"
+          SHELVE_ICON: "📚"
           SHELVE_NAME: "Test Shelve for Cards"
           SHELVE_DESCRIPTION: "Shelve created for card testing"
         assertions:
@@ -184,12 +183,11 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-          INVALID_UUID: "00000000-0000-0000-0000-000000000000"
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "book"
+          SHELVE_ICON: "📚"
           SHELVE_NAME: "Edge Case Shelve"
           SHELVE_DESCRIPTION: "Shelve for edge case testing"
         assertions:
@@ -210,13 +208,61 @@ flows:
         env-vars:
           SUBJECT_ID: $.data.id
     steps:
-      - name: "1. Get Card with Invalid ID"
+      - name: "1. Create a Card to Get Valid ID"
+        api: CARD_CREATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
+          CARDS_ARRAY: >
+            [
+              {
+                "question": "Edge case test question",
+                "answer": "Edge case test answer",
+                "hint": "Edge case hint"
+              }
+            ]
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 200
+      
+      - name: "2. Get Card ID from Created Cards"
+        api: CARD_GET_ALL_BY_SUBJECT
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
+          PAGE_NUM: "0"
+          PAGE_SIZE: "10"
+        assertions:
+          - path: $.data.content
+            type: not-null
+        env-vars:
+          CARD_ID: $.data.content[0].id
+      
+      - name: "3. Delete the Card"
+        api: CARD_DELETE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
+          CARD_ID: ${CARD_ID}
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+      
+      - name: "4. Get Card with Deleted ID (should fail)"
         api: CARD_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
           SUBJECT_ID: ${SUBJECT_ID}
-          CARD_ID: ${INVALID_UUID}
+          CARD_ID: ${CARD_ID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -224,14 +270,14 @@ flows:
           - path: $.status
             type: equals
             value: 404
-      
-      - name: "2. Update Non-existent Card"
+       
+      - name: "5. Update Deleted Card (should fail)"
         api: CARD_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
           SUBJECT_ID: ${SUBJECT_ID}
-          CARD_ID: ${INVALID_UUID}
+          CARD_ID: ${CARD_ID}
           CARD_QUESTION: "Should fail"
           CARD_ANSWER: "Should not work"
           CARD_HINT: ""
@@ -242,14 +288,14 @@ flows:
           - path: $.status
             type: equals
             value: 404
-      
-      - name: "3. Delete Non-existent Card"
+       
+      - name: "6. Delete Already Deleted Card (should fail)"
         api: CARD_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
           SUBJECT_ID: ${SUBJECT_ID}
-          CARD_ID: ${INVALID_UUID}
+          CARD_ID: ${CARD_ID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -257,8 +303,56 @@ flows:
           - path: $.status
             type: equals
             value: 404
-      
-      - name: "4. Get All Cards with Invalid Pagination"
+       
+      - name: "7. Get Card with Invalid UUID (should fail)"
+        api: CARD_GET_BY_ID
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
+          CARD_ID: "00000000-0000-0000-0000-000000000000"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+       
+      - name: "8. Update Card with Invalid UUID (should fail)"
+        api: CARD_UPDATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
+          CARD_ID: "00000000-0000-0000-0000-000000000000"
+          CARD_QUESTION: "Should fail"
+          CARD_ANSWER: "Should not work"
+          CARD_HINT: ""
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+       
+      - name: "9. Delete Card with Invalid UUID (should fail)"
+        api: CARD_DELETE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
+          CARD_ID: "00000000-0000-0000-0000-000000000000"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+       
+      - name: "10. Get All Cards with Invalid Pagination"
         api: CARD_GET_ALL_BY_SUBJECT
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}

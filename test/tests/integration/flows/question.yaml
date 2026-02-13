@@ -21,12 +21,11 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-          INVALID_UUID: ${INVALID_UUID}
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "book"
+          SHELVE_ICON: "📚"
           SHELVE_NAME: "Test Shelve for Questions"
           SHELVE_DESCRIPTION: "Shelve created for question testing"
         assertions:
@@ -182,12 +181,11 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-          INVALID_UUID: ${INVALID_UUID}
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "book"
+          SHELVE_ICON: "📚"
           SHELVE_NAME: "Edge Case Shelve"
           SHELVE_DESCRIPTION: "Shelve for edge case testing"
         assertions:
@@ -208,82 +206,45 @@ flows:
         env-vars:
           TESTSUITE_ID: $.data.id
     steps:
-      - name: "1. Create True/False Question"
+      - name: "1. Create a Multiple Choice Question to Get Valid ID"
         api: QUESTION_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           TESTSUITE_ID: ${TESTSUITE_ID}
-          QUESTION_TEXT: "Is the sky blue?"
-          QUESTION_TYPE: "TRUE_FALSE"
-          QUESTION_METADATA: >
-            {
-              "correctAnswer": "true"
-            }
-        assertions:
-          - path: $.isSuccess
-            type: equals
-            value: true
-          - path: $.status
-            type: equals
-            value: 201
-      
-      - name: "2. Create Short Answer Question"
-        api: QUESTION_CREATE
-        with:
-          AUTH_TOKEN: ${AUTH_TOKEN}
-          TESTSUITE_ID: ${TESTSUITE_ID}
-          QUESTION_TEXT: "What is the capital of Japan?"
-          QUESTION_TYPE: "SHORT_ANSWER"
-          QUESTION_METADATA: >
-            {
-              "correctAnswer": "Tokyo",
-              "caseSensitive": false
-            }
-        assertions:
-          - path: $.isSuccess
-            type: equals
-            value: true
-          - path: $.status
-            type: equals
-            value: 201
-      
-      - name: "3. Get Question with Invalid ID"
-        api: QUESTION_GET_BY_ID
-        with:
-          AUTH_TOKEN: ${AUTH_TOKEN}
-          TESTSUITE_ID: ${TESTSUITE_ID}
-          QUESTION_ID: ${INVALID_UUID}
-        assertions:
-          - path: $.isSuccess
-            type: equals
-            value: false
-          - path: $.status
-            type: equals
-            value: 404
-      
-      - name: "4. Update Non-existent Question"
-        api: QUESTION_UPDATE
-        with:
-          AUTH_TOKEN: ${AUTH_TOKEN}
-          TESTSUITE_ID: ${TESTSUITE_ID}
-          QUESTION_ID: ${INVALID_UUID}
-          QUESTION_TEXT: "Should fail"
+          QUESTION_TEXT: "Edge case test question?"
           QUESTION_TYPE: "MULTIPLE_CHOICE"
-          QUESTION_METADATA: "{}"
+          QUESTION_OPTIONS: '["Option A", "Option B", "Option C", "Option D"]'
+          QUESTION_CORRECT_ANSWER: "Option A"
+          QUESTION_EXPLANATION: "Edge case explanation"
         assertions:
           - path: $.isSuccess
             type: equals
-            value: false
+            value: true
           - path: $.status
             type: equals
-            value: 404
+            value: 201
+          - path: $.data.id
+            type: not-null
+        env-vars:
+          QUESTION_ID: $.data.id
       
-      - name: "5. Delete Non-existent Question"
+      - name: "2. Delete the Question"
         api: QUESTION_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           TESTSUITE_ID: ${TESTSUITE_ID}
-          QUESTION_ID: ${INVALID_UUID}
+          QUESTION_ID: ${QUESTION_ID}
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+      
+      - name: "3. Get Question with Deleted ID (should fail)"
+        api: QUESTION_GET_BY_ID
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          TESTSUITE_ID: ${TESTSUITE_ID}
+          QUESTION_ID: ${QUESTION_ID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -292,14 +253,96 @@ flows:
             type: equals
             value: 404
       
-      - name: "6. Create Question with Invalid Test Suite ID"
+      - name: "4. Update Deleted Question (should fail)"
+        api: QUESTION_UPDATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          TESTSUITE_ID: ${TESTSUITE_ID}
+          QUESTION_ID: ${QUESTION_ID}
+          QUESTION_TEXT: "Should fail?"
+          QUESTION_TYPE: "MULTIPLE_CHOICE"
+          QUESTION_OPTIONS: '["A", "B"]'
+          QUESTION_CORRECT_ANSWER: "A"
+          QUESTION_EXPLANATION: "Should not work"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+      
+      - name: "5. Delete Already Deleted Question (should fail)"
+        api: QUESTION_DELETE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          TESTSUITE_ID: ${TESTSUITE_ID}
+          QUESTION_ID: ${QUESTION_ID}
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+      
+      - name: "6. Get Question with Invalid UUID (should fail)"
+        api: QUESTION_GET_BY_ID
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          TESTSUITE_ID: ${TESTSUITE_ID}
+          QUESTION_ID: "00000000-0000-0000-0000-000000000000"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+      
+      - name: "7. Update Question with Invalid UUID (should fail)"
+        api: QUESTION_UPDATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          TESTSUITE_ID: ${TESTSUITE_ID}
+          QUESTION_ID: "00000000-0000-0000-0000-000000000000"
+          QUESTION_TEXT: "Should fail?"
+          QUESTION_TYPE: "MULTIPLE_CHOICE"
+          QUESTION_OPTIONS: '["A", "B"]'
+          QUESTION_CORRECT_ANSWER: "A"
+          QUESTION_EXPLANATION: "Should not work"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+      
+      - name: "8. Delete Question with Invalid UUID (should fail)"
+        api: QUESTION_DELETE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          TESTSUITE_ID: ${TESTSUITE_ID}
+          QUESTION_ID: "00000000-0000-0000-0000-000000000000"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+      
+      - name: "9. Create Question with Invalid Test Suite ID (should fail)"
         api: QUESTION_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          TESTSUITE_ID: ${INVALID_UUID}
-          QUESTION_TEXT: "Should fail"
+          TESTSUITE_ID: "00000000-0000-0000-0000-000000000000"
+          QUESTION_TEXT: "Should fail?"
           QUESTION_TYPE: "MULTIPLE_CHOICE"
-          QUESTION_METADATA: "{}"
+          QUESTION_OPTIONS: '["A", "B"]'
+          QUESTION_CORRECT_ANSWER: "A"
+          QUESTION_EXPLANATION: "Should not work"
         assertions:
           - path: $.isSuccess
             type: equals

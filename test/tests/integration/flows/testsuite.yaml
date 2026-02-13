@@ -21,12 +21,11 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-          INVALID_UUID: ${INVALID_UUID}
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "book"
+          SHELVE_ICON: "📚"
           SHELVE_NAME: "Test Shelve for Test Suites"
           SHELVE_DESCRIPTION: "Shelve created for test suite testing"
         assertions:
@@ -160,12 +159,11 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-          INVALID_UUID: ${INVALID_UUID}
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "book"
+          SHELVE_ICON: "📚"
           SHELVE_NAME: "Edge Case Shelve"
           SHELVE_DESCRIPTION: "Shelve for edge case testing"
         assertions:
@@ -174,12 +172,42 @@ flows:
         env-vars:
           SHELVE_ID: $.data.id
     steps:
-      - name: "1. Get Test Suite with Invalid ID"
+      - name: "1. Create a Test Suite to Get Valid ID"
+        api: TESTSUITE_CREATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          TESTSUITE_NAME: "Edge Case Test Suite"
+          TESTSUITE_DESCRIPTION: "Test suite for edge case testing"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 201
+          - path: $.data.id
+            type: not-null
+        env-vars:
+          TESTSUITE_ID: $.data.id
+      
+      - name: "2. Delete the Test Suite"
+        api: TESTSUITE_DELETE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          TESTSUITE_ID: ${TESTSUITE_ID}
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+      
+      - name: "3. Get Test Suite with Deleted ID (should fail)"
         api: TESTSUITE_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
-          TESTSUITE_ID: ${INVALID_UUID}
+          TESTSUITE_ID: ${TESTSUITE_ID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -188,12 +216,12 @@ flows:
             type: equals
             value: 404
       
-      - name: "2. Update Non-existent Test Suite"
+      - name: "4. Update Deleted Test Suite (should fail)"
         api: TESTSUITE_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
-          TESTSUITE_ID: ${INVALID_UUID}
+          TESTSUITE_ID: ${TESTSUITE_ID}
           TESTSUITE_NAME: "Should Fail"
           TESTSUITE_DESCRIPTION: "Should not work"
         assertions:
@@ -204,12 +232,12 @@ flows:
             type: equals
             value: 404
       
-      - name: "3. Delete Non-existent Test Suite"
+      - name: "5. Delete Already Deleted Test Suite (should fail)"
         api: TESTSUITE_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
-          TESTSUITE_ID: ${INVALID_UUID}
+          TESTSUITE_ID: ${TESTSUITE_ID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -218,11 +246,55 @@ flows:
             type: equals
             value: 404
       
-      - name: "4. Create Test Suite with Invalid Shelve ID"
+      - name: "6. Get Test Suite with Invalid UUID (should fail)"
+        api: TESTSUITE_GET_BY_ID
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          TESTSUITE_ID: "00000000-0000-0000-0000-000000000000"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+      
+      - name: "7. Update Test Suite with Invalid UUID (should fail)"
+        api: TESTSUITE_UPDATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          TESTSUITE_ID: "00000000-0000-0000-0000-000000000000"
+          TESTSUITE_NAME: "Should Fail"
+          TESTSUITE_DESCRIPTION: "Should not work"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+      
+      - name: "8. Delete Test Suite with Invalid UUID (should fail)"
+        api: TESTSUITE_DELETE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          TESTSUITE_ID: "00000000-0000-0000-0000-000000000000"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+      
+      - name: "9. Create Test Suite with Invalid Shelve ID (should fail)"
         api: TESTSUITE_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${INVALID_UUID}
+          SHELVE_ID: "00000000-0000-0000-0000-000000000000"
           TESTSUITE_NAME: "Should Fail"
           TESTSUITE_DESCRIPTION: "Should not work"
         assertions:

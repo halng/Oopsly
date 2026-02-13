@@ -24,12 +24,11 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-          INVALID_UUID: ${INVALID_UUID}
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "book"
+          SHELVE_ICON: "📚"
           SHELVE_NAME: "Test Shelve for Subjects"
           SHELVE_DESCRIPTION: "Shelve created for subject testing"
         assertions:
@@ -168,12 +167,11 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-          INVALID_UUID: ${INVALID_UUID}
       - name: Create Test Shelve
         api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ICON: "book"
+          SHELVE_ICON: "📚"
           SHELVE_NAME: "Edge Case Shelve"
           SHELVE_DESCRIPTION: "Shelve for edge case testing"
         assertions:
@@ -182,12 +180,42 @@ flows:
         env-vars:
           SHELVE_ID: $.data.id
     steps:
-      - name: "1. Get Subject with Invalid ID"
+      - name: "1. Create a Subject to Get Valid ID"
+        api: SUBJECT_CREATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_NAME: "Edge Case Subject"
+          SUBJECT_DESCRIPTION: "Subject for edge case testing"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+          - path: $.status
+            type: equals
+            value: 201
+          - path: $.data.id
+            type: not-null
+        env-vars:
+          SUBJECT_ID: $.data.id
+      
+      - name: "2. Delete the Subject"
+        api: SUBJECT_DELETE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: true
+      
+      - name: "3. Get Subject with Deleted ID (should fail)"
         api: SUBJECT_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
-          SUBJECT_ID: ${INVALID_UUID}
+          SUBJECT_ID: ${SUBJECT_ID}
         assertions:
           - path: $.isSuccess
             type: equals
@@ -196,12 +224,12 @@ flows:
             type: equals
             value: 404
       
-      - name: "2. Update Non-existent Subject"
+      - name: "4. Update Deleted Subject (should fail)"
         api: SUBJECT_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
-          SUBJECT_ID: ${INVALID_UUID}
+          SUBJECT_ID: ${SUBJECT_ID}
           SUBJECT_NAME: "Should Fail"
           SUBJECT_DESCRIPTION: "Should not work"
         assertions:
@@ -212,12 +240,56 @@ flows:
             type: equals
             value: 404
       
-      - name: "3. Delete Non-existent Subject"
+      - name: "5. Delete Already Deleted Subject (should fail)"
         api: SUBJECT_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
-          SUBJECT_ID: ${INVALID_UUID}
+          SUBJECT_ID: ${SUBJECT_ID}
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+      
+      - name: "6. Get Subject with Invalid UUID (should fail)"
+        api: SUBJECT_GET_BY_ID
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: "00000000-0000-0000-0000-000000000000"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+      
+      - name: "7. Update Subject with Invalid UUID (should fail)"
+        api: SUBJECT_UPDATE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: "00000000-0000-0000-0000-000000000000"
+          SUBJECT_NAME: "Should Fail"
+          SUBJECT_DESCRIPTION: "Should not work"
+        assertions:
+          - path: $.isSuccess
+            type: equals
+            value: false
+          - path: $.status
+            type: equals
+            value: 404
+      
+      - name: "8. Delete Subject with Invalid UUID (should fail)"
+        api: SUBJECT_DELETE
+        with:
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess
             type: equals
