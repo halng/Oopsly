@@ -161,6 +161,7 @@ def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
         CONTEXT.clear()
         CONTEXT.update(original_context)
 
+
 def get_default_headers() -> Dict[str, str]:
     """
     Return default headers for API requests.
@@ -171,6 +172,7 @@ def get_default_headers() -> Dict[str, str]:
         "X-Request-ID": str(ULID()),
         "X-Platform": "integration-test-runner",
     }
+
 
 def send_api_request(request_data: dict) -> Optional[requests.Response]:
     """
@@ -183,7 +185,7 @@ def send_api_request(request_data: dict) -> Optional[requests.Response]:
         logger.info(f"      📡 Sending {method} {url}")
 
         # requests.request handles json, headers, params kwargs automatically
-        response = requests.request(method, url,**request_data)
+        response = requests.request(method, url, **request_data)
         return response
     except requests.RequestException as e:
         logger.error(f"❌ Network Error: {e}")
