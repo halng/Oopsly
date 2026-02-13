@@ -1,4 +1,4 @@
-enabled: false
+enabled: true
 flows:
   - flow: Question Management Flow
     description: "This flow tests question CRUD operations within test suites"
@@ -21,22 +21,22 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-      - name: Create Test Deck
-        api: DECK_CREATION
+      - name: Create Test Shelve
+        api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_NAME: "Test Deck for Questions"
-          DECK_DESCRIPTION: "Deck created for question testing"
+          SHELVE_NAME: "Test Shelve for Questions"
+          SHELVE_DESCRIPTION: "Shelve created for question testing"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          DECK_ID: $.data.id
+          SHELVE_ID: $.data.id
       - name: Create Test Suite
         api: TESTSUITE_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
+          SHELVE_ID: ${SHELVE_ID}
           TESTSUITE_NAME: "Test Suite for Questions"
           TESTSUITE_DESCRIPTION: "Test suite for question testing"
         assertions:
@@ -180,22 +180,22 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-      - name: Create Test Deck
-        api: DECK_CREATION
+      - name: Create Test Shelve
+        api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_NAME: "Edge Case Deck"
-          DECK_DESCRIPTION: "Deck for edge case testing"
+          SHELVE_NAME: "Edge Case Shelve"
+          SHELVE_DESCRIPTION: "Shelve for edge case testing"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          DECK_ID: $.data.id
+          SHELVE_ID: $.data.id
       - name: Create Test Suite
         api: TESTSUITE_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
+          SHELVE_ID: ${SHELVE_ID}
           TESTSUITE_NAME: "Edge Case Test Suite"
           TESTSUITE_DESCRIPTION: "Test suite for edge case testing"
         assertions:

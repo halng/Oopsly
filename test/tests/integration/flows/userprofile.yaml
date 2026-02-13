@@ -1,4 +1,4 @@
-enabled: false
+enabled: true
 flows:
   - flow: User Profile Management Flow
     description: "This flow tests user profile operations including get and update"

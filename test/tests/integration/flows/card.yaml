@@ -1,4 +1,4 @@
-enabled: false
+enabled: true
 flows:
   - flow: Card Management Flow
     description: "This flow tests card CRUD operations within collections"
@@ -21,36 +21,36 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-      - name: Create Test Deck
-        api: DECK_CREATION
+      - name: Create Test Shelve
+        api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_NAME: "Test Deck for Cards"
-          DECK_DESCRIPTION: "Deck created for card testing"
+          SHELVE_NAME: "Test Shelve for Cards"
+          SHELVE_DESCRIPTION: "Shelve created for card testing"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          DECK_ID: $.data.id
-      - name: Create Test Collection
-        api: COLLECTION_CREATE
+          SHELVE_ID: $.data.id
+      - name: Create Test Subject
+        api: SUBJECT_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_NAME: "Test Collection for Cards"
-          COLLECTION_DESCRIPTION: "Collection for card testing"
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_NAME: "Test Subject for Cards"
+          SUBJECT_DESCRIPTION: "Subject for card testing"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          COLLECTION_ID: $.data.id
+          SUBJECT_ID: $.data.id
     steps:
-      - name: "1. Create Cards in Collection"
+      - name: "1. Create Cards in Subject"
         api: CARD_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARDS_ARRAY: >
             [
               {
@@ -69,12 +69,12 @@ flows:
           - path: $.data
             type: not-null
       
-      - name: "2. Get All Cards in Collection with Pagination"
-        api: CARD_GET_ALL_BY_COLLECTION
+      - name: "2. Get All Cards in Subject with Pagination"
+        api: CARD_GET_ALL_BY_SUBJECT
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           PAGE_NUM: "0"
           PAGE_SIZE: "10"
         assertions:
@@ -93,8 +93,8 @@ flows:
         api: CARD_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: ${CARD_ID}
         assertions:
           - path: $.isSuccess
@@ -114,8 +114,8 @@ flows:
         api: CARD_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: ${CARD_ID}
           CARD_QUESTION: "What is the capital of Germany?"
           CARD_ANSWER: "Berlin"
@@ -135,8 +135,8 @@ flows:
         api: CARD_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: ${CARD_ID}
         assertions:
           - path: $.isSuccess
@@ -150,8 +150,8 @@ flows:
         api: CARD_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: ${CARD_ID}
         assertions:
           - path: $.isSuccess
@@ -182,36 +182,36 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-      - name: Create Test Deck
-        api: DECK_CREATION
+      - name: Create Test Shelve
+        api: SHELVE_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_NAME: "Edge Case Deck"
-          DECK_DESCRIPTION: "Deck for edge case testing"
+          SHELVE_NAME: "Edge Case Shelve"
+          SHELVE_DESCRIPTION: "Shelve for edge case testing"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          DECK_ID: $.data.id
-      - name: Create Test Collection
-        api: COLLECTION_CREATE
+          SHELVE_ID: $.data.id
+      - name: Create Test Subject
+        api: SUBJECT_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_NAME: "Edge Case Collection"
-          COLLECTION_DESCRIPTION: "Collection for edge case testing"
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_NAME: "Edge Case Subject"
+          SUBJECT_DESCRIPTION: "Subject for edge case testing"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          COLLECTION_ID: $.data.id
+          SUBJECT_ID: $.data.id
     steps:
       - name: "1. Get Card with Invalid ID"
         api: CARD_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess
@@ -225,8 +225,8 @@ flows:
         api: CARD_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: "00000000-0000-0000-0000-000000000000"
           CARD_QUESTION: "Should fail"
           CARD_ANSWER: "Should not work"
@@ -243,8 +243,8 @@ flows:
         api: CARD_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess
@@ -255,11 +255,11 @@ flows:
             value: 404
       
       - name: "4. Get All Cards with Invalid Pagination"
-        api: CARD_GET_ALL_BY_COLLECTION
+        api: CARD_GET_ALL_BY_SUBJECT
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELVE_ID: ${SHELVE_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           PAGE_NUM: "-1"
           PAGE_SIZE: "10"
         assertions:
