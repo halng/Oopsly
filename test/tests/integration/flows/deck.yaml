@@ -1,7 +1,7 @@
 enabled: false
 flows:
-  - flow: Create Shelve Flow Check
-    description: "This flow tests the creation of a new shelve and verifies its existence in the database."
+  - flow: Create Deck Flow Check
+    description: "This flow tests the creation of a new deck and verifies its existence in the database."
     before-all:
       - name: Generate OTP
         api: GENERATE_OTP
@@ -37,12 +37,12 @@ flows:
           AUTH_TOKEN: $.data.access_token
           REFRESH_TOKEN: $.data.refresh_token
     steps:
-      - name: "1. Create a New Shelve"
-        api: SHELVE_CREATION
+      - name: "1. Create a New Deck"
+        api: DECK_CREATION
         with:
             AUTH_TOKEN: ${AUTH_TOKEN}
-            SHELVE_NAME: "Integration Test Shelve"
-            SHELVE_DESCRIPTION: "This shelve is created during integration testing."
+            DECK_NAME: "Integration Test Deck"
+            DECK_DESCRIPTION: "This deck is created during integration testing."
         assertions:
           - path: $.isSuccess
             type: equals
@@ -51,8 +51,8 @@ flows:
             type: equals
             value: 201
           - type: contains
-            value: "Integration Test Shelve"
+            value: "Integration Test Deck"
           - type: contains
-            value: "This shelve is created during integration testing."
+            value: "This deck is created during integration testing."
           - type: status-code
             value: 201

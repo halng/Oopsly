@@ -1,0 +1,494 @@
+---
+description: Rules for the Api Spring Boot app
+globs: api/**/*
+alwaysApply: true
+---
+
+# API Development Guidelines
+
+> **Note:** This document provides comprehensive instructions for AI agents working on the Spring Boot API layer. Always refer to `/​.ai/​overall.mdc` for project-wide standards and conventions.
+
+## Architecture & Design Patterns
+
+### Layered Architecture
+
+Follow strict separation of concerns:
+
+* **Controller Layer (`@RestController`)**: Handle HTTP requests/responses, input validation, and response formatting
+* **Service Layer (`@Service`)**: Implement business logic, transaction management, and coordinate between components
+* **Repository Layer (`@Repository`)**: Data access logic using Spring Data JPA
+* **Entity Layer**: Domain models mapped to database tables
+* **ViewModel Layer**: Request/Response data transfer objects
+
+**Rule**: Never access repositories directly from controllers. Always go through service layer.
+
+### Dependency Injection
+
+* Use **constructor injection** (preferred) with `@RequiredArgsConstructor` from Lombok
+* Avoid field injection (`@Autowired` on fields)
+* Keep dependencies immutable where possible
+
+```java
+@Service
+@RequiredArgsConstructor
+public class UserService {
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+}
+```
+
+## REST API Conventions
+
+### HTTP Methods
+
+* `GET`: Retrieve resources (idempotent, cacheable)
+* `POST`: Create new resources
+* `PUT`: Replace entire resource (rarely used)
+* `PATCH`: Update resource (preferred for updates) **and soft deletes**
+* **Important**: This project uses `PATCH` for soft deletes, **NOT** `DELETE`
+
+### Response Format
+
+All API responses must follow this standard structure:
+
+```java
+public class ApiResponse<T> {
+    private boolean isSuccess;
+    private String message;
+    private T data;
+    private LocalDateTime timestamp;
+}
+```
+
+### HTTP Status Codes
+
+* `200 OK`: Successful GET, PATCH
+* `201 Created`: Successful POST (resource created)
+* `400 Bad Request`: Validation errors, malformed requests
+* `401 Unauthorized`: Missing or invalid authentication
+* `403 Forbidden`: Valid auth but insufficient permissions
+* `404 Not Found`: Resource doesn't exist
+* `409 Conflict`: Duplicate resource or business rule violation
+* `500 Internal Server Error`: Unhandled server errors
+
+### Endpoint Naming
+
+* Use plural nouns: `/api/v1/users`, `/api/v1/cards`
+* Use path parameters for IDs: `/api/v1/users/{userId}`
+* Use query parameters for filtering: `/api/v1/users?status=active`
+* Keep URLs lowercase with hyphens: `/api/v1/flash-cards`
+
+## Coding Style & Standards
+
+### Method Naming Conventions
+
+* **Controllers**: `getUsers()`, `createUser()`, `updateUser()`, `patchUser()`
+* **Services**: `findUserById()`, `createNewUser()`, `updateUserDetails()`, `deleteUserSoftly()`
+* **Repositories**: Standard Spring Data JPA names or custom `findBy...()` methods
+
+### Java Best Practices
+
+* Use Lombok annotations: `@Data`, `@Builder`, `@Slf4j`, `@RequiredArgsConstructor`
+* Prefer immutability: Use `final` for variables that won't change
+* Use meaningful names: `userId` not `id`, `userEmail` not `email`
+* Avoid magic numbers: Define constants for fixed values
+* Add JavaDoc for public methods in service layer
+
+```java
+/**
+ * Creates a new user with the provided details.
+ *
+ * @param createUserRequest The user creation request containing email and name
+ * @return ApiResponse containing the created user data
+ * @throws UserAlreadyExistsException if email is already registered
+ */
+public ApiResponse<UserViewModel> createNewUser(CreateUserRequest createUserRequest) {
+    // Implementation
+}
+```
+
+### Validation
+
+* Use Jakarta Bean Validation annotations: `@Valid`, `@NotNull`, `@Email`, `@Size`
+* Validate at controller layer for input DTOs
+* Implement custom validators for complex business rules
+* Return detailed validation errors with field-level messages
+
+```java
+@PostMapping("/users")
+public ApiResponse<UserViewModel> createUser(@Valid @RequestBody CreateUserRequest request) {
+    return userService.createNewUser(request);
+}
+```
+
+### Error Handling
+
+* Use `@ControllerAdvice` for global exception handling
+* Create custom exceptions extending `RuntimeException`
+* Map exceptions to appropriate HTTP status codes
+* Include helpful error messages (but never expose sensitive data)
+
+```java
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiResponse.error(ex.getMessage()));
+    }
+}
+```
+
+### Logging
+
+* Use `@Slf4j` from Lombok
+* Log at appropriate levels:
+  * `DEBUG`: Detailed flow information
+  * `INFO`: Important business events
+  * `WARN`: Recoverable issues
+  * `ERROR`: Failures requiring attention
+* **Never log sensitive data**: passwords, tokens, full credit card numbers
+* Structure logs for easy parsing: Include request IDs, user IDs, timestamps
+
+```java
+@Slf4j
+@Service
+public class AuthService {
+    public ApiResponse<TokenResponse> login(LoginRequest request) {
+        log.debug("Login attempt for email: {}", masked(request.getEmail()));
+        // ... business logic
+        log.info("User {} logged in successfully", userId);
+    }
+}
+```
+
+## Database & JPA
+
+### Entity Design
+
+* Use `@Entity` with meaningful table names via `@Table(name = "users")`
+* Use UUID v7 for primary keys: `@Id @GeneratedValue(strategy = GenerationType.UUID)`
+* Implement soft deletes with `isDeleted` boolean field. Already implemented in audit class
+* Use appropriate relationships: `@OneToMany`, `@ManyToOne`, `@ManyToMany`
+
+```java
+@Entity
+@Table(name = "users")
+@Data
+public class User extends AuditEntity{
+    
+    @Column(nullable = false, unique = true)
+    private String email;
+}
+```
+
+### Repository Pattern
+
+* Extend `JpaRepository<Entity, ID>` or `CrudRepository<Entity, ID>`
+* Use Spring Data query methods: `findByEmail()`, `existsByEmail()`
+* Use `@Query` for complex queries with JPQL or native SQL
+* Add `@Modifying` for UPDATE/DELETE queries
+
+```java
+@Repository
+public interface UserRepository extends JpaRepository<User, UUID> {
+    Optional<User> findByEmailAndIsDeletedFalse(String email);
+    boolean existsByEmailAndIsDeletedFalse(String email);
+    
+    @Query("SELECT u FROM User u WHERE u.isDeleted = false")
+    List<User> findAllActiveUsers();
+}
+```
+
+## Security
+
+### Authentication & Authorization
+
+* Use Spring Security with JWT tokens
+* Implement `JwtAuthenticationFilter` for token validation
+* Store passwords with BCrypt: `passwordEncoder.encode(password)`
+
+```java
+@PreAuthorize("hasRole('ADMIN')")
+@PatchMapping("/users/{userId}/role")
+public ApiResponse<UserViewModel> updateUserRole(...) {
+    // Only admins can access this
+}
+```
+
+### Security Best Practices
+
+* Never return passwords in API responses
+* Validate JWT tokens on every request
+* Implement rate limiting for authentication endpoints
+* Use HTTPS in production
+* Sanitize all user inputs to prevent injection attacks
+
+## Testing Requirements
+
+### Unit Tests (JUnit + Mockito)
+
+* **All test methods must have `@DisplayName` annotations** with clear, descriptive names
+* Achieve ≥90% code coverage
+* Test method naming: `methodName_whenCondition_shouldExpectedOutcome`
+* Mock all external dependencies with `@Mock` or `@MockBean`
+* Use `@ExtendWith(MockitoExtension.class)` for JUnit 5
+
+```java
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+    
+    @Mock
+    private UserRepository userRepository;
+    
+    @InjectMocks
+    private UserService userService;
+    
+    @Test
+    @DisplayName("Should create user successfully when email is unique")
+    void createUser_whenEmailIsUnique_shouldCreateSuccessfully() {
+        // Arrange
+        CreateUserRequest request = new CreateUserRequest("test@example.com", "Test User");
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        
+        // Act
+        ApiResponse<UserViewModel> response = userService.createNewUser(request);
+        
+        // Assert
+        assertTrue(response.isSuccess());
+        verify(userRepository).save(any(User.class));
+    }
+}
+```
+
+### Test Coverage Requirements
+
+* **Controllers**: Test request validation, response formatting, status codes
+* **Services**: Test business logic, edge cases, error handling
+* **Repositories**: Test custom queries (standard Spring Data methods don't need tests)
+* **Security**: Test authentication, authorization, JWT validation
+
+### Test Data
+
+* Use builders or factories for creating test objects
+* Avoid magic values: Use constants or descriptive variables
+* Test edge cases: null values, empty strings, boundary conditions
+* Test security: unauthorized access, missing permissions
+
+## API Documentation
+
+### SpringDoc OpenAPI
+
+* Add `@Tag` to controller classes
+* Add `@Operation` to endpoints with descriptions
+* Add `@ApiResponses` to document all possible responses
+* Add `@Parameter` for path/query parameters
+* Add `@Schema` to DTOs for field descriptions
+
+```java
+@RestController
+@RequestMapping("/api/v1/users")
+@Tag(name = "User Management", description = "APIs for managing users")
+public class UserController {
+    
+    @Operation(summary = "Create new user", description = "Creates a new user with the provided details")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "User created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input"),
+        @ApiResponse(responseCode = "409", description = "Email already exists")
+    })
+    @PostMapping
+    public ApiResponse<UserViewModel> createUser(@Valid @RequestBody CreateUserRequest request) {
+        return userService.createNewUser(request);
+    }
+}
+```
+
+## Performance Considerations
+
+* Use pagination for list endpoints: `@PageableDefault`
+* Add database indexes for frequently queried columns
+* Use `@Transactional` appropriately (read-only for queries)
+* Implement caching for expensive operations with `@Cacheable`
+* Use lazy loading for entity relationships when appropriate
+
+## Unit Testing (API Layer - JUnit + Mockito)
+
+### Code Coverage
+
+- Test coverage must be higher than 90%
+
+### Test Class Structure
+
+```java
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+    
+    @Mock
+    private UserRepository userRepository;
+    
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    
+    @InjectMocks
+    private UserService userService;
+    
+    @BeforeEach
+    void setUp() {
+        // Common setup for all tests
+    }
+    
+    @Test
+    @DisplayName("Should create user successfully when email is unique")
+    void createUser_whenEmailIsUnique_shouldCreateSuccessfully() {
+        // Arrange
+        // Act
+        // Assert
+    }
+}
+```
+
+### Naming Conventions
+
+**Test Methods**: `methodName_whenCondition_shouldExpectedOutcome`
+
+Examples:
+
+* `createUser_whenEmailIsUnique_shouldCreateSuccessfully`
+* `loginUser_whenPasswordIsInvalid_shouldThrowAuthenticationException`
+* `deleteUser_whenUserNotFound_shouldThrowNotFoundException`
+
+**DisplayName Requirement**: **All test methods MUST have `@DisplayName` annotations with clear, descriptive names**
+
+```java
+@Test
+@DisplayName("Should return 404 when user ID does not exist")
+void getUser_whenIdDoesNotExist_shouldReturn404() {
+    // Test implementation
+}
+```
+
+### Test Structure (AAA Pattern)
+
+```java
+@Test
+@DisplayName("Should update user email when new email is valid and unique")
+void updateUser_whenNewEmailIsValidAndUnique_shouldUpdateSuccessfully() {
+    // Arrange - Set up test data and mocks
+    UUID userId = UUID.randomUUID();
+    UpdateUserRequest request = new UpdateUserRequest("newemail@example.com");
+    User existingUser = User.builder()
+        .id(userId)
+        .email("oldemail@example.com")
+        .build();
+    
+    when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+    when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+    
+    // Act - Execute the method under test
+    ApiResponse<UserViewModel> response = userService.updateUserEmail(userId, request);
+    
+    // Assert - Verify the results
+    assertTrue(response.isSuccess());
+    assertEquals("newemail@example.com", response.getData().getEmail());
+    verify(userRepository).save(any(User.class));
+    verify(userRepository).findById(userId);
+}
+```
+
+### What to Test in Each Layer
+
+**Controller Tests**:
+
+* Request validation (invalid inputs)
+* Response status codes
+* Response body structure
+* Authentication/authorization
+* Exception handling
+
+**Service Tests**:
+
+* Business logic correctness
+* Edge cases and boundary conditions
+* Error handling and exception throwing
+* Interaction with repositories
+* Transaction behavior
+
+**Repository Tests**:
+
+* Custom query methods
+* Complex JOIN queries
+* Native SQL queries
+* (Standard Spring Data methods don't need tests)
+
+### Mocking Guidelines
+
+```java
+// Mock repository responses
+when(userRepository.findById(userId))
+    .thenReturn(Optional.of(user));
+
+when(userRepository.save(any(User.class)))
+    .thenAnswer(invocation -> invocation.getArgument(0));
+
+// Verify method calls
+verify(userRepository).save(any(User.class));
+verify(userRepository, times(1)).findById(userId);
+verify(userRepository, never()).delete(any());
+
+// Argument captors for complex verification
+ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+verify(userRepository).save(userCaptor.capture());
+assertEquals("expected@email.com", userCaptor.getValue().getEmail());
+```
+
+## Common Patterns
+
+### Soft Delete Pattern
+
+```java
+@PatchMapping("/{id}")
+public ApiResponse<Void> deleteUser(@PathVariable UUID id) {
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> new UserNotFoundException("User not found"));
+    user.setDeleted(true);
+    user.setDeletedAt(LocalDateTime.now());
+    userRepository.save(user);
+    return ApiResponse.success("User deleted successfully");
+}
+```
+
+### Pagination Pattern
+
+```java
+@GetMapping
+public ApiResponse<Page<UserViewModel>> getUsers(@PageableDefault(size = 20) Pageable pageable) {
+    Page<User> users = userRepository.findAllByIsDeletedFalse(pageable);
+    Page<UserViewModel> viewModels = users.map(UserViewModel::from);
+    return ApiResponse.success(viewModels);
+}
+```
+
+## Code Review Checklist
+
+Before submitting code:
+
+- [ ] All methods have appropriate access modifiers
+- [ ] No hardcoded credentials or sensitive data
+- [ ] All public service methods have unit tests with `@DisplayName`
+- [ ] API endpoints have OpenAPI documentation
+- [ ] Validation is implemented for all inputs
+- [ ] Error handling follows project conventions
+- [ ] Logging is appropriate (no sensitive data)
+- [ ] Code follows Google Java Format (AOSP)
+- [ ] Tests achieve ≥90% coverage
+- [ ] No compiler warnings
+
+## Reference
+
+See `/​.ai/​overall.mdc` for:
+* Project overview and technology stack
+* General coding standards
+* Git commit message format
+* License header requirements
+* CI/CD pipeline information

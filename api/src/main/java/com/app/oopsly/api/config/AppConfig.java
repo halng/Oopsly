@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 public class AppConfig {
 
     private String allowedOrigins;
-    private String testEmail;
+    private String[] testEmails;
 
     public GsonFactory getJsonFactory() {
         return new GsonFactory();
@@ -63,5 +63,17 @@ public class AppConfig {
     public static class Features {
         private boolean authWithGoogle;
         private boolean authWithJwt;
+    }
+
+    public boolean isTestEmail(String email) {
+        if (testEmails == null) {
+            return false;
+        }
+        for (String testEmail : testEmails) {
+            if (testEmail.equalsIgnoreCase(email)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -47,7 +47,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         final String requestId = request.getHeader("X-Request-ID");
+        final String requestPlatform = request.getHeader("X-Platform");
         MDC.put("XID", requestId);
+        MDC.put("XP", requestPlatform);
         LOGGER.info("Filtering request: {}", request.getRequestURI());
         final String authHeader = request.getHeader("authorization");
 

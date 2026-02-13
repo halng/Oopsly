@@ -14,29 +14,33 @@
 
 
 import logging
-import subprocess
-import time
 import sys
 import json
-import os
 from typing import List, Dict, Any
+import os
+import subprocess
+import time
+import requests
+from typing import Optional
 
 import yaml
 
 from tests.integration import runner
 
-# Assume we have the runner we discussed earlier
-# from test_runner import Runner
+# Import shared utils for environment setup / teardown and file handling
+import tests.utils.utils as utils  # noqa: E402
 
 # --- CONFIGURATION ---
 DOCKER_COMPOSE_CMD = ["docker", "compose"]  # or ["docker-compose"] depending on version
-REQUIRED_SERVICES = ["postgres", "redis", "app"]  # Services we must wait for
-MAX_RETRIES = 30  # Wait up to 30 seconds
+REQUIRED_SERVICES = ["postgres", "redis"]  # Services we must wait for
+MAX_RETRIES = 120  # Wait up to 120 seconds (2 minutes) for services to be healthy
 SLEEP_INTERVAL = 1  # Check every 1 second
+COMPOSE_FILE = None  # Will be set in setup_docker()
+HEALTH_CHECK_END_POINT = "http://localhost:9009/api/v1/oopsly/actuator/health"
 
 # --- LOGGING SETUP ---
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%H:%M:%S",
     handlers=[logging.StreamHandler(sys.stdout)],
@@ -52,7 +56,7 @@ def check_container_health(service_name: str) -> bool:
     try:
         # Get the container ID for the service
         # This gets the ID of the first container for the service
-        cmd_id = DOCKER_COMPOSE_CMD + ["ps", "-q", service_name]
+        cmd_id = DOCKER_COMPOSE_CMD + ["-f", COMPOSE_FILE, "ps", "-q", service_name]
         container_id = subprocess.check_output(cmd_id, text=True).strip()
 
         if not container_id:
@@ -97,17 +101,102 @@ def check_container_health(service_name: str) -> bool:
         return False
 
 
+def setup_app() -> Optional[subprocess.Popen]:
+    """
+    Starts Spring Boot in the background but BLOCKS the main thread
+    ONLY until the health check is successful.
+    """
+    logger.info("🚀 Starting Application...")
+    app_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "..", "api")
+    )
+
+    try:
+        # 1. Start the process in the background
+        # We use Popen so it doesn't wait for the server to exit
+        process = subprocess.Popen(
+            ["./gradlew", "bootRun", "--args=--spring.profiles.active=test"],
+            cwd=app_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        # 2. BLOCK the main thread here until healthy
+        logger.info("⏳ Waiting for app to become healthy before starting tests...")
+
+        is_healthy = False
+        for i in range(20):  # Give it ~60 seconds total
+            if process.poll() is not None:
+                stdout, stderr = process.communicate(timeout=1)
+                logger.error(
+                    f"❌ Spring Boot process exited with code {process.returncode}"
+                )
+                logger.error(f"STDOUT: {stdout}")
+                logger.error(f"STDERR: {stderr}")
+                exit(1)
+
+            logger.info("...checking health status...")
+
+            try:
+                response = requests.get(HEALTH_CHECK_END_POINT, timeout=2)
+                if (
+                    response.status_code == 200
+                    and response.json().get("status") == "UP"
+                ):
+                    logger.info("✅ Application is UP! Proceeding to tests...")
+                    is_healthy = True
+                    break
+            except (
+                requests.ConnectionError,
+                requests.Timeout,
+                requests.RequestException,
+            ):
+                # App isn't listening yet or health check failed, keep waiting
+                pass
+            except Exception as e:
+                # Log unexpected errors but continue waiting
+                logger.debug(f"Health check attempt failed: {e}")
+            logger.info(f"Waiting for application to be healthy... ({i + 1}/20)")
+            time.sleep(5)
+
+        if not is_healthy:
+            logger.error("❌ Timeout: Application never became healthy.")
+            process.terminate()
+            return None
+
+        # Return the process so we can kill it after tests are done
+        return process
+
+    except Exception as e:
+        logger.error(f"❌ Failed to start application: {e}")
+        return None
+
+
 def setup_docker() -> bool:
     """
     Set up Docker environment for integration tests.
     Returns True if successful, False otherwise.
     """
+    global COMPOSE_FILE
+
     logger.info("🚀 Starting Docker environment...")
+
+    # Use absolute path based on the main.py location
+    COMPOSE_FILE = os.path.join(
+        os.path.dirname(__file__), "../config/docker-compose-integration.yaml"
+    )
+
+    if not os.path.exists(COMPOSE_FILE):
+        logger.error(f"❌ Docker Compose file not found: {COMPOSE_FILE}")
+        return False
 
     try:
         # 1. Bring up containers (detached)
         # --wait implies waiting for healthy state, but strictly manual checking is often more reliable/debuggable
-        subprocess.run(DOCKER_COMPOSE_CMD + ["up", "-d", "--build"], check=True)
+        subprocess.run(
+            DOCKER_COMPOSE_CMD + ["-f", COMPOSE_FILE, "up", "-d", "--build"], check=True
+        )
 
         # 2. Health Check Loop
         logger.info(f"⏳ Waiting for services: {', '.join(REQUIRED_SERVICES)}...")
@@ -122,7 +211,7 @@ def setup_docker() -> bool:
 
             if healthy_count == len(REQUIRED_SERVICES):
                 duration = round(time.time() - start_time, 2)
-                logger.info(f"✅ All services healthy in {duration}s!")
+                logger.info(f"✅ All container services healthy in {duration}s!")
                 return True
 
             if time.time() - start_time > MAX_RETRIES:
@@ -142,7 +231,14 @@ def setup_docker() -> bool:
 def tear_down_docker():
 
     logger.info("🧹 Tearing down Docker environment...")
-    subprocess.run(DOCKER_COMPOSE_CMD + ["down"], check=False)
+
+    if COMPOSE_FILE and os.path.exists(COMPOSE_FILE):
+        subprocess.run(DOCKER_COMPOSE_CMD + ["-f", COMPOSE_FILE, "down"], check=False)
+    else:
+        logger.warning(
+            "⚠️ Compose file not found for teardown, attempting default teardown"
+        )
+        subprocess.run(DOCKER_COMPOSE_CMD + ["down"], check=False)
 
 
 def load_file(file_path: str) -> Any:
@@ -177,33 +273,57 @@ def get_api_definitions() -> (Dict[str, str], Dict[str, any]):
         logger.error("❌ 'configs' section missing in API definitions.")
         exit(1)
 
-    enviroments = {}
+    environments = {}
     if "environments" in configs:
         for k, v in configs["environments"].items():
-            enviroments[k] = v
+            environments[k] = v
 
     apis = {}
     if "apis" in configs:
         for api in configs["apis"]:
             apis[api["name"]] = api
 
-    return enviroments, apis
+    return environments, apis
+
+
+def before_test():
+    # Delegate to utils.before_test (cleans logs)
+    utils.before_test()
+
+
+def after_test():
+    # Delegate to utils.after_test (prints logs on failure)
+    utils.after_test()
 
 
 def main() -> None:
     """Main entry point for running integration tests."""
+    skip_docker = os.getenv("SKIP_DOCKER_SETUP", "false").lower() == "true"
+    app_process = None  # Initialize to None to prevent UnboundLocalError
+
+    # Use utils to clear logs
+    utils.before_test()
+
     try:
-        setup_success = True  # setup_docker()
+        if skip_docker:
+            logger.info("🐳 Skipping Docker setup (managed externally)")
+            setup_success = True
+        else:
+            setup_success = utils.setup_docker()
 
         if not setup_success:
             logger.error("🛑 Aborting tests due to environment setup failure.")
             sys.exit(1)
 
+        logger.info("✅ Environment setup complete. Starting application...")
+        app_process = utils.setup_app()
         # --- EXECUTE RUNNER ---
 
         logger.info("🧪 Environment Ready. Initializing Test Runner...")
-        env, apis = get_api_definitions()
+        env, apis = utils.get_api_definitions()
         result = runner.run(env, apis)
+
+        utils.after_test()
 
         if not result:
             sys.exit(1)
@@ -216,7 +336,18 @@ def main() -> None:
         sys.exit(1)
 
     finally:
-        tear_down_docker()
+        # Safely terminate app process if it was started
+        if app_process is not None:
+            try:
+                app_process.terminate()
+                app_process.wait(timeout=5)
+            except Exception as e:
+                logger.warning(f"Error terminating app process: {e}")
+
+        if not skip_docker:
+            utils.tear_down_docker()
+        else:
+            logger.info("🐳 Skipping Docker teardown (managed externally)")
 
 
 if __name__ == "__main__":

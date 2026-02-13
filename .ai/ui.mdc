@@ -1,0 +1,840 @@
+---
+description: Rules for the React Native/Expo mobile app
+globs: ui/**/*
+alwaysApply: true
+---
+
+# UI Development Guidelines
+
+> **Note:** This document provides comprehensive instructions for AI agents working on the React Native/Expo UI layer. Always refer to `/​.ai/​overall.mdc` for project-wide standards and conventions.
+
+## Architecture & Project Structure
+
+### Directory Organization
+
+```
+ui/
+├── app/                    # Expo Router screens (file-based routing)
+│   ├── (user)/            # Protected routes (authenticated users)
+│   ├── index.tsx          # Landing/welcome screen
+│   ├── onboard.tsx        # Onboarding flow
+│   └── _layout.tsx        # Root layout with auth check
+├── components/            # Reusable React components
+├── services/              # API communication layer
+├── store/                 # Zustand state management
+├── types/                 # TypeScript type definitions
+├── utils/                 # Utility functions and helpers
+├── __tests__/             # Jest test files
+└── assets/                # Images, fonts, icons
+```
+
+### Navigation (Expo Router)
+
+* **File-based routing**: File structure in `/app` defines routes
+* **Protected routes**: Use `(user)` directory for authenticated-only screens
+* **Navigation**: Use `useRouter()` hook from `expo-router`
+* **Deep linking**: Automatically supported by Expo Router
+
+```typescript
+import { useRouter } from 'expo-router';
+
+function LoginScreen() {
+  const router = useRouter();
+  
+  const handleLogin = () => {
+    // After successful login
+    router.replace('/home');
+  };
+}
+```
+
+## Component Development
+
+### Component Structure
+
+```typescript
+import React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+interface UserCardProps {
+  userId: string;
+  name: string;
+  email: string;
+  onPress: () => void;
+}
+
+export const UserCard: React.FC<UserCardProps> = ({ userId, name, email, onPress }) => {
+  return (
+    <TouchableOpacity
+      testID={`user-card-${userId}`}
+      onPress={onPress}
+      className="bg-white rounded-lg p-4 mb-2 shadow-sm"
+    >
+      <Text className="text-lg font-bold text-gray-900">{name}</Text>
+      <Text className="text-sm text-gray-600">{email}</Text>
+    </TouchableOpacity>
+  );
+};
+```
+
+### Naming Conventions
+
+* **Components**: PascalCase - `UserProfile`, `CardList`, `LoginButton`
+* **Functions**: camelCase - `handleSubmit`, `fetchUserData`, `validateEmail`
+* **Constants**: UPPER_SNAKE_CASE - `API_BASE_URL`, `MAX_RETRIES`
+* **Props Interfaces**: PascalCase with `Props` suffix - `UserProfileProps`, `CardListProps`
+
+### Component Guidelines
+
+* **Use functional components** with TypeScript
+* **Use React hooks** (`useState`, `useEffect`, `useCallback`, `useMemo`)
+* **Define explicit prop types** with TypeScript interfaces
+* **Add `testID` to interactive elements** for testing
+* **Use `SafeAreaView`** for screens to handle notches and status bars
+* **Implement error boundaries** for graceful error handling
+* **Extract reusable logic** into custom hooks
+
+## Styling (NativeWind / Tailwind CSS)
+
+### Using NativeWind
+
+NativeWind is Tailwind CSS for React Native - use the `className` prop:
+
+```typescript
+<View className="flex-1 bg-gray-100 p-4">
+  <Text className="text-2xl font-bold text-gray-900 mb-4">
+    Welcome
+  </Text>
+  <TouchableOpacity className="bg-blue-500 rounded-lg py-3 px-6">
+    <Text className="text-white text-center font-semibold">
+      Get Started
+    </Text>
+  </TouchableOpacity>
+</View>
+```
+
+### Design System
+
+**Colors**:
+
+* Primary: `#8BC34A` (Green) - `bg-[#8BC34A]`
+* Secondary: `#FF9800` (Orange) - `bg-[#FF9800]`
+* Accent: `#03A9F4` (Blue) - `bg-[#03A9F4]`
+* Background: `#F7F7F7` (Light gray) - `bg-[#F7F7F7]`
+* Text: `#212121` (Dark gray) - `text-[#212121]`
+
+**Spacing**: Use Tailwind's standard scale
+
+* `p-4` = 16px padding
+* `m-2` = 8px margin
+* `gap-3` = 12px gap
+
+**Border Radius**:
+
+* Cards and buttons: `rounded-lg`
+* Pills: `rounded-full`
+* Inputs: `rounded-md`
+
+**Shadows**:
+
+* Subtle depth: `shadow-sm`
+* Medium depth: `shadow-md`
+* Heavy depth: `shadow-lg`
+
+### Responsive Design
+
+* Test on multiple screen sizes
+* Use flexbox for layouts (`flex`, `flex-row`, `flex-col`)
+* Avoid fixed pixel widths - use percentages or flex
+* Handle both portrait and landscape orientations
+
+## State Management (Zustand)
+
+### Store Structure
+
+```typescript
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface AuthState {
+  isAuthenticated: boolean;
+  accessToken: string;
+  refreshToken: string;
+  userEmail: string;
+  
+  setAuthTokens: (accessToken: string, refreshToken: string) => void;
+  setCredentials: (email: string, accessToken: string, refreshToken: string) => void;
+  clearAuth: () => void;
+}
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      isAuthenticated: false,
+      accessToken: '',
+      refreshToken: '',
+      userEmail: '',
+      
+      setAuthTokens: (accessToken, refreshToken) =>
+        set({ accessToken, refreshToken, isAuthenticated: true }),
+      
+      setCredentials: (email, accessToken, refreshToken) =>
+        set({
+          userEmail: email,
+          accessToken,
+          refreshToken,
+          isAuthenticated: true,
+        }),
+      
+      clearAuth: () =>
+        set({
+          isAuthenticated: false,
+          accessToken: '',
+          refreshToken: '',
+          userEmail: '',
+        }),
+    }),
+    {
+      name: 'auth-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
+);
+```
+
+### Using Stores
+
+```typescript
+function HomeScreen() {
+  // Get state values
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const userEmail = useAuthStore((state) => state.userEmail);
+  
+  // Get actions
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+  
+  const handleLogout = () => {
+    clearAuth();
+    router.replace('/');
+  };
+}
+```
+
+## API Communication (Services)
+
+### Service Layer Structure
+
+```typescript
+import axios, { AxiosResponse } from 'axios';
+import { Logger } from '@/utils';
+import { useAuthStore } from '@/store';
+
+const logger = Logger.extend('UserService');
+
+interface ApiResponse<T> {
+  isSuccess: boolean;
+  message: string;
+  data: T;
+  timestamp: string;
+}
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export class UserService {
+  private static readonly BASE_URL = '/api/v1/users';
+  
+  static async getUser(userId: string): Promise<ApiResponse<User>> {
+    try {
+      logger.debug('Fetching user:', userId);
+      const response: AxiosResponse<ApiResponse<User>> = await axios.get(
+        `${this.BASE_URL}/${userId}`
+      );
+      logger.debug('User fetched successfully');
+      return response.data;
+    } catch (error) {
+      logger.error('Failed to fetch user:', error);
+      throw error;
+    }
+  }
+  
+  static async createUser(userData: Partial<User>): Promise<ApiResponse<User>> {
+    try {
+      logger.debug('Creating user');
+      const response: AxiosResponse<ApiResponse<User>> = await axios.post(
+        this.BASE_URL,
+        userData
+      );
+      logger.info('User created successfully');
+      return response.data;
+    } catch (error) {
+      logger.error('Failed to create user:', error);
+      throw error;
+    }
+  }
+}
+```
+
+### Handling API Responses
+
+**Success Response**:
+
+```typescript
+const response = await UserService.getUser('123');
+if (response.isSuccess) {
+  // Handle success
+  const user = response.data;
+  console.log(user.name);
+}
+```
+
+**Error Handling**:
+
+```typescript
+try {
+  const response = await UserService.createUser(userData);
+  if (response.isSuccess) {
+    // Success
+    Alert.alert('Success', response.message);
+  }
+} catch (error) {
+  if (axios.isAxiosError(error)) {
+    const message = error.response?.data?.message || 'Network error';
+    Alert.alert('Error', message);
+  } else {
+    Alert.alert('Error', 'An unexpected error occurred');
+  }
+}
+```
+
+### Response Format Convention
+
+All backend API responses follow this structure:
+
+```typescript
+interface ApiResponse<T> {
+  isSuccess: boolean;     // true for success, false for errors
+  message: string;        // Human-readable message
+  data: T;               // Response payload (type varies by endpoint)
+  timestamp: string;     // ISO 8601 timestamp
+}
+```
+
+**Always check `isSuccess` before accessing `data`**:
+
+```typescript
+const response = await AuthService.login(credentials);
+if (response.isSuccess) {
+  // Safe to access response.data
+  const { accessToken, refreshToken } = response.data;
+  setAuthTokens(accessToken, refreshToken);
+} else {
+  // Handle error using response.message
+  Alert.alert('Login Failed', response.message);
+}
+```
+
+## TypeScript Best Practices
+
+### Type Definitions
+
+* Use `interface` for object shapes
+* Use `type` for unions, intersections, or primitives
+* Avoid `any` - use `unknown` if type is truly unknown
+* Define explicit types for function parameters and return values
+
+```typescript
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: string;
+}
+
+type UserStatus = 'active' | 'inactive' | 'pending';
+
+interface UserListProps {
+  users: User[];
+  onUserSelect: (userId: string) => void;
+  status?: UserStatus;
+}
+```
+
+### Type Guards
+
+```typescript
+function isApiError(error: unknown): error is AxiosError {
+  return axios.isAxiosError(error);
+}
+
+try {
+  await fetchData();
+} catch (error) {
+  if (isApiError(error)) {
+    console.log(error.response?.status);
+  }
+}
+```
+
+### Generic Types
+
+```typescript
+function useAsync<T>(asyncFunction: () => Promise<T>) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  
+  // Implementation
+  
+  return { data, loading, error };
+}
+```
+
+## Testing (Jest + React Testing Library)
+
+### Test File Structure
+
+```typescript
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { LoginScreen } from '../LoginScreen';
+
+// Mock dependencies
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    getItem: jest.fn(() => Promise.resolve(null)),
+    setItem: jest.fn(() => Promise.resolve()),
+  },
+}));
+
+describe('LoginScreen', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  it('should display email and password inputs', () => {
+    render(<LoginScreen />);
+    
+    expect(screen.getByTestId('email-input')).toBeTruthy();
+    expect(screen.getByTestId('password-input')).toBeTruthy();
+  });
+  
+  it('should submit form when button is pressed', async () => {
+    const mockLogin = jest.fn();
+    render(<LoginScreen onLogin={mockLogin} />);
+    
+    fireEvent.changeText(screen.getByTestId('email-input'), 'test@example.com');
+    fireEvent.changeText(screen.getByTestId('password-input'), 'password123');
+    fireEvent.press(screen.getByTestId('submit-button'));
+    
+    await waitFor(() => {
+      expect(mockLogin).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'password123',
+      });
+    });
+  });
+});
+```
+
+### Testing Guidelines
+
+* **Use `testID` for element queries**: Prefer `getByTestId` over `getByText`
+* **Test user behavior, not implementation**: Focus on what users see and do
+* **Mock external dependencies**: AsyncStorage, API calls, navigation
+* **Test async operations**: Use `waitFor` for async state updates
+* **Test error states**: Verify error messages are displayed
+* **All tests must have `@DisplayName` (for Java) or descriptive `it()` descriptions (for TypeScript)**
+
+### Example Test Patterns
+
+**Testing Rendering**:
+
+```typescript
+it('should render user name when data is loaded', async () => {
+  const mockUser = { id: '1', name: 'John Doe', email: 'john@example.com' };
+  jest.spyOn(UserService, 'getUser').mockResolvedValue({
+    isSuccess: true,
+    data: mockUser,
+  });
+  
+  render(<UserProfile userId="1" />);
+  
+  await waitFor(() => {
+    expect(screen.getByText('John Doe')).toBeTruthy();
+  });
+});
+```
+
+**Testing Navigation**:
+
+```typescript
+it('should navigate to home screen after successful login', async () => {
+  const mockRouter = { replace: jest.fn() };
+  jest.mock('expo-router', () => ({
+    useRouter: () => mockRouter,
+  }));
+  
+  render(<LoginScreen />);
+  
+  // Perform login
+  fireEvent.press(screen.getByTestId('submit-button'));
+  
+  await waitFor(() => {
+    expect(mockRouter.replace).toHaveBeenCalledWith('/home');
+  });
+});
+```
+
+## Error Handling
+
+### User-Facing Errors
+
+* Use `Alert.alert()` for critical errors
+* Use toast notifications for non-critical feedback
+* Display inline error messages for form validation
+* Provide actionable error messages ("Check your connection" not "Error 500")
+
+```typescript
+try {
+  await UserService.updateProfile(data);
+  Alert.alert('Success', 'Profile updated successfully');
+} catch (error) {
+  if (axios.isAxiosError(error)) {
+    const message = error.response?.data?.message || 'Failed to update profile';
+    Alert.alert('Update Failed', message);
+  } else {
+    Alert.alert('Error', 'An unexpected error occurred');
+  }
+}
+```
+
+### Error Boundaries
+
+```typescript
+import React, { Component, ReactNode } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+
+interface Props {
+  children: ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View className="flex-1 justify-center items-center p-4">
+          <Text className="text-xl font-bold mb-4">Something went wrong</Text>
+          <TouchableOpacity
+            onPress={() => this.setState({ hasError: false })}
+            className="bg-blue-500 rounded-lg py-2 px-4"
+          >
+            <Text className="text-white">Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    
+    return this.props.children;
+  }
+}
+```
+
+## Performance Optimization
+
+* **Use `React.memo`** for components that render frequently with same props
+* **Use `useCallback`** to memoize callbacks passed to child components
+* **Use `useMemo`** to memoize expensive calculations
+* **Lazy load heavy components** with `React.lazy` and `Suspense`
+* **Optimize images**: Use appropriate sizes, compress assets
+* **Implement pagination** for long lists
+* **Use `FlatList`** instead of `ScrollView` for long lists
+
+```typescript
+const MemoizedUserCard = React.memo(UserCard);
+
+function UserList({ users }: { users: User[] }) {
+  const handleUserPress = useCallback((userId: string) => {
+    router.push(`/users/${userId}`);
+  }, [router]);
+  
+  return (
+    <FlatList
+      data={users}
+      renderItem={({ item }) => (
+        <MemoizedUserCard
+          user={item}
+          onPress={() => handleUserPress(item.id)}
+        />
+      )}
+      keyExtractor={(item) => item.id}
+    />
+  );
+}
+```
+
+
+## Unit Testing (UI Layer - Jest + React Testing Library)
+
+### Coverage
+
+- Test coverage must be higher than 80%
+
+### Test File Structure
+
+```typescript
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { UserProfileScreen } from '../UserProfileScreen';
+
+// Mock dependencies
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    getItem: jest.fn(),
+    setItem: jest.fn(),
+  },
+}));
+
+describe('UserProfileScreen', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should display user name when data is loaded', async () => {
+    // Test implementation
+  });
+
+  it('should show error message when fetch fails', async () => {
+    // Test implementation
+  });
+});
+```
+
+### Naming Conventions
+
+**Test Descriptions**: Use descriptive `it()` or `test()` descriptions
+
+Examples:
+
+* `'should display loading spinner while fetching data'`
+* `'should navigate to login screen when user is not authenticated'`
+* `'should show error message when email is invalid'`
+
+### Testing User Interactions
+
+```typescript
+it('should submit form when user clicks submit button', async () => {
+  // Arrange
+  render(<LoginForm />);
+  const emailInput = screen.getByTestId('email-input');
+  const passwordInput = screen.getByTestId('password-input');
+  const submitButton = screen.getByTestId('submit-button');
+
+  // Act
+  fireEvent.changeText(emailInput, 'test@example.com');
+  fireEvent.changeText(passwordInput, 'password123');
+  fireEvent.press(submitButton);
+
+  // Assert
+  await waitFor(() => {
+    expect(screen.getByText('Login successful')).toBeTruthy();
+  });
+});
+```
+
+### Testing Async Operations
+
+```typescript
+it('should fetch and display user data on mount', async () => {
+  // Mock API response
+  const mockUser = { id: '123', name: 'John Doe', email: 'john@example.com' };
+  jest.spyOn(UserService, 'getUser').mockResolvedValue({
+    isSuccess: true,
+    data: mockUser,
+  });
+
+  // Render component
+  render(<UserProfile userId="123" />);
+
+  // Wait for async operations
+  await waitFor(() => {
+    expect(screen.getByText('John Doe')).toBeTruthy();
+    expect(screen.getByText('john@example.com')).toBeTruthy();
+  });
+});
+```
+
+### Test Data Queries
+
+**Preferred**: Use `getByTestId` for reliable element selection
+
+```typescript
+const button = screen.getByTestId('submit-button');
+const input = screen.getByTestId('email-input');
+```
+
+**Alternative** (when testId is not available):
+
+```typescript
+const button = screen.getByRole('button', { name: 'Submit' });
+const heading = screen.getByText('Welcome');
+```
+
+
+## Accessibility
+
+* Use meaningful labels for interactive elements
+* Ensure sufficient color contrast (WCAG 2.1 AA)
+* Support screen readers with `accessibilityLabel`
+* Test with TalkBack (Android) and VoiceOver (iOS)
+* Make touch targets at least 44x44 points
+
+```typescript
+<TouchableOpacity
+  accessibilityLabel="Submit form"
+  accessibilityHint="Submits the login form"
+  accessibilityRole="button"
+  className="bg-blue-500 rounded-lg py-3 px-6 min-h-[44px]"
+>
+  <Text className="text-white text-center">Submit</Text>
+</TouchableOpacity>
+```
+
+## Code Review Checklist
+
+Before submitting code:
+
+- [ ] All components have TypeScript interfaces for props
+- [ ] Interactive elements have `testID` attributes
+- [ ] Error handling is implemented
+- [ ] Loading states are shown for async operations
+- [ ] API responses check `isSuccess` before accessing `data`
+- [ ] Code follows NativeWind styling conventions
+- [ ] Tests are written and passing
+- [ ] No console.log statements (use Logger instead)
+- [ ] No `any` types in TypeScript
+- [ ] Code is formatted with ESLint
+
+## Common Patterns
+
+### Loading State Pattern
+
+```typescript
+function UserProfile({ userId }: { userId: string }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setLoading(true);
+        const response = await UserService.getUser(userId);
+        if (response.isSuccess) {
+          setUser(response.data);
+        } else {
+          setError(response.message);
+        }
+      } catch (err) {
+        setError('Failed to load user');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUser();
+  }, [userId]);
+  
+  if (loading) {
+    return <ActivityIndicator testID="loading-spinner" />;
+  }
+  
+  if (error) {
+    return <Text testID="error-message">{error}</Text>;
+  }
+  
+  if (!user) {
+    return <Text testID="empty-state">User not found</Text>;
+  }
+  
+  return <Text testID="user-name">{user.name}</Text>;
+}
+```
+
+### Form Validation Pattern
+
+```typescript
+function RegistrationForm() {
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  
+  const validateEmail = (value: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!value) {
+      setEmailError('Email is required');
+      return false;
+    }
+    if (!emailRegex.test(value)) {
+      setEmailError('Please enter a valid email');
+      return false;
+    }
+    setEmailError('');
+    return true;
+  };
+  
+  const handleSubmit = () => {
+    if (validateEmail(email)) {
+      // Submit form
+    }
+  };
+  
+  return (
+    <View>
+      <TextInput
+        testID="email-input"
+        value={email}
+        onChangeText={setEmail}
+        onBlur={() => validateEmail(email)}
+        className="border border-gray-300 rounded-md p-3"
+      />
+      {emailError && (
+        <Text testID="email-error" className="text-red-500 text-sm mt-1">
+          {emailError}
+        </Text>
+      )}
+    </View>
+  );
+}
+```
+
+## Reference
+
+See `/​.ai/​overall.mdc` for:
+
+* Project overview
+* General coding standards
+* Technology stack details
+* Testing requirements
+* CI/CD pipeline information

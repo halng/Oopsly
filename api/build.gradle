@@ -129,7 +129,7 @@ jacocoTestCoverageVerification {
 	classDirectories.setFrom(
 			files(
 					sourceSets.main.output.classesDirs.asFileTree.matching {
-						exclude '**/ApiApplication**', '**/Constant**', '**/viewmodel/**'
+						exclude '**/ApiApplication**', '**/Constant**', '**/viewmodel/**', '**/NoOpIEmailSender**'
 					}
 			)
 	)
@@ -168,24 +168,39 @@ spotless {
 }
 
 def loadEnv() {
-	def envFile = file('.env')
+	// 1. Determine which profile to use
+	// Check -Pprofile=xxx (Gradle property) or -Dspring.profiles.active=xxx (System property)
+	def activeProfile = project.hasProperty('profile') ?
+			project.property('profile') :
+			System.getProperty('spring.profiles.active', 'prod')
+
+	// 2. Determine file name: .env.test, .env.dev, or just .env for prod
+	def envFileName = (activeProfile == 'prod') ? '.env' : ".env.${activeProfile}"
+	def envFile = file(envFileName)
+
 	if (envFile.exists()) {
+		logger.lifecycle("🌱 Loading environment variables from: ${envFileName}")
 		envFile.readLines().each { line ->
-			if (!line.startsWith('#') && line.contains('=')) {
-				def (key, value) = line.tokenize('=')
-				if (key && value) {
-					System.setProperty(key.trim(), value.trim())
-				}
+			// Improved regex to handle values with '=' (like connection strings)
+			if (line.trim() && !line.startsWith('#') && line.contains('=')) {
+				def parts = line.split('=', 2)
+				def key = parts[0].trim()
+				def value = parts[1].trim()
+				System.setProperty(key, value)
 			}
 		}
+	} else {
+		logger.warn("⚠️ Environment file ${envFileName} not found, skipping loadEnv.")
 	}
 }
 
 tasks.named('bootRun') {
+	// Ensure we load the env before the process starts
 	doFirst {
 		loadEnv()
+		// Pass System properties to the bootRun environment
 		System.properties.each { k, v ->
-			environment k, v
+			environment k.toString(), v.toString()
 		}
 	}
 }

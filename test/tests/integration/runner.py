@@ -12,27 +12,23 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
-
-import json
 import logging
 import re
 import os
+import json
+
 import requests
 import yaml
-from typing import Dict, Any, Optional, List, Tuple
-from deepdiff import DeepDiff
+from typing import Dict, Any, Optional, Tuple
 from pathlib import Path
-import jsonpath_ng
 from jsonpath_ng import parse
-
+from ulid import ULID
 
 # --- CONFIGURATION ---
 logger = logging.getLogger(__name__)
 
-# Global Context to store variables shared between steps
-# (e.g. {"user_id": 123, "token": "abc"})
-CONTEXT: Dict[str, Any] = {}
-BASE_URL: str = ""
+# Use shared utils for context, base URL, and request builder
+import tests.utils.utils as utils  # noqa: E402
 
 
 def load_test_definition(file_path: str = "tests/config.yaml") -> Dict[str, Any]:
@@ -55,29 +51,24 @@ def load_test_definition(file_path: str = "tests/config.yaml") -> Dict[str, Any]
 
 def _substitute_variables(text: str) -> str:
     """
-    Helper: Replace placeholders like ${user_id} or $user_id with values from CONTEXT.
+    Helper: Replace placeholders like ${user_id} or $user_id with values from shared CONTEXT.
     """
     if not isinstance(text, str):
         return text
 
-    # First, handle ${variable_name} format (e.g., ${AUTH_TOKEN})
     pattern = re.compile(r"\$\{(\w+)\}")
 
     def replacer(match):
         key = match.group(1)
-        # Return value from CONTEXT if exists, else keep original placeholder
-        # converting to str because re.sub expects string return
-        return str(CONTEXT.get(key, f"${{{key}}}"))
+        return str(utils.CONTEXT.get(key, f"${{{key}}}"))
 
     text = pattern.sub(replacer, text)
 
-    # Then handle $variable_name format (e.g., $EMAIL)
-    # Pattern uses negative lookahead (?!\{) to avoid matching ${...} which was already handled
     simple_var_pattern = re.compile(r"\$(?!\{)(\w+)")
 
     def replacer2(match):
         key = match.group(1)
-        return str(CONTEXT.get(key, f"${key}"))
+        return str(utils.CONTEXT.get(key, f"${key}"))
 
     return simple_var_pattern.sub(replacer2, text)
 
@@ -96,71 +87,18 @@ def _process_data_with_context(data: Any) -> Any:
         return data
 
 
-def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
+def get_default_headers() -> Dict[str, str]:
     """
-    Prepare the request dictionary, substituting variables from Context and step_vars.
+    Return default headers for API requests.
     """
-    if step_vars is None:
-        step_vars = {}
-
-    # Temporarily add step vars to context for substitution
-    original_context = CONTEXT.copy()
-    try:
-        # First, substitute any variables in step_vars values using current CONTEXT
-        # This handles cases like: with: { AUTH_TOKEN: ${AUTH_TOKEN} }
-        resolved_step_vars = {}
-        for key, value in step_vars.items():
-            if isinstance(value, str):
-                resolved_step_vars[key] = _substitute_variables(value)
-            else:
-                resolved_step_vars[key] = value
-
-        # Now update CONTEXT with the resolved values
-        CONTEXT.update(resolved_step_vars)
-
-        # 1. Build URL: base_url + endpoint with variable substitution
-        endpoint = _substitute_variables(api_info.get("endpoint", ""))
-        url = BASE_URL + endpoint
-
-        # 2. Substitute variables in Headers
-        headers = {}
-        for key, value in api_info.get("headers", {}).items():
-            headers[key] = _substitute_variables(value)
-
-        # 3. Build Body with variable substitution
-        body = None
-        if "body" in api_info:
-            body = {}
-            for key, field_def in api_info["body"].items():
-                if isinstance(field_def, dict) and "value" in field_def:
-                    body[key] = _substitute_variables(field_def["value"])
-                else:
-                    body[key] = _substitute_variables(field_def)
-
-        # 4. Build Query Params with variable substitution
-        params = {}
-        if "query-params" in api_info:
-            for key, param_def in api_info["query-params"].items():
-                if isinstance(param_def, dict) and "value" in param_def:
-                    params[key] = _substitute_variables(param_def["value"])
-                else:
-                    params[key] = _substitute_variables(param_def)
-
-        result = {
-            "method": api_info.get("method", "GET").upper(),
-            "url": url,
-            "headers": headers,
-            "params": params,
-        }
-
-        if body:
-            result["json"] = body
-
-        return result
-    finally:
-        # Always restore original context
-        CONTEXT.clear()
-        CONTEXT.update(original_context)
+    # keep this for backward compatibility if other parts reference it;
+    # but it will not be used by build_api_request anymore.
+    return {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-Request-ID": str(ULID()),
+        "X-Platform": "integration-test-runner",
+    }
 
 
 def send_api_request(request_data: dict) -> Optional[requests.Response]:
@@ -310,14 +248,14 @@ def validate_api_response(
             val = actual_json.get(json_path) if actual_json else None
 
         if val is not None:
-            CONTEXT[context_key] = val
+            utils.CONTEXT[context_key] = val
 
     # Old capture format support
     captures = step_config.get("capture", {})
     for context_key, json_key in captures.items():
         val = actual_json.get(json_key) if actual_json else None
         if val:
-            CONTEXT[context_key] = val
+            utils.CONTEXT[context_key] = val
 
     return True
 
@@ -350,16 +288,30 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
     # Get step-specific variables from 'with' key
     step_vars = case.get("with", {})
 
-    req_data = build_api_request(api_info, step_vars)
+    # build_api_request is provided by utils
+    req_data = utils.build_api_request(api_info, step_vars)
 
     # Log request details (compact format)
     method = req_data.get("method", "GET")
     url = req_data.get("url", "")
     logger.info(f"      ▶ {method} {url}")
 
-    # Log request body if present (truncated)
+    # Log request body if present (truncated to avoid exposing sensitive data)
     if "json" in req_data and req_data["json"]:
         body_str = str(req_data["json"])
+        # Redact sensitive fields
+        sensitive_fields = [
+            "access_token",
+            "refresh_token",
+            "accessToken",
+            "refreshToken",
+            "password",
+            "otp",
+        ]
+        for field in sensitive_fields:
+            if field in body_str:
+                body_str = body_str.replace(field, f"{field}[REDACTED]")
+        # Truncate if too long
         if len(body_str) > 100:
             body_str = body_str[:100] + "..."
         logger.info(f"        Body: {body_str}")
@@ -371,8 +323,31 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
         status_icon = "✓" if 200 <= response.status_code < 300 else "✗"
         logger.info(f"      ◀ {status_icon} Status {response.status_code}")
 
-        # Log response body (truncated)
+        # Log response body (truncated and redacted)
         response_text = response.text
+        # Redact tokens from response
+        try:
+            import json
+
+            response_json = json.loads(response_text)
+            if isinstance(response_json, dict):
+                for field in [
+                    "access_token",
+                    "refresh_token",
+                    "accessToken",
+                    "refreshToken",
+                ]:
+                    if field in response_json:
+                        response_json[field] = "[REDACTED]"
+                    if (
+                        isinstance(response_json.get("data"), dict)
+                        and field in response_json["data"]
+                    ):
+                        response_json["data"][field] = "[REDACTED]"
+            response_text = json.dumps(response_json)
+        except:
+            pass
+        # Truncate if too long
         if len(response_text) > 200:
             response_text = response_text[:200] + "..."
         logger.debug(f"        Response: {response_text}")
@@ -386,8 +361,8 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
         # Update env with any captured variables from CONTEXT
         captured_vars = []
         for key, value in case.get("env-vars", {}).items():
-            if key in CONTEXT:
-                env[key] = CONTEXT[key]
+            if key in utils.CONTEXT:
+                env[key] = utils.CONTEXT[key]
                 captured_vars.append(key)
 
         if captured_vars:
@@ -400,15 +375,13 @@ def run(env: dict, apis: dict) -> bool:
     """
     Main execution loop.
     """
-    global BASE_URL
-
-    # Set BASE_URL from environment
-    BASE_URL = env.get("base_url", "")
-    if not BASE_URL:
+    # Set BASE_URL in shared utils module
+    utils.BASE_URL = env.get("base_url", "")
+    if not utils.BASE_URL:
         logger.error("❌ base_url not found in environment configuration")
         return False
 
-    logger.info(f"🔗 Base URL: {BASE_URL}")
+    logger.info(f"🔗 Base URL: {utils.BASE_URL}")
 
     # Get flows directory path relative to this file
     flows_dir = os.path.join(os.path.dirname(__file__), "flows")
@@ -429,13 +402,18 @@ def run(env: dict, apis: dict) -> bool:
     for flow_file in test_flows:
         logger.info(f"{'='*80}")
         logger.info(f"📁 Flow File: {flow_file.name}")
-        logger.info(f"{'='*80}")
 
         config_path = str(flow_file)
         test_definition = load_test_definition(config_path)
         if not test_definition:
             logger.error("🚫 No test cases found.\n")
             continue
+
+        if test_definition.get("enabled", True) is False:
+            logger.info("⏭️  Flow is disabled. Skipping...\n")
+            continue
+
+        logger.info(f"{'='*80}")
 
         flows = test_definition.get("flows", [])
 
@@ -508,27 +486,27 @@ def run(env: dict, apis: dict) -> bool:
                 logger.info(f"   ❌ Flow Failed: {flow_name}\n")
 
     # Print summary statistics
-    logger.info("\n" + "=" * 80)
+    logger.info("" + "=" * 80)
     logger.info("📊 TEST EXECUTION SUMMARY")
     logger.info("=" * 80)
-    logger.info(f"\n📦 Flow Suites: {total_flows} total")
+    logger.info(f"📦 Flow Suites: {total_flows} total")
     logger.info(f"   ✅ Passed: {passed_flows}")
     logger.info(f"   ❌ Failed: {failed_flows}")
 
-    logger.info(f"\n🔧 Test Steps: {total_steps} total")
+    logger.info(f"🔧 Test Steps: {total_steps} total")
     logger.info(f"   ✅ Passed: {passed_steps}")
     logger.info(f"   ❌ Failed: {failed_steps}")
 
     if failed_step_details:
-        logger.info(f"\n{'='*80}")
+        logger.info(f"{'='*80}")
         logger.info(f"❌ FAILED STEPS ({len(failed_step_details)} failures)")
         logger.info("=" * 80)
         for idx, failure in enumerate(failed_step_details, 1):
-            logger.info(f"\n{idx}. 📁 {failure['flow_file']} → {failure['flow_name']}")
+            logger.info(f"{idx}. 📁 {failure['flow_file']} → {failure['flow_name']}")
             logger.info(f"   🔹 Step: {failure['step_name']}")
             logger.info(f"   📍 Type: {failure['step_type']}")
 
-    logger.info("\n" + "=" * 80)
+    logger.info("" + "=" * 80)
 
     if all_passed:
         logger.info("🎉 ALL TESTS PASSED!")

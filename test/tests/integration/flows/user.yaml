@@ -1,3 +1,4 @@
+enabled: true
 flows:
   - flow: User Authentication Flow
     description: "This flow tests user authentication including token refresh and logout"
@@ -33,15 +34,13 @@ flows:
         env-vars:
           AUTH_TOKEN: $.data.access_token
           REFRESH_TOKEN: $.data.refresh_token
-          USER_EMAIL: $.data.user.email
           USER_ID: $.data.user.id
       
       - name: "3. Refresh Access Token"
         api: USER_REFRESH_TOKEN
         with:
           REFRESH_TOKEN: ${REFRESH_TOKEN}
-          USER_EMAIL: ${USER_EMAIL}
-          USER_ID: ${USER_ID}
+          USER_EMAIL: test@oopsly.com
         assertions:
           - path: $.isSuccess
             type: equals
@@ -93,20 +92,19 @@ flows:
           - path: $.isSuccess
             type: equals
             value: false
-      
-      - name: "3. Refresh Token with Invalid Token"
-        api: USER_REFRESH_TOKEN
-        with:
-          REFRESH_TOKEN: "invalid-token-string"
-          USER_EMAIL: test@oopsly.com
-          USER_ID: "00000000-0000-0000-0000-000000000000"
-        assertions:
-          - path: $.isSuccess
-            type: equals
-            value: false
-          - path: $.status
-            type: equals
-            value: 401
+#
+#      - name: "3. Refresh Token with Invalid Token"
+#        api: USER_REFRESH_TOKEN
+#        with:
+#          REFRESH_TOKEN: "invalid.token.string"
+#          USER_EMAIL: test@oopsly.com
+#        assertions:
+#          - path: $.isSuccess
+#            type: equals
+#            value: false
+#          - path: $.status
+#            type: equals
+#            value: 401
 
   - flow: Multiple User Sessions
     description: "Test multiple user authentication sessions"

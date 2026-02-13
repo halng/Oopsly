@@ -1,0 +1,456 @@
+---
+description: Rules for the documents for the whole app
+globs: docs/**/*
+alwaysApply: true
+---
+
+# Document Guidelines
+
+> **Note:** This document provides comprehensive instructions for AI agents working on project documentation. Always refer to `/​.ai/​overall.mdc` for project-wide standards and conventions.
+
+## Documentation Philosophy
+
+All documentation must be:
+
+* **Clear and Concise**: Use simple language, avoid jargon
+* **Up-to-Date**: Update docs whenever code changes affect documented behavior
+* **Complete**: Cover all features, APIs, and workflows
+* **Accessible**: Written for both developers and non-technical users
+* **Well-Structured**: Logical organization with clear hierarchy
+
+## Markdown Standards
+
+### Format Requirements
+
+* **All documentation MUST be written in Markdown** (`.md` files)
+* **All markdown files MUST pass `markdownlint-cli2` validation**
+* The CI pipeline automatically checks markdown linting - ensure compliance before committing
+
+### Markdown Linting Rules
+
+Key rules to follow:
+
+* Use ATX-style headers (`#` instead of underline style)
+* One blank line before and after headers
+* One blank line before and after lists
+* One blank line before and after code blocks
+* Use fenced code blocks with language specifiers
+* No trailing spaces
+* Files must end with a single newline
+* No bare URLs (use `[text](url)` format)
+* Consistent list marker style (use `-` for unordered lists)
+
+```markdown
+# Correct Header
+
+This is a paragraph with proper spacing.
+
+- List item 1
+- List item 2
+
+\`\`\`typescript
+// Code block with language
+const example = "code";
+\`\`\`
+
+Another paragraph after code block.
+```
+
+### File Naming
+
+* Use lowercase with hyphens: `authentication-flow.md`, `api-guidelines.md`
+* Be descriptive: `user-management.md` not `users.md`
+* Group related docs in subdirectories
+
+## Document Types & When to Update
+
+### 1. Feature Documentation
+
+**Location**: `docs/features/`
+
+**When to Update**:
+
+* When adding a new feature
+* When modifying existing feature behavior
+* When deprecating a feature
+
+**Required Sections**:
+
+* Overview and purpose
+* User stories
+* Technical specifications
+* API endpoints involved
+* UI components involved
+* Configuration requirements
+* Examples and screenshots
+
+**Example Structure**:
+
+```markdown
+# Feature Name
+
+## Overview
+
+Brief description of what the feature does and why it exists.
+
+## User Stories
+
+- As a [user type], I want to [action] so that [benefit]
+
+## Technical Implementation
+
+### Backend
+
+- API endpoints
+- Database changes
+- Business logic
+
+### Frontend
+
+- Screens/components
+- State management
+- Navigation flow
+
+## Usage Examples
+
+### Creating a New Item
+
+\`\`\`typescript
+// Code example
+\`\`\`
+
+### Screenshots
+
+![Feature Screenshot](../images/feature-name.png)
+
+## Configuration
+
+Required environment variables or settings.
+
+## Testing
+
+How to test this feature.
+```
+
+### 2. API Documentation
+
+**Location**: `docs/api/`
+
+**When to Update**:
+
+* When adding new endpoints
+* When modifying request/response formats
+* When changing authentication requirements
+* When deprecating endpoints
+
+**Required Information**:
+
+* Endpoint URL and HTTP method
+* Request parameters (path, query, body)
+* Request body schema
+* Response schema (success and error cases)
+* Authentication requirements
+* Example requests and responses
+* Error codes and meanings
+
+**Example**:
+
+```markdown
+# User Management API
+
+## Create User
+
+Creates a new user account.
+
+**Endpoint**: `POST /api/v1/users`
+
+**Authentication**: Required (JWT token)
+
+**Request Body**:
+
+\`\`\`json
+{
+  "email": "user@example.com",
+  "name": "John Doe",
+  "password": "SecurePass123!"
+}
+\`\`\`
+
+**Response** (201 Created):
+
+\`\`\`json
+{
+  "isSuccess": true,
+  "message": "User created successfully",
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "email": "user@example.com",
+    "name": "John Doe"
+  },
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+\`\`\`
+
+**Error Responses**:
+
+- `400 Bad Request`: Invalid input data
+- `409 Conflict`: Email already exists
+- `401 Unauthorized`: Missing or invalid token
+```
+
+### 3. Architecture Documentation
+
+**Location**: `docs/architecture/`
+
+**When to Update**:
+
+* When changing system architecture
+* When adding new components or services
+* When modifying data flow
+* When changing technology stack
+
+**Required Sections**:
+
+* System overview diagram
+* Component descriptions
+* Data flow diagrams
+* Technology stack
+* Design decisions and rationale
+
+### 4. Flow Diagrams
+
+**Location**: `docs/flows/`
+
+**When to Update**:
+
+* When implementing a new user flow
+* When modifying an existing flow
+* When adding new screens or steps
+
+**Requirements**:
+
+* **Must draw end-to-end flow diagrams** for each feature
+* Visualize the complete user journey from start to finish
+* Include all screens, API calls, and decision points
+* Use standard flowchart symbols or sequence diagrams
+* Can use Mermaid diagrams, PlantUML, or SVG graphics
+
+**Example Mermaid Diagram**:
+
+```markdown
+## Authentication Flow
+
+\`\`\`mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant API
+    participant Database
+    
+    User->>UI: Enter email
+    UI->>API: POST /otp (email)
+    API->>Database: Check user exists
+    Database-->>API: User found
+    API-->>UI: OTP sent
+    UI-->>User: Show verification screen
+    
+    User->>UI: Enter OTP
+    UI->>API: POST /otp/validate
+    API->>Database: Validate OTP
+    Database-->>API: Valid
+    API-->>UI: JWT tokens
+    UI-->>User: Redirect to home
+\`\`\`
+```
+
+### 5. Setup & Installation Guides
+
+**Location**: `docs/setup/`
+
+**When to Update**:
+
+* When adding new dependencies
+* When changing environment requirements
+* When modifying build process
+* When updating deployment procedures
+
+**Required Sections**:
+
+* Prerequisites
+* Step-by-step installation instructions
+* Configuration guide
+* Troubleshooting common issues
+* Verification steps
+
+### 6. Testing Documentation
+
+**Location**: `docs/testing/`
+
+**When to Update**:
+
+* When adding new test types
+* When changing testing strategy
+* When adding test utilities or helpers
+
+**Required Information**:
+
+* Testing philosophy and requirements
+* How to run tests
+* Test coverage requirements
+* Writing test guidelines
+* CI/CD integration
+
+## Documentation Style Guide
+
+### Writing Style
+
+* Use present tense: "The system validates..." not "The system will validate..."
+* Use active voice: "The API returns..." not "The response is returned..."
+* Be specific: "Click the Save button" not "Submit the form"
+* Use consistent terminology throughout all docs
+
+### Code Examples
+
+* Always include code examples for complex features
+* Use syntax highlighting with proper language tags
+* Include both correct and incorrect examples when clarifying usage
+* Show realistic, complete examples (not just fragments)
+
+### Images and Diagrams
+
+* Store images in `docs/images/` directory
+* Use descriptive filenames: `auth-flow-diagram.svg` not `diagram1.svg`
+* Reference images with relative paths: `![Description](../images/filename.png)`
+* Include alt text for accessibility
+* Prefer vector graphics (SVG) for diagrams
+* Compress PNG/JPG images to reduce file size
+
+### Links
+
+* Use relative links for internal documentation: `[API Guide](./api-guidelines.md)`
+* Use absolute URLs for external resources
+* Check links periodically for validity
+* Use descriptive link text (not "click here")
+
+## Automatic Documentation Updates
+
+As an AI agent, you must:
+
+1. **Detect Feature Changes**: When code changes affect documented features, automatically update corresponding docs
+2. **Detect New Features**: When new features are added, create new documentation
+3. **Detect API Changes**: When controllers or endpoints change, update API documentation
+4. **Draw Flow Diagrams**: When implementing features with user flows, create or update flow diagrams
+5. **Keep Examples Current**: Update code examples when APIs or implementations change
+
+## Documentation Review Checklist
+
+Before considering documentation complete:
+
+- [ ] All markdown files pass `markdownlint-cli2` validation
+- [ ] All code examples are tested and work correctly
+- [ ] All images/diagrams are properly referenced and display correctly
+- [ ] All links work (internal and external)
+- [ ] Spelling and grammar are correct
+- [ ] Technical terms are used consistently
+- [ ] Document follows the appropriate template for its type
+- [ ] Related documents are cross-referenced
+- [ ] Table of contents is present for long documents
+- [ ] Document is added to the main README or index
+
+## Tools and Utilities
+
+### Markdown Linting
+
+```bash
+# Install markdownlint-cli2
+npm install -g markdownlint-cli2
+
+# Run markdown linter
+cd docs
+markdownlint-cli2 "**/*.md"
+
+# Auto-fix simple issues
+markdownlint-cli2 --fix "**/*.md"
+```
+
+### Diagram Tools
+
+* **Mermaid**: For sequence diagrams, flowcharts (embedded in markdown)
+* **PlantUML**: For UML diagrams
+* **Draw.io**: For complex diagrams (export as SVG)
+* **Excalidraw**: For hand-drawn style diagrams
+
+## Common Documentation Patterns
+
+### API Endpoint Template
+
+```markdown
+## [HTTP Method] [Endpoint Path]
+
+Brief description of what this endpoint does.
+
+**Authentication**: Required/Optional/Public
+
+**Request Parameters**:
+- Path: `{id}` (UUID) - Description
+- Query: `?filter=value` (string, optional) - Description
+
+**Request Body**:
+\`\`\`json
+{
+  "field": "value"
+}
+\`\`\`
+
+**Response** (200 OK):
+\`\`\`json
+{
+  "isSuccess": true,
+  "data": { ... }
+}
+\`\`\`
+
+**Error Codes**:
+- 400: Invalid input
+- 404: Resource not found
+```
+
+### Feature Documentation Template
+
+```markdown
+# [Feature Name]
+
+## Overview
+What the feature does and why.
+
+## User Stories
+- As a [user], I want [action] so that [benefit]
+
+## Implementation
+### Backend
+- API endpoints
+- Database changes
+
+### Frontend
+- Components
+- Navigation
+
+## Usage
+Step-by-step guide with examples.
+
+## Configuration
+Required settings.
+
+## Testing
+How to test the feature.
+```
+
+## Reference
+
+See `/​.ai/​overall.mdc` for:
+
+* Project overview
+* General coding standards
+* Git commit message format
+* License header requirements
+* CI/CD pipeline information
