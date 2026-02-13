@@ -27,10 +27,8 @@ from ulid import ULID
 # --- CONFIGURATION ---
 logger = logging.getLogger(__name__)
 
-# Global Context to store variables shared between steps
-# (e.g. {"user_id": 123, "token": "abc"})
-CONTEXT: Dict[str, Any] = {}
-BASE_URL: str = ""
+# Use shared utils for context, base URL, and request builder
+import tests.utils.utils as utils  # noqa: E402
 
 
 def load_test_definition(file_path: str = "tests/config.yaml") -> Dict[str, Any]:
@@ -53,29 +51,24 @@ def load_test_definition(file_path: str = "tests/config.yaml") -> Dict[str, Any]
 
 def _substitute_variables(text: str) -> str:
     """
-    Helper: Replace placeholders like ${user_id} or $user_id with values from CONTEXT.
+    Helper: Replace placeholders like ${user_id} or $user_id with values from shared CONTEXT.
     """
     if not isinstance(text, str):
         return text
 
-    # First, handle ${variable_name} format (e.g., ${AUTH_TOKEN})
     pattern = re.compile(r"\$\{(\w+)\}")
 
     def replacer(match):
         key = match.group(1)
-        # Return value from CONTEXT if exists, else keep original placeholder
-        # converting to str because re.sub expects string return
-        return str(CONTEXT.get(key, f"${{{key}}}"))
+        return str(utils.CONTEXT.get(key, f"${{{key}}}"))
 
     text = pattern.sub(replacer, text)
 
-    # Then handle $variable_name format (e.g., $EMAIL)
-    # Pattern uses negative lookahead (?!\{) to avoid matching ${...} which was already handled
     simple_var_pattern = re.compile(r"\$(?!\{)(\w+)")
 
     def replacer2(match):
         key = match.group(1)
-        return str(CONTEXT.get(key, f"${key}"))
+        return str(utils.CONTEXT.get(key, f"${key}"))
 
     return simple_var_pattern.sub(replacer2, text)
 
@@ -94,78 +87,12 @@ def _process_data_with_context(data: Any) -> Any:
         return data
 
 
-def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
-    """
-    Prepare the request dictionary, substituting variables from Context and step_vars.
-    """
-    if step_vars is None:
-        step_vars = {}
-
-    # Temporarily add step vars to context for substitution
-    original_context = CONTEXT.copy()
-    try:
-        # First, substitute any variables in step_vars values using current CONTEXT
-        # This handles cases like: with: { AUTH_TOKEN: ${AUTH_TOKEN} }
-        resolved_step_vars = {}
-        for key, value in step_vars.items():
-            if isinstance(value, str):
-                resolved_step_vars[key] = _substitute_variables(value)
-            else:
-                resolved_step_vars[key] = value
-
-        # Now update CONTEXT with the resolved values
-        CONTEXT.update(resolved_step_vars)
-
-        # 1. Build URL: base_url + endpoint with variable substitution
-        endpoint = _substitute_variables(api_info.get("endpoint", ""))
-        url = BASE_URL + endpoint
-
-        # 2. Substitute variables in Headers
-        headers = {}
-        for key, value in api_info.get("headers", {}).items():
-            headers[key] = _substitute_variables(value)
-            headers.update(get_default_headers())
-
-        # 3. Build Body with variable substitution
-        body = None
-        if "body" in api_info:
-            body = {}
-            for key, field_def in api_info["body"].items():
-                if isinstance(field_def, dict) and "value" in field_def:
-                    body[key] = _substitute_variables(field_def["value"])
-                else:
-                    body[key] = _substitute_variables(field_def)
-
-        # 4. Build Query Params with variable substitution
-        params = {}
-        if "query-params" in api_info:
-            for key, param_def in api_info["query-params"].items():
-                if isinstance(param_def, dict) and "value" in param_def:
-                    params[key] = _substitute_variables(param_def["value"])
-                else:
-                    params[key] = _substitute_variables(param_def)
-
-        result = {
-            "method": api_info.get("method", "GET").upper(),
-            "url": url,
-            "headers": headers,
-            "params": params,
-        }
-
-        if body:
-            result["json"] = body
-
-        return result
-    finally:
-        # Always restore original context
-        CONTEXT.clear()
-        CONTEXT.update(original_context)
-
-
 def get_default_headers() -> Dict[str, str]:
     """
     Return default headers for API requests.
     """
+    # keep this for backward compatibility if other parts reference it;
+    # but it will not be used by build_api_request anymore.
     return {
         "Content-Type": "application/json",
         "Accept": "application/json",
@@ -321,14 +248,14 @@ def validate_api_response(
             val = actual_json.get(json_path) if actual_json else None
 
         if val is not None:
-            CONTEXT[context_key] = val
+            utils.CONTEXT[context_key] = val
 
     # Old capture format support
     captures = step_config.get("capture", {})
     for context_key, json_key in captures.items():
         val = actual_json.get(json_key) if actual_json else None
         if val:
-            CONTEXT[context_key] = val
+            utils.CONTEXT[context_key] = val
 
     return True
 
@@ -361,7 +288,8 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
     # Get step-specific variables from 'with' key
     step_vars = case.get("with", {})
 
-    req_data = build_api_request(api_info, step_vars)
+    # build_api_request is provided by utils
+    req_data = utils.build_api_request(api_info, step_vars)
 
     # Log request details (compact format)
     method = req_data.get("method", "GET")
@@ -433,8 +361,8 @@ def _run(env: dict, apis: dict, case: dict) -> Tuple[bool, dict]:
         # Update env with any captured variables from CONTEXT
         captured_vars = []
         for key, value in case.get("env-vars", {}).items():
-            if key in CONTEXT:
-                env[key] = CONTEXT[key]
+            if key in utils.CONTEXT:
+                env[key] = utils.CONTEXT[key]
                 captured_vars.append(key)
 
         if captured_vars:
@@ -447,15 +375,13 @@ def run(env: dict, apis: dict) -> bool:
     """
     Main execution loop.
     """
-    global BASE_URL
-
-    # Set BASE_URL from environment
-    BASE_URL = env.get("base_url", "")
-    if not BASE_URL:
+    # Set BASE_URL in shared utils module
+    utils.BASE_URL = env.get("base_url", "")
+    if not utils.BASE_URL:
         logger.error("❌ base_url not found in environment configuration")
         return False
 
-    logger.info(f"🔗 Base URL: {BASE_URL}")
+    logger.info(f"🔗 Base URL: {utils.BASE_URL}")
 
     # Get flows directory path relative to this file
     flows_dir = os.path.join(os.path.dirname(__file__), "flows")

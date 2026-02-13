@@ -27,8 +27,8 @@ import yaml
 
 from tests.integration import runner
 
-# Assume we have the runner we discussed earlier
-# from test_runner import Runner
+# Import shared utils for environment setup / teardown and file handling
+import tests.utils.utils as utils  # noqa: E402
 
 # --- CONFIGURATION ---
 DOCKER_COMPOSE_CMD = ["docker", "compose"]  # or ["docker-compose"] depending on version
@@ -287,61 +287,13 @@ def get_api_definitions() -> (Dict[str, str], Dict[str, any]):
 
 
 def before_test():
-    # Remove previous API log files to ensure test runs start with a clean slate
-    try:
-        logs_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "..", "api", "logs")
-        )
-        if os.path.isdir(logs_dir):
-            logger.info("🧹 Clearing API logs in: %s", logs_dir)
-            # Remove files
-            for root, _, files in os.walk(logs_dir):
-                for fname in files:
-                    fpath = os.path.join(root, fname)
-                    try:
-                        os.remove(fpath)
-                        logger.debug("Removed log file: %s", fpath)
-                    except Exception as e:
-                        logger.warning("Could not remove log file %s: %s", fpath, e)
-            # Attempt to remove any empty subdirectories (but keep the logs_dir itself)
-            for root, dirs, _ in os.walk(logs_dir, topdown=False):
-                for d in dirs:
-                    dpath = os.path.join(root, d)
-                    try:
-                        os.rmdir(dpath)
-                        logger.debug("Removed empty log directory: %s", dpath)
-                    except OSError:
-                        # Directory not empty or removal failed; ignore
-                        pass
-        else:
-            logger.debug("No api logs directory to clear: %s", logs_dir)
-    except Exception as e:
-        logger.warning("Failed to clear API logs directory: %s", e)
+    # Delegate to utils.before_test (cleans logs)
+    utils.before_test()
 
 
 def after_test():
-    try:
-        logs_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "..", "api", "logs")
-        )
-        if os.path.isdir(logs_dir):
-            logger.error("=== BEGIN API LOGS (%s) ===", logs_dir)
-            for root, _, files in os.walk(logs_dir):
-                for fname in sorted(files):
-                    fpath = os.path.join(root, fname)
-                    rel = os.path.relpath(fpath, logs_dir)
-                    logger.error("--- FILE: %s ---", rel)
-                    try:
-                        with open(fpath, "r", encoding="utf-8", errors="replace") as fh:
-                            for line in fh:
-                                logger.error(line.rstrip())
-                    except Exception as e:
-                        logger.error("Could not read %s: %s", fpath, e)
-            logger.error("=== END API LOGS ===")
-        else:
-            logger.error("API logs directory not found: %s", logs_dir)
-    except Exception as e:
-        logger.exception("Failed to print API logs: %s", e)
+    # Delegate to utils.after_test (prints logs on failure)
+    utils.after_test()
 
 
 def main() -> None:
@@ -349,28 +301,29 @@ def main() -> None:
     skip_docker = os.getenv("SKIP_DOCKER_SETUP", "false").lower() == "true"
     app_process = None  # Initialize to None to prevent UnboundLocalError
 
-    before_test()
+    # Use utils to clear logs
+    utils.before_test()
 
     try:
         if skip_docker:
             logger.info("🐳 Skipping Docker setup (managed externally)")
             setup_success = True
         else:
-            setup_success = setup_docker()
+            setup_success = utils.setup_docker()
 
         if not setup_success:
             logger.error("🛑 Aborting tests due to environment setup failure.")
             sys.exit(1)
 
         logger.info("✅ Environment setup complete. Starting application...")
-        app_process = setup_app()
+        app_process = utils.setup_app()
         # --- EXECUTE RUNNER ---
 
         logger.info("🧪 Environment Ready. Initializing Test Runner...")
-        env, apis = get_api_definitions()
+        env, apis = utils.get_api_definitions()
         result = runner.run(env, apis)
 
-        after_test()
+        utils.after_test()
 
         if not result:
             sys.exit(1)
@@ -392,7 +345,7 @@ def main() -> None:
                 logger.warning(f"Error terminating app process: {e}")
 
         if not skip_docker:
-            tear_down_docker()
+            utils.tear_down_docker()
         else:
             logger.info("🐳 Skipping Docker teardown (managed externally)")
 
