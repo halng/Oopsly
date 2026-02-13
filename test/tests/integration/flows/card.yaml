@@ -52,7 +52,9 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
           SUBJECT_ID: ${SUBJECT_ID}
-          CARDS_ARRAY: '[{"front": "What is the capital of France?", "back": "Paris"}]' 
+          CARDS_ARRAY:
+            - front: "What is the capital of France?"
+              back: "Paris"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -207,7 +209,9 @@ flows:
           AUTH_TOKEN: ${AUTH_TOKEN}
           SHELVE_ID: ${SHELVE_ID}
           SUBJECT_ID: ${SUBJECT_ID}
-          CARDS_ARRAY: '[{"front": "Edge case test question", "back": "Edge case test answer"}]' 
+          CARDS_ARRAY:
+            - front: "Edge case test question"
+              back: "Edge case test answer"
         assertions:
           - path: $.isSuccess
             type: equals
