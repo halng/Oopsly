@@ -115,7 +115,7 @@ def setup_app() -> Optional[subprocess.Popen]:
         # 1. Start the process in the background
         # We use Popen so it doesn't wait for the server to exit
         process = subprocess.Popen(
-            ["./gradlew", "bootRun", "--args='--spring.profiles.active=test'"],
+            ["./gradlew", "bootRun", "--args=--spring.profiles.active=test"],
             cwd=app_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
