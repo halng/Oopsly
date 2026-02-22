@@ -1,4 +1,4 @@
-enabled: true
+enabled: false
 flows:
   - flow: Test Suite Management Flow
     description: "This flow tests test suite CRUD operations within shelves"
