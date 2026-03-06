@@ -342,7 +342,15 @@ class UserServiceImplTest {
 
         assertNotNull(result);
         assertTrue(result.getBody().isSuccess());
-        verify(settingRepository).save(any(SettingEntity.class));
+        ArgumentCaptor<SettingEntity> captor = ArgumentCaptor.forClass(SettingEntity.class);
+        verify(settingRepository).save(captor.capture());
+        SettingEntity created = captor.getValue();
+        assertEquals(Theme.SYSTEM, created.getTheme());
+        assertEquals(Language.ENGLISH, created.getLanguage());
+        assertEquals(1, created.getSpaceConfig().get("AGAIN"));
+        assertEquals(1, created.getSpaceConfig().get("HARD"));
+        assertEquals(5, created.getSpaceConfig().get("GOOD"));
+        assertEquals(10, created.getSpaceConfig().get("EASY"));
     }
 
     @Test
