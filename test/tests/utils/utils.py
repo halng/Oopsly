@@ -154,6 +154,9 @@ def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
         for key, field_def in api_info["body"].items():
             if isinstance(field_def, dict) and "value" in field_def:
                 raw_val = field_def["value"]
+                constraints = field_def.get("constraints", {})
+                is_nullable = constraints.get("nullable", False)
+
                 # If value is $VAR and context[VAR] is dict/list, use as-is (no stringify)
                 if (
                     isinstance(raw_val, str)
@@ -162,10 +165,23 @@ def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
                 ):
                     var_name = raw_val[1:].split(".")[0].split("[")[0]
                     ctx_val = working_context.get(var_name)
+
+                    # Skip nullable fields if variable is not in context
+                    if ctx_val is None and is_nullable:
+                        continue
+
                     if isinstance(ctx_val, (dict, list)):
                         body[key] = ctx_val
                     else:
-                        body[key] = _substitute_variables(raw_val, working_context)
+                        substituted = _substitute_variables(raw_val, working_context)
+                        # Skip nullable fields if substitution failed (still contains $)
+                        if (
+                            is_nullable
+                            and isinstance(substituted, str)
+                            and "$" in substituted
+                        ):
+                            continue
+                        body[key] = substituted
                 else:
                     body[key] = _substitute_variables(raw_val, working_context)
             else:

@@ -108,3 +108,7 @@ resilience4j:
             baseConfig: default
           questionServiceCircuitBreaker:
             baseConfig: default
+          subjectServiceCircuitBreaker:
+            baseConfig: default
+          shelveServiceCircuitBreaker:
+            baseConfig: default
