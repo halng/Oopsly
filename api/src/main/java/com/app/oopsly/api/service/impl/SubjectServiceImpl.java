@@ -21,6 +21,7 @@ import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
+import com.app.oopsly.api.exception.UnauthenticatedException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.ShelfRepository;
 import com.app.oopsly.api.repository.SubjectRepository;
@@ -226,35 +227,44 @@ public class SubjectServiceImpl implements SubjectService {
     // Fallback method for getAllByShelve
     public ApiRes getAllByShelveFallback(UUID shelfId, int page, int size, Throwable t) {
         log.error("Subject service unavailable during getAllByShelve: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Subject service is currently unavailable. Please try again later.", t);
+        throw unwrapSubjectException(t);
     }
 
     // Fallback method for getById
     public ApiRes getByIdFallback(UUID shelfId, UUID subjectId, Throwable t) {
         log.error("Subject service unavailable during getById: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Subject service is currently unavailable. Please try again later.", t);
+        throw unwrapSubjectException(t);
     }
 
     // Fallback method for delete
     public ApiRes deleteFallback(UUID shelfId, UUID subjectId, Throwable t) {
         log.error("Subject service unavailable during delete: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Subject service is currently unavailable. Please try again later.", t);
+        throw unwrapSubjectException(t);
     }
 
     // Fallback method for update
     public ApiRes updateFallback(UUID shelfId, UUID subjectId, SubjectReq request, Throwable t) {
         log.error("Subject service unavailable during update: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Subject service is currently unavailable. Please try again later.", t);
+        throw unwrapSubjectException(t);
     }
 
     // Fallback method for create
     public ApiRes createFallback(UUID shelfId, SubjectReq request, Throwable t) {
         log.error("Subject service unavailable during create: {}", t.getMessage());
-        throw new RetryLaterException(
+        throw unwrapSubjectException(t);
+    }
+
+    private RuntimeException unwrapSubjectException(Throwable t) {
+        if (t instanceof ValidationException ve) {
+            return ve;
+        }
+        if (t instanceof NotFoundException nfe) {
+            return nfe;
+        }
+        if (t instanceof UnauthenticatedException ue) {
+            return ue;
+        }
+        return new RetryLaterException(
                 "Subject service is currently unavailable. Please try again later.", t);
     }
 }

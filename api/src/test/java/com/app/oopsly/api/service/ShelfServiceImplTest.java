@@ -22,14 +22,19 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.entity.ShelfEntity;
+import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
+import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.ShelfRepository;
+import com.app.oopsly.api.repository.SubjectRepository;
+import com.app.oopsly.api.repository.TestSuiteRepository;
 import com.app.oopsly.api.service.impl.ShelfServiceImpl;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.ShelfReq;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,7 +54,15 @@ class ShelfServiceImplTest {
 
     @Mock private ShelfRepository shelfRepository;
 
+    @Mock private SubjectRepository subjectRepository;
+
+    @Mock private CardRepository cardRepository;
+
+    @Mock private TestSuiteRepository testSuiteRepository;
+
     @Mock private UserService userService;
+
+    @Mock private CardService cardService;
 
     @InjectMocks private ShelfServiceImpl shelveService;
 
@@ -126,6 +139,14 @@ class ShelfServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(existingShelve));
+
+        // Mock cascade delete operations
+        Page<SubjectEntity> emptyPage = new PageImpl<>(Collections.emptyList());
+        when(subjectRepository.findAllByShelve(eq(existingShelve), any(Pageable.class)))
+                .thenReturn(emptyPage);
+        when(testSuiteRepository.findAllByShelve(existingShelve))
+                .thenReturn(Collections.emptyList());
+
         when(shelfRepository.save(any(ShelfEntity.class))).thenReturn(existingShelve);
 
         ApiRes result = shelveService.delete(shelveId);
@@ -218,6 +239,14 @@ class ShelfServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(existingShelve));
+
+        // Mock cascade delete operations
+        Page<SubjectEntity> emptyPage = new PageImpl<>(Collections.emptyList());
+        when(subjectRepository.findAllByShelve(eq(existingShelve), any(Pageable.class)))
+                .thenReturn(emptyPage);
+        when(testSuiteRepository.findAllByShelve(existingShelve))
+                .thenReturn(Collections.emptyList());
+
         when(shelfRepository.save(any(ShelfEntity.class))).thenReturn(existingShelve);
 
         ApiRes result = shelveService.delete(shelveId);

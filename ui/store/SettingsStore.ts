@@ -14,38 +14,26 @@
  *    limitations under the License.
  */
 
-import { SubjectStats } from "./Subject";
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export interface Shelf {
-  id: string;
-  icon: string;
-  name: string;
-  description: string | null;
-  subjects: SubjectStats[];
+export type ThemeMode = "light" | "dark" | "system";
+
+interface SettingsState {
+  theme: ThemeMode;
+  setTheme: (theme: ThemeMode) => void;
 }
 
-export interface ShelfPaginatedResponse {
-  entities: Shelf[];
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-  totalItems: number;
-  hasNextPage?: boolean;
-}
-
-export interface ShelfCreateRequest {
-  icon: string;
-  name: string;
-  description?: string;
-}
-
-export interface ShelfUpdateRequest {
-  icon?: string;
-  name?: string;
-  description?: string;
-}
-
-export interface ShelfQueryParams {
-  page?: number;
-  size?: number;
-}
+export const useSettingsStore = create<SettingsState>()(
+  persist(
+    (set) => ({
+      theme: "system",
+      setTheme: (theme: ThemeMode) => set({ theme }),
+    }),
+    {
+      name: "settings-storage",
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
+);

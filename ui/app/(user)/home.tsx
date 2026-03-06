@@ -1,5 +1,11 @@
-import { createShelf, deleteShelf, fetchShelves } from "@/services/ShelfService";
+import { createShelf, deleteShelf, fetchShelves, updateShelve } from "@/services/ShelfService";
 import { createSubject } from "@/services/SubjectService";
+import {
+  createTestSuite,
+  deleteTestSuite,
+  fetchTestSuitesByShelf,
+  TestSuiteRes,
+} from "@/services/TestSuiteService";
 import { Shelf } from "@/types/Shelf";
 import { SubjectStats } from "@/types/Subject";
 import { Logger } from "@/utils";
@@ -14,6 +20,7 @@ import {
   Coffee,
   Database,
   Delete,
+  Edit3,
   Flame,
   Gift,
   Globe,
@@ -79,12 +86,27 @@ const OopslyApp = () => {
   const [selectedShelfId, setSelectedShelfId] = useState<string | null>(null);
   const [contentTypeModalVisible, setContentTypeModalVisible] = useState(false);
   const [selectedContentType, setSelectedContentType] = useState<
-    "test" | "subject" | "delete" | null
+    "test" | "subject" | "delete" | "edit" | null
   >(null);
   const [contentName, setContentName] = useState("");
   const [contentDescription, setContentDescription] = useState("");
   const [confirmText, setConfirmText] = useState("");
   const [deletedModalVisible, setDeletedModalVisible] = useState(false);
+
+  // Edit shelf modal state
+  const [editShelfModalVisible, setEditShelfModalVisible] = useState(false);
+  const [editShelfName, setEditShelfName] = useState("");
+  const [editShelfDescription, setEditShelfDescription] = useState("");
+  const [editShelfIcon, setEditShelfIcon] = useState(availableIcons[0]);
+  const [showEditIconPicker, setShowEditIconPicker] = useState(false);
+
+  const [testSuitesByShelf, setTestSuitesByShelf] = useState<Record<string, TestSuiteRes[]>>({});
+  const [createTestModalVisible, setCreateTestModalVisible] = useState(false);
+  const [testTitle, setTestTitle] = useState("");
+  const [selectedSubjectIdForTest, setSelectedSubjectIdForTest] = useState<string | null>(null);
+  const [deleteTestSuiteModalVisible, setDeleteTestSuiteModalVisible] = useState(false);
+  const [testSuiteToDelete, setTestSuiteToDelete] = useState<{ shelfId: string; testSuiteId: string } | null>(null);
+  const [testSuiteDeleteConfirmText, setTestSuiteDeleteConfirmText] = useState("");
 
   const fetchShelvesData = () => {
     fetchShelves({
@@ -94,6 +116,16 @@ const OopslyApp = () => {
       .then((response) => {
         if (response.isSuccess) {
           setShelves(response.data.entities);
+          const entities = response.data.entities ?? [];
+          entities.forEach((shelf: Shelf) => {
+            fetchTestSuitesByShelf(shelf.id)
+              .then((res) => {
+                if (res.isSuccess && Array.isArray(res.data)) {
+                  setTestSuitesByShelf((prev) => ({ ...prev, [shelf.id]: res.data }));
+                }
+              })
+              .catch(() => {});
+          });
         } else {
           console.error("Failed to fetch shelves:", response.message);
         }
@@ -149,11 +181,26 @@ const OopslyApp = () => {
   };
 
   // Handle content type selection
-  const handleContentTypeSelect = (type: "test" | "subject" | "delete") => {
+  const handleContentTypeSelect = (type: "test" | "subject" | "delete" | "edit") => {
     setSelectedContentType(type);
     setContentTypeModalVisible(false);
     if (type === "delete") {
       setDeletedModalVisible(true);
+    } else if (type === "edit" && selectedShelfId) {
+      const shelf = shelves?.find((s) => s.id === selectedShelfId);
+      if (shelf) {
+        setEditShelfName(shelf.name);
+        setEditShelfDescription(shelf.description ?? "");
+        const iconMatch = availableIcons.find(
+          (i) => i.name.toLowerCase() === shelf.icon?.toLowerCase(),
+        );
+        setEditShelfIcon(iconMatch ?? availableIcons[0]);
+        setEditShelfModalVisible(true);
+      }
+    } else if (type === "test" && selectedShelfId) {
+      setTestTitle("");
+      setSelectedSubjectIdForTest(null);
+      setCreateTestModalVisible(true);
     } else {
       setAddContentModalVisible(true);
     }
@@ -194,23 +241,106 @@ const OopslyApp = () => {
 
   const handleDeleteShelf = () => {
     if (selectedShelfId && selectedContentType === "delete") {
-      deleteShelf(selectedShelfId).then((response) => {
-        if (response.isSuccess) {
-          logger.debug("Shelf deleted successfully:", response);
-          fetchShelvesData();
-        } else {
-          logger.error("Failed to delete shelf:", response.message);
-        }}
-      ).catch((error) => {
-        logger.error("Error deleting shelf:", error);
-      });
+      deleteShelf(selectedShelfId)
+        .then((response) => {
+          if (response.isSuccess) {
+            logger.debug("Shelf deleted successfully:", response);
+            fetchShelvesData();
+          } else {
+            logger.error("Failed to delete shelf:", response.message);
+          }
+        })
+        .catch((error) => {
+          logger.error("Error deleting shelf:", error);
+        });
 
-      // Reset state and close modal
       setSelectedShelfId(null);
+      setSelectedContentType(null);
       setConfirmText("");
       setDeletedModalVisible(false);
     }
-  }
+  };
+
+  const handleUpdateShelf = () => {
+    if (!selectedShelfId) return;
+    if (editShelfName.trim() === "") {
+      alert("Please enter a shelf name");
+      return;
+    }
+    const desc = editShelfDescription.trim();
+    updateShelve(selectedShelfId, {
+      icon: editShelfIcon.name,
+      name: editShelfName.trim(),
+      description: desc.length >= 10 ? desc : desc.padEnd(10, " ").slice(0, 100),
+    })
+      .then((response) => {
+        if (response.isSuccess) {
+          logger.debug("Shelf updated successfully:", response);
+          fetchShelvesData();
+          setEditShelfModalVisible(false);
+          setSelectedShelfId(null);
+        } else {
+          logger.error("Failed to update shelf:", response.message);
+        }
+      })
+      .catch((error) => {
+        logger.error("Error updating shelf:", error);
+      });
+  };
+
+  const handleCreateTestSuite = () => {
+    if (!selectedShelfId || !testTitle.trim()) {
+      alert("Please enter a test title");
+      return;
+    }
+    if (!selectedSubjectIdForTest) {
+      alert("Please select a subject");
+      return;
+    }
+    createTestSuite(selectedShelfId, {
+      title: testTitle.trim(),
+      subjectIds: [selectedSubjectIdForTest],
+    })
+      .then((res) => {
+        if (res.isSuccess) {
+          setTestSuitesByShelf((prev) => ({
+            ...prev,
+            [selectedShelfId]: [...(prev[selectedShelfId] ?? []), res.data],
+          }));
+          setCreateTestModalVisible(false);
+          setTestTitle("");
+          setSelectedSubjectIdForTest(null);
+        } else {
+          logger.error("Failed to create test suite:", res.message);
+        }
+      })
+      .catch((err) => logger.error("Error creating test suite:", err));
+  };
+
+  const openDeleteTestSuiteModal = (shelfId: string, testSuiteId: string) => {
+    setTestSuiteToDelete({ shelfId, testSuiteId });
+    setTestSuiteDeleteConfirmText("");
+    setDeleteTestSuiteModalVisible(true);
+  };
+
+  const handleDeleteTestSuite = () => {
+    if (!testSuiteToDelete || testSuiteDeleteConfirmText.trim().toLowerCase() !== "confirm") return;
+    deleteTestSuite(testSuiteToDelete.shelfId, testSuiteToDelete.testSuiteId)
+      .then((res) => {
+        if (res.isSuccess) {
+          setTestSuitesByShelf((prev) => ({
+            ...prev,
+            [testSuiteToDelete.shelfId]: (prev[testSuiteToDelete.shelfId] ?? []).filter(
+              (t) => t.id !== testSuiteToDelete.testSuiteId
+            ),
+          }));
+          setDeleteTestSuiteModalVisible(false);
+          setTestSuiteToDelete(null);
+          setTestSuiteDeleteConfirmText("");
+        }
+      })
+      .catch((err) => logger.error("Error deleting test suite:", err));
+  };
 
   const getShelfName = (shelfId: string) => {
     const shelf = shelves?.find((s) => s.id === shelfId);
@@ -302,7 +432,10 @@ const OopslyApp = () => {
       <View className="bg-white pt-12 pb-4 px-4 shadow-sm" testID="header-container">
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center">
-            <View className="w-10 h-10 rounded-full bg-indigo-100 items-center justify-center mr-3">
+            <TouchableOpacity
+              onPress={() => router.push("/profile")}
+              className="w-10 h-10 rounded-full bg-indigo-100 items-center justify-center mr-3"
+            >
               <Image
                 source={{
                   uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D",
@@ -310,7 +443,7 @@ const OopslyApp = () => {
                 className="w-8 h-8 rounded-full"
                 testID="user-avatar"
               />
-            </View>
+            </TouchableOpacity>
             <Text className="text-2xl font-bold text-gray-800" testID="app-title-text">Oopsly</Text>
           </View>
 
@@ -382,13 +515,35 @@ const OopslyApp = () => {
       <ScrollView className="flex-1" testID="shelves-scroll-view">
         {Array.from(shelves ?? []).map((shelf) => (
           <View key={shelf.id} className="mb-6" testID={`shelf-item-${shelf.id}`}>
-            <View className="flex-row items-center px-4 mb-3 mt-2" testID={`shelf-header-${shelf.id}`}>
+          <View className="flex-row items-center px-4 mb-3 mt-2" testID={`shelf-header-${shelf.id}`}>
               <View className="mr-2">{renderIconComponent(shelf.icon)}</View>
 
               <Text className="text-lg font-bold text-gray-800" testID={`shelf-name-text-${shelf.id}`}>
                 {shelf.name}
               </Text>
             </View>
+
+            {(testSuitesByShelf[shelf.id] ?? []).length > 0 && (
+              <View className="flex-row flex-wrap gap-2 px-4 mb-2">
+                {(testSuitesByShelf[shelf.id] ?? []).map((ts) => (
+                  <View key={ts.id} className="flex-row items-center bg-indigo-50 rounded-lg px-3 py-2 gap-2">
+                    <Text className="text-indigo-800 font-medium flex-1">{ts.title}</Text>
+                    <TouchableOpacity
+                      className="bg-indigo-600 rounded-lg px-3 py-1"
+                      onPress={() => router.push(`/take-test/${ts.id}`)}
+                    >
+                      <Text className="text-white text-sm font-semibold">Take test</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      className="bg-red-100 rounded-lg px-2 py-1"
+                      onPress={() => openDeleteTestSuiteModal(shelf.id, ts.id)}
+                    >
+                      <Delete size={16} color="#B91C1C" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
 
             {renderSubjectCards(shelf.subjects, shelf.id)}
           </View>
@@ -606,6 +761,26 @@ const OopslyApp = () => {
               </View>
             </TouchableOpacity>
 
+            {/* Edit Shelf Option */}
+            <TouchableOpacity
+              className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl p-5 mb-4 border-2 border-amber-200"
+              onPress={() => handleContentTypeSelect("edit")}
+            >
+              <View className="flex-row items-center">
+                <View className="bg-amber-500 rounded-full p-3 mr-4">
+                  <Edit3 size={28} color="#FFFFFF" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-gray-800 font-bold text-lg mb-1">
+                    Edit Shelf
+                  </Text>
+                  <Text className="text-gray-600 text-sm">
+                    Change shelf name, description, or icon
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+
             {/* Delete option */}
             <TouchableOpacity
               className="bg-gradient-to-r from-red-50 to-red-100 rounded-xl p-5 border-2 border-red-200"
@@ -743,27 +918,36 @@ const OopslyApp = () => {
             </View>
 
             <View className="px-6 py-4">
-              {/* Name Input */}
-              <View className="mb-5">
-                <Text className="text-gray-700 font-semibold mb-3">
-                  Warning: You are about to delete {getShelfName(selectedShelfId!)}. This will wipe all associated data, including subjects and test history. You will not be able to recover this information
-                </Text>
-                <TextInput
-                  className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
-                  placeholder={`Enter Confirm to delete`}
-                  placeholderTextColor="#9CA3AF"
-                  value={confirmText}
-                  onChangeText={setConfirmText}
-                />
-              </View>
+              <Text className="text-gray-700 font-semibold mb-3">
+                This will permanently delete this shelf and all its contents:
+              </Text>
+              <Text className="text-gray-600 mb-2">
+                • All subjects in this shelf
+              </Text>
+              <Text className="text-gray-600 mb-2">
+                • All cards within those subjects
+              </Text>
+              <Text className="text-gray-600 mb-4">
+                • All test suites in this shelf
+              </Text>
+              <Text className="text-gray-700 font-semibold mb-2">
+                This action cannot be undone. Type &quot;confirm&quot; below and click Confirm and Acknowledge to proceed.
+              </Text>
+              <TextInput
+                className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200 mt-2 mb-4"
+                placeholder="Type confirm to acknowledge"
+                placeholderTextColor="#9CA3AF"
+                value={confirmText}
+                onChangeText={setConfirmText}
+              />
 
-              {/* Action Buttons */}
               <View className="flex-row gap-3 mt-2">
                 <TouchableOpacity
                   className="flex-1 bg-gray-200 rounded-xl py-4 items-center"
                   onPress={() => {
                     setDeletedModalVisible(false);
                     setConfirmText("");
+                    setSelectedContentType(null);
                   }}
                 >
                   <Text className="text-gray-700 font-bold">Cancel</Text>
@@ -775,10 +959,255 @@ const OopslyApp = () => {
                   disabled={isDisable()}
                 >
                   <Text className="text-white font-bold">
-                    Delete
+                    Confirm and Acknowledge
                   </Text>
                 </TouchableOpacity>
               </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Edit Shelf Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={editShelfModalVisible}
+        onRequestClose={() => setEditShelfModalVisible(false)}
+        testID="edit-shelf-modal"
+      >
+        <Pressable
+          className="flex-1 bg-black/50 justify-center items-center px-6"
+          onPress={() => setEditShelfModalVisible(false)}
+        >
+          <Pressable
+            className="bg-white rounded-2xl w-full max-w-md"
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View className="flex-row justify-between items-center p-6 pb-4 border-b border-gray-100">
+              <Text className="text-xl font-bold text-gray-800">
+                Edit Shelf
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setEditShelfModalVisible(false);
+                  setSelectedShelfId(null);
+                }}
+                className="p-1"
+              >
+                <X size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView className="px-6 py-4" style={{ maxHeight: 500 }}>
+              <View className="mb-5">
+                <Text className="text-gray-700 font-semibold mb-3">Icon</Text>
+                <TouchableOpacity
+                  className="flex-row items-center justify-between bg-gray-50 rounded-xl p-4 border border-gray-200"
+                  onPress={() => setShowEditIconPicker(!showEditIconPicker)}
+                >
+                  <View className="flex-row items-center">
+                    {React.createElement(editShelfIcon.component, {
+                      size: 24,
+                      color: editShelfIcon.color,
+                    })}
+                    <Text className="text-gray-800 ml-3 font-medium">
+                      {editShelfIcon.name}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                {showEditIconPicker && (
+                  <View className="mt-3 bg-gray-50 rounded-xl p-3 border border-gray-200">
+                    <View className="flex-row flex-wrap gap-2">
+                      {availableIcons.map((icon, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          className={`p-3 rounded-lg ${
+                            editShelfIcon.name === icon.name
+                              ? "bg-indigo-100 border-2 border-indigo-500"
+                              : "bg-white border border-gray-200"
+                          }`}
+                          onPress={() => {
+                            setEditShelfIcon(icon);
+                            setShowEditIconPicker(false);
+                          }}
+                        >
+                          {React.createElement(icon.component, {
+                            size: 24,
+                            color: icon.color,
+                          })}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              <View className="mb-5">
+                <Text className="text-gray-700 font-semibold mb-3">Name</Text>
+                <TextInput
+                  className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
+                  placeholder="Enter shelf name"
+                  placeholderTextColor="#9CA3AF"
+                  value={editShelfName}
+                  onChangeText={setEditShelfName}
+                />
+              </View>
+
+              <View className="mb-5">
+                <Text className="text-gray-700 font-semibold mb-3">Description</Text>
+                <TextInput
+                  className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
+                  placeholder="Enter shelf description (min 10 characters)"
+                  placeholderTextColor="#9CA3AF"
+                  value={editShelfDescription}
+                  onChangeText={setEditShelfDescription}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  style={{ minHeight: 100 }}
+                />
+              </View>
+
+              <View className="flex-row gap-3 mt-2">
+                <TouchableOpacity
+                  className="flex-1 bg-gray-200 rounded-xl py-4 items-center"
+                  onPress={() => {
+                    setEditShelfModalVisible(false);
+                    setSelectedShelfId(null);
+                  }}
+                >
+                  <Text className="text-gray-700 font-bold">Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="flex-1 bg-indigo-600 rounded-xl py-4 items-center"
+                  onPress={handleUpdateShelf}
+                >
+                  <Text className="text-white font-bold">Save</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Create Test Suite Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={createTestModalVisible}
+        onRequestClose={() => setCreateTestModalVisible(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/50 justify-center items-center px-6"
+          onPress={() => setCreateTestModalVisible(false)}
+        >
+          <Pressable className="bg-white rounded-2xl w-full max-w-md p-6" onPress={(e) => e.stopPropagation()}>
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-xl font-bold text-gray-800">Create Test Suite</Text>
+              <TouchableOpacity onPress={() => setCreateTestModalVisible(false)} className="p-1">
+                <X size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            <Text className="text-gray-600 mb-2">Test suite is a preset of cards from a subject. Select a subject and name your test.</Text>
+            <View className="mb-4">
+              <Text className="text-gray-700 font-semibold mb-2">Subject</Text>
+              <ScrollView className="max-h-32 bg-gray-50 rounded-xl border border-gray-200">
+                {(shelves?.find((s) => s.id === selectedShelfId)?.subjects ?? []).map((sub) => (
+                  <TouchableOpacity
+                    key={sub.id}
+                    className={`p-3 ${selectedSubjectIdForTest === sub.id ? "bg-indigo-100" : ""}`}
+                    onPress={() => setSelectedSubjectIdForTest(sub.id)}
+                  >
+                    <Text className={selectedSubjectIdForTest === sub.id ? "text-indigo-700 font-semibold" : "text-gray-800"}>{sub.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            <View className="mb-4">
+              <Text className="text-gray-700 font-semibold mb-2">Test title</Text>
+              <TextInput
+                className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
+                placeholder="e.g. Math Chapter 1"
+                placeholderTextColor="#9CA3AF"
+                value={testTitle}
+                onChangeText={setTestTitle}
+              />
+            </View>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                className="flex-1 bg-gray-200 rounded-xl py-4 items-center"
+                onPress={() => setCreateTestModalVisible(false)}
+              >
+                <Text className="text-gray-700 font-bold">Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-1 bg-indigo-600 rounded-xl py-4 items-center"
+                onPress={handleCreateTestSuite}
+              >
+                <Text className="text-white font-bold">Create</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Delete Test Suite Confirmation Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={deleteTestSuiteModalVisible}
+        onRequestClose={() => setDeleteTestSuiteModalVisible(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/50 justify-center items-center px-6"
+          onPress={() => setDeleteTestSuiteModalVisible(false)}
+        >
+          <Pressable className="bg-white rounded-2xl w-full max-w-md p-6" onPress={(e) => e.stopPropagation()}>
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-xl font-bold text-gray-800">Delete Test Suite</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setDeleteTestSuiteModalVisible(false);
+                  setTestSuiteToDelete(null);
+                  setTestSuiteDeleteConfirmText("");
+                }}
+                className="p-1"
+              >
+                <X size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            <Text className="text-gray-700 font-semibold mb-2">
+              This will permanently delete this test suite and all its questions. Cards in the linked subject(s) will not be deleted.
+            </Text>
+            <Text className="text-gray-600 mb-4">
+              Type &quot;confirm&quot; below and click Confirm and Acknowledge to proceed.
+            </Text>
+            <TextInput
+              className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200 mb-4"
+              placeholder="Type confirm to acknowledge"
+              placeholderTextColor="#9CA3AF"
+              value={testSuiteDeleteConfirmText}
+              onChangeText={setTestSuiteDeleteConfirmText}
+            />
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                className="flex-1 bg-gray-200 rounded-xl py-4 items-center"
+                onPress={() => {
+                  setDeleteTestSuiteModalVisible(false);
+                  setTestSuiteToDelete(null);
+                  setTestSuiteDeleteConfirmText("");
+                }}
+              >
+                <Text className="text-gray-700 font-bold">Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`flex-1 rounded-xl py-4 items-center ${testSuiteDeleteConfirmText.trim().toLowerCase() === "confirm" ? "bg-red-500" : "bg-red-400"}`}
+                onPress={handleDeleteTestSuite}
+                disabled={testSuiteDeleteConfirmText.trim().toLowerCase() !== "confirm"}
+              >
+                <Text className="text-white font-bold">Confirm and Acknowledge</Text>
+              </TouchableOpacity>
             </View>
           </Pressable>
         </Pressable>

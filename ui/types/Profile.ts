@@ -1,5 +1,5 @@
 /*
- *    Copyright 2026 Hao Nguyen Tan
+ *    Copyright 2025 Hao Nguyen Tan
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -14,11 +14,37 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.viewmodel;
+export interface SettingsRes {
+  theme: string;
+  language: string;
+  spaceConfig: {
+    AGAIN: number;
+    HARD: number;
+    GOOD: number;
+    EASY: number;
+  };
+}
 
-import jakarta.validation.constraints.NotNull;
-import java.util.List;
-import lombok.NonNull;
+export interface UserProfileRes {
+  displayName: string;
+  bio: string | null;
+  age: number | null;
+  settings: SettingsRes;
+}
 
-public record TestSuiteReq(
-        @NonNull @NotNull String title, Boolean isActive, List<java.util.UUID> subjectIds) {}
+export interface UpdateProfileReq {
+  displayName: string;
+  bio?: string;
+  age?: number;
+}
+
+export interface UpdateSettingsReq {
+  theme: string;
+  language: string;
+  spaceConfig: {
+    AGAIN: number;
+    HARD: number;
+    GOOD: number;
+    EASY: number;
+  };
+}

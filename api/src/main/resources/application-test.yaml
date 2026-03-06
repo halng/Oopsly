@@ -3,6 +3,7 @@ app:
     - test@oopsly.com
     - user1@oopsly.com
     - user2@oopsly.com
+    - integration@oopsly.com
 spring:
   autoconfigure:
     exclude:

@@ -135,11 +135,7 @@ public class UserServiceImpl implements UserService {
     @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "getProfileFallback")
     public ApiRes getProfile() {
         User user = getCurrentUser();
-
-        SettingEntity setting =
-                settingRepository
-                        .findByUserId(user.getId())
-                        .orElseThrow(() -> new ValidationException("User settings not found"));
+        SettingEntity setting = ensureSettings(user);
 
         SettingsRes settingsRes =
                 new SettingsRes(
@@ -156,8 +152,14 @@ public class UserServiceImpl implements UserService {
 
     // Fallback method for getProfile Circuit Breaker
     public ApiRes getProfileFallback(Throwable t) {
-        throw new ValidationException(
-                "Profile service is currently unavailable. Please try again later.");
+        if (t instanceof ValidationException ve) {
+            throw ve;
+        }
+        if (t instanceof UnauthenticatedException ue) {
+            throw ue;
+        }
+        throw new RetryLaterException(
+                "Profile service is currently unavailable. Please try again later.", t);
     }
 
     @Override
@@ -176,20 +178,7 @@ public class UserServiceImpl implements UserService {
         // Create default setting if not exists
         SettingEntity setting = settingRepository.findByUserId(user.getId()).orElse(null);
         if (setting == null) {
-            Map<String, Integer> defaultSpaceConfig = new HashMap<>();
-            defaultSpaceConfig.put("AGAIN", 1);
-            defaultSpaceConfig.put("HARD", 1);
-            defaultSpaceConfig.put("GOOD", 5);
-            defaultSpaceConfig.put("EASY", 10);
-
-            setting =
-                    SettingEntity.builder()
-                            .theme(Theme.SYSTEM)
-                            .language(Language.ENGLISH)
-                            .spaceConfig(defaultSpaceConfig)
-                            .user(user)
-                            .build();
-            settingRepository.save(setting);
+            setting = createDefaultSettings(user);
         }
 
         return getProfile();
@@ -197,8 +186,14 @@ public class UserServiceImpl implements UserService {
 
     // Fallback method for updateProfile Circuit Breaker
     public ApiRes updateProfileFallback(UpdateProfileReq request, Throwable t) {
-        throw new ValidationException(
-                "Profile update service is currently unavailable. Please try again later.");
+        if (t instanceof ValidationException ve) {
+            throw ve;
+        }
+        if (t instanceof UnauthenticatedException ue) {
+            throw ue;
+        }
+        throw new RetryLaterException(
+                "Profile update service is currently unavailable. Please try again later.", t);
     }
 
     @Override
@@ -254,8 +249,14 @@ public class UserServiceImpl implements UserService {
 
     // Fallback method for updateSettings Circuit Breaker
     public ApiRes updateSettingsFallback(UpdateSettingsReq request, Throwable t) {
-        throw new ValidationException(
-                "Settings update service is currently unavailable. Please try again later.");
+        if (t instanceof ValidationException ve) {
+            throw ve;
+        }
+        if (t instanceof UnauthenticatedException ue) {
+            throw ue;
+        }
+        throw new RetryLaterException(
+                "Settings update service is currently unavailable. Please try again later.", t);
     }
 
     public ApiRes refreshTokenFallback(RefreshTokenReq refreshTokenReq, Throwable t) {
@@ -282,9 +283,38 @@ public class UserServiceImpl implements UserService {
         return ApiRes.ok("Logged out successfully");
     }
 
+    @Override
+    public ApiRes validateToken() {
+        getCurrentUser();
+        return ApiRes.success("Token is valid", Map.of("valid", true));
+    }
+
     public ApiRes logoutFallback(Throwable t) {
         log.error("Logout service unavailable");
         throw new RetryLaterException(
                 "Logout service is currently unavailable. Please try again later.", t);
+    }
+
+    private SettingEntity createDefaultSettings(User user) {
+        Map<String, Integer> defaultSpaceConfig = new HashMap<>();
+        defaultSpaceConfig.put("AGAIN", 1);
+        defaultSpaceConfig.put("HARD", 1);
+        defaultSpaceConfig.put("GOOD", 5);
+        defaultSpaceConfig.put("EASY", 10);
+
+        SettingEntity setting =
+                SettingEntity.builder()
+                        .theme(Theme.SYSTEM)
+                        .language(Language.ENGLISH)
+                        .spaceConfig(defaultSpaceConfig)
+                        .user(user)
+                        .build();
+        return settingRepository.save(setting);
+    }
+
+    private SettingEntity ensureSettings(User user) {
+        return settingRepository
+                .findByUserId(user.getId())
+                .orElseGet(() -> createDefaultSettings(user));
     }
 }

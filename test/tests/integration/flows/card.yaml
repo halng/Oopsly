@@ -1,7 +1,7 @@
-enabled: false
+enabled: true
 flows:
   - flow: Card Management Flow
-    description: "This flow tests card CRUD operations within collections"
+    description: "This flow tests card CRUD operations within subjects"
     before-all:
       - name: Generate OTP
         api: GENERATE_OTP
@@ -21,44 +21,40 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-      - name: Create Test Deck
-        api: DECK_CREATION
+      - name: Create Test Shelf
+        api: SHELF_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_NAME: "Test Deck for Cards"
-          DECK_DESCRIPTION: "Deck created for card testing"
+          SHELF_NAME: "Test Shelf for Cards"
+          SHELF_DESCRIPTION: "Shelf created for card testing"
+          SHELF_ICON: "book"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          DECK_ID: $.data.id
-      - name: Create Test Collection
-        api: COLLECTION_CREATE
+          SHELF_ID: $.data.id
+      - name: Create Test Subject
+        api: SUBJECT_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_NAME: "Test Collection for Cards"
-          COLLECTION_DESCRIPTION: "Collection for card testing"
+          SHELF_ID: ${SHELF_ID}
+          SUBJECT_NAME: "Test Subject for Cards"
+          SUBJECT_DESCRIPTION: "Subject for card testing"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          COLLECTION_ID: $.data.id
+          SUBJECT_ID: $.data.id
     steps:
-      - name: "1. Create Cards in Collection"
+      - name: "1. Create Cards in Subject"
         api: CARD_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
-          CARDS_ARRAY: >
-            [
-              {
-                "question": "What is the capital of France?",
-                "answer": "Paris",
-                "hint": "City of lights"
-              }
-            ]
+          SHELF_ID: ${SHELF_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
+          CARDS_ARRAY:
+            - front: "What is the capital of France?"
+              back: "Paris"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -68,13 +64,13 @@ flows:
             value: 200
           - path: $.data
             type: not-null
-      
-      - name: "2. Get All Cards in Collection with Pagination"
-        api: CARD_GET_ALL_BY_COLLECTION
+
+      - name: "2. Get All Cards in Subject with Pagination"
+        api: CARD_GET_ALL_BY_SUBJECT
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELF_ID: ${SHELF_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           PAGE_NUM: "0"
           PAGE_SIZE: "10"
         assertions:
@@ -84,17 +80,17 @@ flows:
           - path: $.status
             type: equals
             value: 200
-          - path: $.data.content
+          - path: $.data.entities
             type: not-null
         env-vars:
-          CARD_ID: $.data.content[0].id
-      
+          CARD_ID: $.data.entities[0].id
+
       - name: "3. Get Card by ID"
         api: CARD_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELF_ID: ${SHELF_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: ${CARD_ID}
         assertions:
           - path: $.isSuccess
@@ -106,20 +102,19 @@ flows:
           - path: $.data.id
             type: equals
             value: ${CARD_ID}
-          - path: $.data.question
+          - path: $.data.front
             type: contains
             value: "France"
-      
+
       - name: "4. Update Card"
         api: CARD_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELF_ID: ${SHELF_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: ${CARD_ID}
-          CARD_QUESTION: "What is the capital of Germany?"
-          CARD_ANSWER: "Berlin"
-          CARD_HINT: "German capital"
+          CARD_FRONT: "What is the capital of Germany?"
+          CARD_BACK: "Berlin"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -127,16 +122,16 @@ flows:
           - path: $.status
             type: equals
             value: 200
-          - path: $.data.question
+          - path: $.data.front
             type: contains
             value: "Germany"
-      
+
       - name: "5. Delete Card"
         api: CARD_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELF_ID: ${SHELF_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: ${CARD_ID}
         assertions:
           - path: $.isSuccess
@@ -145,13 +140,13 @@ flows:
           - path: $.status
             type: equals
             value: 200
-      
+
       - name: "6. Verify Card is Deleted"
         api: CARD_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELF_ID: ${SHELF_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: ${CARD_ID}
         assertions:
           - path: $.isSuccess
@@ -182,36 +177,37 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-      - name: Create Test Deck
-        api: DECK_CREATION
+      - name: Create Test Shelf
+        api: SHELF_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_NAME: "Edge Case Deck"
-          DECK_DESCRIPTION: "Deck for edge case testing"
+          SHELF_NAME: "Edge Case Shelf"
+          SHELF_DESCRIPTION: "Shelf for edge case testing"
+          SHELF_ICON: "book"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          DECK_ID: $.data.id
-      - name: Create Test Collection
-        api: COLLECTION_CREATE
+          SHELF_ID: $.data.id
+      - name: Create Test Subject
+        api: SUBJECT_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_NAME: "Edge Case Collection"
-          COLLECTION_DESCRIPTION: "Collection for edge case testing"
+          SHELF_ID: ${SHELF_ID}
+          SUBJECT_NAME: "Edge Case Subject"
+          SUBJECT_DESCRIPTION: "Subject for edge case testing"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          COLLECTION_ID: $.data.id
+          SUBJECT_ID: $.data.id
     steps:
       - name: "1. Get Card with Invalid ID"
         api: CARD_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELF_ID: ${SHELF_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess
@@ -220,17 +216,16 @@ flows:
           - path: $.status
             type: equals
             value: 404
-      
+
       - name: "2. Update Non-existent Card"
         api: CARD_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELF_ID: ${SHELF_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: "00000000-0000-0000-0000-000000000000"
-          CARD_QUESTION: "Should fail"
-          CARD_ANSWER: "Should not work"
-          CARD_HINT: ""
+          CARD_FRONT: "Should fail"
+          CARD_BACK: "Should not work"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -238,13 +233,13 @@ flows:
           - path: $.status
             type: equals
             value: 404
-      
+
       - name: "3. Delete Non-existent Card"
         api: CARD_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELF_ID: ${SHELF_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           CARD_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess
@@ -253,13 +248,13 @@ flows:
           - path: $.status
             type: equals
             value: 404
-      
+
       - name: "4. Get All Cards with Invalid Pagination"
-        api: CARD_GET_ALL_BY_COLLECTION
+        api: CARD_GET_ALL_BY_SUBJECT
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          DECK_ID: ${DECK_ID}
-          COLLECTION_ID: ${COLLECTION_ID}
+          SHELF_ID: ${SHELF_ID}
+          SUBJECT_ID: ${SUBJECT_ID}
           PAGE_NUM: "-1"
           PAGE_SIZE: "10"
         assertions:

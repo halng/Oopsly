@@ -6,7 +6,7 @@ import {
   FlatList,
   TextInput,
   Modal,
-  Alert,
+  Pressable,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
@@ -32,6 +32,7 @@ import {
   getSubjectById,
   updateSubjectById,
   updateSubjectSetting,
+  deleteSubject as deleteSubjectApi,
 } from "@/services/SubjectService";
 
 
@@ -50,6 +51,9 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
 
   const [subjectStatsData, setSubjectStatsData] = useState<SubjectStats>();
   const [cardsData, setCardsData] = useState<CardRes[]>([]);
+
+  const [deleteSubjectModalVisible, setDeleteSubjectModalVisible] = useState(false);
+  const [deleteSubjectConfirmText, setDeleteSubjectConfirmText] = useState("");
 
   const fetchSubjectStatsData = () => {
     logger.info("Fetching subject stats data for subject ID:",_subjectId);
@@ -242,22 +246,23 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
   };
 
   // Delete subject
-  const deleteSubject = () => {
-    Alert.alert(
-      "Delete Subject",
-      `Are you sure you want to delete "${subjectName}"? All cards will be permanently removed.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            // In a real app, this would delete the subject from storage
-            router.back();
-          },
-        },
-      ],
-    );
+  const openDeleteSubjectModal = () => setDeleteSubjectModalVisible(true);
+
+  const handleDeleteSubject = () => {
+    if (deleteSubjectConfirmText.trim().toLowerCase() !== "confirm") return;
+    deleteSubjectApi(_shelfId, _subjectId)
+      .then((res) => {
+        if (res.isSuccess) {
+          setDeleteSubjectModalVisible(false);
+          setDeleteSubjectConfirmText("");
+          router.back();
+        } else {
+          logger.error("Failed to delete subject:", res.message);
+        }
+      })
+      .catch((error) => {
+        logger.error("Error deleting subject:", error);
+      });
   };
 
   return (
@@ -364,7 +369,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
           {isEditing && (
             <TouchableOpacity
               className="bg-red-50 rounded-xl py-4 items-center border border-red-200 flex-row justify-center"
-              onPress={deleteSubject}
+              onPress={openDeleteSubjectModal}
               testID="delete-subject-button"
             >
               <Trash2 size={20} color="#EF4444" />
@@ -641,6 +646,79 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
             </TouchableOpacity>
           </View>
         </View>
+      </Modal>
+
+      {/* Delete Subject Confirmation Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={deleteSubjectModalVisible}
+        onRequestClose={() => setDeleteSubjectModalVisible(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/50 justify-center items-center px-6"
+          onPress={() => setDeleteSubjectModalVisible(false)}
+        >
+          <Pressable
+            className="bg-white rounded-2xl w-full max-w-md"
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View className="flex-row justify-between items-center p-6 pb-4 border-b border-gray-100">
+              <Text className="text-xl font-bold text-gray-800">
+                Permanently Delete Subject
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setDeleteSubjectModalVisible(false);
+                  setDeleteSubjectConfirmText("");
+                }}
+                className="p-1"
+              >
+                <X size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            <View className="px-6 py-4">
+              <Text className="text-gray-700 font-semibold mb-2">
+                This will permanently delete &quot;{subjectName}&quot; and all its contents:
+              </Text>
+              <Text className="text-gray-600 mb-4">
+                • All cards in this subject will be deleted.
+              </Text>
+              <Text className="text-gray-700 font-semibold mb-2">
+                This action cannot be undone. Type &quot;confirm&quot; below and click Confirm and Acknowledge to proceed.
+              </Text>
+              <TextInput
+                className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200 mt-2 mb-4"
+                placeholder="Type confirm to acknowledge"
+                placeholderTextColor="#9CA3AF"
+                value={deleteSubjectConfirmText}
+                onChangeText={setDeleteSubjectConfirmText}
+              />
+              <View className="flex-row gap-3 mt-2">
+                <TouchableOpacity
+                  className="flex-1 bg-gray-200 rounded-xl py-4 items-center"
+                  onPress={() => {
+                    setDeleteSubjectModalVisible(false);
+                    setDeleteSubjectConfirmText("");
+                  }}
+                >
+                  <Text className="text-gray-700 font-bold">Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className={`flex-1 rounded-xl py-4 items-center ${
+                    deleteSubjectConfirmText.trim().toLowerCase() === "confirm"
+                      ? "bg-red-500"
+                      : "bg-red-400"
+                  }`}
+                  onPress={handleDeleteSubject}
+                  disabled={deleteSubjectConfirmText.trim().toLowerCase() !== "confirm"}
+                >
+                  <Text className="text-white font-bold">Confirm and Acknowledge</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   );

@@ -60,7 +60,7 @@ class TestSuiteServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        testSuiteReq = new TestSuiteReq("Chapter 1 Review", true);
+        testSuiteReq = new TestSuiteReq("Chapter 1 Review", true, null);
         currentUser = new User();
         currentUser.setEmail("test@example.com");
         shelveId = UUID.randomUUID();
@@ -226,7 +226,7 @@ class TestSuiteServiceImplTest {
 
     @Test
     void create_withNullIsActive_defaultsToTrue() {
-        TestSuiteReq reqWithNullIsActive = new TestSuiteReq("New Test Suite", null);
+        TestSuiteReq reqWithNullIsActive = new TestSuiteReq("New Test Suite", null, null);
         TestSuiteEntity savedTestSuite = new TestSuiteEntity();
         savedTestSuite.setId(testSuiteId);
         savedTestSuite.setTitle(reqWithNullIsActive.title());
@@ -247,7 +247,7 @@ class TestSuiteServiceImplTest {
     @Test
     void testCreateFallback() {
         UUID shelveId = UUID.randomUUID();
-        TestSuiteReq request = new TestSuiteReq("Test Suite", true);
+        TestSuiteReq request = new TestSuiteReq("Test Suite", true, null);
         RuntimeException exception = new RuntimeException("Database connection failed");
 
         RetryLaterException thrown =
@@ -265,7 +265,7 @@ class TestSuiteServiceImplTest {
     void testUpdateFallback() {
         UUID shelveId = UUID.randomUUID();
         UUID testSuiteId = UUID.randomUUID();
-        TestSuiteReq request = new TestSuiteReq("Updated Suite", true);
+        TestSuiteReq request = new TestSuiteReq("Updated Suite", true, null);
         RuntimeException exception = new RuntimeException("Database connection failed");
 
         RetryLaterException thrown =

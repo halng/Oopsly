@@ -17,6 +17,8 @@
 package com.app.oopsly.api.config;
 
 import com.app.oopsly.api.util.JwtUtils;
+import com.app.oopsly.api.viewmodel.ApiRes;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,6 +41,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtUtils jwtUtils;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(
@@ -88,8 +91,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void sendErrorResponse(HttpServletResponse response, String message)
             throws IOException {
         LOGGER.info("Sending error response: {}", message);
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        if (response.isCommitted()) {
+            LOGGER.warn("Response already committed; skipping error response write");
+            return;
+        }
+        ApiRes apiRes = ApiRes.unauthorized(message);
+        response.setStatus(apiRes.getStatusCode().value());
         response.setContentType("application/json");
-        response.getWriter().write("{\"error\": \"" + message + "\"}");
+        response.getWriter().write(objectMapper.writeValueAsString(apiRes.getBody()));
     }
 }

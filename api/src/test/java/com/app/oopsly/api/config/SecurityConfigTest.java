@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,10 +43,11 @@ class SecurityConfigTest {
 
     private SecurityConfig securityConfig;
     @Mock private AppConfig appConfig;
+    @Mock private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        securityConfig = new SecurityConfig(jwtAuthFilter, appConfig);
+        securityConfig = new SecurityConfig(jwtAuthFilter, appConfig, objectMapper);
     }
 
     @Test
@@ -78,6 +80,7 @@ class SecurityConfigTest {
         HttpSecurity httpSecurity = mock(HttpSecurity.class, RETURNS_DEEP_STUBS);
         when(httpSecurity.csrf(any())).thenReturn(httpSecurity);
         when(httpSecurity.sessionManagement(any())).thenReturn(httpSecurity);
+        when(httpSecurity.exceptionHandling(any())).thenReturn(httpSecurity);
         when(httpSecurity.authorizeHttpRequests(any())).thenReturn(httpSecurity);
         when(httpSecurity.formLogin(any())).thenReturn(httpSecurity);
         when(httpSecurity.addFilterBefore(any(), any())).thenReturn(httpSecurity);

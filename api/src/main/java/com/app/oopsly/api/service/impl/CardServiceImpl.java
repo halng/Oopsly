@@ -23,9 +23,12 @@ import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
+import com.app.oopsly.api.exception.UnauthenticatedException;
+import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.ShelfRepository;
 import com.app.oopsly.api.repository.SubjectRepository;
+import com.app.oopsly.api.repository.TestSuiteRepository;
 import com.app.oopsly.api.service.CardService;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.util.StringUtils;
@@ -33,6 +36,7 @@ import com.app.oopsly.api.viewmodel.*;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -52,6 +56,7 @@ public class CardServiceImpl implements CardService {
     private final CardRepository cardRepository;
     private final SubjectRepository subjectRepository;
     private final ShelfRepository shelfRepository;
+    private final TestSuiteRepository testSuiteRepository;
     private final UserService userService;
 
     @Override
@@ -137,6 +142,39 @@ public class CardServiceImpl implements CardService {
                 subjectId,
                 pageData.getTotalElements());
         return ApiRes.success("Fetched successfully", pagingRes);
+    }
+
+    @Override
+    public ApiRes getCardsByTestSuite(UUID testSuiteId) {
+        com.app.oopsly.api.entity.TestSuiteEntity testSuite =
+                testSuiteRepository
+                        .findById(testSuiteId)
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                "Test suite not found with id: " + testSuiteId));
+        if (testSuite.getDeleted() != null && testSuite.getDeleted()) {
+            throw new NotFoundException("Test suite not found with id: " + testSuiteId);
+        }
+        User currentUser = userService.getCurrentUser();
+        if (!testSuite.getShelf().getUser().getId().equals(currentUser.getId())) {
+            throw new NotFoundException("Test suite not found with id: " + testSuiteId);
+        }
+        List<CardEntity> allCards = new ArrayList<>();
+        if (testSuite.getSubjects() != null) {
+            for (SubjectEntity subject : testSuite.getSubjects()) {
+                if (subject.getDeleted() != null && subject.getDeleted()) {
+                    continue;
+                }
+                List<CardEntity> subjectCards =
+                        cardRepository
+                                .findAllBySubject(subject, PageRequest.of(0, Integer.MAX_VALUE))
+                                .getContent();
+                allCards.addAll(subjectCards);
+            }
+        }
+        List<CardRes> result = allCards.stream().map(this::toCardRes).collect(Collectors.toList());
+        return ApiRes.success("Fetched successfully", result);
     }
 
     @Override
@@ -268,8 +306,7 @@ public class CardServiceImpl implements CardService {
                 t.getMessage(),
                 shelfId,
                 subjectId);
-        throw new RetryLaterException(
-                "Card service is currently unavailable. Please try again later.", t);
+        throw unwrapCardException(t);
     }
 
     // Fallback method for updateDifficulty
@@ -280,8 +317,7 @@ public class CardServiceImpl implements CardService {
                 t.getMessage(),
                 shelfId,
                 subjectId);
-        throw new RetryLaterException(
-                "Card service is currently unavailable. Please try again later.", t);
+        throw unwrapCardException(t);
     }
 
     // Fallback method for updateCard
@@ -294,8 +330,7 @@ public class CardServiceImpl implements CardService {
                 shelfId,
                 subjectId,
                 cardId);
-        throw new RetryLaterException(
-                "Card service is currently unavailable. Please try again later.", t);
+        throw unwrapCardException(t);
     }
 
     // Fallback method for getAllCardsBySubject
@@ -309,8 +344,7 @@ public class CardServiceImpl implements CardService {
                 subjectId,
                 page,
                 size);
-        throw new RetryLaterException(
-                "Card service is currently unavailable. Please try again later.", t);
+        throw unwrapCardException(t);
     }
 
     // Fallback method for delete
@@ -321,8 +355,7 @@ public class CardServiceImpl implements CardService {
                 shelfId,
                 subjectId,
                 cardId);
-        throw new RetryLaterException(
-                "Card service is currently unavailable. Please try again later.", t);
+        throw unwrapCardException(t);
     }
 
     // Fallback method for getById
@@ -334,7 +367,20 @@ public class CardServiceImpl implements CardService {
                 shelfId,
                 subjectId,
                 cardId);
-        throw new RetryLaterException(
+        throw unwrapCardException(t);
+    }
+
+    private RuntimeException unwrapCardException(Throwable t) {
+        if (t instanceof NotFoundException nfe) {
+            return nfe;
+        }
+        if (t instanceof UnauthenticatedException ue) {
+            return ue;
+        }
+        if (t instanceof ValidationException ve) {
+            return ve;
+        }
+        return new RetryLaterException(
                 "Card service is currently unavailable. Please try again later.", t);
     }
 }

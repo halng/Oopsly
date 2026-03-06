@@ -1,4 +1,4 @@
-enabled: false
+enabled: true
 flows:
   - flow: Subject Management Flow
     description: "This flow tests subject CRUD operations including create, read, update, and delete operations"
@@ -24,12 +24,13 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-      - name: Create Test Shelve
-        api: SHELVE_CREATION
+      - name: Create Test Shelf
+        api: SHELF_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_NAME: "Test Shelve for Subjects"
-          SHELVE_DESCRIPTION: "Shelve created for subject testing"
+          SHELF_NAME: "Test Shelf for Subjects"
+          SHELF_DESCRIPTION: "Shelf created for subject testing"
+          SHELF_ICON: "book"
         assertions:
           - path: $.status
             type: equals
@@ -37,13 +38,13 @@ flows:
           - path: $.data.id
             type: not-null
         env-vars:
-          SHELVE_ID: $.data.id
+          SHELF_ID: $.data.id
     steps:
       - name: "1. Create a New Subject"
         api: SUBJECT_CREATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          SHELF_ID: ${SHELF_ID}
           SUBJECT_NAME: "Test Subject"
           SUBJECT_DESCRIPTION: "Subject for testing"
         assertions:
@@ -52,7 +53,7 @@ flows:
             value: true
           - path: $.status
             type: equals
-            value: 200
+            value: 201
           - path: $.data.id
             type: not-null
           - path: $.data.name
@@ -60,12 +61,12 @@ flows:
             value: "Test Subject"
         env-vars:
           SUBJECT_ID: $.data.id
-      
+
       - name: "2. Get Subject by ID"
         api: SUBJECT_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          SHELF_ID: ${SHELF_ID}
           SUBJECT_ID: ${SUBJECT_ID}
         assertions:
           - path: $.isSuccess
@@ -80,12 +81,12 @@ flows:
           - path: $.data.name
             type: equals
             value: "Test Subject"
-      
+
       - name: "3. Update Subject"
         api: SUBJECT_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          SHELF_ID: ${SHELF_ID}
           SUBJECT_ID: ${SUBJECT_ID}
           SUBJECT_NAME: "Updated Subject"
           SUBJECT_DESCRIPTION: "Updated description"
@@ -99,12 +100,12 @@ flows:
           - path: $.data.name
             type: equals
             value: "Updated Subject"
-      
+
       - name: "4. Get All Subjects with Pagination"
-        api: SUBJECT_GET_ALL_BY_SHELVE
+        api: SUBJECT_GET_ALL_BY_SHELF
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          SHELF_ID: ${SHELF_ID}
           PAGE_NUM: "0"
           PAGE_SIZE: "10"
         assertions:
@@ -116,12 +117,12 @@ flows:
             value: 200
           - path: $.data
             type: not-null
-      
+
       - name: "5. Delete Subject"
         api: SUBJECT_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          SHELF_ID: ${SHELF_ID}
           SUBJECT_ID: ${SUBJECT_ID}
         assertions:
           - path: $.isSuccess
@@ -130,12 +131,12 @@ flows:
           - path: $.status
             type: equals
             value: 200
-      
+
       - name: "6. Verify Subject is Deleted (Get by ID should fail)"
         api: SUBJECT_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          SHELF_ID: ${SHELF_ID}
           SUBJECT_ID: ${SUBJECT_ID}
         assertions:
           - path: $.isSuccess
@@ -166,23 +167,24 @@ flows:
             type: not-null
         env-vars:
           AUTH_TOKEN: $.data.access_token
-      - name: Create Test Shelve
-        api: SHELVE_CREATION
+      - name: Create Test Shelf
+        api: SHELF_CREATION
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_NAME: "Edge Case Shelve"
-          SHELVE_DESCRIPTION: "Shelve for edge case testing"
+          SHELF_NAME: "Edge Case Shelf"
+          SHELF_DESCRIPTION: "Shelf for edge case testing"
+          SHELF_ICON: "book"
         assertions:
           - path: $.data.id
             type: not-null
         env-vars:
-          SHELVE_ID: $.data.id
+          SHELF_ID: $.data.id
     steps:
       - name: "1. Get Subject with Invalid ID"
         api: SUBJECT_GET_BY_ID
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          SHELF_ID: ${SHELF_ID}
           SUBJECT_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess
@@ -191,12 +193,12 @@ flows:
           - path: $.status
             type: equals
             value: 404
-      
+
       - name: "2. Update Non-existent Subject"
         api: SUBJECT_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          SHELF_ID: ${SHELF_ID}
           SUBJECT_ID: "00000000-0000-0000-0000-000000000000"
           SUBJECT_NAME: "Should Fail"
           SUBJECT_DESCRIPTION: "Should not work"
@@ -207,12 +209,12 @@ flows:
           - path: $.status
             type: equals
             value: 404
-      
+
       - name: "3. Delete Non-existent Subject"
         api: SUBJECT_DELETE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          SHELVE_ID: ${SHELVE_ID}
+          SHELF_ID: ${SHELF_ID}
           SUBJECT_ID: "00000000-0000-0000-0000-000000000000"
         assertions:
           - path: $.isSuccess

@@ -2,7 +2,7 @@ configs:
   environments:
     base_url: "http://localhost:9009/api/v1/oopsly"
   apis:
-    # OTP AUTHENTICATION APIS
+    # OTP AUTHENTICATION APIS (POST /otp?email=...)
     - name: GENERATE_OTP
       method: POST
       endpoint: /otp
@@ -10,14 +10,14 @@ configs:
         Content-Type: "application/json"
       query-params:
         email:
-         value: $EMAIL
-         constraints:
-           nullable: false
+          value: $EMAIL
+          constraints:
+            nullable: false
     - name: VERIFY_OTP
       method: POST
       endpoint: /otp/validate
       headers:
-          Content-Type: "application/json"
+        Content-Type: "application/json"
       body:
         email:
           value: $EMAIL
@@ -28,7 +28,15 @@ configs:
           constraints:
             length: 6
             nullable: false
-#    USER AUTHENTICATION AND PROFILE APIS
+
+    # TOKEN VALIDATION
+    - name: TOKEN_VALIDATE
+      method: GET
+      endpoint: /users/validate
+      headers:
+        Authorization: "Bearer $AUTH_TOKEN"
+
+    # USER AUTHENTICATION APIS
     - name: TOKEN_REFRESH
       method: POST
       endpoint: /users/refresh-token
@@ -42,86 +50,57 @@ configs:
         user_email:
           value: $EMAIL
           constraints:
-              nullable: false
+            nullable: false
 
-    # DECK MANAGEMENT APIS
-    - name: DECK_CREATION
+    # SHELF MANAGEMENT APIS
+    - name: SHELF_CREATION
       method: POST
-      endpoint: /decks
+      endpoint: /shelves
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
         Content-Type: "application/json"
       body:
+        icon:
+          value: $SHELF_ICON
+          constraints:
+            nullable: false
         name:
-          value: $DECK_NAME
+          value: $SHELF_NAME
           constraints:
             nullable: false
         description:
-          value: $DECK_DESCRIPTION
+          value: $SHELF_DESCRIPTION
           constraints:
             length: [10, 100]
             nullable: false
-    - name: DECK_UPDATE
+    - name: SHELF_UPDATE
       method: PUT
-      endpoint: /decks/$DECK_ID
+      endpoint: /shelves/$SHELF_ID
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
         Content-Type: "application/json"
       body:
+        icon:
+          value: $SHELF_ICON
+          constraints:
+            nullable: false
         name:
-          value: $DECK_NAME
+          value: $SHELF_NAME
           constraints:
             nullable: false
         description:
-          value: $DECK_DESCRIPTION
+          value: $SHELF_DESCRIPTION
           constraints:
             length: [10, 100]
             nullable: false
-    - name: DECK_GET_BY_ID
+    - name: SHELF_GET_BY_ID
       method: GET
-      endpoint: /decks/$DECK_ID
+      endpoint: /shelves/$SHELF_ID
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
-    - name: DECK_GET_ALL_WITH_PAGINATION
+    - name: SHELF_GET_ALL
       method: GET
-      endpoint: /decks
-      headers:
-        Authorization: "Bearer $AUTH_TOKEN"
-      query-params:
-        page:
-            value: $PAGE_NUM
-            constraints:
-                min: 1
-        size:
-            value: $PAGE_SIZE
-            constraints:
-                min: 1
-                max: 100
-    - name: DECK_DELETE
-      method: PATCH
-      endpoint: /decks/$DECK_ID
-      headers:
-          Authorization: "Bearer $AUTH_TOKEN"
-
-    # COLLECTION MANAGEMENT APIS
-    - name: COLLECTION_CREATE
-      method: POST
-      endpoint: /decks/$DECK_ID/collections
-      headers:
-        Authorization: "Bearer $AUTH_TOKEN"
-        Content-Type: "application/json"
-      body:
-        name:
-          value: $COLLECTION_NAME
-          constraints:
-            nullable: false
-        description:
-          value: $COLLECTION_DESCRIPTION
-          constraints:
-            nullable: true
-    - name: COLLECTION_GET_ALL_BY_DECK
-      method: GET
-      endpoint: /decks/$DECK_ID/collections
+      endpoint: /shelves
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
       query-params:
@@ -133,36 +112,73 @@ configs:
           value: $PAGE_SIZE
           constraints:
             min: 1
-    - name: COLLECTION_UPDATE
-      method: PUT
-      endpoint: /decks/$DECK_ID/collections/$COLLECTION_ID
+            max: 100
+    - name: SHELF_DELETE
+      method: PATCH
+      endpoint: /shelves/$SHELF_ID
+      headers:
+        Authorization: "Bearer $AUTH_TOKEN"
+
+    # SUBJECT MANAGEMENT APIS
+    - name: SUBJECT_CREATE
+      method: POST
+      endpoint: /shelves/$SHELF_ID/subjects
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
         Content-Type: "application/json"
       body:
         name:
-          value: $COLLECTION_NAME
+          value: $SUBJECT_NAME
           constraints:
             nullable: false
         description:
-          value: $COLLECTION_DESCRIPTION
+          value: $SUBJECT_DESCRIPTION
           constraints:
             nullable: true
-    - name: COLLECTION_GET_BY_ID
+    - name: SUBJECT_GET_ALL_BY_SHELF
       method: GET
-      endpoint: /decks/$DECK_ID/collections/$COLLECTION_ID
+      endpoint: /shelves/$SHELF_ID/subjects
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
-    - name: COLLECTION_DELETE
+      query-params:
+        page:
+          value: $PAGE_NUM
+          constraints:
+            min: 0
+        size:
+          value: $PAGE_SIZE
+          constraints:
+            min: 1
+    - name: SUBJECT_UPDATE
+      method: PUT
+      endpoint: /shelves/$SHELF_ID/subjects/$SUBJECT_ID
+      headers:
+        Authorization: "Bearer $AUTH_TOKEN"
+        Content-Type: "application/json"
+      body:
+        name:
+          value: $SUBJECT_NAME
+          constraints:
+            nullable: false
+        description:
+          value: $SUBJECT_DESCRIPTION
+          constraints:
+            nullable: true
+    - name: SUBJECT_GET_BY_ID
+      method: GET
+      endpoint: /shelves/$SHELF_ID/subjects/$SUBJECT_ID
+      headers:
+        Authorization: "Bearer $AUTH_TOKEN"
+    - name: SUBJECT_DELETE
       method: PATCH
-      endpoint: /decks/$DECK_ID/collections/$COLLECTION_ID
+      endpoint: /shelves/$SHELF_ID/subjects/$SUBJECT_ID
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
 
     # CARD MANAGEMENT APIS
     - name: CARD_CREATE
       method: POST
-      endpoint: /decks/$DECK_ID/collections/$COLLECTION_ID/cards
+      endpoint: /shelves/$SHELF_ID/subjects/$SUBJECT_ID/cards
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
         Content-Type: "application/json"
@@ -171,9 +187,9 @@ configs:
           value: $CARDS_ARRAY
           constraints:
             nullable: false
-    - name: CARD_GET_ALL_BY_COLLECTION
+    - name: CARD_GET_ALL_BY_SUBJECT
       method: GET
-      endpoint: /decks/$DECK_ID/collections/$COLLECTION_ID/cards
+      endpoint: /shelves/$SHELF_ID/subjects/$SUBJECT_ID/cards
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
       query-params:
@@ -187,31 +203,27 @@ configs:
             min: 1
     - name: CARD_UPDATE
       method: PUT
-      endpoint: /decks/$DECK_ID/collections/$COLLECTION_ID/cards/$CARD_ID
+      endpoint: /shelves/$SHELF_ID/subjects/$SUBJECT_ID/cards/$CARD_ID
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
         Content-Type: "application/json"
       body:
-        question:
-          value: $CARD_QUESTION
+        front:
+          value: $CARD_FRONT
           constraints:
             nullable: false
-        answer:
-          value: $CARD_ANSWER
+        back:
+          value: $CARD_BACK
           constraints:
             nullable: false
-        hint:
-          value: $CARD_HINT
-          constraints:
-            nullable: true
     - name: CARD_GET_BY_ID
       method: GET
-      endpoint: /decks/$DECK_ID/collections/$COLLECTION_ID/cards/$CARD_ID
+      endpoint: /shelves/$SHELF_ID/subjects/$SUBJECT_ID/cards/$CARD_ID
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
     - name: CARD_UPDATE_DIFFICULTY
       method: PUT
-      endpoint: /decks/$DECK_ID/collections/$COLLECTION_ID/cards/difficulty
+      endpoint: /shelves/$SHELF_ID/subjects/$SUBJECT_ID/cards/difficulty
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
         Content-Type: "application/json"
@@ -222,54 +234,67 @@ configs:
             nullable: false
     - name: CARD_DELETE
       method: PATCH
-      endpoint: /decks/$DECK_ID/collections/$COLLECTION_ID/cards/$CARD_ID
+      endpoint: /shelves/$SHELF_ID/subjects/$SUBJECT_ID/cards/$CARD_ID
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
 
     # TEST SUITE MANAGEMENT APIS
     - name: TESTSUITE_CREATE
       method: POST
-      endpoint: /decks/$DECK_ID/test-suites
+      endpoint: /shelves/$SHELF_ID/test-suites
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
         Content-Type: "application/json"
       body:
-        name:
-          value: $TESTSUITE_NAME
+        title:
+          value: $TESTSUITE_TITLE
           constraints:
             nullable: false
-        description:
-          value: $TESTSUITE_DESCRIPTION
+        isActive:
+          value: $TESTSUITE_IS_ACTIVE
+          constraints:
+            nullable: true
+        subjectIds:
+          value: $TESTSUITE_SUBJECT_IDS
           constraints:
             nullable: true
     - name: TESTSUITE_UPDATE
       method: PUT
-      endpoint: /decks/$DECK_ID/test-suites/$TESTSUITE_ID
+      endpoint: /shelves/$SHELF_ID/test-suites/$TESTSUITE_ID
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
         Content-Type: "application/json"
       body:
-        name:
-          value: $TESTSUITE_NAME
+        title:
+          value: $TESTSUITE_TITLE
           constraints:
             nullable: false
-        description:
-          value: $TESTSUITE_DESCRIPTION
+        isActive:
+          value: $TESTSUITE_IS_ACTIVE
+          constraints:
+            nullable: true
+        subjectIds:
+          value: $TESTSUITE_SUBJECT_IDS
           constraints:
             nullable: true
     - name: TESTSUITE_GET_BY_ID
       method: GET
-      endpoint: /decks/$DECK_ID/test-suites/$TESTSUITE_ID
+      endpoint: /shelves/$SHELF_ID/test-suites/$TESTSUITE_ID
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
     - name: TESTSUITE_DELETE
       method: DELETE
-      endpoint: /decks/$DECK_ID/test-suites/$TESTSUITE_ID
+      endpoint: /shelves/$SHELF_ID/test-suites/$TESTSUITE_ID
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
-    - name: TESTSUITE_GET_ALL_BY_DECK
+    - name: TESTSUITE_GET_ALL_BY_SHELF
       method: GET
-      endpoint: /decks/$DECK_ID/test-suites
+      endpoint: /shelves/$SHELF_ID/test-suites
+      headers:
+        Authorization: "Bearer $AUTH_TOKEN"
+    - name: TESTSUITE_GET_CARDS
+      method: GET
+      endpoint: /test-suites/$TESTSUITE_ID/cards
       headers:
         Authorization: "Bearer $AUTH_TOKEN"
 
@@ -365,13 +390,13 @@ configs:
         displayName:
           value: $DISPLAY_NAME
           constraints:
-            nullable: true
+            nullable: false
         bio:
           value: $BIO
           constraints:
             nullable: true
-        avatarUrl:
-          value: $AVATAR_URL
+        age:
+          value: $AGE
           constraints:
             nullable: true
     - name: USERSETTINGS_UPDATE
@@ -384,12 +409,12 @@ configs:
         theme:
           value: $THEME
           constraints:
-            nullable: true
+            nullable: false
         language:
           value: $LANGUAGE
           constraints:
-            nullable: true
-        notifications:
-          value: $NOTIFICATIONS
+            nullable: false
+        spaceConfig:
+          value: $SPACE_CONFIG
           constraints:
-            nullable: true
+            nullable: false

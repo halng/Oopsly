@@ -1,7 +1,7 @@
-enabled: false
+enabled: true
 flows:
   - flow: Create Shelve Flow Check
-    description: "This flow tests the creation of a new shelve and verifies its existence in the database."
+    description: "This flow tests the creation of a new shelf (shelve) and verifies its existence."
     before-all:
       - name: Generate OTP
         api: GENERATE_OTP
@@ -37,12 +37,13 @@ flows:
           AUTH_TOKEN: $.data.access_token
           REFRESH_TOKEN: $.data.refresh_token
     steps:
-      - name: "1. Create a New Shelve"
-        api: SHELVE_CREATION
+      - name: "1. Create a New Shelf"
+        api: SHELF_CREATION
         with:
-            AUTH_TOKEN: ${AUTH_TOKEN}
-            SHELVE_NAME: "Integration Test Shelve"
-            SHELVE_DESCRIPTION: "This shelve is created during integration testing."
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELF_NAME: "Integration Test Shelve"
+          SHELF_DESCRIPTION: "This shelve is created during integration testing."
+          SHELF_ICON: "book"
         assertions:
           - path: $.isSuccess
             type: equals
