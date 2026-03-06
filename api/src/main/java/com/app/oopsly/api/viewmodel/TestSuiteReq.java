@@ -21,6 +21,4 @@ import java.util.List;
 import lombok.NonNull;
 
 public record TestSuiteReq(
-        @NonNull @NotNull String title,
-        Boolean isActive,
-        List<java.util.UUID> subjectIds) {}
+        @NonNull @NotNull String title, Boolean isActive, List<java.util.UUID> subjectIds) {}

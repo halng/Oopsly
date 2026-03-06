@@ -30,7 +30,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -98,16 +97,16 @@ public class UserController {
 
     @Operation(
             summary = "Validate access token",
-            description = "Validates the current JWT access token. Returns 200 if valid, 401 if invalid or expired.")
+            description =
+                    "Validates the current JWT access token. Returns 200 if valid, 401 if invalid"
+                            + " or expired.")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
                         description = "Token is valid",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(
-                        responseCode = "401",
-                        description = "Invalid or expired token"),
+                @ApiResponse(responseCode = "401", description = "Invalid or expired token"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/validate")

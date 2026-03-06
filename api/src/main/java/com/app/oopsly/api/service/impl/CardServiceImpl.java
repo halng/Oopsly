@@ -171,8 +171,7 @@ public class CardServiceImpl implements CardService {
                 allCards.addAll(subjectCards);
             }
         }
-        List<CardRes> result =
-                allCards.stream().map(this::toCardRes).collect(Collectors.toList());
+        List<CardRes> result = allCards.stream().map(this::toCardRes).collect(Collectors.toList());
         return ApiRes.success("Fetched successfully", result);
     }
 

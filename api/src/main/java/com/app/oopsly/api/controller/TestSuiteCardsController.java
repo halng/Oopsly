@@ -47,8 +47,8 @@ public class TestSuiteCardsController {
     @Operation(
             summary = "Get cards for test suite",
             description =
-                    "Returns all non-deleted cards from subjects linked to this test suite. Used for"
-                            + " \"Taking a test\" (card-based preset).")
+                    "Returns all non-deleted cards from subjects linked to this test suite. Used"
+                            + " for \"Taking a test\" (card-based preset).")
     @ApiResponses(
             value = {
                 @ApiResponse(

@@ -115,7 +115,11 @@ public class ShelfServiceImpl implements ShelfService {
 
         existingEntity.setDeleted(true);
         shelfRepository.save(existingEntity);
-        log.info("Deleted shelf {} and cascaded to {} subjects and {} test suites", id, subjects.size(), testSuites.size());
+        log.info(
+                "Deleted shelf {} and cascaded to {} subjects and {} test suites",
+                id,
+                subjects.size(),
+                testSuites.size());
         return ApiRes.success("Deleted successfully");
     }
 
