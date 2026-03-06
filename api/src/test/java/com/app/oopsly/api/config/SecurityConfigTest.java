@@ -80,6 +80,7 @@ class SecurityConfigTest {
         HttpSecurity httpSecurity = mock(HttpSecurity.class, RETURNS_DEEP_STUBS);
         when(httpSecurity.csrf(any())).thenReturn(httpSecurity);
         when(httpSecurity.sessionManagement(any())).thenReturn(httpSecurity);
+        when(httpSecurity.exceptionHandling(any())).thenReturn(httpSecurity);
         when(httpSecurity.authorizeHttpRequests(any())).thenReturn(httpSecurity);
         when(httpSecurity.formLogin(any())).thenReturn(httpSecurity);
         when(httpSecurity.addFilterBefore(any(), any())).thenReturn(httpSecurity);
