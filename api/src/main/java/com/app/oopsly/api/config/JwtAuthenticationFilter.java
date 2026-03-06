@@ -89,7 +89,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
+    private void sendErrorResponse(HttpServletResponse response, String message)
+            throws IOException {
         LOGGER.info("Sending error response: {}", message);
         if (response.isCommitted()) {
             LOGGER.warn("Response already committed; skipping error response write");

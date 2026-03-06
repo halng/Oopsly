@@ -111,8 +111,7 @@ public class CardController {
             @Parameter(description = "Page number (starts from 0)", required = true, example = "0")
                     @RequestParam
                     int page,
-            @Parameter(description = "Page size", required = true, example = "10")
-                    @RequestParam
+            @Parameter(description = "Page size", required = true, example = "10") @RequestParam
                     int size) {
         if (page < 0 || size < 1) {
             return ApiRes.badRequest("Invalid pagination parameters");

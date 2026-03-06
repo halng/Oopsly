@@ -16,6 +16,14 @@
 
 package com.app.oopsly.api.config;
 
+import com.app.oopsly.api.viewmodel.ApiRes;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -29,14 +37,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletResponse;
-import com.app.oopsly.api.viewmodel.ApiRes;
-import java.io.IOException;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Configuration
 @EnableWebSecurity
@@ -63,7 +63,8 @@ public class SecurityConfig {
                                                             response,
                                                             ApiRes.unauthorized(
                                                                     "You must be logged in to"
-                                                                            + " access this resource."));
+                                                                            + " access this"
+                                                                            + " resource."));
                                                 })
                                         .accessDeniedHandler(
                                                 (request, response, ex) ->

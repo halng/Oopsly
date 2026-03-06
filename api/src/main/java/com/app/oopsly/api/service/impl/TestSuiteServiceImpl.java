@@ -102,7 +102,8 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         TestSuiteEntity updatedTestSuite = this.toEntity(request, existingTestSuite);
         testSuiteRepository.save(updatedTestSuite);
 
-        return ApiRes.success("Test suite updated successfully", this.toViewModel(updatedTestSuite));
+        return ApiRes.success(
+                "Test suite updated successfully", this.toViewModel(updatedTestSuite));
     }
 
     @Override
