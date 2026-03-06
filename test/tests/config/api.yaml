@@ -273,6 +273,10 @@ configs:
           value: $TESTSUITE_IS_ACTIVE
           constraints:
             nullable: true
+        subjectIds:
+          value: $TESTSUITE_SUBJECT_IDS
+          constraints:
+            nullable: true
     - name: TESTSUITE_GET_BY_ID
       method: GET
       endpoint: /shelves/$SHELF_ID/test-suites/$TESTSUITE_ID
