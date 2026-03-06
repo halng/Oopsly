@@ -29,7 +29,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -111,10 +110,12 @@ public class CardController {
                     UUID subjectId,
             @Parameter(description = "Page number (starts from 0)", required = true, example = "0")
                     @RequestParam
-                    @Min(value = 0, message = "Page must be greater than or equal to 0") int page,
-            @Parameter(description = "Page size", required = true, example = "10")
-                    @RequestParam
-                    @Min(value = 1, message = "Size must be greater than 0") int size) {
+                    int page,
+            @Parameter(description = "Page size", required = true, example = "10") @RequestParam
+                    int size) {
+        if (page < 0 || size < 1) {
+            return ApiRes.badRequest("Invalid pagination parameters");
+        }
         log.info(
                 "Getting all cards for subject: {} in shelve: {} with page: {} and size: {}",
                 subjectId,

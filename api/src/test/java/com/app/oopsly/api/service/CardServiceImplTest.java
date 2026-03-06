@@ -29,6 +29,8 @@ import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
+import com.app.oopsly.api.exception.UnauthenticatedException;
+import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.ShelfRepository;
 import com.app.oopsly.api.repository.SubjectRepository;
@@ -593,5 +595,35 @@ class CardServiceImplTest {
 
         assertTrue(createEx.getMessage().contains("try again later"));
         assertTrue(deleteEx.getMessage().contains("try again later"));
+    }
+
+    @Test
+    void fallbackMethods_propagateDomainExceptionsWithoutWrapping() {
+        NotFoundException notFound = new NotFoundException("missing card");
+        UnauthenticatedException unauthenticated = new UnauthenticatedException("no token");
+        ValidationException validation = new ValidationException("bad input");
+
+        assertSame(
+                notFound,
+                assertThrows(
+                        NotFoundException.class,
+                        () -> cardService.getByIdFallback(shelveId, subjectId, cardId, notFound)));
+        assertSame(
+                unauthenticated,
+                assertThrows(
+                        UnauthenticatedException.class,
+                        () ->
+                                cardService.createFallback(
+                                        shelveId,
+                                        subjectId,
+                                        new CardReq(List.of(new CardItemReq("F", "B"))),
+                                        unauthenticated)));
+        assertSame(
+                validation,
+                assertThrows(
+                        ValidationException.class,
+                        () ->
+                                cardService.getAllCardsBySubjectFallback(
+                                        shelveId, subjectId, 0, 10, validation)));
     }
 }

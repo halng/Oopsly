@@ -23,6 +23,8 @@ import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
+import com.app.oopsly.api.exception.UnauthenticatedException;
+import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.ShelfRepository;
 import com.app.oopsly.api.repository.SubjectRepository;
@@ -304,8 +306,7 @@ public class CardServiceImpl implements CardService {
                 t.getMessage(),
                 shelfId,
                 subjectId);
-        throw new RetryLaterException(
-                "Card service is currently unavailable. Please try again later.", t);
+        throw unwrapCardException(t);
     }
 
     // Fallback method for updateDifficulty
@@ -316,8 +317,7 @@ public class CardServiceImpl implements CardService {
                 t.getMessage(),
                 shelfId,
                 subjectId);
-        throw new RetryLaterException(
-                "Card service is currently unavailable. Please try again later.", t);
+        throw unwrapCardException(t);
     }
 
     // Fallback method for updateCard
@@ -330,8 +330,7 @@ public class CardServiceImpl implements CardService {
                 shelfId,
                 subjectId,
                 cardId);
-        throw new RetryLaterException(
-                "Card service is currently unavailable. Please try again later.", t);
+        throw unwrapCardException(t);
     }
 
     // Fallback method for getAllCardsBySubject
@@ -345,8 +344,7 @@ public class CardServiceImpl implements CardService {
                 subjectId,
                 page,
                 size);
-        throw new RetryLaterException(
-                "Card service is currently unavailable. Please try again later.", t);
+        throw unwrapCardException(t);
     }
 
     // Fallback method for delete
@@ -357,8 +355,7 @@ public class CardServiceImpl implements CardService {
                 shelfId,
                 subjectId,
                 cardId);
-        throw new RetryLaterException(
-                "Card service is currently unavailable. Please try again later.", t);
+        throw unwrapCardException(t);
     }
 
     // Fallback method for getById
@@ -370,7 +367,20 @@ public class CardServiceImpl implements CardService {
                 shelfId,
                 subjectId,
                 cardId);
-        throw new RetryLaterException(
+        throw unwrapCardException(t);
+    }
+
+    private RuntimeException unwrapCardException(Throwable t) {
+        if (t instanceof NotFoundException nfe) {
+            return nfe;
+        }
+        if (t instanceof UnauthenticatedException ue) {
+            return ue;
+        }
+        if (t instanceof ValidationException ve) {
+            return ve;
+        }
+        return new RetryLaterException(
                 "Card service is currently unavailable. Please try again later.", t);
     }
 }

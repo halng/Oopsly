@@ -16,6 +16,12 @@
 
 package com.app.oopsly.api.config;
 
+import com.app.oopsly.api.viewmodel.ApiRes;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -33,12 +39,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+    private static final Logger LOG = LoggerFactory.getLogger(SecurityConfig.class);
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AppConfig appConfig;
+    private final ObjectMapper objectMapper;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, AppConfig appConfig) {
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthFilter, AppConfig appConfig, ObjectMapper objectMapper) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.appConfig = appConfig;
+        this.objectMapper = objectMapper;
     }
 
     @Bean
@@ -46,6 +56,25 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(
+                        handler ->
+                                handler.authenticationEntryPoint(
+                                                (request, response, ex) -> {
+                                                    writeErrorResponse(
+                                                            response,
+                                                            ApiRes.unauthorized(
+                                                                    "You must be logged in to"
+                                                                            + " access this"
+                                                                            + " resource."));
+                                                })
+                                        .accessDeniedHandler(
+                                                (request, response, ex) ->
+                                                        writeErrorResponse(
+                                                                response,
+                                                                ApiRes.forbidden(
+                                                                        "You do not have permission"
+                                                                                + " to access this"
+                                                                                + " resource."))))
                 .authorizeHttpRequests(
                         req ->
                                 req.requestMatchers(
@@ -83,5 +112,19 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(10);
+    }
+
+    private void writeErrorResponse(HttpServletResponse response, ApiRes apiRes) {
+        if (response.isCommitted()) {
+            LOG.warn("Response already committed, skipping error body write");
+            return;
+        }
+        try {
+            response.setStatus(apiRes.getStatusCode().value());
+            response.setContentType("application/json");
+            response.getWriter().write(objectMapper.writeValueAsString(apiRes.getBody()));
+        } catch (IOException e) {
+            LOG.error("Failed to write security response", e);
+        }
     }
 }

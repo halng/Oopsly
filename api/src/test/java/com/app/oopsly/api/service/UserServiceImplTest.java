@@ -262,9 +262,9 @@ class UserServiceImplTest {
     void getProfileFallback_providesUserFriendlyMessage() {
         Throwable cause = new Throwable("Internal circuit breaker error");
 
-        ValidationException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        ValidationException.class, () -> userService.getProfileFallback(cause));
+                        RetryLaterException.class, () -> userService.getProfileFallback(cause));
 
         String message = exception.getMessage();
         assertTrue(message.contains("Profile service"));
@@ -277,9 +277,9 @@ class UserServiceImplTest {
         UpdateProfileReq request = new UpdateProfileReq("Test User", "Test Bio", 25);
         Throwable cause = new Throwable("Internal circuit breaker error");
 
-        ValidationException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        ValidationException.class,
+                        RetryLaterException.class,
                         () -> userService.updateProfileFallback(request, cause));
 
         String message = exception.getMessage();
@@ -294,9 +294,9 @@ class UserServiceImplTest {
         UpdateSettingsReq request = new UpdateSettingsReq("LIGHT", "en", spaceConfigReq);
         Throwable cause = new Throwable("Internal circuit breaker error");
 
-        ValidationException exception =
+        RetryLaterException exception =
                 assertThrows(
-                        ValidationException.class,
+                        RetryLaterException.class,
                         () -> userService.updateSettingsFallback(request, cause));
 
         String message = exception.getMessage();
@@ -329,15 +329,28 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getProfile_throwsException_whenSettingsNotFound() {
+    void getProfile_createsSettings_whenNotFound() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(settingRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(settingRepository.findByUserId(userId))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(setting));
+        when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
 
-        ValidationException exception =
-                assertThrows(ValidationException.class, () -> userService.getProfile());
-        assertTrue(exception.getMessage().contains("User settings not found"));
+        ApiRes result = userService.getProfile();
+
+        assertNotNull(result);
+        assertTrue(result.getBody().isSuccess());
+        ArgumentCaptor<SettingEntity> captor = ArgumentCaptor.forClass(SettingEntity.class);
+        verify(settingRepository).save(captor.capture());
+        SettingEntity created = captor.getValue();
+        assertEquals(Theme.SYSTEM, created.getTheme());
+        assertEquals(Language.ENGLISH, created.getLanguage());
+        assertEquals(1, created.getSpaceConfig().get("AGAIN"));
+        assertEquals(1, created.getSpaceConfig().get("HARD"));
+        assertEquals(5, created.getSpaceConfig().get("GOOD"));
+        assertEquals(10, created.getSpaceConfig().get("EASY"));
     }
 
     @Test

@@ -20,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.util.JwtUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,6 +43,8 @@ class JwtAuthenticationFilterTest {
 
     @Mock private JwtUtils jwtUtils;
 
+    @Mock private ObjectMapper objectMapper;
+
     @Mock private HttpServletRequest request;
 
     @Mock private HttpServletResponse response;
@@ -56,9 +60,10 @@ class JwtAuthenticationFilterTest {
     }
 
     @BeforeEach
-    void setup() {
+    void setup() throws JsonProcessingException {
         lenient().when(request.getHeader("X-Request-ID")).thenReturn("test-request-id");
         lenient().when(request.getHeader("X-Platform")).thenReturn("test-platform");
+        lenient().when(objectMapper.writeValueAsString(any())).thenReturn("{}");
     }
 
     @Test

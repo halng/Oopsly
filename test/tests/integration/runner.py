@@ -192,6 +192,8 @@ def validate_api_response(
     for assertion in assertions:
         assertion_type = assertion.get("type")
         expected_value = assertion.get("value")
+        if isinstance(expected_value, str):
+            expected_value = _substitute_variables(expected_value)
         json_path = assertion.get("path")
 
         if assertion_type == "equals":
