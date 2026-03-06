@@ -18,8 +18,6 @@ package com.app.oopsly.api.config;
 
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.slf4j.Logger;
@@ -44,10 +42,13 @@ public class SecurityConfig {
     private static final Logger LOG = LoggerFactory.getLogger(SecurityConfig.class);
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AppConfig appConfig;
+    private final ObjectMapper objectMapper;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, AppConfig appConfig) {
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthFilter, AppConfig appConfig, ObjectMapper objectMapper) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.appConfig = appConfig;
+        this.objectMapper = objectMapper;
     }
 
     @Bean
@@ -121,11 +122,7 @@ public class SecurityConfig {
         try {
             response.setStatus(apiRes.getStatusCode().value());
             response.setContentType("application/json");
-            ObjectMapper mapper =
-                    new ObjectMapper()
-                            .registerModule(new JavaTimeModule())
-                            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-            response.getWriter().write(mapper.writeValueAsString(apiRes.getBody()));
+            response.getWriter().write(objectMapper.writeValueAsString(apiRes.getBody()));
         } catch (IOException e) {
             LOG.error("Failed to write security response", e);
         }
