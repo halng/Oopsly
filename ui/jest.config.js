@@ -11,6 +11,7 @@ module.exports = {
     '\\.(css|less|sass|scss)$': '<rootDir>/__mocks__/styleMock.js',
     '^@/(.*)$': '<rootDir>/$1',
   },
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   collectCoverage: true,
   collectCoverageFrom: [
     '**/*.{js,jsx,ts,tsx}',
