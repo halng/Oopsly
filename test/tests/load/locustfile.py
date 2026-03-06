@@ -123,6 +123,7 @@ class OopslyApiUser(HttpUser):
 
         # Extract path from full URL (Locust host is already set)
         from urllib.parse import urlparse
+
         if url.startswith("http"):
             parsed = urlparse(url)
             path = parsed.path or "/"
