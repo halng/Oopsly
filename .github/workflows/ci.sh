@@ -226,6 +226,43 @@ run_integration_tests() {
     fi
 }
 
+# E2E Tests (test directory)
+run_e2e_tests() {
+    echo "CI::"
+    echo "CI::====================================="
+    echo "CI::Running E2E Tests for UI"
+    echo "CI::====================================="
+
+    if [ ! -d "test" ]; then
+        echo "CI::Warning: test directory not found, skipping E2E tests"
+        return 0
+    fi
+
+    if [ ! -d "test/tests/e2e" ]; then
+        echo "CI::Warning: E2E test directory not found, skipping E2E tests"
+        return 0
+    fi
+
+    echo "CI::Installing Playwright browsers..."
+    playwright install --with-deps chromium
+
+    echo "CI::Running E2E tests..."
+    cd test
+    pytest tests/e2e/suites/ -v
+    TEST_EXIT_CODE=$?
+
+    # Return to repo root
+    cd ..
+
+    if [ $TEST_EXIT_CODE -eq 0 ]; then
+        echo "CI::E2E tests completed successfully!"
+        return 0
+    else
+        echo "CI::ERROR: E2E tests failed with exit code $TEST_EXIT_CODE"
+        return 1
+    fi
+}
+
 # Security Scans (Snyk)
 run_security_scans() {
     echo "CI::"
@@ -297,13 +334,14 @@ main() {
     
     # Validate environment first
     validate_environment
-    
+
     # Run all CI steps
     run_backend_ci
     run_markdown_lint
     run_frontend_ci
     run_integration_tests
-    
+    run_e2e_tests
+
     if [ "$SKIP_SECURITY" = false ]; then
         run_security_scans
     fi
