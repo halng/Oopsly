@@ -175,7 +175,11 @@ def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
                     else:
                         substituted = _substitute_variables(raw_val, working_context)
                         # Skip nullable fields if substitution failed (still contains $)
-                        if is_nullable and isinstance(substituted, str) and "$" in substituted:
+                        if (
+                            is_nullable
+                            and isinstance(substituted, str)
+                            and "$" in substituted
+                        ):
                             continue
                         body[key] = substituted
                 else:
