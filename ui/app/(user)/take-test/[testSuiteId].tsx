@@ -1,5 +1,5 @@
 /*
- *    Copyright 2026 Hao Nguyen Tan
+ *    Copyright 2025 Hao Nguyen Tan
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -14,13 +14,17 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.viewmodel;
+import React from "react";
+import { useLocalSearchParams } from "expo-router";
+import FlashcardReviewScreen from "@/screen/FlashCardReviewScreen";
 
-import jakarta.validation.constraints.NotNull;
-import java.util.List;
-import lombok.NonNull;
+export default function TakeTestScreen() {
+  const params = useLocalSearchParams<{ testSuiteId: string }>();
+  const testSuiteId = params.testSuiteId as string;
 
-public record TestSuiteReq(
-        @NonNull @NotNull String title,
-        Boolean isActive,
-        List<java.util.UUID> subjectIds) {}
+  if (!testSuiteId) {
+    return null;
+  }
+
+  return <FlashcardReviewScreen _testSuiteId={testSuiteId} />;
+}

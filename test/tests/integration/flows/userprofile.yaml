@@ -1,4 +1,4 @@
-enabled: false
+enabled: true
 flows:
   - flow: User Profile Management Flow
     description: "This flow tests user profile operations including get and update"
@@ -35,14 +35,13 @@ flows:
             value: 200
           - path: $.data
             type: not-null
-      
+
       - name: "2. Update User Profile"
         api: USERPROFILE_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DISPLAY_NAME: "Test User"
           BIO: "This is a test user profile"
-          AVATAR_URL: "https://example.com/avatar.jpg"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -53,7 +52,7 @@ flows:
           - path: $.data.displayName
             type: equals
             value: "Test User"
-      
+
       - name: "3. Get Updated Profile"
         api: USERPROFILE_GET
         with:
@@ -71,14 +70,14 @@ flows:
           - path: $.data.bio
             type: contains
             value: "test user"
-      
+
       - name: "4. Update User Profile with Partial Data"
         api: USERPROFILE_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DISPLAY_NAME: "Updated Test User"
           BIO: ""
-          AVATAR_URL: ""
+          AGE: null
         assertions:
           - path: $.isSuccess
             type: equals
@@ -114,8 +113,12 @@ flows:
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           THEME: "dark"
-          LANGUAGE: ""
-          NOTIFICATIONS: ""
+          LANGUAGE: "en"
+          SPACE_CONFIG:
+            AGAIN: 1
+            HARD: 2
+            GOOD: 3
+            EASY: 4
         assertions:
           - path: $.isSuccess
             type: equals
@@ -123,14 +126,18 @@ flows:
           - path: $.status
             type: equals
             value: 200
-      
+
       - name: "2. Update User Settings - Language"
         api: USERSETTINGS_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          THEME: ""
+          THEME: "light"
           LANGUAGE: "en"
-          NOTIFICATIONS: ""
+          SPACE_CONFIG:
+            AGAIN: 1
+            HARD: 2
+            GOOD: 3
+            EASY: 4
         assertions:
           - path: $.isSuccess
             type: equals
@@ -138,14 +145,18 @@ flows:
           - path: $.status
             type: equals
             value: 200
-      
-      - name: "3. Update User Settings - Notifications"
+
+      - name: "3. Update User Settings - System Theme"
         api: USERSETTINGS_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
-          THEME: ""
-          LANGUAGE: ""
-          NOTIFICATIONS: "enabled"
+          THEME: "system"
+          LANGUAGE: "en"
+          SPACE_CONFIG:
+            AGAIN: 1
+            HARD: 2
+            GOOD: 3
+            EASY: 4
         assertions:
           - path: $.isSuccess
             type: equals
@@ -153,14 +164,18 @@ flows:
           - path: $.status
             type: equals
             value: 200
-      
+
       - name: "4. Update All Settings at Once"
         api: USERSETTINGS_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           THEME: "light"
           LANGUAGE: "es"
-          NOTIFICATIONS: "disabled"
+          SPACE_CONFIG:
+            AGAIN: 0
+            HARD: 1
+            GOOD: 2
+            EASY: 3
         assertions:
           - path: $.isSuccess
             type: equals
@@ -183,14 +198,13 @@ flows:
           - path: $.status
             type: equals
             value: 401
-      
+
       - name: "2. Update Profile Without Authentication"
         api: USERPROFILE_UPDATE
         with:
           AUTH_TOKEN: ""
           DISPLAY_NAME: "Should Fail"
           BIO: "Should not work"
-          AVATAR_URL: ""
         assertions:
           - path: $.isSuccess
             type: equals
@@ -198,7 +212,7 @@ flows:
           - path: $.status
             type: equals
             value: 401
-      
+
       - name: "3. Get Profile With Invalid Token"
         api: USERPROFILE_GET
         with:
@@ -244,14 +258,13 @@ flows:
           - path: $.status
             type: equals
             value: 200
-      
+
       - name: "2. Update Profile Information"
         api: USERPROFILE_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           DISPLAY_NAME: "Integration Tester"
           BIO: "Testing profile and settings integration"
-          AVATAR_URL: "https://example.com/integration.jpg"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -259,14 +272,18 @@ flows:
           - path: $.status
             type: equals
             value: 200
-      
+
       - name: "3. Update User Preferences"
         api: USERSETTINGS_UPDATE
         with:
           AUTH_TOKEN: ${AUTH_TOKEN}
           THEME: "dark"
           LANGUAGE: "en"
-          NOTIFICATIONS: "enabled"
+          SPACE_CONFIG:
+            AGAIN: 1
+            HARD: 2
+            GOOD: 3
+            EASY: 4
         assertions:
           - path: $.isSuccess
             type: equals
@@ -274,7 +291,7 @@ flows:
           - path: $.status
             type: equals
             value: 200
-      
+
       - name: "4. Verify Profile Still Intact After Settings Update"
         api: USERPROFILE_GET
         with:

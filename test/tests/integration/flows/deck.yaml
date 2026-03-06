@@ -1,7 +1,7 @@
-enabled: false
+enabled: true
 flows:
-  - flow: Create Deck Flow Check
-    description: "This flow tests the creation of a new deck and verifies its existence in the database."
+  - flow: Create Shelf Flow Check
+    description: "This flow tests the creation of a new shelf and verifies its existence."
     before-all:
       - name: Generate OTP
         api: GENERATE_OTP
@@ -37,12 +37,13 @@ flows:
           AUTH_TOKEN: $.data.access_token
           REFRESH_TOKEN: $.data.refresh_token
     steps:
-      - name: "1. Create a New Deck"
-        api: DECK_CREATION
+      - name: "1. Create a New Shelf"
+        api: SHELF_CREATION
         with:
-            AUTH_TOKEN: ${AUTH_TOKEN}
-            DECK_NAME: "Integration Test Deck"
-            DECK_DESCRIPTION: "This deck is created during integration testing."
+          AUTH_TOKEN: ${AUTH_TOKEN}
+          SHELF_NAME: "Integration Test Shelf"
+          SHELF_DESCRIPTION: "This shelf is created during integration testing."
+          SHELF_ICON: "book"
         assertions:
           - path: $.isSuccess
             type: equals
@@ -51,8 +52,8 @@ flows:
             type: equals
             value: 201
           - type: contains
-            value: "Integration Test Deck"
+            value: "Integration Test Shelf"
           - type: contains
-            value: "This deck is created during integration testing."
+            value: "This shelf is created during integration testing."
           - type: status-code
             value: 201

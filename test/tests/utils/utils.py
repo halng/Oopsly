@@ -153,7 +153,17 @@ def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
         body = {}
         for key, field_def in api_info["body"].items():
             if isinstance(field_def, dict) and "value" in field_def:
-                body[key] = _substitute_variables(field_def["value"], working_context)
+                raw_val = field_def["value"]
+                # If value is $VAR and context[VAR] is dict/list, use as-is (no stringify)
+                if isinstance(raw_val, str) and raw_val.startswith("$") and len(raw_val) > 1:
+                    var_name = raw_val[1:].split(".")[0].split("[")[0]
+                    ctx_val = working_context.get(var_name)
+                    if isinstance(ctx_val, (dict, list)):
+                        body[key] = ctx_val
+                    else:
+                        body[key] = _substitute_variables(raw_val, working_context)
+                else:
+                    body[key] = _substitute_variables(raw_val, working_context)
             else:
                 body[key] = _substitute_variables(field_def, working_context)
 

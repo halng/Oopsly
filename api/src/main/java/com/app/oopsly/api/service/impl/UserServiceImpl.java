@@ -282,6 +282,12 @@ public class UserServiceImpl implements UserService {
         return ApiRes.ok("Logged out successfully");
     }
 
+    @Override
+    public ApiRes validateToken() {
+        getCurrentUser();
+        return ApiRes.success("Token is valid", Map.of("valid", true));
+    }
+
     public ApiRes logoutFallback(Throwable t) {
         log.error("Logout service unavailable");
         throw new RetryLaterException(

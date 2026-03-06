@@ -18,10 +18,10 @@ import React, { useEffect, useState } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import "react-native-reanimated";
 import "@/global.css";
-import { useAuthStore } from "@/store";
+import { useAuthStore, useSettingsStore } from "@/store";
 import { Logger } from "@/utils";
 import { AuthService } from "@/services/AuthService";
-import { View, ActivityIndicator, Text } from "react-native";
+import { View, ActivityIndicator, Text, Appearance } from "react-native";
 
 const logger = Logger.extend("RootLayout");
 
@@ -34,6 +34,15 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const theme = useSettingsStore((state) => state.theme);
+
+  useEffect(() => {
+    if (theme === "system") {
+      Appearance.setColorScheme(null);
+    } else {
+      Appearance.setColorScheme(theme);
+    }
+  }, [theme]);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
@@ -167,7 +176,6 @@ export default function RootLayout() {
 
   logger.debug("RootLayout rendered, isAuthenticated:", isAuthenticated);
 
-  //TODO: add theme provider when themes are ready
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={isAuthenticated}>

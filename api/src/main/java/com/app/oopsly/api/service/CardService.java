@@ -38,6 +38,8 @@ public interface CardService {
 
     ApiRes getAllCardsBySubject(UUID shelfId, UUID subjectId, int page, int size);
 
+    ApiRes getCardsByTestSuite(UUID testSuiteId);
+
     Instant calculateNextPracticeTime(DifficultyLevel difficultyLevel);
 
     ApiRes updateCard(UUID shelfId, UUID subjectId, UUID cardId, CardItemReq request);

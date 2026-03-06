@@ -65,6 +65,15 @@ const updateSubjectById = async (
   const endpoint = SUBJECT_ENDPOINTS.BY_ID(shelfId, id);
   const response = await apiClient.put(endpoint, data);
   return response.data;
-}
+};
 
-export { createSubject, getSubjectById, updateSubjectSetting, updateSubjectById };
+const deleteSubject = async (
+  shelfId: string,
+  id: string,
+): Promise<ApiResponse<null>> => {
+  const endpoint = SUBJECT_ENDPOINTS.BY_ID(shelfId, id);
+  const response = await apiClient.patch(endpoint);
+  return response.data;
+};
+
+export { createSubject, getSubjectById, updateSubjectSetting, updateSubjectById, deleteSubject };

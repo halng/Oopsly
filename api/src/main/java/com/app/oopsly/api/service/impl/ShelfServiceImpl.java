@@ -16,16 +16,23 @@
 
 package com.app.oopsly.api.service.impl;
 
+import com.app.oopsly.api.entity.CardEntity;
 import com.app.oopsly.api.entity.ShelfEntity;
+import com.app.oopsly.api.entity.SubjectEntity;
+import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
+import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.ShelfRepository;
+import com.app.oopsly.api.repository.SubjectRepository;
+import com.app.oopsly.api.repository.TestSuiteRepository;
 import com.app.oopsly.api.service.CardService;
 import com.app.oopsly.api.service.ShelfService;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.viewmodel.*;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import jakarta.transaction.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -43,6 +50,9 @@ import org.springframework.stereotype.Service;
 public class ShelfServiceImpl implements ShelfService {
 
     private final ShelfRepository shelfRepository;
+    private final SubjectRepository subjectRepository;
+    private final CardRepository cardRepository;
+    private final TestSuiteRepository testSuiteRepository;
     private final UserService userService;
     private final CardService cardService;
 
@@ -70,6 +80,7 @@ public class ShelfServiceImpl implements ShelfService {
     }
 
     @Override
+    @Transactional
     //    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID id) {
         log.info("Deleting shelve {} for user {}", id, this.currentUser().getId());
@@ -79,8 +90,32 @@ public class ShelfServiceImpl implements ShelfService {
                         .orElseThrow(
                                 () -> new NotFoundException("Entity not found with id: " + id));
 
+        List<SubjectEntity> subjects =
+                subjectRepository
+                        .findAllByShelve(existingEntity, PageRequest.of(0, Integer.MAX_VALUE))
+                        .getContent();
+        for (SubjectEntity subject : subjects) {
+            List<CardEntity> cards =
+                    cardRepository
+                            .findAllBySubject(subject, PageRequest.of(0, Integer.MAX_VALUE))
+                            .getContent();
+            cards.forEach(card -> card.setDeleted(true));
+            if (!cards.isEmpty()) {
+                cardRepository.saveAll(cards);
+            }
+            subject.setDeleted(true);
+            subjectRepository.save(subject);
+        }
+
+        List<TestSuiteEntity> testSuites = testSuiteRepository.findAllByShelve(existingEntity);
+        testSuites.forEach(testSuite -> testSuite.setDeleted(true));
+        if (!testSuites.isEmpty()) {
+            testSuiteRepository.saveAll(testSuites);
+        }
+
         existingEntity.setDeleted(true);
         shelfRepository.save(existingEntity);
+        log.info("Deleted shelf {} and cascaded to {} subjects and {} test suites", id, subjects.size(), testSuites.size());
         return ApiRes.success("Deleted successfully");
     }
 
@@ -132,6 +167,7 @@ public class ShelfServiceImpl implements ShelfService {
 
         to.setName(from.name());
         to.setDescription(from.description());
+        to.setIcon(from.icon());
         return to;
     }
 

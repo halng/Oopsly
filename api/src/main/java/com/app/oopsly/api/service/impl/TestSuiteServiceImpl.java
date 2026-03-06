@@ -17,11 +17,13 @@
 package com.app.oopsly.api.service.impl;
 
 import com.app.oopsly.api.entity.ShelfEntity;
+import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.repository.ShelfRepository;
+import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.repository.TestSuiteRepository;
 import com.app.oopsly.api.service.TestSuiteService;
 import com.app.oopsly.api.service.UserService;
@@ -46,6 +48,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
 
     private final TestSuiteRepository testSuiteRepository;
     private final ShelfRepository shelfRepository;
+    private final SubjectRepository subjectRepository;
     private final UserService userService;
 
     @Override
@@ -57,6 +60,21 @@ public class TestSuiteServiceImpl implements TestSuiteService {
 
         TestSuiteEntity testSuite = this.toEntity(request, null);
         testSuite.setShelf(shelve);
+        if (request.subjectIds() != null && !request.subjectIds().isEmpty()) {
+            List<SubjectEntity> subjects =
+                    request.subjectIds().stream()
+                            .map(
+                                    subjectId ->
+                                            subjectRepository
+                                                    .findByIdAndShelve(subjectId, shelve)
+                                                    .orElseThrow(
+                                                            () ->
+                                                                    new NotFoundException(
+                                                                            "Subject not found: "
+                                                                                    + subjectId)))
+                            .toList();
+            testSuite.setSubjects(subjects);
+        }
         TestSuiteEntity savedEntity = testSuiteRepository.save(testSuite);
 
         return ApiRes.created("Test suite created successfully", this.toViewModel(savedEntity));

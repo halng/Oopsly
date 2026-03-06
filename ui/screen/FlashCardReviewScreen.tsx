@@ -18,15 +18,16 @@ import {
   fetchCardsDataBySubjectAndShelf,
   updateDifficultyLevels,
 } from "@/services/CardService";
+import { getCardsForTestSuite } from "@/services/TestSuiteService";
 import { CardRes, ReviewedFlashcard } from "@/types/Card";
 
-const FlashcardReviewScreen = ({
-  _shelfId,
-  _subjectId,
-}: {
-  _shelfId: string;
-  _subjectId: string;
-}) => {
+type FlashcardReviewProps =
+  | { _shelfId: string; _subjectId: string; _testSuiteId?: never }
+  | { _shelfId?: never; _subjectId?: never; _testSuiteId: string };
+
+const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
+  const { _shelfId, _subjectId, _testSuiteId } = props;
+  const isTestSuiteMode = Boolean(_testSuiteId);
   const startTime = Date.now();
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -42,6 +43,21 @@ const FlashcardReviewScreen = ({
   const buttonTranslateY = useSharedValue(20);
 
   const fetchCards = () => {
+    if (_testSuiteId) {
+      getCardsForTestSuite(_testSuiteId)
+        .then((response) => {
+          if (response.isSuccess && Array.isArray(response.data)) {
+            setCards(response.data);
+            setTotalCards(response.data.length);
+          } else {
+            console.error("Failed to fetch cards for test suite:", response.message);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching cards for test suite:", error);
+        });
+      return;
+    }
     if (_shelfId && _subjectId) {
       fetchCardsDataBySubjectAndShelf(_shelfId, _subjectId)
         .then((response) => {
@@ -63,7 +79,7 @@ const FlashcardReviewScreen = ({
     fetchCards();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_shelfId, _subjectId]);
+  }, [_shelfId, _subjectId, _testSuiteId]);
 
   // Animated styles for card flip
   const frontAnimatedStyle = useAnimatedStyle(() => {
@@ -154,7 +170,13 @@ const FlashcardReviewScreen = ({
           buttonOpacity.value = 0;
           buttonTranslateY.value = 20;
         } else {
-          updateDifficultyLevels(_shelfId, _subjectId, reviewedCards)
+          if (isTestSuiteMode) {
+            const endTime = Date.now();
+            const duration = endTime - startTime;
+            router.replace(`/home?testComplete=1&duration=${duration}`);
+            return;
+          }
+          updateDifficultyLevels(_shelfId!, _subjectId!, reviewedCards)
             .then((response) => {
               if (response.isSuccess) {
                 // Session complete - navigate to results

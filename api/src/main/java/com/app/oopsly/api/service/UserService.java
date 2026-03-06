@@ -36,4 +36,6 @@ public interface UserService {
     ApiRes refreshToken(RefreshTokenReq refreshTokenReq);
 
     ApiRes logout();
+
+    ApiRes validateToken();
 }
