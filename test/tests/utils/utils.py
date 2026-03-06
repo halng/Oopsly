@@ -171,7 +171,7 @@ def build_api_request(api_info: dict, step_vars: dict = None) -> dict:
                         continue
 
                     if isinstance(ctx_val, (dict, list)):
-                        body[key] = ctx_val
+                        body[key] = _process_data_with_context(ctx_val, working_context)
                     else:
                         substituted = _substitute_variables(raw_val, working_context)
                         # Skip nullable fields if substitution failed (still contains $)

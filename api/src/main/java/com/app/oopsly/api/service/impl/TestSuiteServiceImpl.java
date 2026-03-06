@@ -22,6 +22,7 @@ import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
+import com.app.oopsly.api.exception.UnauthenticatedException;
 import com.app.oopsly.api.repository.ShelfRepository;
 import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.repository.TestSuiteRepository;
@@ -101,7 +102,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         TestSuiteEntity updatedTestSuite = this.toEntity(request, existingTestSuite);
         testSuiteRepository.save(updatedTestSuite);
 
-        return ApiRes.success("Test suite updated successfully");
+        return ApiRes.success("Test suite updated successfully", this.toViewModel(updatedTestSuite));
     }
 
     @Override
@@ -188,31 +189,37 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     // Fallback methods for Circuit Breaker
     public ApiRes createFallback(UUID deckId, TestSuiteReq request, Throwable t) {
         log.error("Test suite service unavailable during create: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Test suite service is currently unavailable. Please try again later.", t);
+        throw unwrapTestSuiteException(t);
     }
 
     public ApiRes updateFallback(UUID deckId, UUID testSuiteId, TestSuiteReq request, Throwable t) {
         log.error("Test suite service unavailable during update: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Test suite service is currently unavailable. Please try again later.", t);
+        throw unwrapTestSuiteException(t);
     }
 
     public ApiRes deleteFallback(UUID deckId, UUID testSuiteId, Throwable t) {
         log.error("Test suite service unavailable during delete: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Test suite service is currently unavailable. Please try again later.", t);
+        throw unwrapTestSuiteException(t);
     }
 
     public ApiRes getByIdFallback(UUID deckId, UUID testSuiteId, Throwable t) {
         log.error("Test suite service unavailable during getById: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Test suite service is currently unavailable. Please try again later.", t);
+        throw unwrapTestSuiteException(t);
     }
 
     public ApiRes getAllByShelveFallback(UUID shelveId, Throwable t) {
         log.error("Test suite service unavailable during getAllByShelve: {}", t.getMessage());
-        throw new RetryLaterException(
+        throw unwrapTestSuiteException(t);
+    }
+
+    private RuntimeException unwrapTestSuiteException(Throwable t) {
+        if (t instanceof NotFoundException nfe) {
+            return nfe;
+        }
+        if (t instanceof UnauthenticatedException ue) {
+            return ue;
+        }
+        return new RetryLaterException(
                 "Test suite service is currently unavailable. Please try again later.", t);
     }
 }
