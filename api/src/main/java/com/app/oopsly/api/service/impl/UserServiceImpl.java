@@ -158,8 +158,8 @@ public class UserServiceImpl implements UserService {
         if (t instanceof UnauthenticatedException ue) {
             throw ue;
         }
-        throw new RetryLaterException(
-                "Profile service is currently unavailable. Please try again later.", t);
+        throw new ValidationException(
+                "Profile service is currently unavailable. Please try again later.");
     }
 
     @Override
@@ -192,8 +192,8 @@ public class UserServiceImpl implements UserService {
         if (t instanceof UnauthenticatedException ue) {
             throw ue;
         }
-        throw new RetryLaterException(
-                "Profile update service is currently unavailable. Please try again later.", t);
+        throw new ValidationException(
+                "Profile update service is currently unavailable. Please try again later.");
     }
 
     @Override
@@ -255,8 +255,8 @@ public class UserServiceImpl implements UserService {
         if (t instanceof UnauthenticatedException ue) {
             throw ue;
         }
-        throw new RetryLaterException(
-                "Settings update service is currently unavailable. Please try again later.", t);
+        throw new ValidationException(
+                "Settings update service is currently unavailable. Please try again later.");
     }
 
     public ApiRes refreshTokenFallback(RefreshTokenReq refreshTokenReq, Throwable t) {
@@ -315,6 +315,6 @@ public class UserServiceImpl implements UserService {
     private SettingEntity ensureSettings(User user) {
         return settingRepository
                 .findByUserId(user.getId())
-                .orElseGet(() -> createDefaultSettings(user));
+                .orElseThrow(() -> new ValidationException("User settings not found"));
     }
 }
