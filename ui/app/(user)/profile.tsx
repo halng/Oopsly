@@ -105,19 +105,21 @@ export default function ProfileScreen() {
           <TouchableOpacity
             className="flex-row items-center"
             onPress={() => router.back()}
+            testID="back-button"
           >
             <ChevronLeft size={24} color="#4F46E5" />
             <Text className="text-indigo-600 font-medium ml-1">Back</Text>
           </TouchableOpacity>
           <Text className="text-xl font-bold text-gray-800">Profile</Text>
           {!isEditing ? (
-            <TouchableOpacity onPress={() => setIsEditing(true)}>
+            <TouchableOpacity onPress={() => setIsEditing(true)} testID="edit-button">
               <Edit3 size={20} color="#4F46E5" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
               onPress={handleSave}
               disabled={saving || !displayName.trim()}
+              testID="save-button"
             >
               <Save size={20} color="#4F46E5" />
             </TouchableOpacity>
@@ -142,6 +144,7 @@ export default function ProfileScreen() {
               placeholder="Your display name"
               placeholderTextColor="#9CA3AF"
               maxLength={50}
+              testID="display-name-input"
             />
           ) : (
             <Text className="text-lg font-medium text-gray-800">

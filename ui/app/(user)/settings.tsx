@@ -66,6 +66,7 @@ export default function SettingsScreen() {
           <TouchableOpacity
             className="flex-row items-center"
             onPress={() => router.back()}
+            testID="back-button"
           >
             <ChevronLeft size={24} color="#4F46E5" />
             <Text className="text-indigo-600 font-medium ml-1">Back</Text>
