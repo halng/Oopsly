@@ -274,9 +274,9 @@ main() {
     COMMIT_HASH=$(git rev-parse --short HEAD)
 
     if [[ "$REF" == "refs/heads/main" ]]; then
-        export IMAGE_TAG="snapshot-$COMMIT_HASH"
-    elif [[ "$REF" == "refs/heads/release" ]]; then
         export IMAGE_TAG="latest-$COMMIT_HASH"
+    elif [[ "$REF" == refs/heads/release/* ]]; then
+        export IMAGE_TAG="snapshot-$COMMIT_HASH"
     else
         export IMAGE_TAG=""
         echo "CI::Non-deployment branch detected. Building with dev tag only."
