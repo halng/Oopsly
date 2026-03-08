@@ -21,7 +21,13 @@ import "@/global.css";
 import { useAuthStore, useSettingsStore } from "@/store";
 import { Logger } from "@/utils";
 import { AuthService } from "@/services/AuthService";
-import { View, ActivityIndicator, Text, Appearance } from "react-native";
+import {
+  View,
+  ActivityIndicator,
+  Text,
+  Appearance,
+  Platform,
+} from "react-native";
 
 const logger = Logger.extend("RootLayout");
 
@@ -37,10 +43,12 @@ export default function RootLayout() {
   const theme = useSettingsStore((state) => state.theme);
 
   useEffect(() => {
-    if (theme === "system") {
-      Appearance.setColorScheme(null);
-    } else {
-      Appearance.setColorScheme(theme);
+    if (Platform.OS !== "web") {
+      if (theme === "system") {
+        Appearance.setColorScheme(null);
+      } else {
+        Appearance.setColorScheme(theme);
+      }
     }
   }, [theme]);
 
@@ -51,12 +59,12 @@ export default function RootLayout() {
     const checkAuthStatus = async () => {
       if (isCancelled) return;
       logger.debug("Checking auth status...");
-      
+
       try {
         // Wait for store to hydrate with timeout
         if (!useAuthStore.persist.hasHydrated()) {
           logger.debug("Waiting for store hydration...");
-          
+
           const hydrationPromise = new Promise<void>((resolve) => {
             const unsub = useAuthStore.persist.onFinishHydration(() => {
               logger.debug("Store hydrated");
@@ -76,7 +84,7 @@ export default function RootLayout() {
 
           // Wait for either hydration or timeout
           await Promise.race([hydrationPromise, timeoutPromise]);
-          
+
           // Clean up timeout if hydration finished first
           if (timeoutId) {
             clearTimeout(timeoutId);
@@ -97,7 +105,7 @@ export default function RootLayout() {
         }
 
         logger.debug("Tokens found, validating...");
-        
+
         try {
           // Try to validate the current access token
           await AuthService.ValidateToken();
@@ -105,11 +113,14 @@ export default function RootLayout() {
           setIsReady(true);
         } catch {
           logger.warn("Access token validation failed, attempting refresh...");
-          
+
           try {
             // Try to refresh the token
-            const response = await AuthService.RefreshToken(currentRefreshToken, currentUserEmail);
-            
+            const response = await AuthService.RefreshToken(
+              currentRefreshToken,
+              currentUserEmail,
+            );
+
             if (response.isSuccess && response.data) {
               const { access_token, refresh_token } = response.data;
               setAuthTokens(access_token, refresh_token);
@@ -122,7 +133,7 @@ export default function RootLayout() {
             logger.error("Token refresh error:", refreshError);
             clearAuth();
           }
-          
+
           setIsReady(true);
         }
       } catch (error) {
@@ -166,8 +177,15 @@ export default function RootLayout() {
         style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         testID="auth-loading-screen"
       >
-        <ActivityIndicator size="large" color="#5B5BFD" testID="auth-loading-spinner" />
-        <Text style={{ marginTop: 16, color: "#6B7280" }} testID="auth-loading-text">
+        <ActivityIndicator
+          size="large"
+          color="#5B5BFD"
+          testID="auth-loading-spinner"
+        />
+        <Text
+          style={{ marginTop: 16, color: "#6B7280" }}
+          testID="auth-loading-text"
+        >
           Loading...
         </Text>
       </View>
@@ -181,7 +199,7 @@ export default function RootLayout() {
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="(user)" options={{ headerShown: false }} />
       </Stack.Protected>
-      
+
       <Stack.Screen name="index" />
     </Stack>
   );

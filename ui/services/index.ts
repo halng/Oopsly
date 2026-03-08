@@ -30,7 +30,7 @@ interface IPathConfig {
   description?: string;
 }
 
-const BASE_URL = process.env.BACKEND_API || "http://localhost:9009";
+const BASE_URL = process.env.EXPO_PUBLIC_BACKEND_API || "http://localhost:9009";
 const BASE_PATH = "api/v1/oopsly";
 
 const PUBLIC_PATHS: IPathConfig[] = [

@@ -89,6 +89,9 @@ run_backend_ci() {
     
     if [ -d "api" ]; then
         cd api
+
+        echo "CI::Running Gradle build..."
+        ./gradlew clean build -x test
         
         echo "CI::Running Spotless Check..."
         ./gradlew spotlessCheck
@@ -98,22 +101,6 @@ run_backend_ci() {
         
         echo "CI::Running Code Coverage and Verification..."
         ./gradlew jacocoTestCoverageVerification
-
-        echo "CI::Building and Pushing Docker Image..."
-        if [ -n "$IMAGE_TAG" ]; then
-            echo "CI::Building Docker image with tag: $IMAGE_TAG"
-            ./gradlew bootBuildImage --imageName=ghcr.io/halng/oopsly-api:"$IMAGE_TAG"
-
-            echo "CI::Logging to container registry..."
-            echo "$DOCKER_PASSWORD" | docker login ghcr.io -u "$DOCKER_USERNAME" --password-stdin
-
-            echo "CI::Pushing Docker image to registry..."
-            docker push ghcr.io/halng/oopsly-api:"$IMAGE_TAG"
-
-            echo "CI::Docker image ghcr.io/halng/oopsly-api:$IMAGE_TAG built and pushed successfully!"
-        else
-            echo "CI::No IMAGE_TAG set; skipping Docker image build and push."
-        fi
         
         cd ..
         echo "CI::Backend CI completed successfully!"
@@ -132,7 +119,7 @@ run_frontend_ci() {
     if [ -d "ui" ]; then
         cd ui
         
-        # Detect package manager
+        echo "CI::Detecting package manager..."
         PKG_MANAGER=""
         echo "CI::Installing packages..."
         if [ -f pnpm-lock.yaml ]; then
@@ -151,6 +138,8 @@ run_frontend_ci() {
             PKG_MANAGER="npm"
             npm install
         fi
+
+        echo "CI:: Detected package manager: $PKG_MANAGER"
         
         echo "CI::Running ESLint..."
         $PKG_MANAGER run lint
@@ -271,17 +260,6 @@ main() {
     # Parse arguments
     SKIP_SECURITY=false
 
-    COMMIT_HASH=$(git rev-parse --short HEAD)
-
-    if [[ "$REF" == "refs/heads/main" ]]; then
-        export IMAGE_TAG="latest-$COMMIT_HASH"
-    elif [[ "$REF" == refs/heads/release/* ]]; then
-        export IMAGE_TAG="snapshot-$COMMIT_HASH"
-    else
-        export IMAGE_TAG=""
-        echo "CI::Non-deployment branch detected. Building with dev tag only."
-    fi
-    
     while [[ $# -gt 0 ]]; do
         case $1 in
             --skip-security)
