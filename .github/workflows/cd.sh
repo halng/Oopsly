@@ -64,6 +64,8 @@ install_cli_tools() {
     echo "CD::Installing CLI Tools"
     echo "CD::================================="
 
+    cd ui
+
     echo "CD::Step 1: Installing pnpm globally..."
     npm install -g pnpm
     echo "CD::Step 2: Installing project dependencies with pnpm..."
@@ -72,6 +74,8 @@ install_cli_tools() {
     npm install -g eas-cli
     echo "CD::Step 4: Logging into eas-cli..."
     eas whoami || eas login --token $EXPO_TOKEN
+
+    cd ..
     echo "CD::CLI tools installation completed successfully!"
 
 }
@@ -80,7 +84,8 @@ build_docker_image_api() {
     echo "CD::================================="
     echo "CD::Building and Pushing Docker Image for API"
     echo "CD::================================="
-    
+    cd api
+
     if [ -n "$IMAGE_TAG" ]; then
         echo "CD::Building Docker image with tag: $IMAGE_TAG"
         ./gradlew bootBuildImage --imageName=ghcr.io/halng/oopsly-api:"$IMAGE_TAG"
@@ -95,6 +100,7 @@ build_docker_image_api() {
     else
         echo "CD::No IMAGE_TAG set; skipping Docker image build and push."
     fi
+    cd ..
 }
 
 build_artifact_ui() {
@@ -114,6 +120,7 @@ build_artifact_ui() {
         else
             echo "CD::Non-deployment branch detected. Building with dev tag only."
         fi
+        cd ..
     else
         echo "CD::Warning: ui directory not found, skipping UI artifact build"
     fi
