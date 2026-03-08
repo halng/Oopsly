@@ -1,0 +1,15 @@
+
+spring:
+  datasource:
+    password: ${DB_PASSWORD:postgres}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:oopsly}
+    username: ${DB_USERNAME:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 10
+      connection-timeout: 2000
+      max-lifetime: 1800000
+  data:
+    redis:
+      url: rediss://default:${REDIS_PASSWORD:changeme}@${REDIS_HOST:localhost}:${REDIS_PORT:6379}
