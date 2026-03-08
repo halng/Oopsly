@@ -7,7 +7,7 @@ on:
       - release/**
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: cd-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -17,7 +17,7 @@ permissions:
   packages: write
 
 jobs:
-  ci:
+  cd:
     runs-on: ubuntu-latest
 
     steps:
