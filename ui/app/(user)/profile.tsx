@@ -24,7 +24,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronLeft, Edit3, Save, X } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Edit3, Save, X } from "lucide-react-native";
 import { getProfile, updateProfile } from "@/services/ProfileService";
 import { UserProfileRes } from "@/types/Profile";
 import { Logger } from "@/utils";
@@ -158,7 +158,7 @@ export default function ProfileScreen() {
           onPress={() => router.push("/settings")}
         >
           <Text className="text-gray-800 font-medium">Settings</Text>
-          <ChevronLeft size={20} color="#9CA3AF" />
+          <ChevronRight size={20} color="#9CA3AF" />
         </TouchableOpacity>
       </ScrollView>
     </View>

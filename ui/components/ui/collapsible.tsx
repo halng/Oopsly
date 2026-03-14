@@ -1,4 +1,3 @@
-import React from "react";
 import React, { PropsWithChildren, useState } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 

@@ -160,7 +160,7 @@ export default function OTPVerification() {
           {otp.map((digit, index) => (
             <TextInput
               key={index}
-              ref={(ref) => (inputRefs.current[index] = ref)}
+              ref={(ref) => { inputRefs.current[index] = ref; }}
               className={`w-12 h-12 border-2 rounded-xl text-center text-xl
                 ${digit ? "border-indigo-600" : "border-gray-300"}
                 ${Platform.select({

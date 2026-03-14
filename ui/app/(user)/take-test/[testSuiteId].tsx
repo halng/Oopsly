@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, CheckCircle, XCircle, RotateCcw } from "lucide-react-native";
 import { useQuestions } from "@/hooks/queries/useQuestions";
-import { Question } from "@/types/Question";
+import { Question, QuestionType } from "@/types/Question";
+import { TextInput } from "react-native-gesture-handler";
 
 export default function TakeTestScreen() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export default function TakeTestScreen() {
   const { data: questions, isLoading } = useQuestions(testSuiteId);
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
+  const [userAnswers, setUserAnswers] = useState<Record<string, number[] | string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   if (isLoading) {
@@ -42,10 +43,26 @@ export default function TakeTestScreen() {
   }
 
   const currentQuestion: Question = questions[currentIndex];
-  const userAnswer = userAnswers[currentQuestion.id];
+  // Convert standard answer state to generic any to suppress strict TS type errors temporarily in this block
+  const userAnswer: any = userAnswers[currentQuestion.id];
 
   const handleSelectOption = (index: number) => {
-    setUserAnswers((prev) => ({ ...prev, [currentQuestion.id]: index }));
+    setUserAnswers((prev) => {
+      if (currentQuestion.type === QuestionType.MULTIPLE_CHOICE) {
+        const currentAns = (prev[currentQuestion.id] as number[]) || [];
+        if (currentAns.includes(index)) {
+          return { ...prev, [currentQuestion.id]: currentAns.filter((i) => i !== index) };
+        } else {
+          return { ...prev, [currentQuestion.id]: [...currentAns, index] };
+        }
+      } else {
+        return { ...prev, [currentQuestion.id]: [index] };
+      }
+    });
+  };
+
+  const handleTextAnswer = (text: string) => {
+    setUserAnswers((prev) => ({ ...prev, [currentQuestion.id]: text }));
   };
 
   const handleNext = () => {
@@ -73,8 +90,17 @@ export default function TakeTestScreen() {
   const renderResults = () => {
     let score = 0;
     questions.forEach((q) => {
-      if (userAnswers[q.id] === q.correctOptionIndex) {
-        score += 1;
+      const uAns = userAnswers[q.id];
+      if (q.type === QuestionType.FILL_IN_THE_BLANK) {
+        if (typeof uAns === "string" && uAns.trim().toLowerCase() === q.options[0].trim().toLowerCase()) {
+          score += 1;
+        }
+      } else if (Array.isArray(uAns)) {
+        const correct = [...(q.correctOptionIndices || [])].sort();
+        const answered = [...uAns].sort();
+        if (correct.length > 0 && correct.length === answered.length && correct.every((val, i) => val === answered[i])) {
+          score += 1;
+        }
       }
     });
     const percentage = Math.round((score / questions.length) * 100);
@@ -98,7 +124,22 @@ export default function TakeTestScreen() {
         <Text className="text-xl font-bold text-gray-800 mb-4">Review Answers</Text>
         {questions.map((q, idx) => {
           const uAns = userAnswers[q.id];
-          const isCorrect = uAns === q.correctOptionIndex;
+          let isCorrect = false;
+          let userDisplay = "Not answered";
+          let correctDisplay = "";
+
+          if (q.type === QuestionType.FILL_IN_THE_BLANK) {
+            isCorrect = typeof uAns === "string" && uAns.trim().toLowerCase() === q.options[0].trim().toLowerCase();
+            userDisplay = typeof uAns === "string" && uAns ? uAns : "Not answered";
+            correctDisplay = q.options[0];
+          } else {
+            const correctArr = [...(q.correctOptionIndices || [])].sort();
+            const answeredArr = Array.isArray(uAns) ? [...uAns].sort() : [];
+            isCorrect = correctArr.length > 0 && correctArr.length === answeredArr.length && correctArr.every((v, i) => v === answeredArr[i]);
+            
+            userDisplay = answeredArr.length > 0 ? answeredArr.map(a => q.options[a]).join(", ") : "Not answered";
+            correctDisplay = correctArr.map(a => q.options[a]).join(", ");
+          }
           
           return (
             <View
@@ -114,10 +155,10 @@ export default function TakeTestScreen() {
               
               <View className="mb-2 pl-6">
                 <Text className="text-sm text-gray-600">
-                  Your Answer: <Text className="font-semibold">{uAns !== undefined ? q.options[uAns] : "Not answered"}</Text>
+                  Your Answer: <Text className="font-semibold">{userDisplay}</Text>
                 </Text>
                 <Text className="text-sm text-gray-600">
-                  Correct Answer: <Text className="font-semibold">{q.options[q.correctOptionIndex]}</Text>
+                  Correct Answer: <Text className="font-semibold">{correctDisplay}</Text>
                 </Text>
               </View>
 
@@ -193,28 +234,41 @@ export default function TakeTestScreen() {
           </Text>
 
           <View className="gap-3">
-            {currentQuestion.options.map((opt, idx) => (
-              <TouchableOpacity
-                key={idx}
-                className={`p-4 rounded-xl border-2 flex-row items-center ${
-                  userAnswer === idx
-                    ? "border-indigo-500 bg-indigo-50"
-                    : "border-gray-200 bg-white"
-                }`}
-                onPress={() => handleSelectOption(idx)}
-              >
-                <View
-                  className={`w-6 h-6 rounded-full border-2 mr-3 items-center justify-center ${
-                    userAnswer === idx ? "border-indigo-500 bg-indigo-500" : "border-gray-300"
-                  }`}
-                >
-                  {userAnswer === idx && <View className="w-2 h-2 rounded-full bg-white" />}
-                </View>
-                <Text className={`flex-1 text-base ${userAnswer === idx ? "text-indigo-900 font-medium" : "text-gray-700"}`}>
-                  {opt}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {currentQuestion.type === QuestionType.FILL_IN_THE_BLANK ? (
+              <TextInput
+                className="border-2 border-indigo-200 bg-indigo-50 rounded-xl p-4 text-base text-gray-800"
+                placeholder="Type your answer here..."
+                value={typeof userAnswer === "string" ? userAnswer : ""}
+                onChangeText={handleTextAnswer}
+              />
+            ) : (
+              currentQuestion.options.map((opt, idx) => {
+                const isSelected = Array.isArray(userAnswer) && userAnswer.includes(idx);
+                const isCheckbox = currentQuestion.type === QuestionType.MULTIPLE_CHOICE;
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    className={`p-4 rounded-xl border-2 flex-row items-center ${
+                      isSelected ? "border-indigo-500 bg-indigo-50" : "border-gray-200 bg-white"
+                    }`}
+                    onPress={() => handleSelectOption(idx)}
+                  >
+                    <View
+                      className={`mr-3 items-center justify-center ${
+                        isCheckbox ? "w-6 h-6 rounded" : "w-6 h-6 rounded-full"
+                      } border-2 ${isSelected ? "border-indigo-500 bg-indigo-500" : "border-gray-300"}`}
+                    >
+                      {isSelected && (
+                        <View className={isCheckbox ? "w-3 h-3 bg-white" : "w-2 h-2 rounded-full bg-white"} />
+                      )}
+                    </View>
+                    <Text className={`flex-1 text-base ${isSelected ? "text-indigo-900 font-medium" : "text-gray-700"}`}>
+                      {opt}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })
+            )}
           </View>
         </View>
 

@@ -73,25 +73,43 @@ const ShelfTestSuites = ({ shelfId, openDeleteTestSuiteModal }: { shelfId: strin
   const testSuites = testSuitesData ?? [];
   if (testSuites.length === 0) return null;
   return (
-    <View className="flex-row flex-wrap gap-2 px-4 mb-2">
-      {testSuites.map((ts) => (
-        <View key={ts.id} className="flex-row items-center bg-indigo-50 rounded-lg px-3 py-2 gap-2">
-          <Text className="text-indigo-800 font-medium flex-1">{ts.title}</Text>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
+      <View className="flex-row gap-4 px-4 pb-2">
+        {testSuites.map((ts) => (
           <TouchableOpacity
-            className="bg-indigo-600 rounded-lg px-3 py-1"
-            onPress={() => router.push(`/take-test/${ts.id}`)}
+            key={ts.id}
+            className="bg-emerald-50 rounded-xl p-4 w-60 shadow-sm border border-emerald-100"
+            onPress={() => router.push(`/test-suite/${ts.id}?shelfId=${shelfId}&title=${encodeURIComponent(ts.title)}`)}
           >
-            <Text className="text-white text-sm font-semibold">Take test</Text>
+            <View className="flex-row justify-between items-start mb-2">
+              <Text className="font-bold text-emerald-900 text-lg flex-1 mr-2" numberOfLines={1}>
+                {ts.title}
+              </Text>
+              <View className="bg-emerald-200 rounded-full px-2 py-1">
+                <Text className="text-emerald-800 text-xs font-semibold">
+                  Test Suite
+                </Text>
+              </View>
+            </View>
+
+            <View className="mt-2 flex-row justify-between items-center">
+              <View className="flex-row items-center">
+                <Text className="text-emerald-700 text-sm font-medium mr-1">View Details</Text>
+              </View>
+              <TouchableOpacity
+                className="bg-emerald-200/50 rounded-lg p-2"
+                onPress={(e) => {
+                  e.stopPropagation();
+                  openDeleteTestSuiteModal(shelfId, ts.id);
+                }}
+              >
+                <Delete size={16} color="#047857" />
+              </TouchableOpacity>
+            </View>
           </TouchableOpacity>
-          <TouchableOpacity
-            className="bg-red-100 rounded-lg px-2 py-1"
-            onPress={() => openDeleteTestSuiteModal(shelfId, ts.id)}
-          >
-            <Delete size={16} color="#B91C1C" />
-          </TouchableOpacity>
-        </View>
-      ))}
-    </View>
+        ))}
+      </View>
+    </ScrollView>
   );
 };
 
@@ -250,7 +268,7 @@ const OopslyApp = () => {
     }
     const desc = editShelfDescription.trim();
     updateShelfMutation.mutateAsync({
-      shelfId: selectedShelfId,
+      id: selectedShelfId,
       data: {
         icon: editShelfIcon.name,
         name: editShelfName.trim(),
@@ -297,7 +315,7 @@ const OopslyApp = () => {
     if (!testSuiteToDelete || testSuiteDeleteConfirmText.trim().toLowerCase() !== "confirm") return;
     deleteTestMutation.mutateAsync({
       shelfId: testSuiteToDelete.shelfId,
-      testSuiteId: testSuiteToDelete.testSuiteId
+      id: testSuiteToDelete.testSuiteId
     }).then(() => {
       setDeleteTestSuiteModalVisible(false);
       setTestSuiteToDelete(null);
@@ -332,7 +350,7 @@ const OopslyApp = () => {
             <TouchableOpacity
               key={subject.id}
               className="bg-white rounded-xl p-4 w-60 shadow-sm border border-gray-100"
-              onPress={() => router.push(`${shelfId}/view/${subject.id}`)}
+              onPress={() => router.push(`${shelfId}/view/${subject.id}` as any)}
               testID={`subject-card-${subject.id}`}
             >
               <View className="flex-row justify-between items-start mb-2">
