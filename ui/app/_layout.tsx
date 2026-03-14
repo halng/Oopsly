@@ -14,13 +14,17 @@
  *    limitations under the License.
  */
 
+import "react-native-gesture-handler";
 import React, { useEffect, useState } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import "@/global.css";
 import { useAuthStore, useSettingsStore } from "@/store";
 import { Logger } from "@/utils";
 import { AuthService } from "@/services/AuthService";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Toast from "react-native-toast-message";
 import {
   View,
   ActivityIndicator,
@@ -34,6 +38,8 @@ const logger = Logger.extend("RootLayout");
 export const unstable_settings = {
   anchor: "(tabs)",
 };
+
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
@@ -53,7 +59,7 @@ export default function RootLayout() {
   }, [theme]);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let isCancelled = false;
 
     const checkAuthStatus = async () => {
@@ -195,12 +201,17 @@ export default function RootLayout() {
   logger.debug("RootLayout rendered, isAuthenticated:", isAuthenticated);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={isAuthenticated}>
-        <Stack.Screen name="(user)" options={{ headerShown: false }} />
-      </Stack.Protected>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Protected guard={isAuthenticated}>
+            <Stack.Screen name="(user)" options={{ headerShown: false }} />
+          </Stack.Protected>
 
-      <Stack.Screen name="index" />
-    </Stack>
+          <Stack.Screen name="index" />
+        </Stack>
+        <Toast />
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -34,6 +34,7 @@ import {
   updateSubjectSetting,
   deleteSubject as deleteSubjectApi,
 } from "@/services/SubjectService";
+import Toast from "react-native-toast-message";
 
 
 const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjectId: string }) => {
@@ -136,9 +137,19 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
         .then((res) => {
           if (res.isSuccess) {
             logger.debug("Created new card successfully:", res.data);
+            Toast.show({
+              type: "success",
+              text1: "Card created successfully!",
+              position: "top",
+            });
             fetchCardsData();
           } else {
             logger.error("Failed to create new card");
+            Toast.show({
+              type: "error",
+              text1: "Failed to create card",
+              position: "top",
+            });
           }
           setShowAddCardModal(false);
           setEditCard({ front: "", back: ""});
@@ -305,17 +316,17 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
         </View>
 
         {/* Progress Bar */}
-        <View className="mt-4" testID="progress-section">
-          <View className="flex-row justify-between mb-1" testID="progress-header">
+        <View className="mt-4 mb-2" testID="progress-section">
+          <View className="flex-row justify-between mb-2" testID="progress-header">
             <Text className="text-gray-600 font-medium" testID="progress-label">Progress</Text>
             <Text className="text-gray-600 font-medium" testID="progress-percentage">
-              {subjectStatsData?.completedPercent}%
+              {subjectStatsData?.completedPercent ?? 0}%
             </Text>
           </View>
-          <View className="bg-gray-200 rounded-full h-3" testID="progress-bar-background">
+          <View className="bg-gray-200 rounded-full h-3 overflow-hidden" testID="progress-bar-background">
             <View
               className="bg-indigo-500 h-3 rounded-full"
-              style={{ width: `${subjectStatsData?.completedPercent}%` }}
+              style={{ width: `${subjectStatsData?.completedPercent ?? 0}%` }}
               testID="progress-bar-fill"
             />
           </View>
@@ -327,13 +338,14 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
       <View className="px-4 mt-6" testID="main-actions-container">
         {!isEditing && 
         <TouchableOpacity
-          className="bg-indigo-600 rounded-xl py-5 mb-4 items-center shadow-sm"
+          className={`bg-indigo-600 rounded-xl py-5 mb-4 items-center shadow-sm ${(subjectStatsData?.overdue ?? 0) === 0 ? "opacity-60" : ""}`}
           onPress={() => router.push(`/${_shelfId}/review/${_subjectId}`)}
+          disabled={(subjectStatsData?.overdue ?? 0) === 0}
           testID="review-due-cards-button"
         >
           <Text className="text-white text-lg font-bold" testID="review-due-cards-title">Review Due Cards</Text>
-          <Text className="text-indigo-200 mt-1" testID="review-due-cards-count">
-            {subjectStatsData?.overdue} cards ready for review
+          <Text className="text-indigo-100 mt-1 font-medium" testID="review-due-cards-count">
+            {subjectStatsData?.overdue ?? 0} cards ready for review
           </Text>
         </TouchableOpacity>}
 

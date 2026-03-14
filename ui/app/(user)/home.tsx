@@ -1,11 +1,6 @@
-import { createShelf, deleteShelf, fetchShelves, updateShelve } from "@/services/ShelfService";
-import { createSubject } from "@/services/SubjectService";
-import {
-  createTestSuite,
-  deleteTestSuite,
-  fetchTestSuitesByShelf,
-  TestSuiteRes,
-} from "@/services/TestSuiteService";
+import { useShelves, useCreateShelf, useUpdateShelf, useDeleteShelf } from "@/hooks/queries/useShelves";
+import { useCreateSubject } from "@/hooks/queries/useSubjects";
+import { useCreateTestSuite, useDeleteTestSuite, useTestSuites } from "@/hooks/queries/useTestSuites";
 import { Shelf } from "@/types/Shelf";
 import { SubjectStats } from "@/types/Subject";
 import { Logger } from "@/utils";
@@ -71,6 +66,35 @@ const availableIcons = [
   { name: "User", component: User, color: "#3B82F6" },
 ];
 
+
+const ShelfTestSuites = ({ shelfId, openDeleteTestSuiteModal }: { shelfId: string, openDeleteTestSuiteModal: (s: string, t: string) => void }) => {
+  const router = useRouter();
+  const { data: testSuitesData } = useTestSuites(shelfId);
+  const testSuites = testSuitesData ?? [];
+  if (testSuites.length === 0) return null;
+  return (
+    <View className="flex-row flex-wrap gap-2 px-4 mb-2">
+      {testSuites.map((ts) => (
+        <View key={ts.id} className="flex-row items-center bg-indigo-50 rounded-lg px-3 py-2 gap-2">
+          <Text className="text-indigo-800 font-medium flex-1">{ts.title}</Text>
+          <TouchableOpacity
+            className="bg-indigo-600 rounded-lg px-3 py-1"
+            onPress={() => router.push(`/take-test/${ts.id}`)}
+          >
+            <Text className="text-white text-sm font-semibold">Take test</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="bg-red-100 rounded-lg px-2 py-1"
+            onPress={() => openDeleteTestSuiteModal(shelfId, ts.id)}
+          >
+            <Delete size={16} color="#B91C1C" />
+          </TouchableOpacity>
+        </View>
+      ))}
+    </View>
+  );
+};
+
 const OopslyApp = () => {
   const logger = Logger.extend("OopslyApp");
   const router = useRouter();
@@ -79,7 +103,14 @@ const OopslyApp = () => {
   const [shelfDescription, setShelfDescription] = useState("");
   const [selectedIcon, setSelectedIcon] = useState(availableIcons[0]);
   const [showIconPicker, setShowIconPicker] = useState(false);
-  const [shelves, setShelves] = useState<Shelf[]>();
+  const { data: shelvesData } = useShelves({ page: 0, size: 100 });
+  const shelves = shelvesData?.entities ?? [];
+  const createShelfMutation = useCreateShelf();
+  const updateShelfMutation = useUpdateShelf();
+  const deleteShelfMutation = useDeleteShelf();
+  const createSubjectMutation = useCreateSubject();
+  const createTestMutation = useCreateTestSuite();
+  const deleteTestMutation = useDeleteTestSuite();
 
   // New state for add content modal
   const [addContentModalVisible, setAddContentModalVisible] = useState(false);
@@ -100,7 +131,7 @@ const OopslyApp = () => {
   const [editShelfIcon, setEditShelfIcon] = useState(availableIcons[0]);
   const [showEditIconPicker, setShowEditIconPicker] = useState(false);
 
-  const [testSuitesByShelf, setTestSuitesByShelf] = useState<Record<string, TestSuiteRes[]>>({});
+
   const [createTestModalVisible, setCreateTestModalVisible] = useState(false);
   const [testTitle, setTestTitle] = useState("");
   const [selectedSubjectIdForTest, setSelectedSubjectIdForTest] = useState<string | null>(null);
@@ -108,38 +139,7 @@ const OopslyApp = () => {
   const [testSuiteToDelete, setTestSuiteToDelete] = useState<{ shelfId: string; testSuiteId: string } | null>(null);
   const [testSuiteDeleteConfirmText, setTestSuiteDeleteConfirmText] = useState("");
 
-  const fetchShelvesData = () => {
-    fetchShelves({
-      page: 0,
-      size: 100,
-    })
-      .then((response) => {
-        if (response.isSuccess) {
-          setShelves(response.data.entities);
-          const entities = response.data.entities ?? [];
-          entities.forEach((shelf: Shelf) => {
-            fetchTestSuitesByShelf(shelf.id)
-              .then((res) => {
-                if (res.isSuccess && Array.isArray(res.data)) {
-                  setTestSuitesByShelf((prev) => ({ ...prev, [shelf.id]: res.data }));
-                }
-              })
-              .catch(() => {});
-          });
-        } else {
-          console.error("Failed to fetch shelves:", response.message);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching shelves:", error);
-      });
-  };
 
-  useEffect(() => {
-    logger.debug("Fetching shelves data on component mount");
-    fetchShelvesData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Handle shelf creation
   const handleCreateShelf = () => {
@@ -150,28 +150,21 @@ const OopslyApp = () => {
       return;
     }
 
-    createShelf({
+    createShelfMutation.mutateAsync({
       icon: selectedIcon.name,
       name: shelfName,
       description: shelfDescription,
-    })
-      .then((response) => {
-        if (response.isSuccess) {
-          logger.debug("Shelf created successfully:", response);
-          fetchShelvesData();
-        } else {
-          logger.error("Failed to create shelf:", response);
-        }
-      })
-      .catch((error) => {
-        logger.error("Error creating shelf:", error);
-      });
+    }).then(() => {
+      logger.debug("Shelf created successfully");
+      setShelfName("");
+      setShelfDescription("");
+      setSelectedIcon(availableIcons[0]);
+      setModalVisible(false);
+    }).catch((error) => {
+      logger.error("Error creating shelf:", error);
+    });
 
-    // Reset form and close modal
-    setShelfName("");
-    setShelfDescription("");
-    setSelectedIcon(availableIcons[0]);
-    setModalVisible(false);
+
   };
 
   // Open content type selection modal
@@ -215,20 +208,17 @@ const OopslyApp = () => {
     }
 
     if (selectedContentType === "subject" && selectedShelfId) {
-      createSubject(selectedShelfId, {
-        name: contentName,
-        description: contentDescription,
-      })
-        .then((response) => {
-          if (response.isSuccess) {
-            logger.debug("Subject created successfully:", response);
-          fetchShelvesData();
-          }
-          
-        })
-        .catch((error) => {
-          logger.error("Error creating subject:", error);
-        });
+      createSubjectMutation.mutateAsync({
+        shelfId: selectedShelfId,
+        data: {
+          name: contentName,
+          description: contentDescription,
+        }
+      }).then(() => {
+        logger.debug("Subject created successfully");
+      }).catch((error) => {
+        logger.error("Error creating subject:", error);
+      });
     }
     // Reset form and close modal
     setContentName("");
@@ -241,18 +231,9 @@ const OopslyApp = () => {
 
   const handleDeleteShelf = () => {
     if (selectedShelfId && selectedContentType === "delete") {
-      deleteShelf(selectedShelfId)
-        .then((response) => {
-          if (response.isSuccess) {
-            logger.debug("Shelf deleted successfully:", response);
-            fetchShelvesData();
-          } else {
-            logger.error("Failed to delete shelf:", response.message);
-          }
-        })
-        .catch((error) => {
-          logger.error("Error deleting shelf:", error);
-        });
+      deleteShelfMutation.mutateAsync(selectedShelfId)
+        .then(() => logger.debug("Shelf deleted successfully"))
+        .catch((error) => logger.error("Error deleting shelf:", error));
 
       setSelectedShelfId(null);
       setSelectedContentType(null);
@@ -268,24 +249,20 @@ const OopslyApp = () => {
       return;
     }
     const desc = editShelfDescription.trim();
-    updateShelve(selectedShelfId, {
-      icon: editShelfIcon.name,
-      name: editShelfName.trim(),
-      description: desc.length >= 10 ? desc : desc.padEnd(10, " ").slice(0, 100),
-    })
-      .then((response) => {
-        if (response.isSuccess) {
-          logger.debug("Shelf updated successfully:", response);
-          fetchShelvesData();
-          setEditShelfModalVisible(false);
-          setSelectedShelfId(null);
-        } else {
-          logger.error("Failed to update shelf:", response.message);
-        }
-      })
-      .catch((error) => {
-        logger.error("Error updating shelf:", error);
-      });
+    updateShelfMutation.mutateAsync({
+      shelfId: selectedShelfId,
+      data: {
+        icon: editShelfIcon.name,
+        name: editShelfName.trim(),
+        description: desc.length >= 10 ? desc : desc.padEnd(10, " ").slice(0, 100),
+      }
+    }).then(() => {
+      logger.debug("Shelf updated successfully");
+      setEditShelfModalVisible(false);
+      setSelectedShelfId(null);
+    }).catch((error) => {
+      logger.error("Error updating shelf:", error);
+    });
   };
 
   const handleCreateTestSuite = () => {
@@ -297,24 +274,17 @@ const OopslyApp = () => {
       alert("Please select a subject");
       return;
     }
-    createTestSuite(selectedShelfId, {
-      title: testTitle.trim(),
-      subjectIds: [selectedSubjectIdForTest],
-    })
-      .then((res) => {
-        if (res.isSuccess) {
-          setTestSuitesByShelf((prev) => ({
-            ...prev,
-            [selectedShelfId]: [...(prev[selectedShelfId] ?? []), res.data],
-          }));
-          setCreateTestModalVisible(false);
-          setTestTitle("");
-          setSelectedSubjectIdForTest(null);
-        } else {
-          logger.error("Failed to create test suite:", res.message);
-        }
-      })
-      .catch((err) => logger.error("Error creating test suite:", err));
+    createTestMutation.mutateAsync({
+      shelfId: selectedShelfId,
+      data: {
+        title: testTitle.trim(),
+        subjectIds: [selectedSubjectIdForTest],
+      }
+    }).then(() => {
+      setCreateTestModalVisible(false);
+      setTestTitle("");
+      setSelectedSubjectIdForTest(null);
+    }).catch((err) => logger.error("Error creating test suite:", err));
   };
 
   const openDeleteTestSuiteModal = (shelfId: string, testSuiteId: string) => {
@@ -325,21 +295,14 @@ const OopslyApp = () => {
 
   const handleDeleteTestSuite = () => {
     if (!testSuiteToDelete || testSuiteDeleteConfirmText.trim().toLowerCase() !== "confirm") return;
-    deleteTestSuite(testSuiteToDelete.shelfId, testSuiteToDelete.testSuiteId)
-      .then((res) => {
-        if (res.isSuccess) {
-          setTestSuitesByShelf((prev) => ({
-            ...prev,
-            [testSuiteToDelete.shelfId]: (prev[testSuiteToDelete.shelfId] ?? []).filter(
-              (t) => t.id !== testSuiteToDelete.testSuiteId
-            ),
-          }));
-          setDeleteTestSuiteModalVisible(false);
-          setTestSuiteToDelete(null);
-          setTestSuiteDeleteConfirmText("");
-        }
-      })
-      .catch((err) => logger.error("Error deleting test suite:", err));
+    deleteTestMutation.mutateAsync({
+      shelfId: testSuiteToDelete.shelfId,
+      testSuiteId: testSuiteToDelete.testSuiteId
+    }).then(() => {
+      setDeleteTestSuiteModalVisible(false);
+      setTestSuiteToDelete(null);
+      setTestSuiteDeleteConfirmText("");
+    }).catch((err) => logger.error("Error deleting test suite:", err));
   };
 
   const getShelfName = (shelfId: string) => {
@@ -478,7 +441,7 @@ const OopslyApp = () => {
 
           <TouchableOpacity
             className="items-center"
-            onPress={() => router.push("/tasks-list")}
+            onPress={() => router.push("/tasks-list" as any)}
             testID="tasks-button"
           >
             <View className="bg-blue-100 p-3 rounded-full mb-1">
@@ -489,7 +452,7 @@ const OopslyApp = () => {
 
           <TouchableOpacity
             className="items-center"
-            onPress={() => router.push("/notes")}
+            onPress={() => router.push("/notes" as any)}
             testID="notes-button"
           >
             <View className="bg-green-100 p-3 rounded-full mb-1">
@@ -500,7 +463,7 @@ const OopslyApp = () => {
 
           <TouchableOpacity
             className="items-center"
-            onPress={() => router.push("/study-planner")}
+            onPress={() => router.push("/study-planner" as any)}
             testID="planner-button"
           >
             <View className="bg-purple-100 p-3 rounded-full mb-1">
@@ -523,27 +486,7 @@ const OopslyApp = () => {
               </Text>
             </View>
 
-            {(testSuitesByShelf[shelf.id] ?? []).length > 0 && (
-              <View className="flex-row flex-wrap gap-2 px-4 mb-2">
-                {(testSuitesByShelf[shelf.id] ?? []).map((ts) => (
-                  <View key={ts.id} className="flex-row items-center bg-indigo-50 rounded-lg px-3 py-2 gap-2">
-                    <Text className="text-indigo-800 font-medium flex-1">{ts.title}</Text>
-                    <TouchableOpacity
-                      className="bg-indigo-600 rounded-lg px-3 py-1"
-                      onPress={() => router.push(`/take-test/${ts.id}`)}
-                    >
-                      <Text className="text-white text-sm font-semibold">Take test</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      className="bg-red-100 rounded-lg px-2 py-1"
-                      onPress={() => openDeleteTestSuiteModal(shelf.id, ts.id)}
-                    >
-                      <Delete size={16} color="#B91C1C" />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-            )}
+            <ShelfTestSuites shelfId={shelf.id} openDeleteTestSuiteModal={openDeleteTestSuiteModal} />
 
             {renderSubjectCards(shelf.subjects, shelf.id)}
           </View>

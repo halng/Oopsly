@@ -19,6 +19,12 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "nativewind-env.d.ts"
-, "__tests__/app/verification.test.tsx"  ]
+    "nativewind-env.d.ts",
+    "__tests__/app/verification.test.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "temp",
+    "__tests__"
+  ]
 }
