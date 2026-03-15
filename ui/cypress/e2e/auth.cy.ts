@@ -14,14 +14,20 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       cy.visit("/");
       cy.get('[data-testid="skip-button"]')
         .should("exist")
-        .contains("Skip")
         .and("be.visible")
+        .should("be.enabled")
+        .should("have.attr", "data-testid", "skip-button")
+        .and("not.have.attr", "disabled")
+        .contains("Skip")
         .click();
       cy.location("pathname").should("eq", "/onboard");
     });
     describe("Email Entry", () => {
       beforeEach(() => {
-        cy.get('[data-testid="email-input-screen"]').should("exist").and("be.visible");
+        cy.get('[data-testid="email-input-screen"]')
+          .should("exist")
+          .and("be.visible")
+          .should("have.attr", "data-testid", "email-input-screen");
         cy.location("pathname").should("eq", "/onboard");
       });
 
@@ -29,9 +35,13 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
         cy.get('[data-testid="header-container"]')
           .should("exist")
           .and("be.visible")
+          .should("have.attr", "data-testid", "header-container")
           .find('[data-testid="back-button"]')
           .should("exist")
           .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "back-button")
+          .and("not.have.attr", "disabled")
           .click();
         cy.location("pathname").should("eq", "/");
       });
@@ -39,14 +49,17 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       it("shows email input field on onboard screen", () => {
         cy.get('[data-testid="email-input-container"]')
           .should("exist")
-          .and("be.visible");
+          .and("be.visible")
+          .should("have.attr", "data-testid", "email-input-container");
         cy.get('[data-testid="title-text"]')
           .should("exist")
           .and("be.visible")
+          .should("have.attr", "data-testid", "title-text")
           .and("contain", "What's your email?");
         cy.get('[data-testid="description-text"]')
           .should("exist")
           .and("be.visible")
+          .should("have.attr", "data-testid", "description-text")
           .and(
             "contain",
             "We'll send you a secure code to verify your account.",
@@ -54,22 +67,52 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
         cy.get('[data-testid="email-input"]')
           .should("exist")
           .and("be.visible")
-          .and("have.attr", "placeholder", "name@example.com");
-        cy.get('[data-testid="continue-button"]').should("exist").and("be.visible").contains("Continue");
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "email-input")
+          .and("have.attr", "placeholder", "name@example.com")
+          .and("not.have.attr", "disabled");
+        cy.get('[data-testid="continue-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("have.attr", "data-testid", "continue-button")
+          .contains("Continue");
       });
 
       it("disable button when email is invalid", () => {
         INVALID_EMAILS.forEach(email => {
-          cy.get('[data-testid="email-input"]').should("exist").and("be.visible").type(email);
-          cy.get('[data-testid="continue-button"]').should("exist").and("be.visible").and("have.attr", "aria-disabled", "true");
+          cy.get('[data-testid="email-input"]')
+            .should("exist")
+            .and("be.visible")
+            .should("be.enabled")
+            .should("have.attr", "data-testid", "email-input")
+            .type(email);
+          cy.get('[data-testid="continue-button"]')
+            .should("exist")
+            .and("be.visible")
+            .should("have.attr", "data-testid", "continue-button")
+            .and("have.attr", "aria-disabled", "true");
           cy.get('[data-testid="email-input"]').clear();
         })
       });
 
       it("accepts valid email and shows OTP screen", () => {
-        cy.get('[data-testid="email-input"]').should("exist").and("be.visible").type(VALID_EMAIL);
-        cy.get('[data-testid="continue-button"]').should("exist").and("be.visible").click();
-        cy.get('[data-testid="otp-input-0"]').should("exist").and("be.visible");
+        cy.get('[data-testid="email-input"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "email-input")
+          .type(VALID_EMAIL);
+        cy.get('[data-testid="continue-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "continue-button")
+          .and("not.have.attr", "disabled")
+          .click();
+        cy.get('[data-testid="otp-input-0"]')
+          .should("exist")
+          .and("be.visible")
+          .should("have.attr", "data-testid", "otp-input-0");
       });
 
       it("allows editing the email to correct it before sending OTP", () => {
@@ -93,12 +136,23 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
 
       it("shows 6 OTP input boxes", () => {
         for (let i = 0; i < 6; i++) {
-          cy.get(`[data-testid="otp-input-${i}"]`).should("exist").and("be.visible");
+          cy.get(`[data-testid="otp-input-${i}"]`)
+            .should("exist")
+            .and("be.visible")
+            .should("be.enabled")
+            .should("have.attr", "data-testid", `otp-input-${i}`)
+            .and("not.have.attr", "disabled");
         }
       });
 
       it("rejects empty OTP submission", () => {
-        cy.get('[data-testid="verify-otp-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="verify-otp-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "verify-otp-button")
+          .and("not.have.attr", "disabled")
+          .click();
         cy.contains(/enter.*code|code.*required|invalid/i).should("exist").and("be.visible");
       });
 
@@ -148,15 +202,35 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       it("redirects unauthenticated user away from protected home screen", () => {
         cy.visit("/home");
         // Should be redirected to landing / onboard
-        cy.get('[data-testid="get-started-button"]').should("exist").and("be.visible");
+        cy.get('[data-testid="get-started-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "get-started-button")
+          .and("not.have.attr", "disabled");
         cy.location("pathname").should("match", /^\/(|onboard)$/);
       });
 
       it("logs out and clears session", () => {
         cy.login(VALID_EMAIL);
-        cy.get('[data-testid="profile-icon"]').should("exist").and("be.visible").click();
-        cy.get('[data-testid="logout-button"]').should("exist").and("be.visible").click();
-        cy.get('[data-testid="get-started-button"]').should("exist").and("be.visible");
+        cy.get('[data-testid="profile-icon"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "profile-icon")
+          .and("not.have.attr", "disabled")
+          .click();
+        cy.get('[data-testid="logout-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "logout-button")
+          .and("not.have.attr", "disabled")
+          .click();
+        cy.get('[data-testid="get-started-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("have.attr", "data-testid", "get-started-button");
         cy.location("pathname").should("match", /^\/(|onboard)$/);
       });
     });

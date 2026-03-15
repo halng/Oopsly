@@ -14,8 +14,17 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
     // ─── Profile Navigation ────────────────────────────────────────────────────
     describe("Profile Navigation", () => {
       it("opens profile screen via profile icon", () => {
-        cy.get('[data-testid="profile-icon"]').should("exist").and("be.visible").click();
-        cy.get('[data-testid="profile-screen"]').should("exist").and("be.visible");
+        cy.get('[data-testid="profile-icon"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "profile-icon")
+          .and("not.have.attr", "disabled")
+          .click();
+        cy.get('[data-testid="profile-screen"]')
+          .should("exist")
+          .and("be.visible")
+          .should("have.attr", "data-testid", "profile-screen");
         cy.location("pathname").should("eq", "/profile");
       });
 
@@ -39,8 +48,19 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       });
 
       it("opens the edit profile form", () => {
-        cy.get('[data-testid="edit-profile-button"]').should("exist").and("be.visible").click();
-        cy.get('[data-testid="display-name-input"]').should("exist").and("be.visible");
+        cy.get('[data-testid="edit-profile-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "edit-profile-button")
+          .and("not.have.attr", "disabled")
+          .click();
+        cy.get('[data-testid="display-name-input"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "display-name-input")
+          .and("not.have.attr", "disabled");
       });
 
       it("shows current display name pre-filled in the input", () => {

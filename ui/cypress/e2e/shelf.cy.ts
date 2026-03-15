@@ -17,17 +17,45 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
     // ─── Create Shelf ──────────────────────────────────────────────────────────
     describe("Create Shelf", () => {
       it("shows the Add Shelf button on home screen", () => {
-        cy.get('[data-testid="add-shelf-button"]').should("exist").and("be.visible");
+        cy.get('[data-testid="add-shelf-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "add-shelf-button")
+          .and("not.have.attr", "disabled");
       });
 
       it("opens the Create Shelf modal", () => {
-        cy.get('[data-testid="add-shelf-button"]').should("exist").and("be.visible").click();
-        cy.get('[data-testid="shelf-name-input"]').should("exist").and("be.visible");
+        cy.get('[data-testid="add-shelf-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "add-shelf-button")
+          .and("not.have.attr", "disabled")
+          .click();
+        cy.get('[data-testid="shelf-name-input"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "shelf-name-input")
+          .and("not.have.attr", "disabled");
       });
 
       it("prevents saving with empty shelf name", () => {
-        cy.get('[data-testid="add-shelf-button"]').should("exist").and("be.visible").click();
-        cy.get('[data-testid="save-shelf-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="add-shelf-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "add-shelf-button")
+          .and("not.have.attr", "disabled")
+          .click();
+        cy.get('[data-testid="save-shelf-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "save-shelf-button")
+          .and("not.have.attr", "disabled")
+          .click();
         cy.contains(/name.*required|enter.*name/i).should("exist").and("be.visible");
         cy.get('[data-testid="home-screen"]').should("not.exist"); // still in modal
       });
@@ -65,9 +93,27 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       });
 
       it("creates a shelf and shows it in the list", () => {
-        cy.get('[data-testid="add-shelf-button"]').should("exist").and("be.visible").click();
-        cy.get('[data-testid="shelf-name-input"]').should("exist").and("be.visible").type(SHELF_NAME);
-        cy.get('[data-testid="save-shelf-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="add-shelf-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "add-shelf-button")
+          .and("not.have.attr", "disabled")
+          .click();
+        cy.get('[data-testid="shelf-name-input"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "shelf-name-input")
+          .and("not.have.attr", "disabled")
+          .type(SHELF_NAME);
+        cy.get('[data-testid="save-shelf-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "save-shelf-button")
+          .and("not.have.attr", "disabled")
+          .click();
 
         cy.contains(/created successfully/i).should("exist").and("be.visible");
         cy.contains(SHELF_NAME).should("exist").and("be.visible");

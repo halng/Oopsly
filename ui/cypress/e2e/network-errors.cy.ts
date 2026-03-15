@@ -32,7 +32,12 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
         );
         cy.reload();
         cy.wait("@getShelvesOffline");
-        cy.get('[data-testid="retry-button"]').should("exist").and("be.visible");
+        cy.get('[data-testid="retry-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "retry-button")
+          .and("not.have.attr", "disabled");
       });
 
       it("recovers from network error when retry is pressed", () => {
@@ -48,7 +53,13 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
 
         cy.reload();
         cy.wait("@shelves");
-        cy.get('[data-testid="retry-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="retry-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "retry-button")
+          .and("not.have.attr", "disabled")
+          .click();
         cy.wait("@shelves");
         cy.get('[data-testid="home-screen"]').should("exist").and("be.visible");
       });

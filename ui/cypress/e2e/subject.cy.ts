@@ -19,8 +19,15 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
     // ─── Navigate to Subject List ──────────────────────────────────────────────
     describe("Shelf Navigation", () => {
       it("navigates into a shelf and shows the subject list", () => {
-        cy.contains(SHELF_NAME).should("exist").and("be.visible").click();
-        cy.get('[data-testid="subject-list"]').should("exist").and("be.visible");
+        cy.contains(SHELF_NAME)
+          .should("exist")
+          .and("be.visible")
+          .should("have.text", SHELF_NAME)
+          .click();
+        cy.get('[data-testid="subject-list"]')
+          .should("exist")
+          .and("be.visible")
+          .should("have.attr", "data-testid", "subject-list");
       });
 
       it("shows empty state when a shelf has no subjects", () => {
@@ -43,8 +50,19 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       });
 
       it("opens the Add Subject modal", () => {
-        cy.get('[data-testid="add-subject-button"]').should("exist").and("be.visible").click();
-        cy.get('[data-testid="subject-name-input"]').should("exist").and("be.visible");
+        cy.get('[data-testid="add-subject-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "add-subject-button")
+          .and("not.have.attr", "disabled")
+          .click();
+        cy.get('[data-testid="subject-name-input"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "subject-name-input")
+          .and("not.have.attr", "disabled");
       });
 
       it("prevents saving with an empty name", () => {
@@ -61,9 +79,27 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       });
 
       it("creates a subject and shows it in the list", () => {
-        cy.get('[data-testid="add-subject-button"]').click();
-        cy.get('[data-testid="subject-name-input"]').type(SUBJECT_NAME);
-        cy.get('[data-testid="save-subject-button"]').click();
+        cy.get('[data-testid="add-subject-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "add-subject-button")
+          .and("not.have.attr", "disabled")
+          .click();
+        cy.get('[data-testid="subject-name-input"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "subject-name-input")
+          .and("not.have.attr", "disabled")
+          .type(SUBJECT_NAME);
+        cy.get('[data-testid="save-subject-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "save-subject-button")
+          .and("not.have.attr", "disabled")
+          .click();
 
         cy.contains(/created successfully/i).should("be.visible");
         cy.contains(SUBJECT_NAME).should("be.visible");
@@ -115,9 +151,25 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       });
 
       it("opens the add card modal", () => {
-        cy.get('[data-testid="add-card-button"]').click();
-        cy.get('[data-testid="card-front-input"]').should("be.visible");
-        cy.get('[data-testid="card-back-input"]').should("be.visible");
+        cy.get('[data-testid="add-card-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "add-card-button")
+          .and("not.have.attr", "disabled")
+          .click();
+        cy.get('[data-testid="card-front-input"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "card-front-input")
+          .and("not.have.attr", "disabled");
+        cy.get('[data-testid="card-back-input"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "card-back-input")
+          .and("not.have.attr", "disabled");
       });
 
       it("prevents saving a card with empty front", () => {
@@ -246,12 +298,25 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       });
 
       it("disables study button when no cards exist", () => {
-        cy.get('[data-testid="start-study-button"]').should("be.disabled");
+        cy.get('[data-testid="start-study-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.disabled")
+          .should("have.attr", "data-testid", "start-study-button");
       });
 
       it("starts a study session when cards exist", () => {
-        cy.get('[data-testid="start-study-button"]').click();
-        cy.get('[data-testid="flashcard"]').should("be.visible");
+        cy.get('[data-testid="start-study-button"]')
+          .should("exist")
+          .and("be.visible")
+          .should("be.enabled")
+          .should("have.attr", "data-testid", "start-study-button")
+          .and("not.have.attr", "disabled")
+          .click();
+        cy.get('[data-testid="flashcard"]')
+          .should("exist")
+          .and("be.visible")
+          .should("have.attr", "data-testid", "flashcard");
       });
 
       it("flips the card to reveal the back side", () => {
