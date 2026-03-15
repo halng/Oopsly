@@ -19,19 +19,27 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
     describe("Create Test Suite", () => {
       it("opens the create test suite modal", () => {
         cy.contains(SHELF_NAME)
+          .should("exist")
+          .and("be.visible")
           .parent()
           .find('[data-testid="add-test-suite-button"]')
+          .should("exist")
+          .and("be.visible")
           .click();
-        cy.get('[data-testid="test-suite-title-input"]').should("be.visible");
+        cy.get('[data-testid="test-suite-title-input"]').should("exist").and("be.visible");
       });
 
       it("prevents saving with empty title", () => {
         cy.contains(SHELF_NAME)
+          .should("exist")
+          .and("be.visible")
           .parent()
           .find('[data-testid="add-test-suite-button"]')
+          .should("exist")
+          .and("be.visible")
           .click();
-        cy.get('[data-testid="save-test-suite-button"]').click();
-        cy.contains(/title.*required|enter.*title/i).should("be.visible");
+        cy.get('[data-testid="save-test-suite-button"]').should("exist").and("be.visible").click();
+        cy.contains(/title.*required|enter.*title/i).should("exist").and("be.visible");
       });
 
       it("prevents saving with whitespace-only title", () => {

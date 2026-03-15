@@ -19,37 +19,38 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
     // ─── Navigate to Subject List ──────────────────────────────────────────────
     describe("Shelf Navigation", () => {
       it("navigates into a shelf and shows the subject list", () => {
-        cy.contains(SHELF_NAME).click();
-        cy.get('[data-testid="subject-list"]').should("exist");
+        cy.contains(SHELF_NAME).should("exist").and("be.visible").click();
+        cy.get('[data-testid="subject-list"]').should("exist").and("be.visible");
       });
 
       it("shows empty state when a shelf has no subjects", () => {
-        cy.contains(SHELF_NAME).click();
-        cy.get('[data-testid="empty-subject-state"]').should("be.visible");
+        cy.contains(SHELF_NAME).should("exist").and("be.visible").click();
+        cy.get('[data-testid="empty-subject-state"]').should("exist").and("be.visible");
       });
 
       it("navigates back to home from a shelf", () => {
-        cy.contains(SHELF_NAME).click();
-        cy.get('[data-testid="back-button"]').click();
-        cy.get('[data-testid="home-screen"]').should("exist");
+        cy.contains(SHELF_NAME).should("exist").and("be.visible").click();
+        cy.get('[data-testid="back-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="home-screen"]').should("exist").and("be.visible");
+        cy.location("pathname").should("eq", "/home");
       });
     });
 
     // ─── Create Subject ────────────────────────────────────────────────────────
     describe("Create Subject", () => {
       beforeEach(() => {
-        cy.contains(SHELF_NAME).click();
+        cy.contains(SHELF_NAME).should("exist").and("be.visible").click();
       });
 
       it("opens the Add Subject modal", () => {
-        cy.get('[data-testid="add-subject-button"]').click();
-        cy.get('[data-testid="subject-name-input"]').should("be.visible");
+        cy.get('[data-testid="add-subject-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="subject-name-input"]').should("exist").and("be.visible");
       });
 
       it("prevents saving with an empty name", () => {
-        cy.get('[data-testid="add-subject-button"]').click();
-        cy.get('[data-testid="save-subject-button"]').click();
-        cy.contains(/name.*required|enter.*name/i).should("be.visible");
+        cy.get('[data-testid="add-subject-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="save-subject-button"]').should("exist").and("be.visible").click();
+        cy.contains(/name.*required|enter.*name/i).should("exist").and("be.visible");
       });
 
       it("prevents saving with whitespace-only name", () => {
