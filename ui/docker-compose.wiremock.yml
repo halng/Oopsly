@@ -1,0 +1,20 @@
+version: "3.8"
+
+# Starts a WireMock server that acts as the mock backend for Cypress e2e tests.
+# The server listens on port 9009 (matching EXPO_PUBLIC_BACKEND_API default).
+# Stubs are managed programmatically by the Cypress tasks defined in cypress.config.ts.
+#
+# Usage:
+#   docker compose -f docker-compose.wiremock.yml up -d
+#   npm run cy:run:headless
+#   docker compose -f docker-compose.wiremock.yml down
+
+services:
+  wiremock:
+    image: wiremock/wiremock:3.13.0
+    container_name: oopsly-wiremock
+    ports:
+      - "9009:8080"
+    command: >
+      --verbose
+      --port 8080

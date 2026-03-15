@@ -155,7 +155,7 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
         cy.get('[data-testid="logout-button"]').click();
         cy.get('[data-testid="confirm-logout-button"]').click();
 
-        cy.get('[data-testid="get-started-button"]').should("be.visible");
+        cy.get('[data-testid="skip-button"]').should("be.visible");
       });
 
       it("cannot access home after logging out (session cleared)", () => {
@@ -163,7 +163,7 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
         cy.get('[data-testid="confirm-logout-button"]').click();
 
         cy.visit("/home");
-        cy.get('[data-testid="get-started-button"]').should("be.visible");
+        cy.get('[data-testid="skip-button"]').should("be.visible");
       });
     });
 

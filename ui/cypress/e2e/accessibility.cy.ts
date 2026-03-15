@@ -131,15 +131,15 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
     describe("Focus Management", () => {
       it("focus moves to the email input when onboard screen loads", () => {
         cy.visit("/");
-        cy.get('[data-testid="get-started-button"]').click();
+        cy.get('[data-testid="skip-button"]').click();
         cy.focused().should("have.attr", "data-testid", "email-input");
       });
 
       it("focus moves to the first OTP field after email is submitted", () => {
         cy.visit("/");
-        cy.get('[data-testid="get-started-button"]').click();
+        cy.get('[data-testid="skip-button"]').click();
         cy.get('[data-testid="email-input"]').type("test@example.com");
-        cy.get('[data-testid="send-otp-button"]').click();
+        cy.get('[data-testid="continue-button"]').click();
         cy.focused().should("have.attr", "data-testid", "otp-input-0");
       });
 

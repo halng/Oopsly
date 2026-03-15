@@ -94,14 +94,14 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       });
 
       it("rejects empty OTP submission", () => {
-        cy.get('[data-testid="verify-otp-button"]').click();
+        cy.get('[data-testid="verify-button"]').click();
         cy.contains(/enter.*code|code.*required|invalid/i).should("be.visible");
       });
 
       it("rejects partial OTP (fewer than 6 digits)", () => {
         cy.get('[data-testid="otp-input-0"]').type("1");
         cy.get('[data-testid="otp-input-1"]').type("2");
-        cy.get('[data-testid="verify-otp-button"]').click();
+        cy.get('[data-testid="verify-button"]').click();
         cy.contains(/incomplete|invalid|enter.*code/i).should("be.visible");
       });
 
@@ -110,7 +110,7 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
         ["9", "9", "9", "9", "9", "9"].forEach((digit, i) => {
           cy.get(`[data-testid="otp-input-${i}"]`).type(digit);
         });
-        cy.get('[data-testid="verify-otp-button"]').click();
+        cy.get('[data-testid="verify-button"]').click();
         cy.contains(/invalid|expired|incorrect/i).should("be.visible");
       });
 
@@ -120,7 +120,7 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       });
 
       it("allows resending the OTP", () => {
-        cy.get('[data-testid="recontinue-button"]').should("exist").click();
+        cy.get('[data-testid="resend-button"]').should("exist").click();
         cy.contains(/resent|sent again|check your email/i).should("be.visible");
       });
 
@@ -142,14 +142,14 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       it("redirects unauthenticated user away from protected home screen", () => {
         cy.visit("/home");
         // Should be redirected to landing / onboard
-        cy.get('[data-testid="get-started-button"]').should("exist");
+        cy.get('[data-testid="skip-button"]').should("exist");
       });
 
       it("logs out and clears session", () => {
         cy.login(VALID_EMAIL);
         cy.get('[data-testid="profile-icon"]').click();
         cy.get('[data-testid="logout-button"]').click();
-        cy.get('[data-testid="get-started-button"]').should("be.visible");
+        cy.get('[data-testid="skip-button"]').should("be.visible");
       });
     });
 
@@ -160,7 +160,6 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
           "otpRequest",
         );
 
-        cy.get('[data-testid="get-started-button"]').click();
         cy.get('[data-testid="email-input"]').type(VALID_EMAIL);
         cy.get('[data-testid="continue-button"]').click();
 
@@ -170,7 +169,6 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       });
 
       it("shows error when OTP verification fails on server", () => {
-        cy.get('[data-testid="get-started-button"]').click();
         cy.get('[data-testid="email-input"]').type(VALID_EMAIL);
         cy.get('[data-testid="continue-button"]').click();
         cy.get('[data-testid="otp-input-0"]').should("be.visible");
@@ -183,7 +181,7 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
         VALID_OTP.forEach((digit, i) => {
           cy.get(`[data-testid="otp-input-${i}"]`).type(digit);
         });
-        cy.get('[data-testid="verify-otp-button"]').click();
+        cy.get('[data-testid="verify-button"]').click();
 
         cy.wait("@verifyOtp");
         cy.contains(/invalid|expired|incorrect/i).should("be.visible");

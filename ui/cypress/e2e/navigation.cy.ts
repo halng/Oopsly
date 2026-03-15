@@ -13,22 +13,22 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
     describe("Route Guards (Unauthenticated)", () => {
       it("redirects to landing when accessing /home directly without auth", () => {
         cy.visit("/home");
-        cy.get('[data-testid="get-started-button"]').should("be.visible");
+        cy.get('[data-testid="skip-button"]').should("be.visible");
       });
 
       it("redirects to landing when accessing /test-suite/:id directly without auth", () => {
         cy.visit("/test-suite/some-id");
-        cy.get('[data-testid="get-started-button"]').should("be.visible");
+        cy.get('[data-testid="skip-button"]').should("be.visible");
       });
 
       it("redirects to landing when accessing /take-test/:id without auth", () => {
         cy.visit("/take-test/some-id");
-        cy.get('[data-testid="get-started-button"]').should("be.visible");
+        cy.get('[data-testid="skip-button"]').should("be.visible");
       });
 
       it("redirects to landing when accessing /profile without auth", () => {
         cy.visit("/profile");
-        cy.get('[data-testid="get-started-button"]').should("be.visible");
+        cy.get('[data-testid="skip-button"]').should("be.visible");
       });
     });
 

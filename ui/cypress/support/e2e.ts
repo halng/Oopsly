@@ -14,6 +14,10 @@ beforeEach(() => {
       return false; // Don't fail the test for these known non-critical errors
     }
   });
+
+  // Reset WireMock to a clean state and reload default happy-path stubs
+  // before every test so each spec starts from a predictable baseline.
+  cy.task('wiremock:clearAll').then(() => cy.task('wiremock:setupDefaults'));
 });
 
 // ─── Custom Commands ──────────────────────────────────────────────────────────
@@ -28,14 +32,15 @@ Cypress.Commands.add('login', (email = 'test@example.com') => {
   const digits = otp.split('');
 
   cy.visit('/');
-  cy.get('[data-testid="get-started-button"]').click();
+  cy.get('[data-testid="skip-button"]').click();
   cy.get('[data-testid="email-input"]').type(email);
-  cy.get('[data-testid="send-otp-button"]').click();
+  cy.get('[data-testid="continue-button"]').click();
 
-  digits.forEach((digit, i) => {
+  digits.forEach((digit: string, i: number) => {
     cy.get(`[data-testid="otp-input-${i}"]`).type(digit);
   });
 
+  cy.get('[data-testid="verify-button"]').click();
   cy.get('[data-testid="home-screen"]').should('exist');
 });
 
@@ -47,7 +52,7 @@ Cypress.Commands.add('logout', () => {
   cy.get('[data-testid="profile-icon"]').click();
   cy.get('[data-testid="logout-button"]').click();
   cy.get('[data-testid="confirm-logout-button"]').click();
-  cy.get('[data-testid="get-started-button"]').should('be.visible');
+  cy.get('[data-testid="skip-button"]').should('be.visible');
 });
 
 /**
@@ -146,44 +151,19 @@ Cypress.Commands.add(
   }
 );
 
-// ─── TypeScript Declaration Augmentation ──────────────────────────────────────
-declare global {
-  namespace Cypress {
-    interface Chainable {
-      /** Complete email + OTP login flow */
-      login(email?: string): Chainable<void>;
+/**
+ * cy.wiremockReset()
+ * Clears all WireMock stubs and restores the default happy-path stubs.
+ */
+Cypress.Commands.add('wiremockReset', () => {
+  cy.task('wiremock:clearAll').then(() => cy.task('wiremock:setupDefaults'));
+});
 
-      /** Log out via Profile screen */
-      logout(): Chainable<void>;
-
-      /** Create a shelf via the UI */
-      createShelf(name: string): Chainable<void>;
-
-      /** Navigate into a shelf and create a subject */
-      createSubject(shelfName: string, subjectName: string): Chainable<void>;
-
-      /** Create a test suite via the UI */
-      createTestSuite(shelfName: string, title: string): Chainable<void>;
-
-      /** Add a flashcard (must be on subject detail screen) */
-      addCard(front: string, back: string): Chainable<void>;
-
-      /** Add a question (must be on test suite detail screen) */
-      addQuestion(
-        type: 'SINGLE CHOICE' | 'MULTIPLE CHOICE' | 'TRUE FALSE' | 'FILL IN THE BLANK',
-        content: string,
-        options?: string[],
-        correctIndices?: number[],
-        answer?: string
-      ): Chainable<void>;
-
-      /** Intercept API call and return an error response */
-      interceptApiError(
-        method: string,
-        urlPattern: string,
-        statusCode: number,
-        message: string
-      ): Chainable<void>;
-    }
-  }
-}
+/**
+ * cy.wiremockStub(request, response, features?)
+ * Registers a one-off WireMock stub for a specific test scenario.
+ * Complements cy.intercept() for server-level mocking.
+ */
+Cypress.Commands.add('wiremockStub', (request, response, features?) => {
+  cy.task('wiremock:register', { request, response, features });
+});

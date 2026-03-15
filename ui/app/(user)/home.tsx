@@ -408,7 +408,7 @@ const OopslyApp = () => {
   };
 
   return (
-    <View className="flex-1 bg-gray-50" testID="home-container">
+    <View className="flex-1 bg-gray-50" testID="home-screen">
       {/* Header */}
       <View className="bg-white pt-12 pb-4 px-4 shadow-sm" testID="header-container">
         <View className="flex-row justify-between items-center">

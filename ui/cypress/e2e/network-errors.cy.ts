@@ -78,7 +78,7 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
         cy.reload();
         cy.wait("@unauth");
         // User should be kicked back to onboarding/login
-        cy.get('[data-testid="get-started-button"]').should("exist");
+        cy.get('[data-testid="skip-button"]').should("exist");
       });
 
       it("handles 403 Forbidden when accessing restricted shelf", () => {
