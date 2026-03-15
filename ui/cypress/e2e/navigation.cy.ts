@@ -13,22 +13,26 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
     describe("Route Guards (Unauthenticated)", () => {
       it("redirects to landing when accessing /home directly without auth", () => {
         cy.visit("/home");
-        cy.get('[data-testid="get-started-button"]').should("be.visible");
+        cy.get('[data-testid="get-started-button"]').should("exist").and("be.visible");
+        cy.location("pathname").should("match", /^\/(|onboard)$/);
       });
 
       it("redirects to landing when accessing /test-suite/:id directly without auth", () => {
         cy.visit("/test-suite/some-id");
-        cy.get('[data-testid="get-started-button"]').should("be.visible");
+        cy.get('[data-testid="get-started-button"]').should("exist").and("be.visible");
+        cy.location("pathname").should("match", /^\/(|onboard)$/);
       });
 
       it("redirects to landing when accessing /take-test/:id without auth", () => {
         cy.visit("/take-test/some-id");
-        cy.get('[data-testid="get-started-button"]').should("be.visible");
+        cy.get('[data-testid="get-started-button"]').should("exist").and("be.visible");
+        cy.location("pathname").should("match", /^\/(|onboard)$/);
       });
 
       it("redirects to landing when accessing /profile without auth", () => {
         cy.visit("/profile");
-        cy.get('[data-testid="get-started-button"]').should("be.visible");
+        cy.get('[data-testid="get-started-button"]').should("exist").and("be.visible");
+        cy.location("pathname").should("match", /^\/(|onboard)$/);
       });
     });
 
@@ -38,17 +42,19 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
 
       it("navigates directly to home and shows shelves", () => {
         cy.visit("/home");
-        cy.get('[data-testid="home-screen"]').should("exist");
+        cy.get('[data-testid="home-screen"]').should("exist").and("be.visible");
+        cy.location("pathname").should("eq", "/home");
       });
 
       it("shows 404 / not found UI for unknown routes", () => {
         cy.visit("/this-route-does-not-exist", { failOnStatusCode: false });
-        cy.contains(/not found|404|page does not exist/i).should("be.visible");
+        cy.contains(/not found|404|page does not exist/i).should("exist").and("be.visible");
       });
 
       it("navigates to profile directly via URL", () => {
         cy.visit("/profile");
-        cy.get('[data-testid="profile-screen"]').should("exist");
+        cy.get('[data-testid="profile-screen"]').should("exist").and("be.visible");
+        cy.location("pathname").should("eq", "/profile");
       });
     });
 
@@ -57,31 +63,32 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       beforeEach(() => cy.login());
 
       it("browser back from shelf detail returns to home", () => {
-        cy.get('[data-testid="shelf-item"]').first().click();
+        cy.get('[data-testid="shelf-item"]').should("exist").and("be.visible").first().click();
         cy.go("back");
-        cy.get('[data-testid="home-screen"]').should("exist");
+        cy.get('[data-testid="home-screen"]').should("exist").and("be.visible");
+        cy.location("pathname").should("eq", "/home");
       });
 
       it("browser back from test suite detail returns to shelf", () => {
-        cy.get('[data-testid="shelf-item"]').first().click();
-        cy.get('[data-testid="test-suite-item"]').first().click();
+        cy.get('[data-testid="shelf-item"]').should("exist").and("be.visible").first().click();
+        cy.get('[data-testid="test-suite-item"]').should("exist").and("be.visible").first().click();
         cy.go("back");
-        cy.get('[data-testid="shelf-detail-screen"]').should("exist");
+        cy.get('[data-testid="shelf-detail-screen"]').should("exist").and("be.visible");
       });
 
       it("browser back from take-test returns to test suite detail", () => {
-        cy.get('[data-testid="shelf-item"]').first().click();
-        cy.get('[data-testid="test-suite-item"]').first().click();
-        cy.contains("Take Test").click();
+        cy.get('[data-testid="shelf-item"]').should("exist").and("be.visible").first().click();
+        cy.get('[data-testid="test-suite-item"]').should("exist").and("be.visible").first().click();
+        cy.contains("Take Test").should("exist").and("be.visible").click();
         cy.go("back");
-        cy.get('[data-testid="test-suite-detail-screen"]').should("exist");
+        cy.get('[data-testid="test-suite-detail-screen"]').should("exist").and("be.visible");
       });
 
       it("browser forward works after going back", () => {
-        cy.get('[data-testid="shelf-item"]').first().click();
+        cy.get('[data-testid="shelf-item"]').should("exist").and("be.visible").first().click();
         cy.go("back");
         cy.go("forward");
-        cy.get('[data-testid="shelf-detail-screen"]').should("exist");
+        cy.get('[data-testid="shelf-detail-screen"]').should("exist").and("be.visible");
       });
     });
 
@@ -90,37 +97,39 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       beforeEach(() => cy.login());
 
       it("back button on shelf detail returns to home", () => {
-        cy.get('[data-testid="shelf-item"]').first().click();
-        cy.get('[data-testid="back-button"]').click();
-        cy.get('[data-testid="home-screen"]').should("exist");
+        cy.get('[data-testid="shelf-item"]').should("exist").and("be.visible").first().click();
+        cy.get('[data-testid="back-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="home-screen"]').should("exist").and("be.visible");
+        cy.location("pathname").should("eq", "/home");
       });
 
       it("back button on subject detail returns to shelf", () => {
-        cy.get('[data-testid="shelf-item"]').first().click();
-        cy.get('[data-testid="subject-item"]').first().click();
-        cy.get('[data-testid="back-button"]').click();
-        cy.get('[data-testid="shelf-detail-screen"]').should("exist");
+        cy.get('[data-testid="shelf-item"]').should("exist").and("be.visible").first().click();
+        cy.get('[data-testid="subject-item"]').should("exist").and("be.visible").first().click();
+        cy.get('[data-testid="back-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="shelf-detail-screen"]').should("exist").and("be.visible");
       });
 
       it("back button on test suite detail returns to shelf", () => {
-        cy.get('[data-testid="shelf-item"]').first().click();
-        cy.get('[data-testid="test-suite-item"]').first().click();
-        cy.get('[data-testid="back-button"]').click();
-        cy.get('[data-testid="shelf-detail-screen"]').should("exist");
+        cy.get('[data-testid="shelf-item"]').should("exist").and("be.visible").first().click();
+        cy.get('[data-testid="test-suite-item"]').should("exist").and("be.visible").first().click();
+        cy.get('[data-testid="back-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="shelf-detail-screen"]').should("exist").and("be.visible");
       });
 
       it("back button on take-test screen returns to test suite", () => {
-        cy.get('[data-testid="shelf-item"]').first().click();
-        cy.get('[data-testid="test-suite-item"]').first().click();
-        cy.contains("Take Test").click();
-        cy.get('[data-testid="back-button"]').click();
-        cy.get('[data-testid="test-suite-detail-screen"]').should("exist");
+        cy.get('[data-testid="shelf-item"]').should("exist").and("be.visible").first().click();
+        cy.get('[data-testid="test-suite-item"]').should("exist").and("be.visible").first().click();
+        cy.contains("Take Test").should("exist").and("be.visible").click();
+        cy.get('[data-testid="back-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="test-suite-detail-screen"]').should("exist").and("be.visible");
       });
 
       it("back button on profile screen returns to home", () => {
-        cy.get('[data-testid="profile-icon"]').click();
-        cy.get('[data-testid="back-button"]').click();
-        cy.get('[data-testid="home-screen"]').should("exist");
+        cy.get('[data-testid="profile-icon"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="back-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="home-screen"]').should("exist").and("be.visible");
+        cy.location("pathname").should("eq", "/home");
       });
     });
 

@@ -14,47 +14,51 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
     // ─── Profile Navigation ────────────────────────────────────────────────────
     describe("Profile Navigation", () => {
       it("opens profile screen via profile icon", () => {
-        cy.get('[data-testid="profile-icon"]').click();
-        cy.get('[data-testid="profile-screen"]').should("exist");
+        cy.get('[data-testid="profile-icon"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="profile-screen"]').should("exist").and("be.visible");
+        cy.location("pathname").should("eq", "/profile");
       });
 
       it("displays the current user email", () => {
-        cy.get('[data-testid="profile-icon"]').click();
-        cy.contains("test@example.com").should("be.visible");
+        cy.get('[data-testid="profile-icon"]').should("exist").and("be.visible").click();
+        cy.contains("test@example.com").should("exist").and("be.visible");
       });
 
       it("navigates back to home from profile", () => {
-        cy.get('[data-testid="profile-icon"]').click();
-        cy.get('[data-testid="back-button"]').click();
-        cy.get('[data-testid="home-screen"]').should("exist");
+        cy.get('[data-testid="profile-icon"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="back-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="home-screen"]').should("exist").and("be.visible");
+        cy.location("pathname").should("eq", "/home");
       });
     });
 
     // ─── Edit Profile ──────────────────────────────────────────────────────────
     describe("Edit Profile", () => {
       beforeEach(() => {
-        cy.get('[data-testid="profile-icon"]').click();
+        cy.get('[data-testid="profile-icon"]').should("exist").and("be.visible").click();
       });
 
       it("opens the edit profile form", () => {
-        cy.get('[data-testid="edit-profile-button"]').click();
-        cy.get('[data-testid="display-name-input"]').should("be.visible");
+        cy.get('[data-testid="edit-profile-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="display-name-input"]').should("exist").and("be.visible");
       });
 
       it("shows current display name pre-filled in the input", () => {
-        cy.get('[data-testid="edit-profile-button"]').click();
+        cy.get('[data-testid="edit-profile-button"]').should("exist").and("be.visible").click();
         cy.get('[data-testid="display-name-input"]')
+          .should("exist")
+          .and("be.visible")
           .invoke("val")
           .should("not.be.empty");
       });
 
       it("saves a new display name and reflects it immediately", () => {
-        cy.get('[data-testid="edit-profile-button"]').click();
-        cy.get('[data-testid="display-name-input"]').clear().type("John Doe");
-        cy.get('[data-testid="save-profile-button"]').click();
+        cy.get('[data-testid="edit-profile-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="display-name-input"]').should("exist").and("be.visible").clear().type("John Doe");
+        cy.get('[data-testid="save-profile-button"]').should("exist").and("be.visible").click();
 
-        cy.contains("John Doe").should("be.visible");
-        cy.contains(/updated|saved/i).should("be.visible");
+        cy.contains("John Doe").should("exist").and("be.visible");
+        cy.contains(/updated|saved/i).should("exist").and("be.visible");
       });
 
       it("prevents saving an empty display name", () => {
@@ -100,18 +104,20 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
     // ─── Settings ─────────────────────────────────────────────────────────────
     describe("Settings Screen", () => {
       beforeEach(() => {
-        cy.get('[data-testid="profile-icon"]').click();
-        cy.get('[data-testid="settings-button"]').click();
-        cy.get('[data-testid="settings-screen"]').should("exist");
+        cy.get('[data-testid="profile-icon"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="settings-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="settings-screen"]').should("exist").and("be.visible");
       });
 
       it("shows settings screen", () => {
-        cy.get('[data-testid="settings-screen"]').should("be.visible");
+        cy.get('[data-testid="settings-screen"]').should("exist").and("be.visible");
+        cy.location("pathname").should("eq", "/settings");
       });
 
       it("navigates back from Settings to Profile", () => {
-        cy.get('[data-testid="back-button"]').click();
-        cy.get('[data-testid="profile-screen"]').should("exist");
+        cy.get('[data-testid="back-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="profile-screen"]').should("exist").and("be.visible");
+        cy.location("pathname").should("eq", "/profile");
       });
 
       it("can toggle dark mode setting", () => {
@@ -131,7 +137,7 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
     // ─── Logout ────────────────────────────────────────────────────────────────
     describe("Logout", () => {
       beforeEach(() => {
-        cy.get('[data-testid="profile-icon"]').click();
+        cy.get('[data-testid="profile-icon"]').should("exist").and("be.visible").click();
       });
 
       it("shows a logout button on the profile screen", () => {
