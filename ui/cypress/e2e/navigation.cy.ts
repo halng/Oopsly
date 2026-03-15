@@ -13,30 +13,30 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
     describe("Route Guards (Unauthenticated)", () => {
       it("redirects to landing when accessing /home directly without auth", () => {
         cy.visit("/home");
-        cy.get('[data-testid="get-started-button"]')
+        cy.get('[data-testid="next-button"]')
           .should("exist")
           .and("be.visible")
           .should("be.enabled")
-          .should("have.attr", "data-testid", "get-started-button")
+          .should("have.attr", "data-testid", "next-button")
           .and("not.have.attr", "disabled");
         cy.location("pathname").should("match", /^\/(|onboard)$/);
       });
 
       it("redirects to landing when accessing /test-suite/:id directly without auth", () => {
         cy.visit("/test-suite/some-id");
-        cy.get('[data-testid="get-started-button"]').should("exist").and("be.visible");
+        cy.get('[data-testid="next-button"]').should("exist").and("be.visible");
         cy.location("pathname").should("match", /^\/(|onboard)$/);
       });
 
       it("redirects to landing when accessing /take-test/:id without auth", () => {
         cy.visit("/take-test/some-id");
-        cy.get('[data-testid="get-started-button"]').should("exist").and("be.visible");
+        cy.get('[data-testid="next-button"]').should("exist").and("be.visible");
         cy.location("pathname").should("match", /^\/(|onboard)$/);
       });
 
       it("redirects to landing when accessing /profile without auth", () => {
         cy.visit("/profile");
-        cy.get('[data-testid="get-started-button"]').should("exist").and("be.visible");
+        cy.get('[data-testid="next-button"]').should("exist").and("be.visible");
         cy.location("pathname").should("match", /^\/(|onboard)$/);
       });
     });
