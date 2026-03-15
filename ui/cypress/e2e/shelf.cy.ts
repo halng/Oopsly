@@ -17,60 +17,60 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
     // ─── Create Shelf ──────────────────────────────────────────────────────────
     describe("Create Shelf", () => {
       it("shows the Add Shelf button on home screen", () => {
-        cy.get('[data-testid="add-shelf-button"]').should("be.visible");
+        cy.get('[data-testid="add-shelf-button"]').should("exist").and("be.visible");
       });
 
       it("opens the Create Shelf modal", () => {
-        cy.get('[data-testid="add-shelf-button"]').click();
-        cy.get('[data-testid="shelf-name-input"]').should("be.visible");
+        cy.get('[data-testid="add-shelf-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="shelf-name-input"]').should("exist").and("be.visible");
       });
 
       it("prevents saving with empty shelf name", () => {
-        cy.get('[data-testid="add-shelf-button"]').click();
-        cy.get('[data-testid="save-shelf-button"]').click();
-        cy.contains(/name.*required|enter.*name/i).should("be.visible");
+        cy.get('[data-testid="add-shelf-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="save-shelf-button"]').should("exist").and("be.visible").click();
+        cy.contains(/name.*required|enter.*name/i).should("exist").and("be.visible");
         cy.get('[data-testid="home-screen"]').should("not.exist"); // still in modal
       });
 
       it("prevents saving with only whitespace as name", () => {
-        cy.get('[data-testid="add-shelf-button"]').click();
-        cy.get('[data-testid="shelf-name-input"]').type("   ");
-        cy.get('[data-testid="save-shelf-button"]').click();
-        cy.contains(/name.*required|enter.*name/i).should("be.visible");
+        cy.get('[data-testid="add-shelf-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="shelf-name-input"]').should("exist").and("be.visible").type("   ");
+        cy.get('[data-testid="save-shelf-button"]').should("exist").and("be.visible").click();
+        cy.contains(/name.*required|enter.*name/i).should("exist").and("be.visible");
       });
 
       it("trims leading/trailing whitespace in shelf name", () => {
-        cy.get('[data-testid="add-shelf-button"]').click();
-        cy.get('[data-testid="shelf-name-input"]').type("  TrimmedShelf  ");
-        cy.get('[data-testid="save-shelf-button"]').click();
+        cy.get('[data-testid="add-shelf-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="shelf-name-input"]').should("exist").and("be.visible").type("  TrimmedShelf  ");
+        cy.get('[data-testid="save-shelf-button"]').should("exist").and("be.visible").click();
 
-        cy.contains(/created successfully/i).should("be.visible");
-        cy.contains("TrimmedShelf").should("be.visible");
+        cy.contains(/created successfully/i).should("exist").and("be.visible");
+        cy.contains("TrimmedShelf").should("exist").and("be.visible");
       });
 
       it("creates a shelf with maximum-length name", () => {
         const maxName = "A".repeat(100);
-        cy.get('[data-testid="add-shelf-button"]').click();
-        cy.get('[data-testid="shelf-name-input"]').type(maxName);
-        cy.get('[data-testid="save-shelf-button"]').click();
-        cy.contains(/created successfully|name too long/i).should("be.visible");
+        cy.get('[data-testid="add-shelf-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="shelf-name-input"]').should("exist").and("be.visible").type(maxName);
+        cy.get('[data-testid="save-shelf-button"]').should("exist").and("be.visible").click();
+        cy.contains(/created successfully|name too long/i).should("exist").and("be.visible");
       });
 
       it("creates a shelf with special characters in the name", () => {
-        cy.get('[data-testid="add-shelf-button"]').click();
-        cy.get('[data-testid="shelf-name-input"]').type("Math & Physics: 101!");
-        cy.get('[data-testid="save-shelf-button"]').click();
-        cy.contains(/created successfully/i).should("be.visible");
-        cy.contains("Math & Physics: 101!").should("be.visible");
+        cy.get('[data-testid="add-shelf-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="shelf-name-input"]').should("exist").and("be.visible").type("Math & Physics: 101!");
+        cy.get('[data-testid="save-shelf-button"]').should("exist").and("be.visible").click();
+        cy.contains(/created successfully/i).should("exist").and("be.visible");
+        cy.contains("Math & Physics: 101!").should("exist").and("be.visible");
       });
 
       it("creates a shelf and shows it in the list", () => {
-        cy.get('[data-testid="add-shelf-button"]').click();
-        cy.get('[data-testid="shelf-name-input"]').type(SHELF_NAME);
-        cy.get('[data-testid="save-shelf-button"]').click();
+        cy.get('[data-testid="add-shelf-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="shelf-name-input"]').should("exist").and("be.visible").type(SHELF_NAME);
+        cy.get('[data-testid="save-shelf-button"]').should("exist").and("be.visible").click();
 
-        cy.contains(/created successfully/i).should("be.visible");
-        cy.contains(SHELF_NAME).should("be.visible");
+        cy.contains(/created successfully/i).should("exist").and("be.visible");
+        cy.contains(SHELF_NAME).should("exist").and("be.visible");
       });
 
       it("cancels the create shelf modal without saving", () => {
@@ -100,12 +100,12 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
       it("shows empty state when no shelves exist", () => {
         // This test assumes a clean account with no shelves
         // In practice, use a seed/reset fixture
-        cy.get('[data-testid="empty-shelf-state"]').should("exist");
+        cy.get('[data-testid="empty-shelf-state"]').should("exist").and("be.visible");
       });
 
       it("shows multiple shelves when they exist", () => {
         // Assumes shelves are seeded. Verify at least two are visible.
-        cy.get('[data-testid="shelf-item"]').should(
+        cy.get('[data-testid="shelf-item"]').should("exist").should(
           "have.length.greaterThan",
           1,
         );
