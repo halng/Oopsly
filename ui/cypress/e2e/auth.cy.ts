@@ -17,16 +17,18 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
         .contains("Skip")
         .and("be.visible")
         .click();
+      cy.location("pathname").should("eq", "/onboard");
     });
     describe("Email Entry", () => {
       beforeEach(() => {
-        cy.get('[data-testid="email-input-screen"]').should("be.visible");
+        cy.get('[data-testid="email-input-screen"]').should("exist").and("be.visible");
         cy.location("pathname").should("eq", "/onboard");
       });
 
       it("shows back button and able to back to landing page", () => {
         cy.get('[data-testid="header-container"]')
-          .should("be.visible")
+          .should("exist")
+          .and("be.visible")
           .find('[data-testid="back-button"]')
           .should("exist")
           .and("be.visible")
@@ -36,12 +38,15 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
 
       it("shows email input field on onboard screen", () => {
         cy.get('[data-testid="email-input-container"]')
-          .should("be.visible");
+          .should("exist")
+          .and("be.visible");
         cy.get('[data-testid="title-text"]')
           .should("exist")
+          .and("be.visible")
           .and("contain", "What's your email?");
         cy.get('[data-testid="description-text"]')
           .should("exist")
+          .and("be.visible")
           .and(
             "contain",
             "We'll send you a secure code to verify your account.",
@@ -49,53 +54,52 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
         cy.get('[data-testid="email-input"]')
           .should("exist")
           .and("be.visible")
-          .and("have.attr", "placeholder", "name@example.com")
-        cy.get('[data-testid="email-input"]').should("exist");
-        cy.get('[data-testid="continue-button"]').should("exist").should("be.visible").contains("Continue");
+          .and("have.attr", "placeholder", "name@example.com");
+        cy.get('[data-testid="continue-button"]').should("exist").and("be.visible").contains("Continue");
       });
 
       it("disable button when email is invalid", () => {
         INVALID_EMAILS.forEach(email => {
-          cy.get('[data-testid="email-input"]').type(email);
-          cy.get('[data-testid="continue-button"]').should("exist").and("have.attr", "aria-disabled", "true");
+          cy.get('[data-testid="email-input"]').should("exist").and("be.visible").type(email);
+          cy.get('[data-testid="continue-button"]').should("exist").and("be.visible").and("have.attr", "aria-disabled", "true");
           cy.get('[data-testid="email-input"]').clear();
         })
       });
 
       it("accepts valid email and shows OTP screen", () => {
-        cy.get('[data-testid="email-input"]').type(VALID_EMAIL);
-        cy.get('[data-testid="continue-button"]').click();
-        cy.get('[data-testid="otp-input-0"]').should("be.visible");
+        cy.get('[data-testid="email-input"]').should("exist").and("be.visible").type(VALID_EMAIL);
+        cy.get('[data-testid="continue-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="otp-input-0"]').should("exist").and("be.visible");
       });
 
       it("allows editing the email to correct it before sending OTP", () => {
-        cy.get('[data-testid="email-input"]').type("bademail");
-        cy.get('[data-testid="continue-button"]').click();
-        cy.contains(/valid email/i).should("be.visible");
+        cy.get('[data-testid="email-input"]').should("exist").and("be.visible").type("bademail");
+        cy.get('[data-testid="continue-button"]').should("exist").and("be.visible").click();
+        cy.contains(/valid email/i).should("exist").and("be.visible");
 
         cy.get('[data-testid="email-input"]').clear().type(VALID_EMAIL);
-        cy.get('[data-testid="continue-button"]').click();
-        cy.get('[data-testid="otp-input-0"]').should("be.visible");
+        cy.get('[data-testid="continue-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="otp-input-0"]').should("exist").and("be.visible");
       });
     });
 
     // ─── OTP Verification ─────────────────────────────────────────────────────
     describe("OTP Verification", () => {
       beforeEach(() => {
-        cy.get('[data-testid="email-input"]').type(VALID_EMAIL);
-        cy.get('[data-testid="continue-button"]').click();
-        cy.get('[data-testid="otp-input-0"]').should("be.visible");
+        cy.get('[data-testid="email-input"]').should("exist").and("be.visible").type(VALID_EMAIL);
+        cy.get('[data-testid="continue-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="otp-input-0"]').should("exist").and("be.visible");
       });
 
       it("shows 6 OTP input boxes", () => {
         for (let i = 0; i < 6; i++) {
-          cy.get(`[data-testid="otp-input-${i}"]`).should("exist");
+          cy.get(`[data-testid="otp-input-${i}"]`).should("exist").and("be.visible");
         }
       });
 
       it("rejects empty OTP submission", () => {
-        cy.get('[data-testid="verify-otp-button"]').click();
-        cy.contains(/enter.*code|code.*required|invalid/i).should("be.visible");
+        cy.get('[data-testid="verify-otp-button"]').should("exist").and("be.visible").click();
+        cy.contains(/enter.*code|code.*required|invalid/i).should("exist").and("be.visible");
       });
 
       it("rejects partial OTP (fewer than 6 digits)", () => {
@@ -116,7 +120,8 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
 
       it("accepts correct OTP and redirects to home", () => {
         cy.login(VALID_EMAIL);
-        cy.get('[data-testid="home-screen"]').should("exist");
+        cy.get('[data-testid="home-screen"]').should("exist").and("be.visible");
+        cy.location("pathname").should("eq", "/home");
       });
 
       it("allows resending the OTP", () => {
@@ -136,20 +141,23 @@ FLATTEN_VIEW_PORTS.forEach(({ name, width, height }) => {
         cy.login(VALID_EMAIL);
         cy.visit("/");
         // Authenticated user should be redirected to home, not see the landing page
-        cy.get('[data-testid="home-screen"]').should("exist");
+        cy.get('[data-testid="home-screen"]').should("exist").and("be.visible");
+        cy.location("pathname").should("eq", "/home");
       });
 
       it("redirects unauthenticated user away from protected home screen", () => {
         cy.visit("/home");
         // Should be redirected to landing / onboard
-        cy.get('[data-testid="get-started-button"]').should("exist");
+        cy.get('[data-testid="get-started-button"]').should("exist").and("be.visible");
+        cy.location("pathname").should("match", /^\/(|onboard)$/);
       });
 
       it("logs out and clears session", () => {
         cy.login(VALID_EMAIL);
-        cy.get('[data-testid="profile-icon"]').click();
-        cy.get('[data-testid="logout-button"]').click();
-        cy.get('[data-testid="get-started-button"]').should("be.visible");
+        cy.get('[data-testid="profile-icon"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="logout-button"]').should("exist").and("be.visible").click();
+        cy.get('[data-testid="get-started-button"]').should("exist").and("be.visible");
+        cy.location("pathname").should("match", /^\/(|onboard)$/);
       });
     });
 
