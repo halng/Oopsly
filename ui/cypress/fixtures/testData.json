@@ -1,0 +1,45 @@
+{
+  "user": {
+    "email": "test@example.com",
+    "displayName": "Test User",
+    "otp": "123456"
+  },
+  "shelves": [
+    { "name": "Medicine", "description": "Medical studies shelf" },
+    { "name": "Engineering", "description": "Engineering topics" },
+    { "name": "Languages", "description": "Language learning" }
+  ],
+  "subjects": [
+    { "name": "Anatomy", "description": "Study of human anatomy" },
+    { "name": "Physiology", "description": "Study of body functions" }
+  ],
+  "cards": [
+    { "front": "What is the femur?", "back": "The longest bone in the body." },
+    { "front": "What is the patella?", "back": "The kneecap." },
+    { "front": "What is the tibia?", "back": "The shin bone." }
+  ],
+  "testSuites": [
+    { "title": "Anatomy Midterm" },
+    { "title": "Final Exam" }
+  ],
+  "questions": {
+    "singleChoice": {
+      "content": "Which is the powerhouse of the cell?",
+      "options": ["Nucleus", "Mitochondria", "Ribosome", "Golgi Body"],
+      "correctIndex": 1
+    },
+    "multipleChoice": {
+      "content": "Select prime numbers.",
+      "options": ["2", "3", "4", "6"],
+      "correctIndices": [0, 1]
+    },
+    "trueFalse": {
+      "content": "The sun is a star.",
+      "correctIndex": 0
+    },
+    "fillInTheBlank": {
+      "content": "The capital of France is ___.",
+      "answer": "Paris"
+    }
+  }
+}

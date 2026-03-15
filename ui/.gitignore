@@ -42,3 +42,7 @@ app-example
 /ios
 /android
 coverage/
+
+# Cypress
+**/videos/**
+**/screenshots/**

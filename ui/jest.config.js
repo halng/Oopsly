@@ -24,22 +24,24 @@ module.exports = {
     '!**/expo-env.d.ts',
     '!**/nativewind-env.d.ts',
     '!**/tailwind.config.js',
-    // exclude for now, because these files are not in use yet
-    '!**/hooks/**', 
+    '!**/cypress.config.ts',
+    '!**/cypress/**',
     '!**/scripts/**',
     '!**/.expo/**',
     '!**/constants/**',
-    '!**/components/**',
     '!**/app/subject/**',
     '!**/app/study/**',
     '!**/types/**',
     '!**/temp/**',
-    // exclude screen components (not yet tested)
-    '!**/screen/**',
-    // exclude user-protected routes (not yet fully implemented)
-    '!app/\\(user\\)/**',
     '!**/__mocks__/**',
     '!**/__tests__/**',
+    // Include hooks and screen components now that they are tested
+    'hooks/**/*.{ts,tsx}',
+    'app/(user)/**/*.{ts,tsx}',
+    'screen/**/*.{ts,tsx}',
+    'services/**/*.{ts,tsx}',
+    'store/**/*.{ts,tsx}',
+    'components/**/*.{ts,tsx}',
   ],
   coverageThreshold: {
     global: {
