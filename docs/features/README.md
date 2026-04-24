@@ -1,82 +1,28 @@
-# Oopsly Features
+# Features
 
-This directory contains detailed documentation for all features in the Oopsly application. Each feature is documented with its definition, scope, implementation status, and acceptance criteria.
+> This directory contains the feature files for the project. Each feature file describes a specific functionality or behavior of the application in a human-readable format using markdown syntax. These files are used for behavior-driven development (BDD) and serve as a bridge between technical and non-technical stakeholders, ensuring that everyone has a clear understanding of the requirements and expected outcomes.
 
-## Feature Documentation
+## Structure
 
-### Core Features
+Under this directory, you will find various milestone folder named with XXX organized by functionality or module. Each milestone folder typically includes:
 
-1. [User Management & Authentication](./user-management-authentication.md) - ✅ Fully Implemented
-   - OTP-based email authentication
-   - JWT token-based session management
-   - User profiles and settings
+- **TODO file**: A file that lists the tasks or features that need to be implemented for that milestone.
+- **OKR file**: A file that outlines the Objectives and Key Results (OKRs) for the milestone, providing a clear set of goals and measurable outcomes to track progress.
+- **Feature files**: These are the actual feature files that describe the specific behaviors and functionalities to be implemented. Each feature file is written in a clear and concise manner, following the Given-When-Then format to specify the conditions, actions, and expected results.
 
-2. [Test & Quiz Generation](./test-quiz-generation.md) - 🔄 Partially Implemented
-   - Manual test creation (✅ Complete)
-   - AI topic-based generation (🔄 In Development)
-   - AI document upload generation (🔄 In Development)
+Example structure:
 
-3. [Flashcard System](./flashcard-system.md) - ✅ Fully Implemented
-   - Card creation and management
-   - Spaced repetition review
-   - Difficulty-based scheduling
-
-4. [Collections & Shelves](./collections-shelves.md) - ✅ Fully Implemented
-   - Hierarchical content organization
-   - Shelve and subject management
-   - Sharing and collaboration
-
-5. [Study Tools](./study-tools.md) - ✅ Fully Implemented
-   - Pomodoro timer (Focus Flow)
-   - Study planning and calendar
-   - Goal tracking and achievements
-
-6. [Progress Tracking & Analytics](./progress-tracking-analytics.md) - 🔄 Partially Implemented
-   - Statistics and metrics (✅ Complete)
-   - Visual analytics (🔄 In Development)
-   - Performance tracking (✅ Complete)
-
-### Additional Features
-
-- [Task Management](./task-management.md) - 📋 Planned
-  - Study task organization
-  - Priority management
-  - Task-to-content linking
-
-- [Note-Taking System](./note-taking-system.md) - 📋 Planned
-  - Rich text notes
-  - Markdown support
-  - Integration with flashcards and subjects
-
-- [Document Management](./document-management.md) - 🔄 Partially Implemented
-  - Document upload (🔄 In Development)
-  - Resource library (📋 Planned)
-  - PDF viewer integration (📋 Planned)
-
-- [Test Taking](./test-taking.md) - ✅ Fully Implemented
-  - Interactive test interface
-  - Multiple question types
-  - Results and analysis
-
-## Status Legend
-
-- ✅ **Fully Implemented**: Feature is complete with both UI and backend
-- 🔄 **Partially Implemented**: Some components complete, others in development
-- 📋 **Planned**: Feature is designed but not yet implemented
-
-## Related Documentation
-
-- [Flow Diagrams](../flows/README.md) - End-to-end user journey flows
-- [API Documentation](../API.md) - Backend API specifications
-- [Architecture](../ARCHITECTURE.md) - System architecture overview
-- [Original Features Document](../FEATURES.md) - Consolidated features reference
-
-## Contributing
-
-When documenting new features:
-
-1. Use the established template structure
-2. Include clear definition, scope, and acceptance criteria
-3. Update implementation status accurately
-4. Add isSuccess field to match API response format
-5. Keep acceptance criteria testable and specific
+```plain
+features/
+├── 001/
+│   ├── TODO.md
+│   ├── OKR.md
+│   ├── OOPS-001.md
+│   └── OOPS-002.md
+├── 002/
+│   ├── TODO.md
+│   ├── OKR.md
+│   ├── OOPS-003.md
+│   └── OOPS-004.md
+└── ...
+```
