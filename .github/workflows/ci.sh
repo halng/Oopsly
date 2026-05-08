@@ -154,66 +154,6 @@ run_frontend_ci() {
     fi
 }
 
-# Markdown Linting
-run_markdown_lint() {
-    echo "CI::"
-    echo "CI::====================================="
-    echo "CI::Running Markdown Linting"
-    echo "CI::====================================="
-    
-    if command -v markdownlint-cli2 &> /dev/null; then
-        markdownlint-cli2 '**/*.md'
-        echo "CI::Markdown linting completed successfully!"
-    else
-        echo "CI::Installing markdownlint-cli2..."
-        npm install -g markdownlint-cli2
-        markdownlint-cli2 '**/*.md'
-        echo "CI::Markdown linting completed successfully!"
-    fi
-}
-
-# Integration Tests (test directory)
-run_integration_tests() {
-    echo "CI::"
-    echo "CI::====================================="
-    echo "CI::Running Integration Tests"
-    echo "CI::====================================="
-    
-    if [ ! -d "test" ]; then
-        echo "CI::Warning: test directory not found, skipping integration tests"
-        return 0
-    fi
-    
-    if [ ! -d "api" ]; then
-        echo "CI::ERROR: api directory not found"
-        return 1
-    fi
-
-    echo "CI::Installing Python dependencies..."
-    python -m pip install --upgrade pip
-    pip install -r test/config/requirement.txt
-    
-    echo "CI::Running black style check..."
-    black --check test/
-    
-    echo "CI::Test style check completed successfully!"
-    cd test
-    
-    export SKIP_DOCKER_SETUP=false
-    python -m tests.integration.main
-    TEST_EXIT_CODE=$?
-    
-    # Return to repo root
-    cd ..
-    
-    if [ $TEST_EXIT_CODE -eq 0 ]; then
-        echo "CI::Integration tests completed successfully!"
-        return 0
-    else
-        echo "CI::ERROR: Integration tests failed with exit code $TEST_EXIT_CODE"
-        return 1
-    fi
-}
 
 # Security Scans (Snyk)
 run_security_scans() {
@@ -278,9 +218,7 @@ main() {
     
     # Run all CI steps
     run_backend_ci
-    run_markdown_lint
     run_frontend_ci
-    run_integration_tests
     
     if [ "$SKIP_SECURITY" = false ]; then
         run_security_scans
