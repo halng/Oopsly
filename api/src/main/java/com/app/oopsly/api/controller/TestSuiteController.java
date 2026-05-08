@@ -184,4 +184,35 @@ public class TestSuiteController {
                     UUID shelveId) {
         return this.service.getAllByShelve(shelveId);
     }
+
+    @Operation(
+            summary = "Run test preset",
+            description =
+                    "Returns flashcards matching this suite's linked subjects and selection rules"
+                            + " (read-only snapshot for a practice session)")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Cards resolved successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "404", description = "Test suite or shelve not found"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
+    @PostMapping("/{id}/run")
+    ApiRes runPreset(
+            @Parameter(
+                            description = "Shelve ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174000")
+                    @PathVariable
+                    UUID shelveId,
+            @Parameter(
+                            description = "Test Suite ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174001")
+                    @PathVariable
+                    UUID id) {
+        return this.service.run(shelveId, id);
+    }
 }

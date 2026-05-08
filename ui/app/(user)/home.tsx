@@ -300,6 +300,7 @@ const OopslyApp = () => {
     createTestSuite(selectedShelfId, {
       title: testTitle.trim(),
       subjectIds: [selectedSubjectIdForTest],
+      selection: { mode: "RANDOM", shuffle: true, limit: 20 },
     })
       .then((res) => {
         if (res.isSuccess) {
@@ -530,7 +531,12 @@ const OopslyApp = () => {
                     <Text className="text-indigo-800 font-medium flex-1">{ts.title}</Text>
                     <TouchableOpacity
                       className="bg-indigo-600 rounded-lg px-3 py-1"
-                      onPress={() => router.push(`/take-test/${ts.id}`)}
+                      onPress={() =>
+                        router.push(
+                          `/take-test/${ts.id}?shelfId=${encodeURIComponent(shelf.id)}`,
+                        )
+                      }
+                      testID={`take-test-button-${ts.id}`}
                     >
                       <Text className="text-white text-sm font-semibold">Take test</Text>
                     </TouchableOpacity>

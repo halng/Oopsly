@@ -20,7 +20,9 @@ import "react-native-reanimated";
 import "@/global.css";
 import { useAuthStore, useSettingsStore } from "@/store";
 import { Logger } from "@/utils";
+import { getRefreshTokenSecure } from "@/utils/secureTokens";
 import { AuthService } from "@/services/AuthService";
+import { getProfile } from "@/services/ProfileService";
 import {
   View,
   ActivityIndicator,
@@ -92,14 +94,63 @@ export default function RootLayout() {
           }
         }
 
-        const currentAccessToken = useAuthStore.getState().accessToken;
-        const currentRefreshToken = useAuthStore.getState().refreshToken;
+        let currentAccessToken = useAuthStore.getState().accessToken;
+        let currentRefreshToken = useAuthStore.getState().refreshToken;
         const currentUserEmail = useAuthStore.getState().userEmail;
         const clearAuth = useAuthStore.getState().clearAuth;
         const setAuthTokens = useAuthStore.getState().setAuthTokens;
 
-        if (!currentAccessToken || !currentRefreshToken) {
-          logger.debug("No tokens found in storage");
+        if (!currentRefreshToken) {
+          const fromSecure = await getRefreshTokenSecure();
+          if (fromSecure) {
+            useAuthStore.setState({ refreshToken: fromSecure });
+            currentRefreshToken = fromSecure;
+          }
+        }
+
+        const syncThemeFromProfile = async () => {
+          try {
+            const profile = await getProfile();
+            if (profile.isSuccess && profile.data?.settings) {
+              useSettingsStore.getState().syncFromServer(profile.data.settings);
+            }
+          } catch {
+            /* ignore */
+          }
+        };
+
+        const refreshSession = async (): Promise<boolean> => {
+          try {
+            const response = await AuthService.RefreshToken(
+              currentRefreshToken!,
+              currentUserEmail,
+            );
+            if (response.isSuccess && response.data) {
+              const { access_token, refresh_token } = response.data;
+              setAuthTokens(access_token, refresh_token);
+              logger.info("Token refreshed successfully");
+              await syncThemeFromProfile();
+              return true;
+            }
+            logger.error("Token refresh failed:", response.message);
+            clearAuth();
+            return false;
+          } catch (refreshError) {
+            logger.error("Token refresh error:", refreshError);
+            clearAuth();
+            return false;
+          }
+        };
+
+        if (!currentRefreshToken || !currentUserEmail?.trim()) {
+          logger.debug("No refresh token or email in storage");
+          setIsReady(true);
+          return;
+        }
+
+        if (!currentAccessToken) {
+          logger.debug("Access token missing; refreshing with stored refresh token");
+          await refreshSession();
           setIsReady(true);
           return;
         }
@@ -107,35 +158,15 @@ export default function RootLayout() {
         logger.debug("Tokens found, validating...");
 
         try {
-          // Try to validate the current access token
           await AuthService.ValidateToken();
           logger.info("Access token is valid");
-          setIsReady(true);
+          await syncThemeFromProfile();
         } catch {
           logger.warn("Access token validation failed, attempting refresh...");
-
-          try {
-            // Try to refresh the token
-            const response = await AuthService.RefreshToken(
-              currentRefreshToken,
-              currentUserEmail,
-            );
-
-            if (response.isSuccess && response.data) {
-              const { access_token, refresh_token } = response.data;
-              setAuthTokens(access_token, refresh_token);
-              logger.info("Token refreshed successfully");
-            } else {
-              logger.error("Token refresh failed:", response.message);
-              clearAuth();
-            }
-          } catch (refreshError) {
-            logger.error("Token refresh error:", refreshError);
-            clearAuth();
-          }
-
-          setIsReady(true);
+          await refreshSession();
         }
+
+        setIsReady(true);
       } catch (error) {
         logger.error("Error checking auth status:", error);
         const clearAuth = useAuthStore.getState().clearAuth;

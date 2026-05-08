@@ -14,23 +14,17 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.service;
+package com.app.oopsly.api.viewmodel;
 
-import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.TestSuiteReq;
+import com.app.oopsly.api.entity.DifficultyLevel;
+import java.time.Instant;
 import java.util.UUID;
 
-public interface TestSuiteService {
-    ApiRes create(UUID shelveId, TestSuiteReq request);
-
-    ApiRes update(UUID shelveId, UUID testSuiteId, TestSuiteReq request);
-
-    ApiRes delete(UUID shelveId, UUID testSuiteId);
-
-    ApiRes getById(UUID shelveId, UUID testSuiteId);
-
-    ApiRes getAllByShelve(UUID shelveId);
-
-    /** Resolves flashcards from the preset (read-only; does not change SRS schedules). */
-    ApiRes run(UUID shelveId, UUID testSuiteId);
-}
+public record TestRunCardRes(
+        UUID id,
+        UUID subjectId,
+        String front,
+        String back,
+        DifficultyLevel difficultyLevel,
+        Instant nextPracticeTime,
+        Integer numberOfPractice) {}

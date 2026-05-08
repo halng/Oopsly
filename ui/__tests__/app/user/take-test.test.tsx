@@ -41,15 +41,21 @@ describe("TakeTestScreen", () => {
     jest.clearAllMocks();
   });
 
-  it("renders flashcard review screen when testSuiteId is provided", () => {
-    (useLocalSearchParams as jest.Mock).mockReturnValue({ testSuiteId: "suite-123" });
+  it("renders flashcard review when testSuiteId and shelfId are provided", () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({
+      testSuiteId: "suite-123",
+      shelfId: "shelf-456",
+    });
 
     render(<TakeTestScreen />);
 
-    expect(mockFlashcard).toHaveBeenCalledWith({ _testSuiteId: "suite-123" });
+    expect(mockFlashcard).toHaveBeenCalledWith({
+      _shelfId: "shelf-456",
+      _testSuiteId: "suite-123",
+    });
   });
 
-  it("returns null when testSuiteId is missing", () => {
+  it("returns null when ids are missing", () => {
     (useLocalSearchParams as jest.Mock).mockReturnValue({});
 
     const { toJSON } = render(<TakeTestScreen />);

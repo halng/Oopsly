@@ -18,12 +18,15 @@ package com.app.oopsly.api.repository;
 
 import com.app.oopsly.api.entity.CardEntity;
 import com.app.oopsly.api.entity.SubjectEntity;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -40,4 +43,14 @@ public interface CardRepository extends JpaRepository<CardEntity, UUID> {
             "SELECT COUNT(c) FROM cards c WHERE c.subject = ?1 AND c.nextPracticeTime <"
                     + " CURRENT_DATE AND c.deleted = false")
     long countOverdue(SubjectEntity subject);
+
+    @Query("SELECT c FROM cards c WHERE c.subject IN :subjects AND c.deleted = false")
+    List<CardEntity> findAllBySubjectInAndDeletedFalse(
+            @Param("subjects") List<SubjectEntity> subjects);
+
+    @Query(
+            "SELECT c FROM cards c WHERE c.subject IN :subjects AND c.deleted = false AND "
+                    + "c.nextPracticeTime <= :now")
+    List<CardEntity> findDueBySubjects(
+            @Param("subjects") List<SubjectEntity> subjects, @Param("now") Instant now);
 }

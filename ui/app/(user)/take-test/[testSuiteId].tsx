@@ -19,12 +19,18 @@ import { useLocalSearchParams } from "expo-router";
 import FlashcardReviewScreen from "@/screen/FlashCardReviewScreen";
 
 export default function TakeTestScreen() {
-  const params = useLocalSearchParams<{ testSuiteId: string }>();
-  const testSuiteId = params.testSuiteId as string;
+  const params = useLocalSearchParams<{
+    testSuiteId: string;
+    shelfId: string;
+  }>();
+  const testSuiteId = params.testSuiteId;
+  const shelfId = params.shelfId;
 
-  if (!testSuiteId) {
+  if (!testSuiteId || !shelfId) {
     return null;
   }
 
-  return <FlashcardReviewScreen _testSuiteId={testSuiteId} />;
+  return (
+    <FlashcardReviewScreen _shelfId={shelfId} _testSuiteId={testSuiteId} />
+  );
 }

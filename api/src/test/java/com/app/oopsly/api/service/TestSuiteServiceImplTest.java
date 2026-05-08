@@ -20,12 +20,16 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.app.oopsly.api.entity.CardEntity;
 import com.app.oopsly.api.entity.ShelfEntity;
+import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
+import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.ShelfRepository;
+import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.repository.TestSuiteRepository;
 import com.app.oopsly.api.service.impl.TestSuiteServiceImpl;
 import com.app.oopsly.api.viewmodel.ApiRes;
@@ -48,7 +52,11 @@ class TestSuiteServiceImplTest {
 
     @Mock private ShelfRepository shelfRepository;
 
+    @Mock private SubjectRepository subjectRepository;
+
     @Mock private UserService userService;
+
+    @Mock private CardRepository cardRepository;
 
     @InjectMocks private TestSuiteServiceImpl testSuiteService;
 
@@ -60,7 +68,7 @@ class TestSuiteServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        testSuiteReq = new TestSuiteReq("Chapter 1 Review", true, null);
+        testSuiteReq = new TestSuiteReq("Chapter 1 Review", true, null, null);
         currentUser = new User();
         currentUser.setEmail("test@example.com");
         shelveId = UUID.randomUUID();
@@ -226,7 +234,7 @@ class TestSuiteServiceImplTest {
 
     @Test
     void create_withNullIsActive_defaultsToTrue() {
-        TestSuiteReq reqWithNullIsActive = new TestSuiteReq("New Test Suite", null, null);
+        TestSuiteReq reqWithNullIsActive = new TestSuiteReq("New Test Suite", null, null, null);
         TestSuiteEntity savedTestSuite = new TestSuiteEntity();
         savedTestSuite.setId(testSuiteId);
         savedTestSuite.setTitle(reqWithNullIsActive.title());
@@ -247,7 +255,7 @@ class TestSuiteServiceImplTest {
     @Test
     void testCreateFallback() {
         UUID shelveId = UUID.randomUUID();
-        TestSuiteReq request = new TestSuiteReq("Test Suite", true, null);
+        TestSuiteReq request = new TestSuiteReq("Test Suite", true, null, null);
         RuntimeException exception = new RuntimeException("Database connection failed");
 
         RetryLaterException thrown =
@@ -265,7 +273,7 @@ class TestSuiteServiceImplTest {
     void testUpdateFallback() {
         UUID shelveId = UUID.randomUUID();
         UUID testSuiteId = UUID.randomUUID();
-        TestSuiteReq request = new TestSuiteReq("Updated Suite", true, null);
+        TestSuiteReq request = new TestSuiteReq("Updated Suite", true, null, null);
         RuntimeException exception = new RuntimeException("Database connection failed");
 
         RetryLaterException thrown =
@@ -324,6 +332,68 @@ class TestSuiteServiceImplTest {
                 assertThrows(
                         RetryLaterException.class,
                         () -> testSuiteService.getAllByShelveFallback(shelveId, exception));
+
+        assertEquals(
+                "Test suite service is currently unavailable. Please try again later.",
+                thrown.getMessage());
+        assertSame(exception, thrown.getCause());
+    }
+
+    @Test
+    void run_returnsEmpty_whenNoSubjectsLinked() {
+        TestSuiteEntity suite = new TestSuiteEntity();
+        suite.setId(testSuiteId);
+        suite.setSubjects(new ArrayList<>());
+
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
+                .thenReturn(Optional.of(suite));
+
+        ApiRes result = testSuiteService.run(shelveId, testSuiteId);
+
+        assertNotNull(result);
+        verify(cardRepository, never()).findAllBySubjectInAndDeletedFalse(any());
+    }
+
+    @Test
+    void run_loadsCards_forAllMode() {
+        UUID subjectId = UUID.randomUUID();
+        SubjectEntity subject = new SubjectEntity();
+        subject.setId(subjectId);
+
+        TestSuiteEntity suite = new TestSuiteEntity();
+        suite.setId(testSuiteId);
+        suite.setSubjects(List.of(subject));
+        suite.setSelection(null);
+
+        CardEntity card = CardEntity.builder().front("Q").back("A").numberOfPractice(0).build();
+        card.setId(UUID.randomUUID());
+        card.setSubject(subject);
+
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
+                .thenReturn(Optional.of(suite));
+        when(cardRepository.findAllBySubjectInAndDeletedFalse(List.of(subject)))
+                .thenReturn(List.of(card));
+
+        ApiRes result = testSuiteService.run(shelveId, testSuiteId);
+
+        assertNotNull(result);
+        verify(cardRepository, times(1)).findAllBySubjectInAndDeletedFalse(List.of(subject));
+    }
+
+    @Test
+    void testRunFallback() {
+        RuntimeException exception = new RuntimeException("Database connection failed");
+
+        RetryLaterException thrown =
+                assertThrows(
+                        RetryLaterException.class,
+                        () -> testSuiteService.runFallback(shelveId, testSuiteId, exception));
 
         assertEquals(
                 "Test suite service is currently unavailable. Please try again later.",

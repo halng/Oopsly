@@ -1,3 +1,4 @@
 allowBuilds:
+  cypress: true
   unrs-resolver: true
 nodeLinker: hoisted

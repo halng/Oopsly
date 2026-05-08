@@ -18,23 +18,23 @@ import {
   fetchCardsDataBySubjectAndShelf,
   updateDifficultyLevels,
 } from "@/services/CardService";
-import { getCardsForTestSuite } from "@/services/TestSuiteService";
-import { CardRes, ReviewedFlashcard } from "@/types/Card";
+import { runTestPreset } from "@/services/TestSuiteService";
+import { CardRes, ReviewedFlashcard, TestRunCardRes } from "@/types/Card";
 
 type FlashcardReviewProps =
-  | { _shelfId: string; _subjectId: string; _testSuiteId?: never }
-  | { _shelfId?: never; _subjectId?: never; _testSuiteId: string };
+  | { _shelfId: string; _subjectId: string; _testSuiteId?: undefined }
+  | { _shelfId: string; _testSuiteId: string; _subjectId?: undefined };
 
 const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
   const { _shelfId, _subjectId, _testSuiteId } = props;
-  const isTestSuiteMode = Boolean(_testSuiteId);
+  const isTestSuiteMode = Boolean(_testSuiteId && _shelfId);
   const startTime = Date.now();
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [reviewedCards, setReviewedCards] = useState<ReviewedFlashcard[]>([]);
 
-  const [cards, setCards] = useState<CardRes[]>([]);
+  const [cards, setCards] = useState<(CardRes & { subjectId?: string })[]>([]);
   const [totalCards, setTotalCards] = useState<number>(0);
   // Animation values
   const flipRotation = useSharedValue(0);
@@ -43,18 +43,19 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
   const buttonTranslateY = useSharedValue(20);
 
   const fetchCards = () => {
-    if (_testSuiteId) {
-      getCardsForTestSuite(_testSuiteId)
+    if (isTestSuiteMode && _shelfId && _testSuiteId) {
+      runTestPreset(_shelfId, _testSuiteId)
         .then((response) => {
           if (response.isSuccess && Array.isArray(response.data)) {
-            setCards(response.data);
-            setTotalCards(response.data.length);
+            const list = response.data as TestRunCardRes[];
+            setCards(list);
+            setTotalCards(list.length);
           } else {
-            console.error("Failed to fetch cards for test suite:", response.message);
+            console.error("Failed to run test preset:", response.message);
           }
         })
         .catch((error) => {
-          console.error("Error fetching cards for test suite:", error);
+          console.error("Error running test preset:", error);
         });
       return;
     }
@@ -79,7 +80,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
     fetchCards();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_shelfId, _subjectId, _testSuiteId]);
+  }, [_shelfId, _subjectId, _testSuiteId, isTestSuiteMode]);
 
   // Animated styles for card flip
   const frontAnimatedStyle = useAnimatedStyle(() => {
@@ -139,20 +140,18 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
 
   // Handle rating selection
   const handleRating = (rating: "again" | "hard" | "good" | "easy") => {
-    // Animate card out
+    if (!cards.length || !cards[currentIndex]) return;
+
     cardScale.value = withTiming(0.9, { duration: 150 });
     buttonOpacity.value = withTiming(0, { duration: 150 });
 
-    // Mark card as reviewed
-    setReviewedCards([
-      ...reviewedCards,
-      {
-        cardId: cards[currentIndex].id,
-        newLevel: rating.toUpperCase() as "HARD" | "GOOD" | "EASY" | "AGAIN",
-      },
-    ]);
+    const entry: ReviewedFlashcard = {
+      cardId: cards[currentIndex].id,
+      newLevel: rating.toUpperCase() as "HARD" | "GOOD" | "EASY" | "AGAIN",
+    };
+    const nextReviewed = [...reviewedCards, entry];
+    setReviewedCards(nextReviewed);
 
-    // Move to next card or finish
     setTimeout(() => {
       if (rating === "again") {
         setCurrentIndex(currentIndex);
@@ -161,43 +160,62 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
         cardScale.value = 1;
         buttonOpacity.value = 0;
         buttonTranslateY.value = 20;
-      } else {
-        if (currentIndex < totalCards - 1) {
-          setCurrentIndex(currentIndex + 1);
-          setIsFlipped(false);
-          flipRotation.value = 0;
-          cardScale.value = 1;
-          buttonOpacity.value = 0;
-          buttonTranslateY.value = 20;
-        } else {
-          if (isTestSuiteMode) {
+        return;
+      }
+      if (currentIndex < totalCards - 1) {
+        setCurrentIndex(currentIndex + 1);
+        setIsFlipped(false);
+        flipRotation.value = 0;
+        cardScale.value = 1;
+        buttonOpacity.value = 0;
+        buttonTranslateY.value = 20;
+        return;
+      }
+
+      if (isTestSuiteMode && _shelfId) {
+        const bySubject = new Map<string, ReviewedFlashcard[]>();
+        for (const r of nextReviewed) {
+          const sid = cards.find((c) => c.id === r.cardId)?.subjectId;
+          if (!sid) continue;
+          const arr = bySubject.get(sid) ?? [];
+          arr.push(r);
+          bySubject.set(sid, arr);
+        }
+        Promise.all(
+          Array.from(bySubject.entries()).map(([subjectId, batch]) =>
+            updateDifficultyLevels(_shelfId, subjectId, batch),
+          ),
+        )
+          .then(() => {
             const endTime = Date.now();
             const duration = endTime - startTime;
             router.replace(`/home?testComplete=1&duration=${duration}`);
-            return;
-          }
-          updateDifficultyLevels(_shelfId!, _subjectId!, reviewedCards)
-            .then((response) => {
-              if (response.isSuccess) {
-                // Session complete - navigate to results
-                const endTime = Date.now();
-                const duration = endTime - startTime;
-                router.push(
-                  `/${_shelfId}/complete/${_subjectId}?duration=${duration}`,
-                );
-                console.log("Updated difficulty levels successfully");
-              } else {
-                console.error(
-                  "Failed to update difficulty levels:",
-                  response.message,
-                );
-              }
-            })
-            .catch((error) => {
-              console.error("Error updating difficulty levels:", error);
-            });
-        }
+          })
+          .catch((error) => {
+            console.error("Error updating difficulty after test:", error);
+            router.replace("/home");
+          });
+        return;
       }
+
+      updateDifficultyLevels(_shelfId!, _subjectId!, nextReviewed)
+        .then((response) => {
+          if (response.isSuccess) {
+            const endTime = Date.now();
+            const duration = endTime - startTime;
+            router.push(
+              `/${_shelfId}/complete/${_subjectId}?duration=${duration}`,
+            );
+          } else {
+            console.error(
+              "Failed to update difficulty levels:",
+              response.message,
+            );
+          }
+        })
+        .catch((error) => {
+          console.error("Error updating difficulty levels:", error);
+        });
     }, 200);
   };
 
@@ -233,16 +251,25 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
             <Animated.View
               style={[
                 styles.progressFill,
-                { width: `${((currentIndex + 1) / totalCards) * 100}%` },
+                {
+                  width: `${
+                    (Math.min(currentIndex + 1, Math.max(totalCards, 1)) /
+                      Math.max(totalCards, 1)) *
+                    100
+                  }%`,
+                },
               ]}
             />
           </View>
           <View style={styles.progressTextContainer}>
             <Sparkles size={16} color="#FFF" strokeWidth={2} />
             <Text style={styles.progressText}>
-              {currentIndex + 1} of {totalCards}
+              {totalCards > 0 ? `${currentIndex + 1} of ${totalCards}` : "No cards"}
             </Text>
           </View>
+          <Text style={styles.sessionModeHint} testID="session-mode-label">
+            {isTestSuiteMode ? "Test from preset · ratings save to SRS" : "Study · SRS session"}
+          </Text>
         </View>
 
         {/* Header */}
@@ -280,7 +307,17 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
 
         {/* Card Container */}
         <View style={styles.cardContainer}>
-          {!isFlipped ? (
+          {totalCards === 0 ? (
+            <View style={styles.emptyState} testID="empty-cards-state">
+              <Text style={styles.emptyTitle}>Nothing to review</Text>
+              <Text style={styles.emptySubtitle}>
+                Try a different preset or add cards to your subject first.
+              </Text>
+              <Pressable style={styles.emptyBackBtn} onPress={() => router.back()}>
+                <Text style={styles.emptyBackBtnText}>Go back</Text>
+              </Pressable>
+            </View>
+          ) : !isFlipped ? (
             // Front of card (Question)
             <Animated.View style={[styles.card, frontAnimatedStyle]}>
               <Pressable style={styles.cardPressable} onPress={handleCardPress}>
@@ -325,7 +362,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
 
         {/* Footer Controls */}
         <View style={styles.footer}>
-          {!isFlipped ? (
+          {totalCards === 0 ? null : !isFlipped ? (
             <View style={styles.footerHintContainer}>
               <View style={styles.footerHintDot} />
               <Text style={styles.footerHint}>
@@ -435,6 +472,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#FFF",
     fontWeight: "600",
+  },
+  sessionModeHint: {
+    marginTop: 6,
+    textAlign: "center",
+    fontSize: 12,
+    color: "rgba(255,255,255,0.85)",
+    fontWeight: "500",
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontSize: 15,
+    color: "rgba(255,255,255,0.9)",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  emptyBackBtn: {
+    backgroundColor: "rgba(255,255,255,0.28)",
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+  },
+  emptyBackBtnText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: 16,
   },
   header: {
     flexDirection: "row",

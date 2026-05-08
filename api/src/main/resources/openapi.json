@@ -654,6 +654,72 @@
         }
       }
     },
+    "/shelves/{shelveId}/test-suites/{id}/run": {
+      "post": {
+        "tags": [
+          "Test Suite"
+        ],
+        "summary": "Run test preset",
+        "description": "Returns flashcards matching this suite's linked subjects and selection rules (read-only snapshot for a practice session)",
+        "operationId": "runTestPreset",
+        "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Test Suite ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cards resolved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Test suite or shelve not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Res"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/shelves/{shelveId}/subjects/{id}": {
       "get": {
         "tags": [
@@ -2389,18 +2455,108 @@
       },
       "TestSuiteReq": {
         "type": "object",
-        "description": "Test suite creation request",
+        "description": "Test suite preset: title, optional subject scope, and card selection rules",
         "properties": {
           "title": {
             "type": "string"
           },
           "isActive": {
             "type": "boolean"
+          },
+          "subjectIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "selection": {
+            "$ref": "#/components/schemas/TestSuiteSelectionPayload"
           }
         },
         "required": [
           "title"
         ]
+      },
+      "TestSuiteSelectionPayload": {
+        "type": "object",
+        "description": "How to draw cards when running a test preset",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "ALL",
+              "DUE_ONLY",
+              "RANDOM"
+            ],
+            "default": "ALL"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "shuffle": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "TestSuiteRes": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "subjectIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "selection": {
+            "$ref": "#/components/schemas/TestSuiteSelectionPayload"
+          }
+        }
+      },
+      "TestRunCardRes": {
+        "type": "object",
+        "description": "Card in a preset run response (includes subjectId for SRS update routes)",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subjectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "front": {
+            "type": "string"
+          },
+          "back": {
+            "type": "string"
+          },
+          "difficultyLevel": {
+            "type": "string"
+          },
+          "nextPracticeTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "numberOfPractice": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
       },
       "SubjectReq": {
         "type": "object",

@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -34,4 +35,10 @@ public interface TestSuiteRepository extends JpaRepository<TestSuiteEntity, UUID
 
     @Query("SELECT t FROM TestSuiteEntity t WHERE t.shelf = ?1 AND t.deleted = false")
     List<TestSuiteEntity> findAllByShelve(ShelfEntity shelve);
+
+    @Query(
+            "SELECT DISTINCT t FROM TestSuiteEntity t LEFT JOIN FETCH t.subjects WHERE t.id = :id"
+                    + " AND t.shelf = :shelf AND t.deleted = false")
+    Optional<TestSuiteEntity> findByIdAndShelveWithSubjects(
+            @Param("id") UUID id, @Param("shelf") ShelfEntity shelf);
 }

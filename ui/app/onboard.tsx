@@ -47,12 +47,14 @@ export default function EmailInputScreen() {
     AuthService.CreateOTP(email)
       .then((res) => {
         if (res.isSuccess) {
-          logger.info('OTP sent successfully');
+          logger.info("OTP sent successfully");
           authState.setUserEmail(email);
-          setIsLoading(false);  
-          router.push('/verification');
+          setIsLoading(false);
+          router.push("/verification");
+          return;
         }
-        
+        setError(res.message || "Could not send code. Try again.");
+        setIsLoading(false);
       })
       .catch((error) => {
         setError('Failed to send OTP. Please try again.');

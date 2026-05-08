@@ -16,9 +16,14 @@
 
 package com.app.oopsly.api.viewmodel;
 
+import com.app.oopsly.api.entity.TestSuiteSelectionPayload;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import java.util.UUID;
 import lombok.NonNull;
 
 public record TestSuiteReq(
-        @NonNull @NotNull String title, Boolean isActive, List<java.util.UUID> subjectIds) {}
+        @NonNull @NotNull String title,
+        Boolean isActive,
+        List<UUID> subjectIds,
+        TestSuiteSelectionPayload selection) {}

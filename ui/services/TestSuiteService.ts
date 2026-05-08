@@ -15,29 +15,39 @@
  */
 
 import { ApiResponse } from "@/types/ApiRes";
-import { CardRes } from "@/types/Card";
+import { TestRunCardRes } from "@/types/Card";
 import { apiClient } from ".";
 
 const TEST_SUITE_ENDPOINTS = {
   BY_SHELF: (shelfId: string) => `/shelves/${shelfId}/test-suites`,
   BY_ID: (shelfId: string, id: string) => `/shelves/${shelfId}/test-suites/${id}`,
-  CARDS: (testSuiteId: string) => `/test-suites/${testSuiteId}/cards`,
+  RUN: (shelfId: string, id: string) =>
+    `/shelves/${shelfId}/test-suites/${id}/run`,
 };
+
+export interface TestSuiteSelectionPayload {
+  mode?: "ALL" | "DUE_ONLY" | "RANDOM";
+  limit?: number;
+  shuffle?: boolean;
+}
 
 export interface TestSuiteRes {
   id: string;
   title: string;
   isActive: boolean;
+  subjectIds?: string[];
+  selection?: TestSuiteSelectionPayload | null;
 }
 
 export interface TestSuiteCreateReq {
   title: string;
   isActive?: boolean;
   subjectIds?: string[];
+  selection?: TestSuiteSelectionPayload;
 }
 
 const fetchTestSuitesByShelf = async (
-  shelfId: string
+  shelfId: string,
 ): Promise<ApiResponse<TestSuiteRes[]>> => {
   const response = await apiClient.get(TEST_SUITE_ENDPOINTS.BY_SHELF(shelfId));
   return response.data;
@@ -45,34 +55,33 @@ const fetchTestSuitesByShelf = async (
 
 const createTestSuite = async (
   shelfId: string,
-  data: TestSuiteCreateReq
+  data: TestSuiteCreateReq,
 ): Promise<ApiResponse<TestSuiteRes>> => {
-  const response = await apiClient.post(
-    TEST_SUITE_ENDPOINTS.BY_SHELF(shelfId),
-    {
-      title: data.title,
-      isActive: data.isActive ?? true,
-      subjectIds: data.subjectIds ?? [],
-    }
-  );
+  const response = await apiClient.post(TEST_SUITE_ENDPOINTS.BY_SHELF(shelfId), {
+    title: data.title,
+    isActive: data.isActive ?? true,
+    subjectIds: data.subjectIds ?? [],
+    selection: data.selection ?? null,
+  });
   return response.data;
 };
 
-const getCardsForTestSuite = async (
-  testSuiteId: string
-): Promise<ApiResponse<CardRes[]>> => {
-  const response = await apiClient.get(
-    TEST_SUITE_ENDPOINTS.CARDS(testSuiteId)
+const runTestPreset = async (
+  shelfId: string,
+  testSuiteId: string,
+): Promise<ApiResponse<TestRunCardRes[]>> => {
+  const response = await apiClient.post(
+    TEST_SUITE_ENDPOINTS.RUN(shelfId, testSuiteId),
   );
   return response.data;
 };
 
 const deleteTestSuite = async (
   shelfId: string,
-  testSuiteId: string
+  testSuiteId: string,
 ): Promise<ApiResponse<null>> => {
   const response = await apiClient.delete(
-    TEST_SUITE_ENDPOINTS.BY_ID(shelfId, testSuiteId)
+    TEST_SUITE_ENDPOINTS.BY_ID(shelfId, testSuiteId),
   );
   return response.data;
 };
@@ -80,6 +89,6 @@ const deleteTestSuite = async (
 export {
   fetchTestSuitesByShelf,
   createTestSuite,
-  getCardsForTestSuite,
+  runTestPreset,
   deleteTestSuite,
 };

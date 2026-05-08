@@ -16,6 +16,7 @@
 
 package com.app.oopsly.api.service.impl;
 
+import com.app.oopsly.api.entity.CardEntity;
 import com.app.oopsly.api.entity.ShelfEntity;
 import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.TestSuiteEntity;
@@ -23,17 +24,27 @@ import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.UnauthenticatedException;
+import com.app.oopsly.api.entity.TestSuiteSelectionPayload;
+import com.app.oopsly.api.entity.TestSuiteSelectionPayload.Mode;
+import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.ShelfRepository;
 import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.repository.TestSuiteRepository;
 import com.app.oopsly.api.service.TestSuiteService;
 import com.app.oopsly.api.service.UserService;
 import com.app.oopsly.api.viewmodel.ApiRes;
+import com.app.oopsly.api.viewmodel.TestRunCardRes;
 import com.app.oopsly.api.viewmodel.TestSuiteReq;
 import com.app.oopsly.api.viewmodel.TestSuiteRes;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import jakarta.transaction.Transactional;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +61,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     private final TestSuiteRepository testSuiteRepository;
     private final ShelfRepository shelfRepository;
     private final SubjectRepository subjectRepository;
+    private final CardRepository cardRepository;
     private final UserService userService;
 
     @Override
@@ -61,21 +73,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
 
         TestSuiteEntity testSuite = this.toEntity(request, null);
         testSuite.setShelf(shelve);
-        if (request.subjectIds() != null && !request.subjectIds().isEmpty()) {
-            List<SubjectEntity> subjects =
-                    request.subjectIds().stream()
-                            .map(
-                                    subjectId ->
-                                            subjectRepository
-                                                    .findByIdAndShelve(subjectId, shelve)
-                                                    .orElseThrow(
-                                                            () ->
-                                                                    new NotFoundException(
-                                                                            "Subject not found: "
-                                                                                    + subjectId)))
-                            .toList();
-            testSuite.setSubjects(subjects);
-        }
+        applySubjectLinks(shelve, request, testSuite);
         TestSuiteEntity savedEntity = testSuiteRepository.save(testSuite);
 
         return ApiRes.created("Test suite created successfully", this.toViewModel(savedEntity));
@@ -100,6 +98,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                                                 "Test suite not found with id: " + testSuiteId));
 
         TestSuiteEntity updatedTestSuite = this.toEntity(request, existingTestSuite);
+        applySubjectLinks(shelve, request, updatedTestSuite);
         testSuiteRepository.save(updatedTestSuite);
 
         return ApiRes.success(
@@ -131,6 +130,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
+    @Transactional
     @Cacheable(value = "testSuites", key = "#deckId + ':' + #testSuiteId")
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID deckId, UUID testSuiteId) {
@@ -148,6 +148,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
+    @Transactional
     @Cacheable(value = "testSuites", key = "#shelveId + ':all'")
     @CircuitBreaker(
             name = "testSuiteServiceCircuitBreaker",
@@ -161,11 +162,119 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         return ApiRes.success("Test suites fetched successfully", responses);
     }
 
+    @Override
+    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "runFallback")
+    @Transactional
+    public ApiRes run(UUID shelveId, UUID testSuiteId) {
+        log.info("Running test preset {} under shelve {}", testSuiteId, shelveId);
+        ShelfEntity shelve = findShelveByIdAndUser(shelveId);
+        TestSuiteEntity suite =
+                testSuiteRepository
+                        .findByIdAndShelveWithSubjects(testSuiteId, shelve)
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                "Test suite not found with id: " + testSuiteId));
+
+        List<SubjectEntity> subjects = suite.getSubjects();
+        if (subjects == null || subjects.isEmpty()) {
+            return ApiRes.success(
+                    "No subjects linked to this preset; add subjectIds when creating or updating.",
+                    Collections.emptyList());
+        }
+
+        TestSuiteSelectionPayload effective = resolveSelection(suite);
+        List<CardEntity> pool =
+                switch (effective.getMode()) {
+                    case ALL -> cardRepository.findAllBySubjectInAndDeletedFalse(subjects);
+                    case DUE_ONLY -> cardRepository.findDueBySubjects(subjects, Instant.now());
+                    case RANDOM -> cardRepository.findAllBySubjectInAndDeletedFalse(subjects);
+                };
+
+        if (pool.isEmpty()) {
+            return ApiRes.success("No cards match this preset.", Collections.emptyList());
+        }
+
+        ArrayList<CardEntity> mutable = new ArrayList<>(pool);
+        if (Boolean.TRUE.equals(effective.getShuffle()) || effective.getMode() == Mode.RANDOM) {
+            Collections.shuffle(mutable, new Random());
+        }
+
+        int cap = computeCap(effective, mutable.size());
+        if (mutable.size() > cap) {
+            mutable = new ArrayList<>(mutable.subList(0, cap));
+        }
+
+        List<TestRunCardRes> dto =
+                mutable.stream()
+                        .map(
+                                c ->
+                                        new TestRunCardRes(
+                                                c.getId(),
+                                                c.getSubject().getId(),
+                                                c.getFront(),
+                                                c.getBack(),
+                                                c.getDifficultyLevel(),
+                                                c.getNextPracticeTime(),
+                                                c.getNumberOfPractice()))
+                        .collect(Collectors.toList());
+
+        return ApiRes.success("Cards resolved for preset run", dto);
+    }
+
+    private static int computeCap(TestSuiteSelectionPayload effective, int poolSize) {
+        if (effective.getMode() == Mode.RANDOM) {
+            int lim =
+                    effective.getLimit() != null
+                            ? effective.getLimit()
+                            : TestSuiteSelectionPayload.RANDOM_DEFAULT_LIMIT;
+            return Math.min(poolSize, Math.max(1, lim));
+        }
+        if (effective.getLimit() != null) {
+            return Math.min(poolSize, Math.max(1, effective.getLimit()));
+        }
+        return Math.min(poolSize, TestSuiteSelectionPayload.DEFAULT_MAX_WITHOUT_EXPLICIT_LIMIT);
+    }
+
+    private static TestSuiteSelectionPayload resolveSelection(TestSuiteEntity suite) {
+        TestSuiteSelectionPayload s = suite.getSelection();
+        if (s == null) {
+            return new TestSuiteSelectionPayload(Mode.ALL, null, Boolean.FALSE);
+        }
+        Mode mode = s.getMode() != null ? s.getMode() : Mode.ALL;
+        Boolean shuffle = s.getShuffle() != null ? s.getShuffle() : Boolean.FALSE;
+        return new TestSuiteSelectionPayload(mode, s.getLimit(), shuffle);
+    }
+
+    void applySubjectLinks(ShelfEntity shelve, TestSuiteReq request, TestSuiteEntity entity) {
+        if (request.subjectIds() == null) {
+            return;
+        }
+        if (request.subjectIds().isEmpty()) {
+            entity.setSubjects(new ArrayList<>());
+            return;
+        }
+        List<SubjectEntity> subjects =
+                request.subjectIds().stream()
+                        .map(
+                                subjectId ->
+                                        subjectRepository
+                                                .findByIdAndShelve(subjectId, shelve)
+                                                .orElseThrow(
+                                                        () ->
+                                                                new NotFoundException(
+                                                                        "Subject not found: "
+                                                                                + subjectId)))
+                        .collect(Collectors.toList());
+        entity.setSubjects(subjects);
+    }
+
     TestSuiteEntity toEntity(@NonNull TestSuiteReq from, TestSuiteEntity to) {
         if (to == null) {
             return TestSuiteEntity.builder()
                     .title(from.title())
                     .isActive(from.isActive() != null ? from.isActive() : true)
+                    .selection(from.selection())
                     .build();
         }
 
@@ -173,11 +282,19 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         if (from.isActive() != null) {
             to.setIsActive(from.isActive());
         }
+        if (from.selection() != null) {
+            to.setSelection(from.selection());
+        }
         return to;
     }
 
     TestSuiteRes toViewModel(TestSuiteEntity from) {
-        return new TestSuiteRes(from.getId(), from.getTitle(), from.getIsActive());
+        List<UUID> subjectIds =
+                from.getSubjects() == null
+                        ? List.of()
+                        : from.getSubjects().stream().map(SubjectEntity::getId).toList();
+        return new TestSuiteRes(
+                from.getId(), from.getTitle(), from.getIsActive(), subjectIds, from.getSelection());
     }
 
     private ShelfEntity findShelveByIdAndUser(UUID deckId) {
@@ -210,6 +327,11 @@ public class TestSuiteServiceImpl implements TestSuiteService {
 
     public ApiRes getAllByShelveFallback(UUID shelveId, Throwable t) {
         log.error("Test suite service unavailable during getAllByShelve: {}", t.getMessage());
+        throw unwrapTestSuiteException(t);
+    }
+
+    public ApiRes runFallback(UUID shelveId, UUID testSuiteId, Throwable t) {
+        log.error("Test suite service unavailable during run: {}", t.getMessage());
         throw unwrapTestSuiteException(t);
     }
 
