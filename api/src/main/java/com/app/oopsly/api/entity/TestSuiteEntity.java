@@ -16,7 +16,6 @@
 
 package com.app.oopsly.api.entity;
 
-import com.app.oopsly.api.entity.TestSuiteSelectionPayload;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
