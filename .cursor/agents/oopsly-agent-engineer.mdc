@@ -10,7 +10,19 @@ specialties:
  - Build, test and deployment
 skills:
     preferred:
-        - 
+        - Java 21+
+        - Spring Boot 3
+        - React-Native
+        - Expo
+        - Typescript
+        - Gradle
+        - pnpm
+        - Cypress
+        - Jest
+        - JUnit
+        - Docker
+        - Structured logging
+        - Metrics
     can_use: all
 triggers:
     keywords:

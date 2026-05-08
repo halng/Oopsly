@@ -225,25 +225,6 @@ api/
 └── Dockerfile                       # Docker configuration
 ```
 
-### Testing Structure
-
-```text
-test/
-├── integration/                  # Integration tests
-│   ├── test_auth.py              # Authentication tests
-│   ├── test_cards.py             # Card management tests
-│   ├── test_test_suites.py       # Test suite tests
-│   └── ...
-├── e2e/                          # End-to-end tests
-│   ├── test_user_journey.py      # Full user flows
-│   └── ...
-├── config/                       # Test configuration
-├── fixtures/                     # Test data
-└── utils/                        # Test utilities
-```
-
----
-
 ## Data Models
 
 ### Entity Relationship Diagram
@@ -783,7 +764,3 @@ Question {
    - Data warehouse
    - Business intelligence
    - Machine learning insights
-
----
-
-**Last Updated:** 2026-01-31
