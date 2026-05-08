@@ -15,12 +15,21 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
 import { AuthService } from '@/services/AuthService';
 import { useAuthStore } from '@/store';
 import { Logger } from '@/utils';
+import ScreenContainer from "@/components/common/ScreenContainer";
+import ScreenHeader from "@/components/common/ScreenHeader";
+import AppButton from "@/components/common/AppButton";
+import FeedbackMessage from "@/components/common/FeedbackMessage";
 
 export default function EmailInputScreen() {
   const logger = Logger.extend('EmailInputScreen');
@@ -67,21 +76,18 @@ export default function EmailInputScreen() {
   const isEmailValid = isValidEmail(email);
 
   return (
-    <View className="flex-1 bg-white" testID="email-input-screen">
-      {/* Header */}
-      <View className="px-4 pt-12 pb-4" testID="header-container">
-        <TouchableOpacity
-          onPress={() => router.push("/")}
-          className="w-10 h-10 items-center justify-center"
-          accessibilityLabel="Go back"
-          testID="back-button"
-        >
-          <ArrowLeft size={24} color="#1F2937" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Content */}
-      <View className="flex-1 px-4" testID="content-container">
+    <ScreenContainer testID="email-input-screen">
+      <ScreenHeader
+        title="Email verification"
+        subtitle="Secure sign in with one-time code"
+        onBack={() => router.push("/")}
+        testID="header-container"
+      />
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+      <View className="flex-1 pt-6" testID="content-container">
         <Text className="text-3xl font-bold text-gray-900 mb-2" testID="title-text">
           What's your email?
         </Text>
@@ -107,30 +113,23 @@ export default function EmailInputScreen() {
             accessibilityHint="Enter your email address"
             testID="email-input"
           />
-          {error && <Text className="text-red-500 mt-2" testID="error-message">{error}</Text>}
+          {error ? (
+            <FeedbackMessage message={error} tone="error" testID="error-message" />
+          ) : null}
         </View>
       </View>
 
-      {/* Bottom Button */}
       <View className="px-4 pb-8" testID="button-container">
-        <TouchableOpacity
+        <AppButton
+          label="Continue"
           onPress={handleContinue}
-          disabled={!isEmailValid || isLoading}
-          className={`w-full h-14 rounded-xl justify-center items-center bg-indigo-600 
-            ${(!isEmailValid || isLoading) ? 'opacity-50' : 'opacity-100'}`}
+          disabled={!isEmailValid}
+          loading={isLoading}
           accessibilityLabel="Continue button"
-          accessibilityHint="Proceed to verification"
           testID="continue-button"
-        >
-          {isLoading ? (
-            <ActivityIndicator color="white" testID="loading-indicator" />
-          ) : (
-            <Text className="text-white text-base font-semibold" testID="continue-button-text">
-              Continue
-            </Text>
-          )}
-        </TouchableOpacity>
+        />
       </View>
-    </View>
+      </KeyboardAvoidingView>
+    </ScreenContainer>
   );
 }

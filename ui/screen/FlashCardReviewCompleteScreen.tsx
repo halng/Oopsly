@@ -1,4 +1,4 @@
-import React, { use, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, SafeAreaView, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Trophy, Target, Clock, TrendingUp, Star, Zap, Award, Heart } from 'lucide-react-native';
@@ -205,6 +205,7 @@ export default function FlashCardReviewCompleteScreen({ _shelfId, _subjectId }: 
             pressed && styles.primaryButtonPressed
           ]}
           onPress={handleBackToDeck}
+          testID="complete-back-to-subject-button"
         >
           <Text style={styles.primaryButtonText}>Back to Subject</Text>
         </Pressable>
@@ -215,6 +216,7 @@ export default function FlashCardReviewCompleteScreen({ _shelfId, _subjectId }: 
             pressed && styles.secondaryButtonPressed
           ]}
           onPress={handleReviewHardCards}
+          testID="complete-review-again-button"
         >
           <Text style={styles.secondaryButtonText}>Review Again</Text>
         </Pressable>

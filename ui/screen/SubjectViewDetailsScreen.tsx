@@ -466,11 +466,20 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
         visible={showAddCardModal}
         transparent={true}
         animationType="slide"
+        presentationStyle="overFullScreen"
         onRequestClose={() => setShowAddCardModal(false)}
         testID="add-edit-card-modal"
       >
-        <View className="flex-1 bg-black/50 justify-end" testID="modal-backdrop">
-          <View className="bg-white rounded-t-2xl p-6" testID="modal-content">
+        <Pressable
+          className="flex-1 bg-black/50 justify-end"
+          onPress={() => setShowAddCardModal(false)}
+          testID="modal-backdrop"
+        >
+          <Pressable
+            className="mt-auto bg-white rounded-t-2xl p-6 pb-8"
+            onPress={(e) => e.stopPropagation()}
+            testID="modal-content"
+          >
             <View className="flex-row justify-between items-center mb-4" testID="modal-header">
               <Text className="text-xl font-bold text-gray-800" testID="modal-title">
                 {editingCardId ? "Edit Card" : "Add New Card"}
@@ -541,8 +550,8 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
                 {editingCardId ? "Update Card" : "Add Card"}
               </Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* Settings Modal */}
@@ -550,11 +559,20 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
         visible={showSettingsModal}
         transparent={true}
         animationType="slide"
+        presentationStyle="overFullScreen"
         onRequestClose={() => setShowSettingsModal(false)}
         testID="settings-modal"
       >
-        <View className="flex-1 bg-black/50 justify-end" testID="settings-modal-backdrop">
-          <View className="bg-white rounded-t-2xl p-6" testID="settings-modal-content">
+        <Pressable
+          className="flex-1 bg-black/50 justify-end"
+          onPress={() => setShowSettingsModal(false)}
+          testID="settings-modal-backdrop"
+        >
+          <Pressable
+            className="mt-auto bg-white rounded-t-2xl p-6 pb-8"
+            onPress={(e) => e.stopPropagation()}
+            testID="settings-modal-content"
+          >
             <View className="flex-row justify-between items-center mb-4" testID="settings-modal-header">
               <Text className="text-xl font-bold text-gray-800" testID="settings-modal-title">
                 Study Settings
@@ -644,8 +662,8 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
             >
               <Text className="text-white font-bold" testID="save-settings-button-text">Save Settings</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* Delete Subject Confirmation Modal */}

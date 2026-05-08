@@ -82,6 +82,8 @@ export default function WelcomeScreen() {
             onPress={handleSkip}
             className="py-2 px-4"
             testID="skip-button"
+            accessibilityRole="button"
+            accessibilityLabel="Skip onboarding"
           >
             <Text className="text-gray-500 text-base" testID="skip-button-text">Skip</Text>
           </TouchableOpacity>
@@ -106,11 +108,11 @@ export default function WelcomeScreen() {
         </View>
 
         {/* Content Section */}
-        <View testID='content-view' className="flex-1 items-center justify-center mt-8 gap-4">
+        <View testID='content-view' className="flex-1 items-center justify-center mt-6 gap-4">
           <Text testID='content-view-title' className="text-2xl font-bold text-gray-900 text-center px-4">
             {currentSlide.title}
           </Text>
-          <Text testID='content-view-subtitle' className="text-base text-gray-600 text-center px-4 max-w-[300px]">
+          <Text testID='content-view-subtitle' className="text-base text-gray-600 text-center px-4 max-w-[320px]">
             {currentSlide.subtitle}
           </Text>
         </View>
@@ -138,6 +140,9 @@ export default function WelcomeScreen() {
             onPress={handleBack}
             className={`p-4 ${currentIndex === 0 ? 'opacity-0' : 'bg-[#5B5BFD] rounded-full'}`}
             disabled={currentIndex === 0}
+            accessibilityRole="button"
+            accessibilityLabel="Previous slide"
+            accessibilityState={{ disabled: currentIndex === 0 }}
             style={{
               shadowColor: '#5B5BFD',
               shadowOffset: { width: 0, height: 4 },
@@ -157,6 +162,8 @@ export default function WelcomeScreen() {
             testID='next-button'
             onPress={handleNext}
             className="bg-[#5B5BFD] rounded-full p-4"
+            accessibilityRole="button"
+            accessibilityLabel={isLastSlide ? "Get started" : "Next slide"}
             style={{
               shadowColor: '#5B5BFD',
               shadowOffset: { width: 0, height: 4 },

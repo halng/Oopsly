@@ -33,6 +33,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [reviewedCards, setReviewedCards] = useState<ReviewedFlashcard[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [cards, setCards] = useState<(CardRes & { subjectId?: string })[]>([]);
   const [totalCards, setTotalCards] = useState<number>(0);
@@ -43,6 +44,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
   const buttonTranslateY = useSharedValue(20);
 
   const fetchCards = () => {
+    setIsLoading(true);
     if (isTestSuiteMode && _shelfId && _testSuiteId) {
       runTestPreset(_shelfId, _testSuiteId)
         .then((response) => {
@@ -56,7 +58,8 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
         })
         .catch((error) => {
           console.error("Error running test preset:", error);
-        });
+        })
+        .finally(() => setIsLoading(false));
       return;
     }
     if (_shelfId && _subjectId) {
@@ -72,8 +75,11 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
         })
         .catch((error) => {
           console.error("Error fetching cards:", error);
-        });
+        })
+        .finally(() => setIsLoading(false));
+      return;
     }
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -278,6 +284,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
             style={styles.iconButton}
             onPress={() => router.back()}
             hitSlop={8}
+            testID="review-close-button"
           >
             <View style={styles.iconButtonInner}>
               <X size={22} color="#FFF" strokeWidth={2.5} />
@@ -289,6 +296,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
             onPress={handleReset}
             disabled={currentIndex === 0}
             hitSlop={8}
+            testID="review-reset-button"
           >
             <View
               style={[
@@ -307,13 +315,22 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
 
         {/* Card Container */}
         <View style={styles.cardContainer}>
-          {totalCards === 0 ? (
+          {isLoading ? (
+            <View style={styles.emptyState} testID="cards-loading-state">
+              <Text style={styles.emptyTitle}>Loading cards...</Text>
+              <Text style={styles.emptySubtitle}>Preparing your session.</Text>
+            </View>
+          ) : totalCards === 0 ? (
             <View style={styles.emptyState} testID="empty-cards-state">
               <Text style={styles.emptyTitle}>Nothing to review</Text>
               <Text style={styles.emptySubtitle}>
                 Try a different preset or add cards to your subject first.
               </Text>
-              <Pressable style={styles.emptyBackBtn} onPress={() => router.back()}>
+              <Pressable
+                style={styles.emptyBackBtn}
+                onPress={() => router.back()}
+                testID="empty-go-back-button"
+              >
                 <Text style={styles.emptyBackBtnText}>Go back</Text>
               </Pressable>
             </View>
@@ -377,6 +394,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
                   pressed && styles.ratingButtonPressed,
                 ]}
                 onPress={() => handleRating("again")}
+                testID="rating-again-button"
               >
                 <LinearGradient
                   colors={["#EF4444", "#DC2626"]}
@@ -392,6 +410,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
                   pressed && styles.ratingButtonPressed,
                 ]}
                 onPress={() => handleRating("hard")}
+                testID="rating-hard-button"
               >
                 <LinearGradient
                   colors={["#F97316", "#EA580C"]}
@@ -407,6 +426,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
                   pressed && styles.ratingButtonPressed,
                 ]}
                 onPress={() => handleRating("good")}
+                testID="rating-good-button"
               >
                 <LinearGradient
                   colors={["#3B82F6", "#2563EB"]}
@@ -422,6 +442,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
                   pressed && styles.ratingButtonPressed,
                 ]}
                 onPress={() => handleRating("easy")}
+                testID="rating-easy-button"
               >
                 <LinearGradient
                   colors={["#10B981", "#059669"]}

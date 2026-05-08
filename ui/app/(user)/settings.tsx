@@ -14,13 +14,15 @@
  *    limitations under the License.
  */
 
-import React, { useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import React from "react";
+import { View, Text, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronLeft, Palette } from "lucide-react-native";
+import { Palette } from "lucide-react-native";
 import { useSettingsStore, ThemeMode } from "@/store/SettingsStore";
 import { getProfile, updateSettings } from "@/services/ProfileService";
 import { Logger } from "@/utils";
+import ScreenContainer from "@/components/common/ScreenContainer";
+import ScreenHeader from "@/components/common/ScreenHeader";
 
 const logger = Logger.extend("SettingsScreen");
 
@@ -60,23 +62,14 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <View className="bg-white pt-12 pb-4 px-4 shadow-sm">
-        <View className="flex-row items-center">
-          <TouchableOpacity
-            className="flex-row items-center"
-            onPress={() => router.back()}
-            testID="back-button"
-          >
-            <ChevronLeft size={24} color="#4F46E5" />
-            <Text className="text-indigo-600 font-medium ml-1">Back</Text>
-          </TouchableOpacity>
-          <Text className="text-xl font-bold text-gray-800 ml-4">Settings</Text>
-        </View>
-        <Text className="text-gray-500 mt-1">Theme and preferences</Text>
-      </View>
-
-      <ScrollView className="flex-1 px-4 py-6">
+    <ScreenContainer scrollable testID="settings-screen">
+      <ScreenHeader
+        title="Settings"
+        subtitle="Theme and preferences"
+        onBack={() => router.back()}
+        testID="settings-header"
+      />
+      <View className="py-6">
         <View className="mb-6">
           <Text className="text-lg font-semibold text-gray-700 mb-3">
             Appearance
@@ -93,6 +86,7 @@ export default function SettingsScreen() {
                   opt.id !== "system" ? "border-b border-gray-100" : ""
                 } ${theme === opt.id ? "bg-indigo-50" : ""}`}
                 onPress={() => handleThemeChange(opt.id)}
+                testID={`theme-option-${opt.id}`}
               >
                 <Text
                   className={
@@ -110,7 +104,7 @@ export default function SettingsScreen() {
             ))}
           </View>
         </View>
-      </ScrollView>
-    </View>
+      </View>
+    </ScreenContainer>
   );
 }

@@ -49,6 +49,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AppButton from "@/components/common/AppButton";
+import FeedbackMessage from "@/components/common/FeedbackMessage";
 
 const availableIcons = [
   { name: "Code", component: Code, color: "#4F46E5" },
@@ -107,6 +109,8 @@ const OopslyApp = () => {
   const [deleteTestSuiteModalVisible, setDeleteTestSuiteModalVisible] = useState(false);
   const [testSuiteToDelete, setTestSuiteToDelete] = useState<{ shelfId: string; testSuiteId: string } | null>(null);
   const [testSuiteDeleteConfirmText, setTestSuiteDeleteConfirmText] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const fetchShelvesData = () => {
     fetchShelves({
@@ -150,6 +154,8 @@ const OopslyApp = () => {
       return;
     }
 
+    setActionBusy(true);
+    setActionError(null);
     createShelf({
       icon: selectedIcon.name,
       name: shelfName,
@@ -161,11 +167,14 @@ const OopslyApp = () => {
           fetchShelvesData();
         } else {
           logger.error("Failed to create shelf:", response);
+          setActionError(response.message || "Could not create shelf. Try again.");
         }
       })
       .catch((error) => {
         logger.error("Error creating shelf:", error);
-      });
+        setActionError("Could not create shelf. Try again.");
+      })
+      .finally(() => setActionBusy(false));
 
     // Reset form and close modal
     setShelfName("");
@@ -214,6 +223,8 @@ const OopslyApp = () => {
       return;
     }
 
+    setActionBusy(true);
+    setActionError(null);
     if (selectedContentType === "subject" && selectedShelfId) {
       createSubject(selectedShelfId, {
         name: contentName,
@@ -224,11 +235,15 @@ const OopslyApp = () => {
             logger.debug("Subject created successfully:", response);
           fetchShelvesData();
           }
-          
+          if (!response.isSuccess) {
+            setActionError(response.message || "Could not create content. Try again.");
+          }
         })
         .catch((error) => {
           logger.error("Error creating subject:", error);
-        });
+          setActionError("Could not create content. Try again.");
+        })
+        .finally(() => setActionBusy(false));
     }
     // Reset form and close modal
     setContentName("");
@@ -241,6 +256,8 @@ const OopslyApp = () => {
 
   const handleDeleteShelf = () => {
     if (selectedShelfId && selectedContentType === "delete") {
+      setActionBusy(true);
+      setActionError(null);
       deleteShelf(selectedShelfId)
         .then((response) => {
           if (response.isSuccess) {
@@ -248,11 +265,14 @@ const OopslyApp = () => {
             fetchShelvesData();
           } else {
             logger.error("Failed to delete shelf:", response.message);
+            setActionError(response.message || "Could not delete shelf. Try again.");
           }
         })
         .catch((error) => {
           logger.error("Error deleting shelf:", error);
-        });
+          setActionError("Could not delete shelf. Try again.");
+        })
+        .finally(() => setActionBusy(false));
 
       setSelectedShelfId(null);
       setSelectedContentType(null);
@@ -262,6 +282,8 @@ const OopslyApp = () => {
   };
 
   const handleUpdateShelf = () => {
+    setActionBusy(true);
+    setActionError(null);
     if (!selectedShelfId) return;
     if (editShelfName.trim() === "") {
       alert("Please enter a shelf name");
@@ -281,11 +303,14 @@ const OopslyApp = () => {
           setSelectedShelfId(null);
         } else {
           logger.error("Failed to update shelf:", response.message);
+          setActionError(response.message || "Could not update shelf. Try again.");
         }
       })
       .catch((error) => {
         logger.error("Error updating shelf:", error);
-      });
+        setActionError("Could not update shelf. Try again.");
+      })
+      .finally(() => setActionBusy(false));
   };
 
   const handleCreateTestSuite = () => {
@@ -297,6 +322,8 @@ const OopslyApp = () => {
       alert("Please select a subject");
       return;
     }
+    setActionBusy(true);
+    setActionError(null);
     createTestSuite(selectedShelfId, {
       title: testTitle.trim(),
       subjectIds: [selectedSubjectIdForTest],
@@ -313,9 +340,14 @@ const OopslyApp = () => {
           setSelectedSubjectIdForTest(null);
         } else {
           logger.error("Failed to create test suite:", res.message);
+          setActionError(res.message || "Could not create test suite. Try again.");
         }
       })
-      .catch((err) => logger.error("Error creating test suite:", err));
+      .catch((err) => {
+        logger.error("Error creating test suite:", err);
+        setActionError("Could not create test suite. Try again.");
+      })
+      .finally(() => setActionBusy(false));
   };
 
   const openDeleteTestSuiteModal = (shelfId: string, testSuiteId: string) => {
@@ -326,6 +358,8 @@ const OopslyApp = () => {
 
   const handleDeleteTestSuite = () => {
     if (!testSuiteToDelete || testSuiteDeleteConfirmText.trim().toLowerCase() !== "confirm") return;
+    setActionBusy(true);
+    setActionError(null);
     deleteTestSuite(testSuiteToDelete.shelfId, testSuiteToDelete.testSuiteId)
       .then((res) => {
         if (res.isSuccess) {
@@ -340,7 +374,11 @@ const OopslyApp = () => {
           setTestSuiteDeleteConfirmText("");
         }
       })
-      .catch((err) => logger.error("Error deleting test suite:", err));
+      .catch((err) => {
+        logger.error("Error deleting test suite:", err);
+        setActionError("Could not delete test suite. Try again.");
+      })
+      .finally(() => setActionBusy(false));
   };
 
   const getShelfName = (shelfId: string) => {
@@ -514,6 +552,11 @@ const OopslyApp = () => {
 
       {/* Main Content */}
       <ScrollView className="flex-1" testID="shelves-scroll-view">
+        {actionError ? (
+          <View className="px-4 pt-3">
+            <FeedbackMessage message={actionError} testID="home-action-error" />
+          </View>
+        ) : null}
         {Array.from(shelves ?? []).map((shelf) => (
           <View key={shelf.id} className="mb-6" testID={`shelf-item-${shelf.id}`}>
           <View className="flex-row items-center px-4 mb-3 mt-2" testID={`shelf-header-${shelf.id}`}>
@@ -681,13 +724,14 @@ const OopslyApp = () => {
                   <Text className="text-gray-700 font-bold">Cancel</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  className="flex-1 bg-indigo-600 rounded-xl py-4 items-center"
-                  onPress={handleCreateShelf}
-                  testID="create-shelf-submit-button"
-                >
-                  <Text className="text-white font-bold">Create Shelf</Text>
-                </TouchableOpacity>
+                <View className="flex-1">
+                  <AppButton
+                    label="Create Shelf"
+                    onPress={handleCreateShelf}
+                    loading={actionBusy}
+                    testID="create-shelf-submit-button"
+                  />
+                </View>
               </View>
             </ScrollView>
           </Pressable>
@@ -731,6 +775,7 @@ const OopslyApp = () => {
             <TouchableOpacity
               className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-5 mb-4 border-2 border-blue-200"
               onPress={() => handleContentTypeSelect("test")}
+              testID="content-type-test-button"
             >
               <View className="flex-row items-center">
                 <View className="bg-blue-500 rounded-full p-3 mr-4">
@@ -751,6 +796,7 @@ const OopslyApp = () => {
             <TouchableOpacity
               className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-5 mb-4 border-2 border-purple-200"
               onPress={() => handleContentTypeSelect("subject")}
+              testID="content-type-subject-button"
             >
               <View className="flex-row items-center">
                 <View className="bg-purple-500 rounded-full p-3 mr-4">
@@ -771,6 +817,7 @@ const OopslyApp = () => {
             <TouchableOpacity
               className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl p-5 mb-4 border-2 border-amber-200"
               onPress={() => handleContentTypeSelect("edit")}
+              testID="content-type-edit-button"
             >
               <View className="flex-row items-center">
                 <View className="bg-amber-500 rounded-full p-3 mr-4">
@@ -791,6 +838,7 @@ const OopslyApp = () => {
             <TouchableOpacity
               className="bg-gradient-to-r from-red-50 to-red-100 rounded-xl p-5 border-2 border-red-200"
               onPress={() => handleContentTypeSelect("delete")}
+              testID="content-type-delete-button"
             >
               <View className="flex-row items-center">
                 <View className="bg-red-500 rounded-full p-3 mr-4">

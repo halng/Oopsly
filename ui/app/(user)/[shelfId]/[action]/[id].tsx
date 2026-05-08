@@ -1,4 +1,5 @@
 import React from "react";
+import { Text, View } from "react-native";
 
 import { useLocalSearchParams } from "expo-router";
 import SubjectViewDetailsScreen from "@/screen/SubjectViewDetailsScreen";
@@ -22,7 +23,19 @@ const SubjectFactoryScreen = () => {
 
   logger.debug(`Rendering SubjectFactoryScreen with action: ${_action}, shelfId: ${_shelfId}, subjectId: ${_subjectId}`);
 
-  return ACTION_MAPPINGS[_action as keyof typeof ACTION_MAPPINGS](_shelfId, _subjectId);
+  const builder = ACTION_MAPPINGS[_action as keyof typeof ACTION_MAPPINGS];
+  if (!builder) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white px-6" testID="invalid-action-state">
+        <Text className="text-lg font-semibold text-gray-900">Unknown action</Text>
+        <Text className="text-gray-600 mt-2 text-center">
+          This review route is not available.
+        </Text>
+      </View>
+    );
+  }
+
+  return builder(_shelfId, _subjectId);
 }
 
 export default SubjectFactoryScreen;

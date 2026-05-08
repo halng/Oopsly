@@ -15,6 +15,7 @@
  */
 
 import React from "react";
+import { Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import FlashcardReviewScreen from "@/screen/FlashCardReviewScreen";
 
@@ -27,7 +28,14 @@ export default function TakeTestScreen() {
   const shelfId = params.shelfId;
 
   if (!testSuiteId || !shelfId) {
-    return null;
+    return (
+      <View className="flex-1 bg-white items-center justify-center px-6" testID="take-test-missing-params">
+        <Text className="text-lg font-semibold text-gray-900">Missing test data</Text>
+        <Text className="text-gray-600 mt-2 text-center">
+          Please go back and start the test again.
+        </Text>
+      </View>
+    );
   }
 
   return (

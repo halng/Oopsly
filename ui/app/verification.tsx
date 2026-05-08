@@ -21,13 +21,16 @@ import {
   TextInput,
   TouchableOpacity,
   Platform,
-  ActivityIndicator,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
 import { AuthService } from "@/services/AuthService";
 import { useAuthStore } from "@/store";
 import { ApiResponse } from "@/types/ApiRes";
+import ScreenContainer from "@/components/common/ScreenContainer";
+import ScreenHeader from "@/components/common/ScreenHeader";
+import AppButton from "@/components/common/AppButton";
+import FeedbackMessage from "@/components/common/FeedbackMessage";
 
 export default function OTPVerification() {
   const router = useRouter();
@@ -149,19 +152,18 @@ export default function OTPVerification() {
   const isOtpComplete = otp.every((digit) => digit !== "");
 
   return (
-    <View className="flex-1 bg-white" testID="verification-screen">
-      <View className="p-4 flex-row items-center" testID="header-container">
-        <TouchableOpacity
-          onPress={() => router.push("/onboard")}
-          className="p-2"
-          accessibilityLabel="Go back"
-          testID="back-button"
-        >
-          <ArrowLeft size={24} color="#1F2937" />
-        </TouchableOpacity>
-      </View>
-
-      <View className="px-6 pt-6" testID="content-container">
+    <ScreenContainer testID="verification-screen">
+      <ScreenHeader
+        title="Verify your email"
+        subtitle="Enter the code sent to your inbox"
+        onBack={() => router.push("/onboard")}
+        testID="header-container"
+      />
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+      <View className="px-2 pt-6 flex-1" testID="content-container">
         <Text className="text-2xl font-bold text-gray-900" testID="title-text">
           Verify your email
         </Text>
@@ -200,9 +202,13 @@ export default function OTPVerification() {
         </View>
 
         {verifyError ? (
-          <Text className="text-red-600 mt-4" testID="verify-error-message">
-            {verifyError}
-          </Text>
+          <View className="mt-4">
+            <FeedbackMessage
+              message={verifyError}
+              tone="error"
+              testID="verify-error-message"
+            />
+          </View>
         ) : null}
 
         <View
@@ -235,24 +241,17 @@ export default function OTPVerification() {
         </View>
       </View>
 
-      <View className="px-6 absolute bottom-8 w-full" testID="footer-container">
-        <TouchableOpacity
+      <View className="px-2 pb-8 mt-auto" testID="footer-container">
+        <AppButton
+          label="Verify and continue"
           onPress={handleVerify}
-          disabled={!isOtpComplete || verifyLoading}
-          className={`py-4 rounded-xl items-center flex-row justify-center gap-2
-            ${isOtpComplete && !verifyLoading ? "bg-indigo-600" : "bg-gray-300"}`}
+          disabled={!isOtpComplete}
+          loading={verifyLoading}
           accessibilityLabel="Verify and sign in"
           testID="verify-button"
-        >
-          {verifyLoading ? (
-            <ActivityIndicator color="#FFFFFF" testID="verify-loading" />
-          ) : (
-            <Text className="text-white font-semibold" testID="verify-button-text">
-              Verify and continue
-            </Text>
-          )}
-        </TouchableOpacity>
+        />
       </View>
-    </View>
+      </KeyboardAvoidingView>
+    </ScreenContainer>
   );
 }
