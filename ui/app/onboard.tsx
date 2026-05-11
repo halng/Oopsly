@@ -19,8 +19,6 @@ import {
   View,
   Text,
   TextInput,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AuthService } from '@/services/AuthService';
@@ -30,6 +28,8 @@ import ScreenContainer from "@/components/common/ScreenContainer";
 import ScreenHeader from "@/components/common/ScreenHeader";
 import AppButton from "@/components/common/AppButton";
 import FeedbackMessage from "@/components/common/FeedbackMessage";
+import { uiTokens } from "@/constants/uiTokens";
+import { MAX_FORM_WIDTH } from "@/utils/responsiveLayout";
 
 export default function EmailInputScreen() {
   const logger = Logger.extend('EmailInputScreen');
@@ -76,34 +76,46 @@ export default function EmailInputScreen() {
   const isEmailValid = isValidEmail(email);
 
   return (
-    <ScreenContainer testID="email-input-screen">
+    <ScreenContainer contentMaxWidth={MAX_FORM_WIDTH} testID="email-input-screen">
       <ScreenHeader
         title="Email verification"
         subtitle="Secure sign in with one-time code"
         onBack={() => router.push("/")}
         testID="header-container"
       />
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
       <View className="flex-1 pt-6" testID="content-container">
-        <Text className="text-3xl font-bold text-gray-900 mb-2" testID="title-text">
+        <Text
+          style={{ color: uiTokens.text.primary, fontSize: 28, fontWeight: "700", marginBottom: 8 }}
+          testID="title-text"
+        >
           What's your email?
         </Text>
-        <Text className="text-base text-gray-500 mb-8" testID="description-text">
+        <Text
+          style={{ color: uiTokens.text.muted, fontSize: 16, marginBottom: 32 }}
+          testID="description-text"
+        >
           We'll send you a secure code to verify your account.
         </Text>
 
-        {/* Email Input */}
         <View className="mb-6" testID="email-input-container">
           <TextInput
-            className={`w-full h-14 px-4 rounded-xl border-2 ${
-              email ? (isEmailValid ? 'border-indigo-600' : 'border-red-500') 
-              : 'border-gray-200'
-            } text-gray-900 text-base`}
+            style={{
+              width: "100%",
+              height: 56,
+              paddingHorizontal: 16,
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: email
+                ? isEmailValid
+                  ? uiTokens.accent.default
+                  : uiTokens.state.error.solid
+                : uiTokens.border.subtle,
+              color: uiTokens.text.primary,
+              fontSize: 16,
+              backgroundColor: uiTokens.surface.default,
+            }}
             placeholder="name@example.com"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={uiTokens.text.muted}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -114,7 +126,9 @@ export default function EmailInputScreen() {
             testID="email-input"
           />
           {error ? (
-            <FeedbackMessage message={error} tone="error" testID="error-message" />
+            <View style={{ marginTop: 12 }}>
+              <FeedbackMessage message={error} tone="error" testID="error-message" />
+            </View>
           ) : null}
         </View>
       </View>
@@ -129,7 +143,6 @@ export default function EmailInputScreen() {
           testID="continue-button"
         />
       </View>
-      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }

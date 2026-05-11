@@ -20,6 +20,8 @@ import {
 } from "@/services/CardService";
 import { runTestPreset } from "@/services/TestSuiteService";
 import { CardRes, ReviewedFlashcard, TestRunCardRes } from "@/types/Card";
+import { uiTokens } from "@/constants/uiTokens";
+import { useResponsiveLayout } from "@/utils/responsiveLayout";
 
 type FlashcardReviewProps =
   | { _shelfId: string; _subjectId: string; _testSuiteId?: undefined }
@@ -30,6 +32,11 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
   const isTestSuiteMode = Boolean(_testSuiteId && _shelfId);
   const startTime = Date.now();
   const router = useRouter();
+  const { width, height, isCompact, contentMaxWidth } = useResponsiveLayout();
+  const shouldWrapRatings = width < 430;
+  const cardMinHeight = Math.min(400, Math.max(260, Math.floor(height * 0.42)));
+  const cardPadding = isCompact ? 24 : 32;
+  const ratingMinHeight = shouldWrapRatings ? 64 : 80;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [reviewedCards, setReviewedCards] = useState<ReviewedFlashcard[]>([]);
@@ -240,11 +247,15 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#6366F1" />
+      <StatusBar barStyle="light-content" backgroundColor={uiTokens.review.gradientStart} />
 
       {/* Gradient Background */}
       <LinearGradient
-        colors={["#6366F1", "#8B5CF6", "#EC4899"]}
+        colors={[
+          uiTokens.review.gradientStart,
+          uiTokens.review.gradientMid,
+          uiTokens.review.gradientEnd,
+        ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFillObject}
@@ -252,7 +263,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
 
       <SafeAreaView style={styles.safeArea}>
         {/* Progress Bar */}
-        <View style={styles.progressContainer}>
+        <View style={[styles.progressContainer, { maxWidth: contentMaxWidth }]}>
           <View style={styles.progressBar}>
             <Animated.View
               style={[
@@ -268,7 +279,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
             />
           </View>
           <View style={styles.progressTextContainer}>
-            <Sparkles size={16} color="#FFF" strokeWidth={2} />
+            <Sparkles size={16} color={uiTokens.text.onAccent} strokeWidth={2} />
             <Text style={styles.progressText}>
               {totalCards > 0 ? `${currentIndex + 1} of ${totalCards}` : "No cards"}
             </Text>
@@ -279,7 +290,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
         </View>
 
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { maxWidth: contentMaxWidth }]}>
           <Pressable
             style={styles.iconButton}
             onPress={() => router.back()}
@@ -287,7 +298,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
             testID="review-close-button"
           >
             <View style={styles.iconButtonInner}>
-              <X size={22} color="#FFF" strokeWidth={2.5} />
+              <X size={22} color={uiTokens.text.onAccent} strokeWidth={2.5} />
             </View>
           </Pressable>
 
@@ -306,7 +317,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
             >
               <RotateCcw
                 size={20}
-                color={currentIndex === 0 ? "#A5B4FC" : "#FFF"}
+                color={currentIndex === 0 ? uiTokens.accent.disabled : uiTokens.text.onAccent}
                 strokeWidth={2.5}
               />
             </View>
@@ -314,7 +325,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
         </View>
 
         {/* Card Container */}
-        <View style={styles.cardContainer}>
+        <View style={[styles.cardContainer, { maxWidth: contentMaxWidth }]}>
           {isLoading ? (
             <View style={styles.emptyState} testID="cards-loading-state">
               <Text style={styles.emptyTitle}>Loading cards...</Text>
@@ -336,9 +347,11 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
             </View>
           ) : !isFlipped ? (
             // Front of card (Question)
-            <Animated.View style={[styles.card, frontAnimatedStyle]}>
+            <Animated.View
+              style={[styles.card, { minHeight: cardMinHeight }, frontAnimatedStyle]}
+            >
               <Pressable style={styles.cardPressable} onPress={handleCardPress}>
-                <View style={styles.cardContent}>
+                <View style={[styles.cardContent, { padding: cardPadding }]}>
                   <View style={styles.questionBadge}>
                     <Text style={styles.questionBadgeText}>Question</Text>
                   </View>
@@ -355,8 +368,10 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
             </Animated.View>
           ) : (
             // Back of card (Answer)
-            <Animated.View style={[styles.card, backAnimatedStyle]}>
-              <View style={styles.cardContent}>
+            <Animated.View
+              style={[styles.card, { minHeight: cardMinHeight }, backAnimatedStyle]}
+            >
+              <View style={[styles.cardContent, { padding: cardPadding }]}>
                 <View style={styles.questionBadge}>
                   <Text style={styles.questionBadgeText}>Question</Text>
                 </View>
@@ -378,7 +393,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
         </View>
 
         {/* Footer Controls */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, { maxWidth: contentMaxWidth }]}>
           {totalCards === 0 ? null : !isFlipped ? (
             <View style={styles.footerHintContainer}>
               <View style={styles.footerHintDot} />
@@ -387,18 +402,31 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
               </Text>
             </View>
           ) : (
-            <Animated.View style={[styles.buttonRow, buttonAnimatedStyle]}>
+            <Animated.View
+              style={[
+                styles.buttonRow,
+                shouldWrapRatings && styles.buttonRowWrapped,
+                buttonAnimatedStyle,
+              ]}
+            >
               <Pressable
                 style={({ pressed }) => [
                   styles.ratingButton,
+                  shouldWrapRatings && styles.ratingButtonWrapped,
                   pressed && styles.ratingButtonPressed,
                 ]}
                 onPress={() => handleRating("again")}
                 testID="rating-again-button"
               >
                 <LinearGradient
-                  colors={["#EF4444", "#DC2626"]}
-                  style={styles.ratingButtonGradient}
+                  colors={[
+                    uiTokens.review.rating.againStart,
+                    uiTokens.review.rating.againEnd,
+                  ]}
+                  style={[
+                    styles.ratingButtonGradient,
+                    { minHeight: ratingMinHeight },
+                  ]}
                 >
                   <Text style={styles.buttonLabel}>Again</Text>
                 </LinearGradient>
@@ -407,14 +435,21 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
               <Pressable
                 style={({ pressed }) => [
                   styles.ratingButton,
+                  shouldWrapRatings && styles.ratingButtonWrapped,
                   pressed && styles.ratingButtonPressed,
                 ]}
                 onPress={() => handleRating("hard")}
                 testID="rating-hard-button"
               >
                 <LinearGradient
-                  colors={["#F97316", "#EA580C"]}
-                  style={styles.ratingButtonGradient}
+                  colors={[
+                    uiTokens.review.rating.hardStart,
+                    uiTokens.review.rating.hardEnd,
+                  ]}
+                  style={[
+                    styles.ratingButtonGradient,
+                    { minHeight: ratingMinHeight },
+                  ]}
                 >
                   <Text style={styles.buttonLabel}>Hard</Text>
                 </LinearGradient>
@@ -423,14 +458,21 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
               <Pressable
                 style={({ pressed }) => [
                   styles.ratingButton,
+                  shouldWrapRatings && styles.ratingButtonWrapped,
                   pressed && styles.ratingButtonPressed,
                 ]}
                 onPress={() => handleRating("good")}
                 testID="rating-good-button"
               >
                 <LinearGradient
-                  colors={["#3B82F6", "#2563EB"]}
-                  style={styles.ratingButtonGradient}
+                  colors={[
+                    uiTokens.review.rating.goodStart,
+                    uiTokens.review.rating.goodEnd,
+                  ]}
+                  style={[
+                    styles.ratingButtonGradient,
+                    { minHeight: ratingMinHeight },
+                  ]}
                 >
                   <Text style={styles.buttonLabel}>Good</Text>
                 </LinearGradient>
@@ -439,14 +481,21 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
               <Pressable
                 style={({ pressed }) => [
                   styles.ratingButton,
+                  shouldWrapRatings && styles.ratingButtonWrapped,
                   pressed && styles.ratingButtonPressed,
                 ]}
                 onPress={() => handleRating("easy")}
                 testID="rating-easy-button"
               >
                 <LinearGradient
-                  colors={["#10B981", "#059669"]}
-                  style={styles.ratingButtonGradient}
+                  colors={[
+                    uiTokens.review.rating.easyStart,
+                    uiTokens.review.rating.easyEnd,
+                  ]}
+                  style={[
+                    styles.ratingButtonGradient,
+                    { minHeight: ratingMinHeight },
+                  ]}
                 >
                   <Text style={styles.buttonLabel}>Easy</Text>
                 </LinearGradient>
@@ -465,8 +514,10 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    alignItems: "center",
   },
   progressContainer: {
+    width: "100%",
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 16,
@@ -532,6 +583,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   header: {
+    width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -553,6 +605,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   cardContainer: {
+    width: "100%",
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: 20,
@@ -561,7 +614,6 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 24,
-    minHeight: 400,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
@@ -679,6 +731,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 10,
   },
+  buttonRowWrapped: {
+    flexWrap: "wrap",
+  },
   ratingButton: {
     flex: 1,
     borderRadius: 16,
@@ -689,6 +744,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  ratingButtonWrapped: {
+    flexBasis: "48%",
+  },
   ratingButtonPressed: {
     transform: [{ scale: 0.95 }],
   },
@@ -697,7 +755,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 80,
   },
   buttonLabel: {
     fontSize: 16,

@@ -49,8 +49,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppButton from "@/components/common/AppButton";
 import FeedbackMessage from "@/components/common/FeedbackMessage";
+import FadeIn from "@/components/common/FadeIn";
+import { uiTokens } from "@/constants/uiTokens";
+import { useResponsiveLayout } from "@/utils/responsiveLayout";
 
 const availableIcons = [
   { name: "Code", component: Code, color: "#4F46E5" },
@@ -76,6 +80,18 @@ const availableIcons = [
 const OopslyApp = () => {
   const logger = Logger.extend("OopslyApp");
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const {
+    contentMaxWidth,
+    isTablet,
+    modalMaxHeight,
+    sheetMaxWidth,
+    subjectCardWidth,
+  } = useResponsiveLayout();
+  const contentFrameStyle = { width: "100%" as const, maxWidth: contentMaxWidth };
+  const sheetFrameStyle = sheetMaxWidth
+    ? { width: "100%" as const, maxWidth: sheetMaxWidth, alignSelf: "center" as const }
+    : undefined;
   const [modalVisible, setModalVisible] = useState(false);
   const [shelfName, setShelfName] = useState("");
   const [shelfDescription, setShelfDescription] = useState("");
@@ -398,16 +414,20 @@ const OopslyApp = () => {
   const renderSubjectCards = (subjects: SubjectStats[], shelfId: string) => {
     return (
       <ScrollView
-        horizontal
+        horizontal={!isTablet}
         showsHorizontalScrollIndicator={false}
-        className="max-h-40"
+        className={isTablet ? "" : "max-h-40"}
         testID={`subject-scroll-view-${shelfId}`}
       >
-        <View className="flex-row gap-4 px-4 pb-2">
+        <View
+          className="flex-row gap-4 px-4 pb-2"
+          style={{ flexWrap: isTablet ? "wrap" : "nowrap" }}
+        >
           {subjects.map((subject) => (
             <TouchableOpacity
               key={subject.id}
-              className="bg-white rounded-xl p-4 w-60 shadow-sm border border-gray-100"
+              className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
+              style={{ width: subjectCardWidth }}
               onPress={() => router.push(`${shelfId}/view/${subject.id}`)}
               testID={`subject-card-${subject.id}`}
             >
@@ -442,7 +462,8 @@ const OopslyApp = () => {
           ))}
           {/* Add Placeholder Manage Shelf Card */}
           <TouchableOpacity
-            className="bg-white rounded-xl p-4 w-60 shadow-sm border-2 border-dashed border-gray-300 justify-center items-center"
+            className="bg-white rounded-xl p-4 shadow-sm border-2 border-dashed border-gray-300 justify-center items-center"
+            style={{ width: subjectCardWidth }}
             onPress={() => openContentTypeModal(shelfId)}
             testID={`manage-shelf-button-${shelfId}`}
           >
@@ -468,7 +489,12 @@ const OopslyApp = () => {
   return (
     <View className="flex-1 bg-gray-50" testID="home-container">
       {/* Header */}
-      <View className="bg-white pt-12 pb-4 px-4 shadow-sm" testID="header-container">
+      <View
+        className="bg-white pb-4 px-4 shadow-sm items-center"
+        style={{ paddingTop: Math.max(insets.top, 12) }}
+        testID="header-container"
+      >
+        <View className="w-full" style={contentFrameStyle}>
         <View className="flex-row justify-between items-center">
           <View className="flex-row items-center">
             <TouchableOpacity
@@ -487,7 +513,7 @@ const OopslyApp = () => {
           </View>
 
           <View className="flex-row items-center bg-orange-50 px-3 py-1 rounded-full" testID="streak-container">
-            <Flame size={16} color="#EA580C" fill="#EA580C" />
+              <Flame size={16} color={uiTokens.state.warning.solid} fill={uiTokens.state.warning.solid} />
             <Text className="ml-1 font-bold text-orange-700" testID="streak-count-text">7</Text>
           </View>
         </View>
@@ -548,17 +574,28 @@ const OopslyApp = () => {
             <Text className="text-xs text-gray-600" testID="planner-label-text">Planner</Text>
           </TouchableOpacity>
         </View>
+        </View>
       </View>
 
       {/* Main Content */}
-      <ScrollView className="flex-1" testID="shelves-scroll-view">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ alignItems: "center" }}
+        testID="shelves-scroll-view"
+      >
         {actionError ? (
-          <View className="px-4 pt-3">
+          <View className="px-4 pt-3" style={contentFrameStyle}>
             <FeedbackMessage message={actionError} testID="home-action-error" />
           </View>
         ) : null}
-        {Array.from(shelves ?? []).map((shelf) => (
-          <View key={shelf.id} className="mb-6" testID={`shelf-item-${shelf.id}`}>
+        {Array.from(shelves ?? []).map((shelf, shelfIdx) => (
+          <FadeIn
+            key={shelf.id}
+            delay={shelfIdx * 60}
+            duration={240}
+            translate={6}
+          >
+          <View className="mb-6" style={contentFrameStyle} testID={`shelf-item-${shelf.id}`}>
           <View className="flex-row items-center px-4 mb-3 mt-2" testID={`shelf-header-${shelf.id}`}>
               <View className="mr-2">{renderIconComponent(shelf.icon)}</View>
 
@@ -587,7 +624,7 @@ const OopslyApp = () => {
                       className="bg-red-100 rounded-lg px-2 py-1"
                       onPress={() => openDeleteTestSuiteModal(shelf.id, ts.id)}
                     >
-                      <Delete size={16} color="#B91C1C" />
+                      <Delete size={16} color={uiTokens.state.error.text} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -596,6 +633,7 @@ const OopslyApp = () => {
 
             {renderSubjectCards(shelf.subjects, shelf.id)}
           </View>
+          </FadeIn>
         ))}
 
         <View className="h-24" />
@@ -603,19 +641,21 @@ const OopslyApp = () => {
 
       {/* Create Shelf Modal */}
       <Modal
-        animationType="fade"
+        animationType="slide"
         transparent={true}
+        presentationStyle="overFullScreen"
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
         testID="create-shelf-modal"
       >
         <Pressable
-          className="flex-1 bg-black/50 justify-center items-center px-6"
+          className="flex-1 bg-black/50 justify-end"
           onPress={() => setModalVisible(false)}
           testID="create-shelf-modal-overlay"
         >
           <Pressable
-            className="bg-white rounded-2xl w-full max-w-md"
+            className="bg-white rounded-t-2xl w-full mt-auto"
+            style={sheetFrameStyle}
             onPress={(e) => e.stopPropagation()}
             testID="create-shelf-modal-content"
           >
@@ -629,11 +669,11 @@ const OopslyApp = () => {
                 className="p-1"
                 testID="create-shelf-modal-close-button"
               >
-                <X size={24} color="#6B7280" />
+                <X size={24} color={uiTokens.text.muted} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView className="px-6 py-4" style={{ maxHeight: 500 }}>
+            <ScrollView className="px-6 py-4" style={{ maxHeight: modalMaxHeight }}>
               {/* Icon Selector */}
               <View className="mb-5">
                 <Text className="text-gray-700 font-semibold mb-3">Icon</Text>
@@ -688,7 +728,7 @@ const OopslyApp = () => {
                 <TextInput
                   className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
                   placeholder="Enter shelf name"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={uiTokens.text.muted}
                   value={shelfName}
                   onChangeText={setShelfName}
                   testID="shelf-name-input"
@@ -703,7 +743,7 @@ const OopslyApp = () => {
                 <TextInput
                   className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
                   placeholder="Enter shelf description (optional)"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={uiTokens.text.muted}
                   value={shelfDescription}
                   onChangeText={setShelfDescription}
                   multiline
@@ -740,18 +780,20 @@ const OopslyApp = () => {
 
       {/* Content Type Selection Modal (Step 1) */}
       <Modal
-        animationType="fade"
+        animationType="slide"
         transparent={true}
+        presentationStyle="overFullScreen"
         visible={contentTypeModalVisible}
         onRequestClose={() => setContentTypeModalVisible(false)}
         testID="content-type-modal"
       >
         <Pressable
-          className="flex-1 bg-black/50 justify-center items-center px-6"
+          className="flex-1 bg-black/50 justify-end"
           onPress={() => setContentTypeModalVisible(false)}
         >
           <Pressable
-            className="bg-white rounded-2xl w-full max-w-md p-6"
+            className="bg-white rounded-t-2xl w-full mt-auto p-6 pb-8"
+            style={sheetFrameStyle}
             onPress={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -763,7 +805,7 @@ const OopslyApp = () => {
                 onPress={() => setContentTypeModalVisible(false)}
                 className="p-1"
               >
-                <X size={24} color="#6B7280" />
+                <X size={24} color={uiTokens.text.muted} />
               </TouchableOpacity>
             </View>
 
@@ -779,7 +821,7 @@ const OopslyApp = () => {
             >
               <View className="flex-row items-center">
                 <View className="bg-blue-500 rounded-full p-3 mr-4">
-                  <CheckSquare size={28} color="#FFFFFF" />
+                  <CheckSquare size={28} color={uiTokens.text.onAccent} />
                 </View>
                 <View className="flex-1">
                   <Text className="text-gray-800 font-bold text-lg mb-1">
@@ -800,7 +842,7 @@ const OopslyApp = () => {
             >
               <View className="flex-row items-center">
                 <View className="bg-purple-500 rounded-full p-3 mr-4">
-                  <BookOpen size={28} color="#FFFFFF" />
+                  <BookOpen size={28} color={uiTokens.text.onAccent} />
                 </View>
                 <View className="flex-1">
                   <Text className="text-gray-800 font-bold text-lg mb-1">
@@ -821,7 +863,7 @@ const OopslyApp = () => {
             >
               <View className="flex-row items-center">
                 <View className="bg-amber-500 rounded-full p-3 mr-4">
-                  <Edit3 size={28} color="#FFFFFF" />
+                  <Edit3 size={28} color={uiTokens.text.onAccent} />
                 </View>
                 <View className="flex-1">
                   <Text className="text-gray-800 font-bold text-lg mb-1">
@@ -842,7 +884,7 @@ const OopslyApp = () => {
             >
               <View className="flex-row items-center">
                 <View className="bg-red-500 rounded-full p-3 mr-4">
-                  <Delete size={28} color="#FFFFFF" />
+                  <Delete size={28} color={uiTokens.text.onAccent} />
                 </View>
                 <View className="flex-1">
                   <Text className="text-gray-800 font-bold text-lg mb-1">
@@ -860,17 +902,19 @@ const OopslyApp = () => {
 
       {/* Add Content Modal (Step 2) */}
       <Modal
-        animationType="fade"
+        animationType="slide"
         transparent={true}
+        presentationStyle="overFullScreen"
         visible={addContentModalVisible}
         onRequestClose={() => setAddContentModalVisible(false)}
       >
         <Pressable
-          className="flex-1 bg-black/50 justify-center items-center px-6"
+          className="flex-1 bg-black/50 justify-end"
           onPress={() => setAddContentModalVisible(false)}
         >
           <Pressable
-            className="bg-white rounded-2xl w-full max-w-md"
+            className="bg-white rounded-t-2xl w-full mt-auto"
+            style={sheetFrameStyle}
             onPress={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -882,7 +926,7 @@ const OopslyApp = () => {
                 onPress={() => setAddContentModalVisible(false)}
                 className="p-1"
               >
-                <X size={24} color="#6B7280" />
+                <X size={24} color={uiTokens.text.muted} />
               </TouchableOpacity>
             </View>
 
@@ -893,7 +937,7 @@ const OopslyApp = () => {
                 <TextInput
                   className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
                   placeholder={`Enter ${selectedContentType} name`}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={uiTokens.text.muted}
                   value={contentName}
                   onChangeText={setContentName}
                 />
@@ -907,7 +951,7 @@ const OopslyApp = () => {
                 <TextInput
                   className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
                   placeholder={`Enter ${selectedContentType} description (optional)`}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={uiTokens.text.muted}
                   value={contentDescription}
                   onChangeText={setContentDescription}
                   multiline
@@ -944,17 +988,19 @@ const OopslyApp = () => {
 
       {/* Confirm delete selected shelf */}
       <Modal
-        animationType="fade"
+        animationType="slide"
         transparent={true}
+        presentationStyle="overFullScreen"
         visible={deletedModalVisible}
         onRequestClose={() => setDeletedModalVisible(false)}
       >
         <Pressable
-          className="flex-1 bg-black/50 justify-center items-center px-6"
+          className="flex-1 bg-black/50 justify-end"
           onPress={() => setDeletedModalVisible(false)}
         >
           <Pressable
-            className="bg-white rounded-2xl w-full max-w-md"
+            className="bg-white rounded-t-2xl w-full mt-auto"
+            style={sheetFrameStyle}
             onPress={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -967,7 +1013,7 @@ const OopslyApp = () => {
                 onPress={() => setDeletedModalVisible(false)}
                 className="p-1"
               >
-                <X size={24} color="#6B7280" />
+                <X size={24} color={uiTokens.text.muted} />
               </TouchableOpacity>
             </View>
 
@@ -990,7 +1036,7 @@ const OopslyApp = () => {
               <TextInput
                 className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200 mt-2 mb-4"
                 placeholder="Type confirm to acknowledge"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={uiTokens.text.muted}
                 value={confirmText}
                 onChangeText={setConfirmText}
               />
@@ -1024,18 +1070,20 @@ const OopslyApp = () => {
 
       {/* Edit Shelf Modal */}
       <Modal
-        animationType="fade"
+        animationType="slide"
         transparent={true}
+        presentationStyle="overFullScreen"
         visible={editShelfModalVisible}
         onRequestClose={() => setEditShelfModalVisible(false)}
         testID="edit-shelf-modal"
       >
         <Pressable
-          className="flex-1 bg-black/50 justify-center items-center px-6"
+          className="flex-1 bg-black/50 justify-end"
           onPress={() => setEditShelfModalVisible(false)}
         >
           <Pressable
-            className="bg-white rounded-2xl w-full max-w-md"
+            className="bg-white rounded-t-2xl w-full mt-auto"
+            style={sheetFrameStyle}
             onPress={(e) => e.stopPropagation()}
           >
             <View className="flex-row justify-between items-center p-6 pb-4 border-b border-gray-100">
@@ -1049,11 +1097,11 @@ const OopslyApp = () => {
                 }}
                 className="p-1"
               >
-                <X size={24} color="#6B7280" />
+                <X size={24} color={uiTokens.text.muted} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView className="px-6 py-4" style={{ maxHeight: 500 }}>
+            <ScrollView className="px-6 py-4" style={{ maxHeight: modalMaxHeight }}>
               <View className="mb-5">
                 <Text className="text-gray-700 font-semibold mb-3">Icon</Text>
                 <TouchableOpacity
@@ -1102,7 +1150,7 @@ const OopslyApp = () => {
                 <TextInput
                   className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
                   placeholder="Enter shelf name"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={uiTokens.text.muted}
                   value={editShelfName}
                   onChangeText={setEditShelfName}
                 />
@@ -1113,7 +1161,7 @@ const OopslyApp = () => {
                 <TextInput
                   className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
                   placeholder="Enter shelf description (min 10 characters)"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={uiTokens.text.muted}
                   value={editShelfDescription}
                   onChangeText={setEditShelfDescription}
                   multiline
@@ -1147,20 +1195,25 @@ const OopslyApp = () => {
 
       {/* Create Test Suite Modal */}
       <Modal
-        animationType="fade"
+        animationType="slide"
         transparent={true}
+        presentationStyle="overFullScreen"
         visible={createTestModalVisible}
         onRequestClose={() => setCreateTestModalVisible(false)}
       >
         <Pressable
-          className="flex-1 bg-black/50 justify-center items-center px-6"
+          className="flex-1 bg-black/50 justify-end"
           onPress={() => setCreateTestModalVisible(false)}
         >
-          <Pressable className="bg-white rounded-2xl w-full max-w-md p-6" onPress={(e) => e.stopPropagation()}>
+          <Pressable
+            className="bg-white rounded-t-2xl w-full mt-auto p-6 pb-8"
+            style={sheetFrameStyle}
+            onPress={(e) => e.stopPropagation()}
+          >
             <View className="flex-row justify-between items-center mb-4">
               <Text className="text-xl font-bold text-gray-800">Create Test Suite</Text>
               <TouchableOpacity onPress={() => setCreateTestModalVisible(false)} className="p-1">
-                <X size={24} color="#6B7280" />
+                <X size={24} color={uiTokens.text.muted} />
               </TouchableOpacity>
             </View>
             <Text className="text-gray-600 mb-2">Test suite is a preset of cards from a subject. Select a subject and name your test.</Text>
@@ -1183,7 +1236,7 @@ const OopslyApp = () => {
               <TextInput
                 className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
                 placeholder="e.g. Math Chapter 1"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={uiTokens.text.muted}
                 value={testTitle}
                 onChangeText={setTestTitle}
               />
@@ -1208,16 +1261,21 @@ const OopslyApp = () => {
 
       {/* Delete Test Suite Confirmation Modal */}
       <Modal
-        animationType="fade"
+        animationType="slide"
         transparent={true}
+        presentationStyle="overFullScreen"
         visible={deleteTestSuiteModalVisible}
         onRequestClose={() => setDeleteTestSuiteModalVisible(false)}
       >
         <Pressable
-          className="flex-1 bg-black/50 justify-center items-center px-6"
+          className="flex-1 bg-black/50 justify-end"
           onPress={() => setDeleteTestSuiteModalVisible(false)}
         >
-          <Pressable className="bg-white rounded-2xl w-full max-w-md p-6" onPress={(e) => e.stopPropagation()}>
+          <Pressable
+            className="bg-white rounded-t-2xl w-full mt-auto p-6 pb-8"
+            style={sheetFrameStyle}
+            onPress={(e) => e.stopPropagation()}
+          >
             <View className="flex-row justify-between items-center mb-4">
               <Text className="text-xl font-bold text-gray-800">Delete Test Suite</Text>
               <TouchableOpacity
@@ -1228,7 +1286,7 @@ const OopslyApp = () => {
                 }}
                 className="p-1"
               >
-                <X size={24} color="#6B7280" />
+                <X size={24} color={uiTokens.text.muted} />
               </TouchableOpacity>
             </View>
             <Text className="text-gray-700 font-semibold mb-2">
@@ -1240,7 +1298,7 @@ const OopslyApp = () => {
             <TextInput
               className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200 mb-4"
               placeholder="Type confirm to acknowledge"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={uiTokens.text.muted}
               value={testSuiteDeleteConfirmText}
               onChangeText={setTestSuiteDeleteConfirmText}
             />

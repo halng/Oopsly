@@ -21,7 +21,6 @@ import {
   TextInput,
   TouchableOpacity,
   Platform,
-  KeyboardAvoidingView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthService } from "@/services/AuthService";
@@ -31,6 +30,8 @@ import ScreenContainer from "@/components/common/ScreenContainer";
 import ScreenHeader from "@/components/common/ScreenHeader";
 import AppButton from "@/components/common/AppButton";
 import FeedbackMessage from "@/components/common/FeedbackMessage";
+import { uiTokens } from "@/constants/uiTokens";
+import { useResponsiveLayout } from "@/utils/responsiveLayout";
 
 export default function OTPVerification() {
   const router = useRouter();
@@ -40,6 +41,7 @@ export default function OTPVerification() {
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [resendBusy, setResendBusy] = useState(false);
+  const { formMaxWidth, otpCellSize } = useResponsiveLayout();
   const inputRefs = useRef<Array<TextInput | null>>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const userEmail = useAuthStore((state) => state.userEmail);
@@ -152,24 +154,29 @@ export default function OTPVerification() {
   const isOtpComplete = otp.every((digit) => digit !== "");
 
   return (
-    <ScreenContainer testID="verification-screen">
+    <ScreenContainer contentMaxWidth={formMaxWidth} testID="verification-screen">
       <ScreenHeader
         title="Verify your email"
         subtitle="Enter the code sent to your inbox"
         onBack={() => router.push("/onboard")}
         testID="header-container"
       />
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
       <View className="px-2 pt-6 flex-1" testID="content-container">
-        <Text className="text-2xl font-bold text-gray-900" testID="title-text">
+        <Text
+          style={{ color: uiTokens.text.primary, fontSize: 24, fontWeight: "700" }}
+          testID="title-text"
+        >
           Verify your email
         </Text>
-        <Text className="mt-2 text-gray-600" testID="description-text">
+        <Text
+          style={{ color: uiTokens.text.secondary, marginTop: 8 }}
+          testID="description-text"
+        >
           Enter the code sent to{" "}
-          <Text className="font-semibold text-gray-900" testID="user-email-display">
+          <Text
+            style={{ color: uiTokens.text.primary, fontWeight: "600" }}
+            testID="user-email-display"
+          >
             {userEmail || "your inbox"}
           </Text>
         </Text>
@@ -184,12 +191,23 @@ export default function OTPVerification() {
               ref={(ref) => {
                 inputRefs.current[index] = ref;
               }}
-              className={`w-12 h-12 border-2 rounded-xl text-center text-xl
-                ${digit ? "border-indigo-600" : "border-gray-300"}
-                ${Platform.select({
-                  ios: "leading-[46px]",
-                  android: "",
-                })}`}
+              style={[
+                {
+                  maxWidth: otpCellSize,
+                  flex: 1,
+                  aspectRatio: 1,
+                  borderWidth: 2,
+                  borderRadius: 12,
+                  textAlign: "center",
+                  fontSize: 20,
+                  color: uiTokens.text.primary,
+                  borderColor: digit
+                    ? uiTokens.accent.default
+                    : uiTokens.border.subtle,
+                  backgroundColor: uiTokens.surface.default,
+                },
+                Platform.OS === "ios" ? { lineHeight: otpCellSize - 2 } : null,
+              ]}
               maxLength={1}
               keyboardType="number-pad"
               value={digit}
@@ -215,10 +233,10 @@ export default function OTPVerification() {
           className="flex-row items-center justify-center mt-8 gap-1 flex-wrap"
           testID="timer-resend-container"
         >
-          <Text className="text-gray-600" testID="timer-text">
+          <Text style={{ color: uiTokens.text.secondary }} testID="timer-text">
             {formatTime(timer)}
           </Text>
-          <Text className="text-gray-600" testID="resend-label">
+          <Text style={{ color: uiTokens.text.secondary }} testID="resend-label">
             {" "}
             I did not receive a code.
           </Text>
@@ -228,11 +246,11 @@ export default function OTPVerification() {
             testID="resend-button"
           >
             <Text
-              className={`${
+              className={
                 isResendActive && !resendBusy
-                  ? "text-indigo-600"
-                  : "text-gray-400"
-              }`}
+                  ? "text-indigo-600 font-medium"
+                  : "text-gray-400 font-medium"
+              }
               testID="resend-button-text"
             >
               {resendBusy ? "Sending…" : "Resend"}
@@ -251,7 +269,6 @@ export default function OTPVerification() {
           testID="verify-button"
         />
       </View>
-      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }

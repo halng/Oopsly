@@ -30,8 +30,41 @@ import { Logger } from "@/utils";
 import ScreenContainer from "@/components/common/ScreenContainer";
 import ScreenHeader from "@/components/common/ScreenHeader";
 import FeedbackMessage from "@/components/common/FeedbackMessage";
+import { uiTokens } from "@/constants/uiTokens";
+import { MAX_READING_WIDTH } from "@/utils/responsiveLayout";
 
 const logger = Logger.extend("ProfileScreen");
+
+const inputStyle = {
+  backgroundColor: uiTokens.surface.subtle,
+  borderRadius: 12,
+  padding: 16,
+  color: uiTokens.text.primary,
+  borderWidth: 1,
+  borderColor: uiTokens.border.subtle,
+  fontSize: 16,
+} as const;
+
+function FieldLabel({
+  children,
+  icon,
+}: {
+  children: React.ReactNode;
+  icon: React.ReactNode;
+}) {
+  return (
+    <View
+      style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}
+    >
+      {icon}
+      <Text
+        style={{ color: uiTokens.text.muted, fontSize: 14, marginLeft: 8 }}
+      >
+        {children}
+      </Text>
+    </View>
+  );
+}
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -107,10 +140,12 @@ export default function ProfileScreen() {
   if (loading) {
     return (
       <ScreenContainer testID="profile-loading-screen">
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="#4F46E5" />
-        <Text className="text-gray-600 mt-4">Loading profile...</Text>
-      </View>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color={uiTokens.accent.default} />
+          <Text style={{ color: uiTokens.text.muted, marginTop: 16 }}>
+            Loading profile...
+          </Text>
+        </View>
       </ScreenContainer>
     );
   }
@@ -121,7 +156,11 @@ export default function ProfileScreen() {
   const completionPercent = Math.round((completionScore / 3) * 100);
 
   return (
-    <ScreenContainer scrollable testID="profile-screen">
+    <ScreenContainer
+      scrollable
+      contentMaxWidth={MAX_READING_WIDTH}
+      testID="profile-screen"
+    >
       <ScreenHeader
         title="Profile"
         onBack={() => router.back()}
@@ -129,7 +168,7 @@ export default function ProfileScreen() {
         rightSlot={
           !isEditing ? (
             <TouchableOpacity onPress={() => setIsEditing(true)} testID="edit-button">
-              <Edit3 size={20} color="#4F46E5" />
+              <Edit3 size={20} color={uiTokens.accent.default} />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -137,7 +176,7 @@ export default function ProfileScreen() {
               disabled={saving || !displayName.trim()}
               testID="save-button"
             >
-              <Save size={20} color="#4F46E5" />
+              <Save size={20} color={uiTokens.accent.default} />
             </TouchableOpacity>
           )
         }
@@ -147,91 +186,142 @@ export default function ProfileScreen() {
           <FeedbackMessage message={error} tone="error" testID="profile-error" />
         )}
 
-        <View className="bg-indigo-50 rounded-xl p-4 mb-4 border border-indigo-100">
-          <Text className="text-indigo-700 font-semibold" testID="profile-completion-title">
+        <View
+          style={{
+            backgroundColor: uiTokens.accent.tint,
+            borderRadius: 16,
+            padding: 16,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: uiTokens.border.subtle,
+          }}
+        >
+          <Text
+            style={{ color: uiTokens.accent.onTint, fontWeight: "600" }}
+            testID="profile-completion-title"
+          >
             Profile completeness: {completionPercent}%
           </Text>
-          <View className="mt-2 h-2 bg-indigo-100 rounded-full overflow-hidden">
+          <View
+            style={{
+              marginTop: 8,
+              height: 8,
+              backgroundColor: uiTokens.surface.default,
+              borderRadius: 999,
+              overflow: "hidden",
+            }}
+          >
             <View
-              className="h-full bg-indigo-600"
-              style={{ width: `${completionPercent}%` }}
+              style={{
+                height: "100%",
+                backgroundColor: uiTokens.accent.default,
+                width: `${completionPercent}%`,
+              }}
               testID="profile-completion-progress"
             />
           </View>
-          <Text className="text-indigo-700 text-xs mt-2">
+          <Text
+            style={{ color: uiTokens.accent.onTint, fontSize: 12, marginTop: 8 }}
+          >
             Completing profile helps personalize study pacing and reminders.
           </Text>
         </View>
 
-        <View className="bg-white rounded-xl p-6 shadow-sm">
-          <View className="flex-row items-center mb-2">
-            <UserRound size={16} color="#6B7280" />
-            <Text className="text-gray-500 text-sm ml-2">Display name</Text>
-          </View>
+        <View
+          style={{
+            backgroundColor: uiTokens.surface.default,
+            borderRadius: 16,
+            padding: 24,
+            borderWidth: 1,
+            borderColor: uiTokens.border.subtle,
+          }}
+        >
+          <FieldLabel icon={<UserRound size={16} color={uiTokens.text.muted} />}>
+            Display name
+          </FieldLabel>
           {isEditing ? (
             <TextInput
-              className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
+              style={inputStyle}
               value={displayName}
               onChangeText={setDisplayName}
               placeholder="Your display name"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={uiTokens.text.muted}
               maxLength={50}
               testID="display-name-input"
             />
           ) : (
-            <Text className="text-lg font-medium text-gray-800">
+            <Text
+              style={{ fontSize: 18, fontWeight: "500", color: uiTokens.text.primary }}
+            >
               {profile?.displayName ?? "—"}
             </Text>
           )}
 
-          <View className="flex-row items-center mt-6 mb-2">
-            <BookOpen size={16} color="#6B7280" />
-            <Text className="text-gray-500 text-sm ml-2">Bio (learning focus)</Text>
+          <View style={{ marginTop: 24 }}>
+            <FieldLabel icon={<BookOpen size={16} color={uiTokens.text.muted} />}>
+              Bio (learning focus)
+            </FieldLabel>
+            {isEditing ? (
+              <TextInput
+                style={[inputStyle, { minHeight: 96, textAlignVertical: "top" }]}
+                value={bio}
+                onChangeText={setBio}
+                placeholder="Tell us what you are learning (e.g. TOEIC, Java, SAT Math)"
+                placeholderTextColor={uiTokens.text.muted}
+                multiline
+                numberOfLines={4}
+                maxLength={200}
+                testID="bio-input"
+              />
+            ) : (
+              <Text style={{ fontSize: 16, color: uiTokens.text.secondary }}>
+                {profile?.bio ?? "—"}
+              </Text>
+            )}
           </View>
-          {isEditing ? (
-            <TextInput
-              className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
-              value={bio}
-              onChangeText={setBio}
-              placeholder="Tell us what you are learning (e.g. TOEIC, Java, SAT Math)"
-              placeholderTextColor="#9CA3AF"
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-              maxLength={200}
-              testID="bio-input"
-            />
-          ) : (
-            <Text className="text-base text-gray-700">{profile?.bio ?? "—"}</Text>
-          )}
 
-          <View className="flex-row items-center mt-6 mb-2">
-            <Calendar size={16} color="#6B7280" />
-            <Text className="text-gray-500 text-sm ml-2">Age</Text>
+          <View style={{ marginTop: 24 }}>
+            <FieldLabel icon={<Calendar size={16} color={uiTokens.text.muted} />}>
+              Age
+            </FieldLabel>
+            {isEditing ? (
+              <TextInput
+                style={inputStyle}
+                value={ageInput}
+                onChangeText={(value) => setAgeInput(value.replace(/[^\d]/g, ""))}
+                placeholder="Enter your age"
+                placeholderTextColor={uiTokens.text.muted}
+                keyboardType="number-pad"
+                maxLength={3}
+                testID="age-input"
+              />
+            ) : (
+              <Text style={{ fontSize: 16, color: uiTokens.text.secondary }}>
+                {profile?.age ?? "—"}
+              </Text>
+            )}
           </View>
-          {isEditing ? (
-            <TextInput
-              className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
-              value={ageInput}
-              onChangeText={(value) => setAgeInput(value.replace(/[^\d]/g, ""))}
-              placeholder="Enter your age"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="number-pad"
-              maxLength={3}
-              testID="age-input"
-            />
-          ) : (
-            <Text className="text-base text-gray-700">{profile?.age ?? "—"}</Text>
-          )}
         </View>
 
         <TouchableOpacity
-          className="bg-white rounded-xl p-4 mt-4 shadow-sm flex-row items-center justify-between"
+          style={{
+            backgroundColor: uiTokens.surface.default,
+            borderRadius: 16,
+            padding: 16,
+            marginTop: 16,
+            borderWidth: 1,
+            borderColor: uiTokens.border.subtle,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
           onPress={() => router.push("/settings")}
           testID="profile-settings-link"
         >
-          <Text className="text-gray-800 font-medium">Settings</Text>
-          <ChevronRight size={20} color="#9CA3AF" />
+          <Text style={{ color: uiTokens.text.primary, fontWeight: "500" }}>
+            Settings
+          </Text>
+          <ChevronRight size={20} color={uiTokens.text.muted} />
         </TouchableOpacity>
       </View>
     </ScreenContainer>

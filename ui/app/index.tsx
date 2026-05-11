@@ -16,15 +16,15 @@
 
 
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { Logger } from '@/utils';
+import { uiTokens } from '@/constants/uiTokens';
+import FadeIn from '@/components/common/FadeIn';
+import { useResponsiveLayout } from '@/utils/responsiveLayout';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-// Onboarding data
 const ONBOARDING_DATA = [
   {
     id: 1,
@@ -51,6 +51,9 @@ export default function WelcomeScreen() {
   logger.debug('Rendering WelcomeScreen component');
   const [currentIndex, setCurrentIndex] = useState(0);
   const router = useRouter();
+  const { width, height, isTablet, formMaxWidth } = useResponsiveLayout();
+  const heroHeight = Math.min(height * (isTablet ? 0.36 : 0.4), 360);
+  const heroWidth = Math.min(width * 0.82, isTablet ? 520 : 360);
   
   const handleNext = () => {
     if (currentIndex === ONBOARDING_DATA.length - 1) {
@@ -74,9 +77,21 @@ export default function WelcomeScreen() {
   const currentSlide = ONBOARDING_DATA[currentIndex];
   const isLastSlide = currentIndex === ONBOARDING_DATA.length - 1;
 
+  const accentShadow = {
+    shadowColor: uiTokens.accent.default,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  };
+
   return (
-    <SafeAreaView testID='safe-area-view' className="flex-1 bg-white">
-      <View testID='main-view' className="flex-1 px-6">
+    <SafeAreaView
+      testID='safe-area-view'
+      style={{ flex: 1, backgroundColor: uiTokens.surface.default }}
+    >
+      <View testID='main-view' className="flex-1 px-6 items-center">
+        <View className="w-full flex-1" style={{ maxWidth: formMaxWidth }}>
         <View testID='header-view' className="w-full items-end py-4">
           <TouchableOpacity
             onPress={handleSkip}
@@ -85,101 +100,144 @@ export default function WelcomeScreen() {
             accessibilityRole="button"
             accessibilityLabel="Skip onboarding"
           >
-            <Text className="text-gray-500 text-base" testID="skip-button-text">Skip</Text>
+            <Text
+              style={{ color: uiTokens.text.muted, fontSize: 16 }}
+              testID="skip-button-text"
+            >
+              Skip
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Image Section */}
-        <View 
-        testID='image-view'
+        <View
+          testID='image-view'
           className="w-full items-center justify-center"
-          style={{ height: SCREEN_HEIGHT * 0.4 }}
+          style={{ height: heroHeight }}
         >
           <Image
             testID='image-view-image'
             source={{ uri: currentSlide.image }}
             className="w-full h-full"
             resizeMode="contain"
-            style={{ 
-              width: SCREEN_WIDTH * 0.8,
-              maxHeight: SCREEN_HEIGHT * 0.4 
+            style={{
+              width: heroWidth,
+              maxHeight: heroHeight
             }}
           />
         </View>
 
-        {/* Content Section */}
-        <View testID='content-view' className="flex-1 items-center justify-center mt-6 gap-4">
-          <Text testID='content-view-title' className="text-2xl font-bold text-gray-900 text-center px-4">
-            {currentSlide.title}
-          </Text>
-          <Text testID='content-view-subtitle' className="text-base text-gray-600 text-center px-4 max-w-[320px]">
-            {currentSlide.subtitle}
-          </Text>
-        </View>
+        <FadeIn
+          key={currentSlide.id}
+          delay={40}
+          duration={260}
+          translate={6}
+          className="flex-1"
+        >
+          <View
+            testID='content-view'
+            className="flex-1 items-center justify-center mt-6 gap-4"
+          >
+            <Text
+              testID='content-view-title'
+              style={{
+                color: uiTokens.text.primary,
+                fontSize: 24,
+                fontWeight: "700",
+                textAlign: "center",
+                paddingHorizontal: 16,
+              }}
+            >
+              {currentSlide.title}
+            </Text>
+            <Text
+              testID='content-view-subtitle'
+              style={{
+                color: uiTokens.text.secondary,
+                fontSize: 16,
+                textAlign: "center",
+                paddingHorizontal: 16,
+                maxWidth: isTablet ? 460 : 320,
+              }}
+            >
+              {currentSlide.subtitle}
+            </Text>
+          </View>
+        </FadeIn>
 
-        {/* Pagination Dots */}
         <View testID='pagination-dots-view' className="flex-row justify-center items-center gap-2 my-8">
           {ONBOARDING_DATA.map((_, index) => (
             <View
               testID={`pagination-dot-${index}`}
               key={index}
-              className={`h-2 rounded-full ${
-                index === currentIndex 
-                  ? 'w-6 bg-[#5B5BFD]' 
-                  : 'w-2 bg-gray-200'
-              }`}
+              style={{
+                height: 8,
+                width: index === currentIndex ? 24 : 8,
+                borderRadius: 4,
+                backgroundColor:
+                  index === currentIndex
+                    ? uiTokens.accent.default
+                    : uiTokens.border.subtle,
+              }}
             />
           ))}
         </View>
 
-        {/* Bottom Navigation */}
         <View testID='bottom-navigation-view' className="flex-row items-center justify-between pb-8">
-          {/* Back Button */}
           <TouchableOpacity
             testID='back-button'
             onPress={handleBack}
-            className={`p-4 ${currentIndex === 0 ? 'opacity-0' : 'bg-[#5B5BFD] rounded-full'}`}
+            className={
+              currentIndex === 0
+                ? "p-4 opacity-0"
+                : "p-4 rounded-full"
+            }
             disabled={currentIndex === 0}
             accessibilityRole="button"
             accessibilityLabel="Previous slide"
             accessibilityState={{ disabled: currentIndex === 0 }}
             style={{
-              shadowColor: '#5B5BFD',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 5
+              ...accentShadow,
+              backgroundColor:
+                currentIndex === 0 ? "transparent" : uiTokens.accent.default,
             }}
           >
-            <ChevronLeft 
-              size={24} 
-              color={currentIndex === 0 ? 'transparent' : 'white'}
+            <ChevronLeft
+              size={24}
+              color={currentIndex === 0 ? "transparent" : uiTokens.text.onAccent}
             />
           </TouchableOpacity>
 
-          {/* Next/Get Started Button */}
           <TouchableOpacity
             testID='next-button'
             onPress={handleNext}
-            className="bg-[#5B5BFD] rounded-full p-4"
+            className="rounded-full p-4"
             accessibilityRole="button"
             accessibilityLabel={isLastSlide ? "Get started" : "Next slide"}
             style={{
-              shadowColor: '#5B5BFD',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 5
+              ...accentShadow,
+              backgroundColor: uiTokens.accent.default,
             }}
           >
             {isLastSlide ? (
-              <Text className="text-white font-semibold px-4" testID='get-started-text'>
+              <Text
+                style={{
+                  color: uiTokens.text.onAccent,
+                  fontWeight: "600",
+                  paddingHorizontal: 16,
+                }}
+                testID='get-started-text'
+              >
                 Get Started
               </Text>
             ) : (
-              <ChevronRight size={24} color="white" testID='next-icon' />
+              <ChevronRight
+                size={24}
+                color={uiTokens.text.onAccent}
+                testID='next-icon'
+              />
             )}
           </TouchableOpacity>
+        </View>
         </View>
       </View>
     </SafeAreaView>

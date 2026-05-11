@@ -17,6 +17,7 @@
 import React, { ReactNode } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { ChevronLeft } from "lucide-react-native";
+import { uiTokens } from "@/constants/uiTokens";
 
 type Props = {
   title: string;
@@ -34,25 +35,60 @@ export default function ScreenHeader({
   testID,
 }: Props) {
   return (
-    <View className="bg-white px-4 py-4 rounded-b-2xl shadow-sm" testID={testID}>
+    <View
+      style={{
+        backgroundColor: uiTokens.surface.default,
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+        borderBottomLeftRadius: 16,
+        borderBottomRightRadius: 16,
+        shadowColor: "#0F172A",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+        elevation: 1,
+      }}
+      testID={testID}
+    >
       <View className="flex-row items-center justify-between">
         {onBack ? (
           <TouchableOpacity
             className="flex-row items-center"
             onPress={onBack}
             accessibilityLabel="Go back"
+            accessibilityRole="button"
             testID={testID ? `${testID}-back-button` : undefined}
           >
-            <ChevronLeft size={22} color="#4F46E5" />
-            <Text className="text-indigo-600 font-medium ml-1">Back</Text>
+            <ChevronLeft size={22} color={uiTokens.accent.default} />
+            <Text
+              style={{
+                color: uiTokens.accent.default,
+                fontWeight: "500",
+                marginLeft: 4,
+              }}
+            >
+              Back
+            </Text>
           </TouchableOpacity>
         ) : (
           <View />
         )}
-        <Text className="text-xl font-bold text-gray-800">{title}</Text>
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: "700",
+            color: uiTokens.text.primary,
+          }}
+        >
+          {title}
+        </Text>
         <View>{rightSlot ?? <View />}</View>
       </View>
-      {subtitle ? <Text className="text-gray-500 mt-2">{subtitle}</Text> : null}
+      {subtitle ? (
+        <Text style={{ color: uiTokens.text.muted, marginTop: 8 }}>
+          {subtitle}
+        </Text>
+      ) : null}
     </View>
   );
 }

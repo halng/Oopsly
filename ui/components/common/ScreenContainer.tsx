@@ -18,15 +18,17 @@ import React, { ReactNode } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { uiTokens } from "@/constants/uiTokens";
 
 type Props = {
   children: ReactNode;
   scrollable?: boolean;
   contentClassName?: string;
+  contentMaxWidth?: number;
   testID?: string;
 };
 
@@ -34,25 +36,35 @@ export default function ScreenContainer({
   children,
   scrollable = false,
   contentClassName = "",
+  contentMaxWidth,
   testID,
 }: Props) {
+  const frameStyle = contentMaxWidth
+    ? { width: "100%" as const, maxWidth: contentMaxWidth, alignSelf: "center" as const }
+    : undefined;
   const body = scrollable ? (
     <ScrollView
-      className={`flex-1 px-4 ${contentClassName}`}
-      contentContainerStyle={{ paddingBottom: 24 }}
+      className="flex-1"
+      contentContainerStyle={{ paddingBottom: 24, paddingHorizontal: 16 }}
       keyboardShouldPersistTaps="handled"
       testID={testID}
     >
-      {children}
+      <View className={contentClassName} style={frameStyle}>
+        {children}
+      </View>
     </ScrollView>
   ) : (
-    <View className={`flex-1 px-4 ${contentClassName}`} testID={testID}>
-      {children}
+    <View className="flex-1 px-4" testID={testID}>
+      <View className={`flex-1 ${contentClassName}`} style={frameStyle}>
+        {children}
+      </View>
     </View>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: uiTokens.surface.canvas }}
+    >
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}

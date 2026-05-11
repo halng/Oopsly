@@ -23,6 +23,8 @@ import { getProfile, updateSettings } from "@/services/ProfileService";
 import { Logger } from "@/utils";
 import ScreenContainer from "@/components/common/ScreenContainer";
 import ScreenHeader from "@/components/common/ScreenHeader";
+import { uiTokens } from "@/constants/uiTokens";
+import { MAX_READING_WIDTH } from "@/utils/responsiveLayout";
 
 const logger = Logger.extend("SettingsScreen");
 
@@ -62,7 +64,11 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScreenContainer scrollable testID="settings-screen">
+    <ScreenContainer
+      scrollable
+      contentMaxWidth={MAX_READING_WIDTH}
+      testID="settings-screen"
+    >
       <ScreenHeader
         title="Settings"
         subtitle="Theme and preferences"
@@ -71,37 +77,89 @@ export default function SettingsScreen() {
       />
       <View className="py-6">
         <View className="mb-6">
-          <Text className="text-lg font-semibold text-gray-700 mb-3">
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "600",
+              color: uiTokens.text.secondary,
+              marginBottom: 12,
+            }}
+          >
             Appearance
           </Text>
-          <View className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <View className="flex-row items-center p-4 border-b border-gray-100">
-              <Palette size={20} color="#4F46E5" />
-              <Text className="text-gray-800 font-medium ml-3">Theme</Text>
-            </View>
-            {THEME_OPTIONS.map((opt) => (
-              <TouchableOpacity
-                key={opt.id}
-                className={`flex-row items-center justify-between p-4 ${
-                  opt.id !== "system" ? "border-b border-gray-100" : ""
-                } ${theme === opt.id ? "bg-indigo-50" : ""}`}
-                onPress={() => handleThemeChange(opt.id)}
-                testID={`theme-option-${opt.id}`}
+          <View
+            style={{
+              backgroundColor: uiTokens.surface.default,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: uiTokens.border.subtle,
+              overflow: "hidden",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: uiTokens.border.subtle,
+              }}
+            >
+              <Palette size={20} color={uiTokens.accent.default} />
+              <Text
+                style={{
+                  color: uiTokens.text.primary,
+                  fontWeight: "500",
+                  marginLeft: 12,
+                }}
               >
-                <Text
-                  className={
-                    theme === opt.id
-                      ? "text-indigo-600 font-medium"
-                      : "text-gray-800"
-                  }
+                Theme
+              </Text>
+            </View>
+            {THEME_OPTIONS.map((opt, idx) => {
+              const isSelected = theme === opt.id;
+              return (
+                <TouchableOpacity
+                  key={opt.id}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: 16,
+                    borderBottomWidth: idx !== THEME_OPTIONS.length - 1 ? 1 : 0,
+                    borderBottomColor: uiTokens.border.subtle,
+                    backgroundColor: isSelected
+                      ? uiTokens.accent.tint
+                      : "transparent",
+                  }}
+                  onPress={() => handleThemeChange(opt.id)}
+                  testID={`theme-option-${opt.id}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected }}
                 >
-                  {opt.label}
-                </Text>
-                {theme === opt.id && (
-                  <View className="w-5 h-5 rounded-full bg-indigo-500" />
-                )}
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={{
+                      color: isSelected
+                        ? uiTokens.accent.onTint
+                        : uiTokens.text.primary,
+                      fontWeight: isSelected ? "600" : "500",
+                    }}
+                  >
+                    {opt.label}
+                  </Text>
+                  {isSelected && (
+                    <View
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 999,
+                        backgroundColor: uiTokens.accent.default,
+                      }}
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       </View>

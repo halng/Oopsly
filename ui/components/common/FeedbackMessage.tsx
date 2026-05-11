@@ -16,8 +16,9 @@
 
 import React from "react";
 import { Text, View } from "react-native";
+import { uiTokens } from "@/constants/uiTokens";
 
-type Tone = "error" | "info" | "success";
+type Tone = "error" | "info" | "success" | "warning";
 
 type Props = {
   message: string;
@@ -25,10 +26,27 @@ type Props = {
   testID?: string;
 };
 
-const toneClassMap: Record<Tone, string> = {
-  error: "bg-red-50 border-red-200 text-red-700",
-  info: "bg-blue-50 border-blue-200 text-blue-700",
-  success: "bg-green-50 border-green-200 text-green-700",
+const tonePalette: Record<Tone, { bg: string; border: string; text: string }> = {
+  error: {
+    bg: uiTokens.state.error.bg,
+    border: uiTokens.state.error.border,
+    text: uiTokens.state.error.text,
+  },
+  info: {
+    bg: uiTokens.state.info.bg,
+    border: uiTokens.state.info.border,
+    text: uiTokens.state.info.text,
+  },
+  success: {
+    bg: uiTokens.state.success.bg,
+    border: uiTokens.state.success.border,
+    text: uiTokens.state.success.text,
+  },
+  warning: {
+    bg: uiTokens.state.warning.bg,
+    border: uiTokens.state.warning.border,
+    text: uiTokens.state.warning.text,
+  },
 };
 
 export default function FeedbackMessage({
@@ -36,9 +54,19 @@ export default function FeedbackMessage({
   tone = "error",
   testID,
 }: Props) {
+  const palette = tonePalette[tone];
   return (
-    <View className={`border rounded-xl p-3 ${toneClassMap[tone]}`} testID={testID}>
-      <Text className="font-medium">{message}</Text>
+    <View
+      style={{
+        backgroundColor: palette.bg,
+        borderColor: palette.border,
+        borderWidth: 1,
+        borderRadius: 12,
+        padding: 12,
+      }}
+      testID={testID}
+    >
+      <Text style={{ color: palette.text, fontWeight: "500" }}>{message}</Text>
     </View>
   );
 }

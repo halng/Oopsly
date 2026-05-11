@@ -17,7 +17,9 @@
 import React from "react";
 import { Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
+import ScreenContainer from "@/components/common/ScreenContainer";
 import FlashcardReviewScreen from "@/screen/FlashCardReviewScreen";
+import { MAX_FORM_WIDTH } from "@/utils/responsiveLayout";
 
 export default function TakeTestScreen() {
   const params = useLocalSearchParams<{
@@ -29,12 +31,19 @@ export default function TakeTestScreen() {
 
   if (!testSuiteId || !shelfId) {
     return (
-      <View className="flex-1 bg-white items-center justify-center px-6" testID="take-test-missing-params">
-        <Text className="text-lg font-semibold text-gray-900">Missing test data</Text>
-        <Text className="text-gray-600 mt-2 text-center">
-          Please go back and start the test again.
-        </Text>
-      </View>
+      <ScreenContainer
+        contentMaxWidth={MAX_FORM_WIDTH}
+        testID="take-test-missing-params"
+      >
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-lg font-semibold text-gray-900">
+            Missing test data
+          </Text>
+          <Text className="text-gray-600 mt-2 text-center">
+            Please go back and start the test again.
+          </Text>
+        </View>
+      </ScreenContainer>
     );
   }
 

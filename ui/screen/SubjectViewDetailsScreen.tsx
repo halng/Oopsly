@@ -8,6 +8,7 @@ import {
   Modal,
   Pressable,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   ChevronLeft,
@@ -26,6 +27,8 @@ import {
   deleteCard,
 } from "@/services/CardService";
 import { Logger } from "@/utils";
+import { uiTokens } from "@/constants/uiTokens";
+import { useResponsiveLayout } from "@/utils/responsiveLayout";
 import { SubjectStats } from "@/types/Subject";
 import { CardCreateRequest, CardRes } from "@/types/Card";
 import {
@@ -41,6 +44,12 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
 
   const router = useRouter();
   const params = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
+  const { contentMaxWidth, sheetMaxWidth } = useResponsiveLayout();
+  const contentFrameStyle = { width: "100%" as const, maxWidth: contentMaxWidth, alignSelf: "center" as const };
+  const sheetFrameStyle = sheetMaxWidth
+    ? { width: "100%" as const, maxWidth: sheetMaxWidth, alignSelf: "center" as const }
+    : undefined;
 
   const [isEditing, setIsEditing] = useState(false);
   const [subjectName, setSubjectName] = useState("");
@@ -268,7 +277,12 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
   return (
     <View className="flex-1 bg-gray-50" testID="subject-detail-screen">
       {/* Header */}
-      <View className="bg-white pt-12 pb-4 px-4 shadow-sm" testID="header-container">
+      <View
+        className="bg-white pb-4 px-4 shadow-sm items-center"
+        style={{ paddingTop: Math.max(insets.top, 12) }}
+        testID="header-container"
+      >
+        <View className="w-full" style={contentFrameStyle}>
         <View className="flex-row items-center justify-between" testID="header-top-row">
           <View className="flex-row items-center" testID="header-left">
             <TouchableOpacity
@@ -276,7 +290,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
               onPress={() => router.back()}
               testID="back-button"
             >
-              <ChevronLeft size={24} color="#4B5563" />
+              <ChevronLeft size={24} color={uiTokens.text.secondary} />
             </TouchableOpacity>
 
             {isEditing ? (
@@ -297,9 +311,9 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
 
           <TouchableOpacity className="p-2" onPress={toggleEditMode} testID="edit-toggle-button">
             {isEditing ? (
-              <Save size={20} color="#4F46E5" />
+              <Save size={20} color={uiTokens.accent.default} />
             ) : (
-              <Edit3 size={20} color="#4B5563" />
+              <Edit3 size={20} color={uiTokens.text.secondary} />
             )}
           </TouchableOpacity>
         </View>
@@ -320,11 +334,16 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
             />
           </View>
         </View>
+        </View>
       </View>
 
       {/* Main Actions */}
       
-      <View className="px-4 mt-6" testID="main-actions-container">
+      <View
+        className="px-4 mt-6"
+        style={contentFrameStyle}
+        testID="main-actions-container"
+      >
         {!isEditing && 
         <TouchableOpacity
           className="bg-indigo-600 rounded-xl py-5 mb-4 items-center shadow-sm"
@@ -353,7 +372,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
               onPress={openAddCardModal}
               testID="add-card-button"
             >
-              <Plus size={20} color="#4B5563" />
+              <Plus size={20} color={uiTokens.text.secondary} />
               <Text className="text-gray-800 font-bold ml-2" testID="add-card-button-text">{cardsData.length === 0 ? "Add Your First Card" : "Add Card"}</Text>
             </TouchableOpacity>
 
@@ -362,7 +381,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
               onPress={() => setShowSettingsModal(true)}
               testID="settings-button"
             >
-              <Settings size={20} color="#4B5563" />
+              <Settings size={20} color={uiTokens.text.secondary} />
               <Text className="text-gray-800 font-bold ml-2" testID="settings-button-text">Settings</Text>
             </TouchableOpacity>
           </View>
@@ -372,7 +391,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
               onPress={openDeleteSubjectModal}
               testID="delete-subject-button"
             >
-              <Trash2 size={20} color="#EF4444" />
+              <Trash2 size={20} color={uiTokens.state.error.solid} />
               <Text className="text-red-600 font-bold ml-2" testID="delete-subject-button-text">
                 Delete Subject
               </Text>
@@ -382,7 +401,11 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
       </View>
 
       {/* Card List */}
-      <View className="mt-6 px-4 flex-1" testID="card-list-container">
+      <View
+        className="mt-6 px-4 flex-1"
+        style={contentFrameStyle}
+        testID="card-list-container"
+      >
         <View className="flex-row justify-between items-center mb-3" testID="card-list-header">
           <Text className="text-gray-700 font-bold" testID="card-list-title">Cards in this subject</Text>
           <Text className="text-gray-500 text-sm" testID="card-list-count">
@@ -392,7 +415,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
 
         {cardsData.length === 0 ? (
           <View className="flex-1 items-center justify-center py-12" testID="empty-cards-container">
-            <BookOpen size={48} color="#9CA3AF" />
+            <BookOpen size={48} color={uiTokens.text.muted} />
             <Text className="text-gray-500 mt-4 text-center" testID="empty-cards-text">
               No cards in this subject yet
             </Text>
@@ -421,14 +444,14 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
                           onPress={() => openEditCardModal(item)}
                           testID={`edit-card-button-${item.id}`}
                         >
-                          <Edit3 size={18} color="#4B5563" />
+                          <Edit3 size={18} color={uiTokens.text.secondary} />
                         </TouchableOpacity>
                         <TouchableOpacity
                           className="p-2"
                           onPress={() => deleteExistCard(item.id)}
                           testID={`delete-card-button-${item.id}`}
                         >
-                          <Trash2 size={18} color="#EF4444" />
+                          <Trash2 size={18} color={uiTokens.state.error.solid} />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -438,7 +461,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
                         onPress={openAddCardModal}
                         testID="add-another-card-button"
                       >
-                        <Plus size={16} color="#4F46E5" />
+                        <Plus size={16} color={uiTokens.accent.default} />
                         <Text className="text-indigo-600 font-medium ml-1" testID="add-another-card-text">
                           Add Another Card
                         </Text>
@@ -477,6 +500,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
         >
           <Pressable
             className="mt-auto bg-white rounded-t-2xl p-6 pb-8"
+            style={sheetFrameStyle}
             onPress={(e) => e.stopPropagation()}
             testID="modal-content"
           >
@@ -489,7 +513,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
                 onPress={() => setShowAddCardModal(false)}
                 testID="modal-close-button"
               >
-                <X size={24} color="#9CA3AF" />
+                <X size={24} color={uiTokens.text.muted} />
               </TouchableOpacity>
             </View>
 
@@ -570,6 +594,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
         >
           <Pressable
             className="mt-auto bg-white rounded-t-2xl p-6 pb-8"
+            style={sheetFrameStyle}
             onPress={(e) => e.stopPropagation()}
             testID="settings-modal-content"
           >
@@ -582,7 +607,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
                 onPress={() => setShowSettingsModal(false)}
                 testID="settings-modal-close-button"
               >
-                <X size={24} color="#9CA3AF" />
+                <X size={24} color={uiTokens.text.muted} />
               </TouchableOpacity>
             </View>
 
@@ -692,7 +717,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
                 }}
                 className="p-1"
               >
-                <X size={24} color="#6B7280" />
+                <X size={24} color={uiTokens.text.muted} />
               </TouchableOpacity>
             </View>
             <View className="px-6 py-4">
@@ -708,7 +733,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
               <TextInput
                 className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200 mt-2 mb-4"
                 placeholder="Type confirm to acknowledge"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={uiTokens.text.muted}
                 value={deleteSubjectConfirmText}
                 onChangeText={setDeleteSubjectConfirmText}
               />

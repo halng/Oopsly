@@ -30,6 +30,7 @@ import {
   Appearance,
   Platform,
 } from "react-native";
+import { uiTokens } from "@/constants/uiTokens";
 
 const logger = Logger.extend("RootLayout");
 
@@ -205,16 +206,21 @@ export default function RootLayout() {
   if (!isReady) {
     return (
       <View
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: uiTokens.surface.canvas,
+        }}
         testID="auth-loading-screen"
       >
         <ActivityIndicator
           size="large"
-          color="#5B5BFD"
+          color={uiTokens.accent.default}
           testID="auth-loading-spinner"
         />
         <Text
-          style={{ marginTop: 16, color: "#6B7280" }}
+          style={{ marginTop: 16, color: uiTokens.text.muted }}
           testID="auth-loading-text"
         >
           Loading...
@@ -226,12 +232,33 @@ export default function RootLayout() {
   logger.debug("RootLayout rendered, isAuthenticated:", isAuthenticated);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "fade",
+        animationDuration: 220,
+        gestureEnabled: true,
+      }}
+    >
       <Stack.Protected guard={isAuthenticated}>
-        <Stack.Screen name="(user)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="(user)"
+          options={{
+            headerShown: false,
+            animation: "slide_from_right",
+          }}
+        />
       </Stack.Protected>
 
       <Stack.Screen name="index" />
+      <Stack.Screen
+        name="onboard"
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="verification"
+        options={{ animation: "slide_from_right" }}
+      />
     </Stack>
   );
 }

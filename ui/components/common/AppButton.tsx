@@ -15,7 +15,9 @@
  */
 
 import React from "react";
-import { ActivityIndicator, Text, TouchableOpacity } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
+import { uiTokens } from "@/constants/uiTokens";
+import PressableScale from "./PressableScale";
 
 type Variant = "primary" | "secondary" | "danger";
 
@@ -29,16 +31,22 @@ type Props = {
   accessibilityLabel?: string;
 };
 
-const variantStyles: Record<Variant, string> = {
-  primary: "bg-indigo-600",
-  secondary: "bg-gray-200",
-  danger: "bg-red-500",
+const variantBackgrounds: Record<Variant, string> = {
+  primary: uiTokens.accent.default,
+  secondary: uiTokens.surface.subtle,
+  danger: uiTokens.state.error.solid,
 };
 
-const variantTextStyles: Record<Variant, string> = {
-  primary: "text-white",
-  secondary: "text-gray-800",
-  danger: "text-white",
+const variantBackgroundsDisabled: Record<Variant, string> = {
+  primary: uiTokens.accent.disabled,
+  secondary: uiTokens.surface.subtle,
+  danger: uiTokens.state.error.border,
+};
+
+const variantTextColors: Record<Variant, string> = {
+  primary: uiTokens.text.onAccent,
+  secondary: uiTokens.text.primary,
+  danger: uiTokens.text.onAccent,
 };
 
 export default function AppButton({
@@ -51,29 +59,42 @@ export default function AppButton({
   accessibilityLabel,
 }: Props) {
   const isDisabled = disabled || loading;
+  const background = isDisabled
+    ? variantBackgroundsDisabled[variant]
+    : variantBackgrounds[variant];
+  const textColor = variantTextColors[variant];
 
   return (
-    <TouchableOpacity
+    <PressableScale
       onPress={onPress}
       disabled={isDisabled}
-      className={`rounded-xl py-4 items-center justify-center ${
-        variantStyles[variant]
-      } ${isDisabled ? "opacity-60" : "opacity-100"}`}
+      pressedScale={0.97}
       accessibilityRole="button"
-      accessibilityState={{ disabled: isDisabled, busy: loading }}
       accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
       testID={testID}
+      style={{
+        backgroundColor: background,
+        borderRadius: 14,
+        minHeight: 52,
+        opacity: isDisabled ? 0.85 : 1,
+      }}
     >
-      {loading ? (
-        <ActivityIndicator
-          color={variant === "secondary" ? "#111827" : "#FFFFFF"}
-          testID={testID ? `${testID}-loading` : undefined}
-        />
-      ) : (
-        <Text className={`font-semibold text-base ${variantTextStyles[variant]}`}>
-          {label}
-        </Text>
-      )}
-    </TouchableOpacity>
+      <View className="py-4 items-center justify-center">
+        {loading ? (
+          <ActivityIndicator
+            color={textColor}
+            testID={testID ? `${testID}-loading` : undefined}
+          />
+        ) : (
+          <Text
+            style={{ color: textColor, fontWeight: "600", fontSize: 16 }}
+            testID={testID ? `${testID}-text` : undefined}
+          >
+            {label}
+          </Text>
+        )}
+      </View>
+    </PressableScale>
   );
 }
