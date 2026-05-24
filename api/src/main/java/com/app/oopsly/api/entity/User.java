@@ -17,6 +17,7 @@
 package com.app.oopsly.api.entity;
 
 import jakarta.persistence.*;
+import java.time.Instant;
 import java.util.List;
 import lombok.*;
 import org.springframework.data.relational.core.mapping.Table;
@@ -46,6 +47,11 @@ public class User extends Audit {
     private String bio;
 
     @Column private Integer age;
+
+    @Builder.Default private Integer dailyStreak = 0;
+    @Builder.Default private Integer totalXp = 0;
+
+    private Instant lastReviewedAt;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ShelfEntity> shelves;

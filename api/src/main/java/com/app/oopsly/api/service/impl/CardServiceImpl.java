@@ -31,6 +31,7 @@ import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.repository.TestSuiteRepository;
 import com.app.oopsly.api.service.CardService;
 import com.app.oopsly.api.service.UserService;
+import com.app.oopsly.api.util.FsrsAlgorithm;
 import com.app.oopsly.api.util.StringUtils;
 import com.app.oopsly.api.viewmodel.*;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -181,10 +182,10 @@ public class CardServiceImpl implements CardService {
     public Instant calculateNextPracticeTime(DifficultyLevel difficultyLevel) {
         Instant now = Instant.now();
         return switch (difficultyLevel) {
-            case AGAIN -> now.plus(1, ChronoUnit.MINUTES);
-            case HARD -> now.plus(10, ChronoUnit.MINUTES);
-            case GOOD -> now.plus(1, ChronoUnit.DAYS);
-            case EASY -> now.plus(4, ChronoUnit.DAYS);
+            case AGAIN -> now.plus(10, ChronoUnit.MINUTES);
+            case HARD -> now.plus(1, ChronoUnit.DAYS);
+            case GOOD -> now.plus(3, ChronoUnit.DAYS);
+            case EASY -> now.plus(15, ChronoUnit.DAYS);
         };
     }
 
@@ -236,8 +237,28 @@ public class CardServiceImpl implements CardService {
                                                 subject, item.cardId(), item.newLevel()))
                         .collect(Collectors.toList());
         cardRepository.saveAll(updatedList);
+
+        userService.updateUserProgress(10 * updatedList.size());
         log.info("Successfully updated difficulty for all cards in subject: {}", subjectId);
         return ApiRes.success("Updated successfully");
+    }
+
+    @Override
+    @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "getDueCardsFallback")
+    public ApiRes getDueCards(UUID shelfId, UUID subjectId, int limit) {
+        log.info(
+                "Getting due cards for subject: {} in shelve: {} with limit: {}",
+                subjectId,
+                shelfId,
+                limit);
+        SubjectEntity subject = getSubjectForCurrentUser(shelfId, subjectId);
+        List<CardEntity> dueCards =
+                cardRepository
+                        .findDueBySubjectAndLimit(subject, Instant.now(), PageRequest.of(0, limit))
+                        .getContent();
+        List<CardRes> result = dueCards.stream().map(this::toCardRes).collect(Collectors.toList());
+        log.info("Successfully retrieved {} due cards for subject: {}", result.size(), subjectId);
+        return ApiRes.success("Fetched successfully", result);
     }
 
     private CardEntity updateSingleCardDifficulty(
@@ -249,12 +270,42 @@ public class CardServiceImpl implements CardService {
                                 () -> new NotFoundException("Card not found with id: " + cardId));
 
         DifficultyLevel level = DifficultyLevel.fromString(difficultyLevel);
+        int grade = toFsrsGrade(level);
+
+        FsrsAlgorithm.CardState cardState =
+                new FsrsAlgorithm.CardState(
+                        existingCard.getFsrsStability(),
+                        existingCard.getFsrsDifficulty(),
+                        existingCard.getFsrsIntervalDays(),
+                        existingCard.getFsrsRepetitions());
+
+        FsrsAlgorithm.ScheduleResult result = FsrsAlgorithm.schedule(cardState, grade);
+
+        Instant now = Instant.now();
+        Instant nextPractice =
+                result.intervalDays() == 0
+                        ? now.plus(10, ChronoUnit.MINUTES)
+                        : now.plus(result.intervalDays(), ChronoUnit.DAYS);
+
         existingCard.setDifficultyLevel(level);
-        Instant nextPracticeTime = calculateNextPracticeTime(level);
-        existingCard.setNextPracticeTime(nextPracticeTime);
+        existingCard.setFsrsStability(result.stability());
+        existingCard.setFsrsDifficulty(result.difficulty());
+        existingCard.setFsrsIntervalDays(result.intervalDays());
+        existingCard.setFsrsRepetitions(result.repetitions());
+        existingCard.setLastReviewedAt(now);
+        existingCard.setNextPracticeTime(nextPractice);
         existingCard.setNumberOfPractice(existingCard.getNumberOfPractice() + 1);
 
         return existingCard;
+    }
+
+    private int toFsrsGrade(DifficultyLevel level) {
+        return switch (level) {
+            case AGAIN -> 1;
+            case HARD -> 2;
+            case GOOD -> 3;
+            case EASY -> 4;
+        };
     }
 
     private CardEntity toEntityFromItem(CardItemReq item) {
@@ -275,7 +326,11 @@ public class CardServiceImpl implements CardService {
                 entity.getBack(),
                 entity.getDifficultyLevel(),
                 entity.getNextPracticeTime(),
-                entity.getNumberOfPractice());
+                entity.getNumberOfPractice(),
+                entity.getFsrsStability(),
+                entity.getFsrsDifficulty(),
+                entity.getFsrsIntervalDays(),
+                entity.getFsrsRepetitions());
     }
 
     private SubjectEntity getSubjectForCurrentUser(UUID shelfId, UUID subjectId) {
@@ -367,6 +422,16 @@ public class CardServiceImpl implements CardService {
                 shelfId,
                 subjectId,
                 cardId);
+        throw unwrapCardException(t);
+    }
+
+    // Fallback method for getDueCards
+    public ApiRes getDueCardsFallback(UUID shelfId, UUID subjectId, int limit, Throwable t) {
+        log.error(
+                "Card service unavailable during getDueCards: {}, shelfId={}, subjectId={}",
+                t.getMessage(),
+                shelfId,
+                subjectId);
         throw unwrapCardException(t);
     }
 

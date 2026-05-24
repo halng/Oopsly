@@ -24,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -35,4 +36,13 @@ public interface SubjectRepository extends JpaRepository<SubjectEntity, UUID> {
 
     @Query("SELECT c FROM SubjectEntity c WHERE c.shelf = ?1 AND c.deleted = false")
     Page<SubjectEntity> findAllByShelve(ShelfEntity shelve, Pageable pageable);
+
+    @Query(
+            "SELECT s FROM SubjectEntity s WHERE s.isPublic = true AND s.deleted = false AND"
+                    + " (LOWER(s.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(s.description)"
+                    + " LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<SubjectEntity> findPublicByQuery(@Param("query") String query, Pageable pageable);
+
+    @Query("SELECT s FROM SubjectEntity s WHERE s.isPublic = true AND s.deleted = false")
+    Page<SubjectEntity> findAllPublic(Pageable pageable);
 }

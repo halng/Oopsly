@@ -149,14 +149,14 @@ public class QuestionController {
             value = {
                 @ApiResponse(
                         responseCode = "200",
-                        description = "Question deleted successfully",
+                        description = "Question soft-deleted successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(
                         responseCode = "404",
                         description = "Question or test suite not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
-    @DeleteMapping("/{id}")
+    @PatchMapping("/{id}")
     ApiRes deleteById(
             @Parameter(
                             description = "Test Suite ID",

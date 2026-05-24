@@ -304,6 +304,35 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                 .orElseThrow(() -> new NotFoundException("Shelve not found with id: " + deckId));
     }
 
+    @Override
+    public ApiRes autoGenerate(UUID shelveId, UUID subjectId, int numQuestions) {
+        log.info(
+                "Auto-generating test suite for subject: {} under shelve: {} with {} questions",
+                subjectId,
+                shelveId,
+                numQuestions);
+        ShelfEntity shelve = findShelveByIdAndUser(shelveId);
+        SubjectEntity subject =
+                subjectRepository
+                        .findByIdAndShelve(subjectId, shelve)
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                "Subject not found with id: " + subjectId));
+
+        TestSuiteEntity testSuite =
+                TestSuiteEntity.builder()
+                        .title("Auto: " + subject.getName())
+                        .isActive(true)
+                        .shelf(shelve)
+                        .build();
+        testSuite.setSubjects(List.of(subject));
+        TestSuiteEntity saved = testSuiteRepository.save(testSuite);
+
+        log.info("Auto-generated test suite: {} for subject: {}", saved.getId(), subjectId);
+        return ApiRes.created("Test suite auto-generated successfully", this.toViewModel(saved));
+    }
+
     // Fallback methods for Circuit Breaker
     public ApiRes createFallback(UUID deckId, TestSuiteReq request, Throwable t) {
         log.error("Test suite service unavailable during create: {}", t.getMessage());

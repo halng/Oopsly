@@ -14,20 +14,31 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.viewmodel;
+package com.app.oopsly.api.entity;
 
-import com.app.oopsly.api.entity.DifficultyLevel;
-import java.time.Instant;
-import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import java.util.List;
+import lombok.*;
 
-public record CardRes(
-        UUID id,
-        String front,
-        String back,
-        DifficultyLevel difficultyLevel,
-        Instant nextPracticeTime,
-        Integer numberOfPractice,
-        Double fsrsStability,
-        Double fsrsDifficulty,
-        Integer fsrsIntervalDays,
-        Integer fsrsRepetitions) {}
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "tags")
+@Entity
+public class TagEntity extends Audit {
+
+    @Column(nullable = false, length = 50)
+    private String name;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "tags")
+    private List<CardEntity> cards;
+}

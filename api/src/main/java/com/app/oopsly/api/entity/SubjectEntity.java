@@ -36,6 +36,7 @@ public class SubjectEntity extends Audit {
     @Builder.Default private Integer dailyLimit = 20;
     @Builder.Default private Integer newCardsPerDay = 5;
     @Builder.Default private Double interval = 1.0;
+    @Builder.Default private Boolean isPublic = false;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
@@ -48,4 +49,8 @@ public class SubjectEntity extends Audit {
 
     @ManyToMany(mappedBy = "subjects")
     private List<TestSuiteEntity> testSuites;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_subject_id")
+    private SubjectEntity parentSubject;
 }

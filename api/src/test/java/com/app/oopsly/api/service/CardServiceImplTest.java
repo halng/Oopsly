@@ -18,6 +18,7 @@ package com.app.oopsly.api.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -34,6 +35,7 @@ import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.ShelfRepository;
 import com.app.oopsly.api.repository.SubjectRepository;
+import com.app.oopsly.api.repository.TestSuiteRepository;
 import com.app.oopsly.api.service.impl.CardServiceImpl;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.CardItemReq;
@@ -64,6 +66,8 @@ class CardServiceImplTest {
     @Mock private SubjectRepository subjectRepository;
 
     @Mock private ShelfRepository shelfRepository;
+
+    @Mock private TestSuiteRepository testSuiteRepository;
 
     @Mock private UserService userService;
 
@@ -167,6 +171,7 @@ class CardServiceImplTest {
         when(cardRepository.findByIdAndSubject(cardId, subject))
                 .thenReturn(Optional.of(existingCard));
         when(cardRepository.saveAll(any())).thenReturn(List.of(existingCard));
+        doNothing().when(userService).updateUserProgress(anyInt());
 
         ApiRes result = cardService.updateDifficulty(shelveId, subjectId, updateDifficultyReq);
 
@@ -397,7 +402,7 @@ class CardServiceImplTest {
     void calculateNextPracticeTime_again_returnsOneMinuteLater() {
         Instant before = Instant.now();
         Instant result = cardService.calculateNextPracticeTime(DifficultyLevel.AGAIN);
-        Instant expected = before.plus(1, ChronoUnit.MINUTES);
+        Instant expected = before.plus(10, ChronoUnit.MINUTES);
 
         assertTrue(result.isAfter(before));
         assertTrue(result.isBefore(expected.plus(1, ChronoUnit.SECONDS)));
@@ -407,7 +412,7 @@ class CardServiceImplTest {
     void calculateNextPracticeTime_hard_returnsTenMinutesLater() {
         Instant before = Instant.now();
         Instant result = cardService.calculateNextPracticeTime(DifficultyLevel.HARD);
-        Instant expected = before.plus(10, ChronoUnit.MINUTES);
+        Instant expected = before.plus(1, ChronoUnit.DAYS);
 
         assertTrue(result.isAfter(before));
         assertTrue(result.isBefore(expected.plus(1, ChronoUnit.SECONDS)));
@@ -417,7 +422,7 @@ class CardServiceImplTest {
     void calculateNextPracticeTime_good_returnsOneDayLater() {
         Instant before = Instant.now();
         Instant result = cardService.calculateNextPracticeTime(DifficultyLevel.GOOD);
-        Instant expected = before.plus(1, ChronoUnit.DAYS);
+        Instant expected = before.plus(3, ChronoUnit.DAYS);
 
         assertTrue(result.isAfter(before));
         assertTrue(result.isBefore(expected.plus(1, ChronoUnit.SECONDS)));
@@ -427,7 +432,7 @@ class CardServiceImplTest {
     void calculateNextPracticeTime_easy_returnsFourDaysLater() {
         Instant before = Instant.now();
         Instant result = cardService.calculateNextPracticeTime(DifficultyLevel.EASY);
-        Instant expected = before.plus(4, ChronoUnit.DAYS);
+        Instant expected = before.plus(15, ChronoUnit.DAYS);
 
         assertTrue(result.isAfter(before));
         assertTrue(result.isBefore(expected.plus(1, ChronoUnit.SECONDS)));
@@ -450,6 +455,7 @@ class CardServiceImplTest {
             when(cardRepository.findByIdAndSubject(cardId, subject))
                     .thenReturn(Optional.of(existingCard));
             when(cardRepository.saveAll(any())).thenReturn(List.of(existingCard));
+            doNothing().when(userService).updateUserProgress(anyInt());
 
             ApiRes result =
                     cardService.updateDifficulty(

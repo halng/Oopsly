@@ -14,20 +14,21 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.viewmodel;
+import { ApiResponse } from '@/types/ApiRes';
+import { apiClient } from '.';
 
-import com.app.oopsly.api.entity.DifficultyLevel;
-import java.time.Instant;
-import java.util.UUID;
+export interface UserStats {
+  dailyStreak: number;
+  totalXp: number;
+  cardsReviewedToday: number;
+  totalCards: number;
+  dueCards: number;
+  retentionRate: number;
+}
 
-public record CardRes(
-        UUID id,
-        String front,
-        String back,
-        DifficultyLevel difficultyLevel,
-        Instant nextPracticeTime,
-        Integer numberOfPractice,
-        Double fsrsStability,
-        Double fsrsDifficulty,
-        Integer fsrsIntervalDays,
-        Integer fsrsRepetitions) {}
+const getUserStats = async (): Promise<ApiResponse<UserStats>> => {
+  const response = await apiClient.get('/users/me/stats');
+  return response.data;
+};
+
+export { getUserStats };

@@ -37,6 +37,9 @@ import com.app.oopsly.api.viewmodel.UpdateProfileReq;
 import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
 import com.app.oopsly.api.viewmodel.UserProfileRes;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -310,6 +313,39 @@ public class UserServiceImpl implements UserService {
                         .user(user)
                         .build();
         return settingRepository.save(setting);
+    }
+
+    @Override
+    @Transactional
+    public void updateUserProgress(int xpGained) {
+        UUID userId = UUID.fromString(getCurrentUserId());
+        User user =
+                userRepository
+                        .findByIdWithLock(userId)
+                        .orElseThrow(() -> new UnauthenticatedException("User not found"));
+        Instant now = Instant.now();
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+
+        int currentStreak = user.getDailyStreak() != null ? user.getDailyStreak() : 0;
+        int currentXp = user.getTotalXp() != null ? user.getTotalXp() : 0;
+
+        if (user.getLastReviewedAt() != null) {
+            LocalDate lastReviewDate =
+                    user.getLastReviewedAt().atZone(ZoneOffset.UTC).toLocalDate();
+            if (lastReviewDate.equals(today.minusDays(1))) {
+                currentStreak += 1;
+            } else if (!lastReviewDate.equals(today)) {
+                currentStreak = 1;
+            }
+        } else {
+            currentStreak = 1;
+        }
+
+        user.setTotalXp(currentXp + xpGained);
+        user.setDailyStreak(currentStreak);
+        user.setLastReviewedAt(now);
+        userRepository.save(user);
+        log.info("Updated user progress: xp={}, streak={}", currentXp + xpGained, currentStreak);
     }
 
     private SettingEntity ensureSettings(User user) {

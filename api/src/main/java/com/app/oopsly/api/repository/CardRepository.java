@@ -53,4 +53,18 @@ public interface CardRepository extends JpaRepository<CardEntity, UUID> {
                     + "c.nextPracticeTime <= :now")
     List<CardEntity> findDueBySubjects(
             @Param("subjects") List<SubjectEntity> subjects, @Param("now") Instant now);
+
+    @Query(
+            "SELECT c FROM cards c WHERE c.subject = :subject AND c.deleted = false AND"
+                    + " c.nextPracticeTime <= :now")
+    Page<CardEntity> findDueBySubjectAndLimit(
+            @Param("subject") SubjectEntity subject, @Param("now") Instant now, Pageable pageable);
+
+    @Query(
+            "SELECT COUNT(c) FROM cards c WHERE c.subject = :subject AND c.deleted = false"
+                    + " AND c.lastReviewedAt >= :startOfDay AND c.lastReviewedAt < :endOfDay")
+    long countReviewedToday(
+            @Param("subject") SubjectEntity subject,
+            @Param("startOfDay") Instant startOfDay,
+            @Param("endOfDay") Instant endOfDay);
 }

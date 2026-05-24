@@ -140,12 +140,12 @@ public class TestSuiteController {
             value = {
                 @ApiResponse(
                         responseCode = "200",
-                        description = "Test suite deleted successfully",
+                        description = "Test suite soft-deleted successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(responseCode = "404", description = "Test suite or shelve not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
-    @DeleteMapping("/{id}")
+    @PatchMapping("/{id}")
     ApiRes deleteById(
             @Parameter(
                             description = "Shelve ID",
@@ -183,6 +183,33 @@ public class TestSuiteController {
                     @PathVariable
                     UUID shelveId) {
         return this.service.getAllByShelve(shelveId);
+    }
+
+    @Operation(
+            summary = "Auto-generate test suite",
+            description = "Auto-generates a test suite from cards in a given subject")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "201",
+                        description = "Test suite auto-generated successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "404", description = "Subject or shelve not found"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
+    @PostMapping("/auto-generate")
+    ApiRes autoGenerate(
+            @Parameter(
+                            description = "Shelve ID",
+                            required = true,
+                            example = "123e4567-e89b-12d3-a456-426614174000")
+                    @PathVariable
+                    UUID shelveId,
+            @Parameter(description = "Subject ID", required = true) @RequestParam UUID subjectId,
+            @Parameter(description = "Number of questions", example = "10")
+                    @RequestParam(defaultValue = "10")
+                    int numQuestions) {
+        return this.service.autoGenerate(shelveId, subjectId, numQuestions);
     }
 
     @Operation(

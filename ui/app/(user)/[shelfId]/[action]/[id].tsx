@@ -22,6 +22,8 @@ import ScreenContainer from "@/components/common/ScreenContainer";
 import SubjectViewDetailsScreen from "@/screen/SubjectViewDetailsScreen";
 import FlashcardReviewScreen from "@/screen/FlashCardReviewScreen";
 import FlashCardReviewCompleteScreen from "@/screen/FlashCardReviewCompleteScreen";
+import LearnModeScreen from "@/screen/LearnModeScreen";
+import MatchingGameScreen from "@/screen/MatchingGameScreen";
 import Logger from "@/utils/Logger";
 import { MAX_FORM_WIDTH } from "@/utils/responsiveLayout";
 
@@ -29,6 +31,8 @@ const ACTION_MAPPINGS = {
     view: (_shelfId: string, _subjectId: string) => <SubjectViewDetailsScreen _shelfId={_shelfId} _subjectId={_subjectId} />,
     review: (_shelfId: string, _subjectId: string) => <FlashcardReviewScreen _shelfId={_shelfId} _subjectId={_subjectId} />,
     complete : (_shelfId: string, _subjectId: string) => <FlashCardReviewCompleteScreen _shelfId={_shelfId} _subjectId={_subjectId} />,
+    learn: (_shelfId: string, _subjectId: string) => <LearnModeScreen shelfId={_shelfId} subjectId={_subjectId} />,
+    match: (_shelfId: string, _subjectId: string) => <MatchingGameScreen shelfId={_shelfId} subjectId={_subjectId} />,
 };
 
 const SubjectFactoryScreen = () => {

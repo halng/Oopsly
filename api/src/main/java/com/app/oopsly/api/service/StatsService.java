@@ -17,22 +17,7 @@
 package com.app.oopsly.api.service;
 
 import com.app.oopsly.api.viewmodel.ApiRes;
-import com.app.oopsly.api.viewmodel.TestSuiteReq;
-import java.util.UUID;
 
-public interface TestSuiteService {
-    ApiRes create(UUID shelveId, TestSuiteReq request);
-
-    ApiRes update(UUID shelveId, UUID testSuiteId, TestSuiteReq request);
-
-    ApiRes delete(UUID shelveId, UUID testSuiteId);
-
-    ApiRes getById(UUID shelveId, UUID testSuiteId);
-
-    ApiRes getAllByShelve(UUID shelveId);
-
-    /** Resolves flashcards from the preset (read-only; does not change SRS schedules). */
-    ApiRes run(UUID shelveId, UUID testSuiteId);
-
-    ApiRes autoGenerate(UUID shelveId, UUID subjectId, int numQuestions);
+public interface StatsService {
+    ApiRes getUserStats();
 }

@@ -1,5 +1,5 @@
 /*
- *    Copyright 2025 Hao Nguyen Tan
+ *    Copyright 2026 Hao Nguyen Tan
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -55,12 +55,12 @@ describe("TakeTestScreen", () => {
     });
   });
 
-  it("returns null when ids are missing", () => {
+  it("renders error UI when ids are missing", () => {
     (useLocalSearchParams as jest.Mock).mockReturnValue({});
 
-    const { toJSON } = render(<TakeTestScreen />);
+    const { getByTestId } = render(<TakeTestScreen />);
 
-    expect(toJSON()).toBeNull();
+    expect(getByTestId("take-test-missing-params")).toBeTruthy();
     expect(mockFlashcard).not.toHaveBeenCalled();
   });
 });
