@@ -1,0 +1,137 @@
+name: CI UI
+
+on:
+  push:
+    branches:
+      - main
+      - release/**
+    paths:
+      - "ui/**"
+      - ".github/workflows/ci-ui.yaml"
+  pull_request:
+    branches:
+      - main
+      - release/**
+    paths:
+      - "ui/**"
+      - ".github/workflows/ci-ui.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-ui-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
+jobs:
+  ui:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+          package_json_file: ui/package.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Install dependencies
+        # Lint/Jest do not need the Cypress binary (large, flaky on GHA).
+        run: pnpm install --frozen-lockfile
+        env:
+          CYPRESS_INSTALL_BINARY: "0"
+
+      - name: ESLint
+        run: pnpm lint
+
+      - name: Jest with coverage
+        # Never enable CYPRESS_COVERAGE / BABEL_ENV during Jest.
+        run: env -u CYPRESS_COVERAGE -u BABEL_ENV pnpm test:coverage
+
+      - name: Upload Jest coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-jest-coverage
+          path: ui/coverage/
+          if-no-files-found: ignore
+
+  ui-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+          package_json_file: ui/package.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Cypress e2e (headless electron)
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: ui
+          install-command: pnpm install --frozen-lockfile
+          start: pnpm web:coverage
+          wait-on: http://127.0.0.1:8081
+          wait-on-timeout: 180
+          browser: electron
+          headed: false
+          command: pnpm e2e:cypress:run
+        env:
+          CI: true
+          CYPRESS_COVERAGE: "true"
+          BABEL_ENV: cypress
+          TS_NODE_PROJECT: ./cypress/tsconfig.json
+          EXPO_NO_TELEMETRY: 1
+
+      - name: Check e2e coverage gates
+        working-directory: ui
+        run: pnpm coverage:check:e2e
+
+      - name: Upload Cypress coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-cypress-coverage
+          path: |
+            ui/coverage-cypress/
+            ui/.nyc_output/
+          if-no-files-found: ignore
+
+      - name: Upload Cypress screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: ui/cypress/screenshots/
+          if-no-files-found: ignore

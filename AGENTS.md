@@ -18,6 +18,8 @@ Oopsly is a cross-platform flashcard / spaced repetition (SRS) app.
 ./gradlew jacocoTestCoverageVerification  # coverage check
 ```
 
+GitHub Actions API CI: `.github/workflows/ci-api.yaml` (native steps)
+
 ### UI (from `ui/`)
 
 ```bash
@@ -29,6 +31,8 @@ pnpm e2e:cypress:ci      # Expo web + Cypress with Istanbul coverage (CI)
 pnpm coverage:check:e2e  # gate screen/ + app/(user)/ from Cypress report
 pnpm coverage:merge      # merge Jest + Cypress → coverage-combined/
 ```
+
+GitHub Actions UI CI: `.github/workflows/ci-ui.yaml` (native steps + headless Cypress job)
 
 ## Critical Conventions
 

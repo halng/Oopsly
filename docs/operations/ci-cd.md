@@ -2,20 +2,24 @@
 
 ## Continuous integration
 
+### Unified (legacy)
+
 Workflow: [`.github/workflows/ci.yaml`](../../.github/workflows/ci.yaml) → [`.github/workflows/ci.sh`](../../.github/workflows/ci.sh)
 
-**Triggers:** push/PR to `main` and `release/**`; weekly Sunday cron.
+Runs API + UI via one shell script. Still available.
 
-**Jobs:**
+### Split pipelines (native GitHub Actions)
 
-1. **`ci`** — tooling validate → API Gradle (build, spotless, test, integrationTest, Jacoco ~90%) → UI `lint` + Jest `test:coverage` (~80%). Snyk on `api/` when `SNYK_TOKEN` is set.  
-2. **`ui-e2e`** — headless Cypress via [`cypress-io/github-action`](https://github.com/cypress-io/github-action) (Electron, `headed: false`): start instrumented Expo web → wait on `http://127.0.0.1:8081` → `pnpm e2e:cypress:run` → `coverage:check:e2e` for `screen/` + `app/(user)/`.
+| Pipeline | Workflow | Jobs |
+| -------- | -------- | ---- |
+| API | [`.github/workflows/ci-api.yaml`](../../.github/workflows/ci-api.yaml) | `api` — Gradle build, spotless, test, Jacoco (~90%), optional Snyk |
+| UI | [`.github/workflows/ci-ui.yaml`](../../.github/workflows/ci-ui.yaml) | `ui` — pnpm lint + Jest; `ui-e2e` — headless Cypress (Electron) |
 
-Cypress instrumentation env (`CYPRESS_COVERAGE` / `BABEL_ENV`) is **only** on the `ui-e2e` job so Jest is never affected.
+Path filters: API on `api/**`, UI on `ui/**`. No shell orchestration — steps are native Actions/`run` commands.
 
-Local e2e: `cd ui && pnpm e2e:cypress:ci`, or `./.github/workflows/ci.sh --with-e2e`.
+Cypress instrumentation env (`CYPRESS_COVERAGE` / `BABEL_ENV`) is only on the `ui-e2e` job.
 
-Artifacts: `ui-jest-coverage`, `ui-cypress-coverage`, Cypress screenshots on e2e failure.
+Artifacts: `api-jacoco-report`, `ui-jest-coverage`, `ui-cypress-coverage`, Cypress screenshots on e2e failure.
 
 ## Continuous delivery
 

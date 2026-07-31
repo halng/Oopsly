@@ -39,8 +39,11 @@
 ## CI
 
 ```bash
-./.github/workflows/ci.sh              # API + UI lint/Jest
-./.github/workflows/ci.sh --with-e2e   # also headless Cypress locally
+./.github/workflows/ci.sh [--skip-security] [--with-e2e]  # unified local script (legacy)
 ```
 
-GitHub Actions (`.github/workflows/ci.yaml`): job `ci` for API/Jest; job `ui-e2e` for headless Cypress (Electron).
+GitHub Actions (native steps, path-filtered):
+
+- [`.github/workflows/ci-api.yaml`](../../.github/workflows/ci-api.yaml) — API
+- [`.github/workflows/ci-ui.yaml`](../../.github/workflows/ci-ui.yaml) — UI lint/Jest + headless Cypress
+- [`.github/workflows/ci.yaml`](../../.github/workflows/ci.yaml) — unified script (legacy)

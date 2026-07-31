@@ -1,0 +1,86 @@
+name: CI API
+
+on:
+  push:
+    branches:
+      - main
+      - release/**
+    paths:
+      - "api/**"
+      - ".github/workflows/ci-api.yaml"
+  pull_request:
+    branches:
+      - main
+      - release/**
+    paths:
+      - "api/**"
+      - ".github/workflows/ci-api.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-api-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  packages: write
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    defaults:
+      run:
+        working-directory: api
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Build (skip tests)
+        run: ./gradlew clean build -x test
+
+      - name: Spotless check
+        run: ./gradlew spotlessCheck
+
+      - name: Unit tests
+        run: ./gradlew test
+
+      - name: Jacoco coverage verification
+        run: ./gradlew jacocoTestCoverageVerification
+
+      - name: Upload Jacoco report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-jacoco-report
+          path: |
+            api/build/reports/jacoco/
+            api/build/reports/tests/
+          if-no-files-found: ignore
+
+      - name: Snyk (API)
+        if: env.SNYK_TOKEN != ''
+        uses: snyk/actions/gradle-jdk21@master
+        continue-on-error: true
+        with:
+          command: code test
+          args: >-
+            ./api
+            --org=a8c77c31-638a-4516-ab03-0e14eb961631
+            --report
+            --project-name=OOPSLY-API
