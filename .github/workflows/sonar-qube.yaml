@@ -5,9 +5,6 @@ on:
       - main
   pull_request:
     types: [opened, synchronize, reopened]
-  path:
-    - 'api/**'
-    - '.github/workflows/sonar-qube.yaml'
   schedule:
     - cron: '0 0 * * *' # Run at midnight every day
 

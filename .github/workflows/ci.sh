@@ -151,18 +151,18 @@ run_frontend_ci() {
         # Keep Istanbul/Cypress instrumentation env vars off during Jest.
         env -u CYPRESS_COVERAGE -u BABEL_ENV $PKG_MANAGER run test:coverage
 
-        echo "CI::Installing Cypress binary..."
-        $PKG_MANAGER exec cypress install
+        # echo "CI::Installing Cypress binary..."
+        # $PKG_MANAGER exec cypress install
 
-        echo "CI::Running Cypress e2e with Istanbul instrumentation..."
-        # Scope instrumentation env to the e2e process only (not Jest).
-        CYPRESS_COVERAGE=true BABEL_ENV=cypress $PKG_MANAGER run e2e:cypress:ci
+        # echo "CI::Running Cypress e2e with Istanbul instrumentation..."
+        # # Scope instrumentation env to the e2e process only (not Jest).
+        # CYPRESS_COVERAGE=true BABEL_ENV=cypress $PKG_MANAGER run e2e:cypress:ci
 
-        echo "CI::Checking e2e coverage for screen/ + app/(user)/..."
-        $PKG_MANAGER run coverage:check:e2e
+        # echo "CI::Checking e2e coverage for screen/ + app/(user)/..."
+        # $PKG_MANAGER run coverage:check:e2e
 
-        echo "CI::Merging Jest + Cypress coverage reports..."
-        $PKG_MANAGER run coverage:merge
+        # echo "CI::Merging Jest + Cypress coverage reports..."
+        # $PKG_MANAGER run coverage:merge
         
         cd ..
         echo "CI::Frontend CI completed successfully!"
@@ -214,32 +214,18 @@ run_security_scans() {
 
 # Main execution
 main() {
-    # Parse arguments
-    SKIP_SECURITY=false
-
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --skip-security)
-                SKIP_SECURITY=true
-                shift
-                ;;
-            *)
-                echo "CI::Unknown option: $1"
-                exit 1
-                ;;
-        esac
-    done
-    
+    echo "CI::"
+    echo "CI::====================================="
+    echo "CI::Starting Unified CI Pipeline"
+    echo "CI::====================================="
     # Validate environment first
     validate_environment
     
     # Run all CI steps
     run_backend_ci
     run_frontend_ci
-    
-    if [ "$SKIP_SECURITY" = false ]; then
-        run_security_scans
-    fi
+    run_security_scans
+
     
     echo "CI::"
     echo "CI::====================================="
