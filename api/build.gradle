@@ -6,6 +6,7 @@ plugins {
 	id 'com.diffplug.spotless' version '8.1.0'
 	id 'jacoco'
 	id 'org.barfuin.gradle.jacocolog' version '4.0.0'
+	id "org.sonarqube" version "7.3.1.8318"
 }
 group = 'com.app.oopsly'
 version = '0.0.1-SNAPSHOT'
@@ -15,6 +16,14 @@ java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(21)
 	}
+}
+
+sonar {
+  properties {
+    property "sonar.projectKey", "Oopsly::API"
+    property "sonar.organization", "tanhao111"
+	property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
+  }
 }
 
 configurations {
