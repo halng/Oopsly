@@ -72,7 +72,9 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'com.github.fppt:jedis-mock:1.1.8'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testRuntimeOnly 'com.h2database:h2'
 }
 
 dependencyManagement {
@@ -82,8 +84,28 @@ dependencyManagement {
 	}
 }
 
+// GraalVM AOT test processing is slow and pulls every @SpringBootTest into context; keep it off for local/CI unit+IT runs.
+tasks.named('processTestAot').configure { enabled = false }
+
 tasks.named('test') {
 	useJUnitPlatform()
+	filter {
+		includeTestsMatching 'com.app.oopsly.api.unit.*'
+	}
+}
+
+tasks.register('integrationTest', Test) {
+	description = 'Runs controller-layer integration tests (H2 + embedded Redis, profile=integration)'
+	group = 'verification'
+	useJUnitPlatform()
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	filter {
+		includeTestsMatching 'com.app.oopsly.api.integration.*'
+		excludeTestsMatching 'com.app.oopsly.api.integration.support.*'
+	}
+	shouldRunAfter test
+	finalizedBy jacocoTestReport
 }
 
 def composeFile = 'src/main/resources/docker-compose.yml'
@@ -109,8 +131,25 @@ tasks.register('composeDown', Exec) {
 	}
 }
 
+def jacocoExcludes = [
+		'**/ApiApplication**',
+		'**/Constant**',
+		'**/viewmodel/**',
+		'**/NoOpIEmailSender**',
+		// Spring Security DSL lambdas are not unit-testable without full filter-chain boot
+		'**/SecurityConfig**',
+]
+
 jacocoTestReport {
 	dependsOn test
+
+	classDirectories.setFrom(
+			files(
+					sourceSets.main.output.classesDirs.asFileTree.matching {
+						exclude jacocoExcludes
+					}
+			)
+	)
 
 	reports {
 		xml.required = true
@@ -129,7 +168,7 @@ jacocoTestCoverageVerification {
 	classDirectories.setFrom(
 			files(
 					sourceSets.main.output.classesDirs.asFileTree.matching {
-						exclude '**/ApiApplication**', '**/Constant**', '**/viewmodel/**', '**/NoOpIEmailSender**'
+						exclude jacocoExcludes
 					}
 			)
 	)
@@ -139,9 +178,34 @@ jacocoTestCoverageVerification {
 	violationRules {
 		rule {
 			enabled = true
-			element = 'CLASS'
+			element = 'BUNDLE'
 			limit {
 				counter = 'CLASS'
+				value = 'COVEREDRATIO'
+				minimum = 0.9
+			}
+			limit {
+				counter = 'METHOD'
+				value = 'COVEREDRATIO'
+				minimum = 0.9
+			}
+			limit {
+				counter = 'LINE'
+				value = 'COVEREDRATIO'
+				minimum = 0.9
+			}
+			limit {
+				counter = 'BRANCH'
+				value = 'COVEREDRATIO'
+				minimum = 0.9
+			}
+			limit {
+				counter = 'INSTRUCTION'
+				value = 'COVEREDRATIO'
+				minimum = 0.9
+			}
+			limit {
+				counter = 'COMPLEXITY'
 				value = 'COVEREDRATIO'
 				minimum = 0.9
 			}

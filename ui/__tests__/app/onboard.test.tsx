@@ -64,7 +64,7 @@ describe('EmailInputScreen', () => {
   describe('Rendering', () => {
     it('renders header with back button', () => {
       render(<EmailInputScreen />);
-      expect(screen.getByTestId('back-button')).toBeTruthy();
+      expect(screen.getByTestId('header-container-back-button')).toBeTruthy();
     });
 
     it('renders title text', () => {
@@ -96,7 +96,7 @@ describe('EmailInputScreen', () => {
   describe('Navigation', () => {
     it('navigates to home when back button is pressed', () => {
       render(<EmailInputScreen />);
-      fireEvent.press(screen.getByTestId('back-button'));
+      fireEvent.press(screen.getByTestId('header-container-back-button'));
       expect(mockPush).toHaveBeenCalledWith('/');
     });
   });
@@ -260,7 +260,7 @@ describe('EmailInputScreen', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('error-message')).toBeTruthy();
-        expect(screen.getByTestId('error-message').props.children).toBe('Failed to send OTP. Please try again.');
+        expect(screen.getByText('Failed to send OTP. Please try again.')).toBeTruthy();
       });
 
       consoleErrorSpy.mockRestore();
@@ -339,7 +339,7 @@ describe('EmailInputScreen', () => {
       // Check that button text changes (ActivityIndicator is shown instead of "Continue")
       await waitFor(() => {
         expect(screen.queryByTestId('continue-button-text')).toBeNull();
-        expect(screen.getByTestId('loading-indicator')).toBeTruthy();
+        expect(screen.getByTestId('continue-button-loading')).toBeTruthy();
       });
 
       // Resolve the promise to clean up

@@ -38,7 +38,7 @@ public class MediaController {
             summary = "Get upload URL",
             description = "Returns a pre-signed upload URL for attaching media to a card")
     @PostMapping
-    ApiRes getUploadUrl(
+    public ApiRes getUploadUrl(
             @PathVariable UUID shelveId,
             @PathVariable UUID subjectId,
             @PathVariable UUID cardId,

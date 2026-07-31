@@ -23,6 +23,8 @@ import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
+import com.app.oopsly.api.exception.UnauthenticatedException;
+import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.ShelfRepository;
 import com.app.oopsly.api.repository.SubjectRepository;
@@ -232,21 +234,32 @@ public class ShelfServiceImpl implements ShelfService {
     // Fallback method for getById
     public ApiRes getByIdFallback(UUID id, Throwable t) {
         log.error("Shelve service unavailable during getById: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Shelve service is currently unavailable. Please try again later.", t);
+        throw unwrapShelfException(t);
     }
 
     // Fallback method for delete
     public ApiRes deleteFallback(UUID id, Throwable t) {
         log.error("Shelve service unavailable during delete: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Shelve service is currently unavailable. Please try again later.", t);
+        throw unwrapShelfException(t);
     }
 
     // Fallback method for update
     public ApiRes updateFallback(ShelfReq request, UUID id, Throwable t) {
         log.error("Shelve service unavailable during update: {}", t.getMessage());
-        throw new RetryLaterException(
+        throw unwrapShelfException(t);
+    }
+
+    private RuntimeException unwrapShelfException(Throwable t) {
+        if (t instanceof NotFoundException nfe) {
+            return nfe;
+        }
+        if (t instanceof ValidationException ve) {
+            return ve;
+        }
+        if (t instanceof UnauthenticatedException ue) {
+            return ue;
+        }
+        return new RetryLaterException(
                 "Shelve service is currently unavailable. Please try again later.", t);
     }
 }

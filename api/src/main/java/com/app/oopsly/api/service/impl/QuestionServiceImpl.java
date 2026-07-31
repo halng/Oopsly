@@ -21,6 +21,7 @@ import com.app.oopsly.api.entity.QuestionType;
 import com.app.oopsly.api.entity.TestSuiteEntity;
 import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
+import com.app.oopsly.api.exception.UnauthenticatedException;
 import com.app.oopsly.api.exception.ValidationException;
 import com.app.oopsly.api.repository.QuestionRepository;
 import com.app.oopsly.api.repository.TestSuiteRepository;
@@ -252,32 +253,41 @@ public class QuestionServiceImpl implements QuestionService {
     // Fallback methods for Circuit Breaker
     public ApiRes createFallback(UUID testSuiteId, QuestionReq request, Throwable t) {
         log.error("Question service unavailable during create: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Question service is currently unavailable. Please try again later.", t);
+        throw unwrapQuestionException(t);
     }
 
     public ApiRes updateFallback(
             UUID testSuiteId, UUID questionId, QuestionReq request, Throwable t) {
         log.error("Question service unavailable during update: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Question service is currently unavailable. Please try again later.", t);
+        throw unwrapQuestionException(t);
     }
 
     public ApiRes deleteFallback(UUID testSuiteId, UUID questionId, Throwable t) {
         log.error("Question service unavailable during delete: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Question service is currently unavailable. Please try again later.", t);
+        throw unwrapQuestionException(t);
     }
 
     public ApiRes getByIdFallback(UUID testSuiteId, UUID questionId, Throwable t) {
         log.error("Question service unavailable during getById: {}", t.getMessage());
-        throw new RetryLaterException(
-                "Question service is currently unavailable. Please try again later.", t);
+        throw unwrapQuestionException(t);
     }
 
     public ApiRes getAllByTestSuiteFallback(UUID testSuiteId, Throwable t) {
         log.error("Question service unavailable during getAllByTestSuite: {}", t.getMessage());
-        throw new RetryLaterException(
+        throw unwrapQuestionException(t);
+    }
+
+    private RuntimeException unwrapQuestionException(Throwable t) {
+        if (t instanceof NotFoundException nfe) {
+            return nfe;
+        }
+        if (t instanceof ValidationException ve) {
+            return ve;
+        }
+        if (t instanceof UnauthenticatedException ue) {
+            return ue;
+        }
+        return new RetryLaterException(
                 "Question service is currently unavailable. Please try again later.", t);
     }
 }

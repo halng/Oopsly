@@ -39,7 +39,6 @@ public class TestSuiteEntity extends Audit {
     private Integer highestScore;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
     private TestSuiteSelectionPayload selection;
 
     @JsonIgnore

@@ -29,7 +29,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 
-@Profile("!test")
+@Profile("!test & !integration")
 @Component
 public class EmailSender implements IEmailSender {
     private final JavaMailSender mailSender;

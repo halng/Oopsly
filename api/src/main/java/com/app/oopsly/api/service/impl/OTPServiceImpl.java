@@ -121,9 +121,9 @@ public class OTPServiceImpl implements OTPService {
         if (user.isEmpty()) {
             log.warn("User not found for email {}", StringUtils.masked(email));
             User createdUser = this.userRepository.save(User.builder().email(email).build());
-            claims.put("id", createdUser.getId());
+            claims.put("id", createdUser.getId().toString());
         } else {
-            claims.put("id", user.get().getId());
+            claims.put("id", user.get().getId().toString());
         }
 
         log.info("Generating JWT token for {}", StringUtils.masked(email));

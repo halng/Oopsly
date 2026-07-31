@@ -65,7 +65,7 @@ public class ShelfController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("")
-    ApiRes create(
+    public ApiRes create(
             @Parameter(description = "Shelf creation request", required = true) @Valid @RequestBody
                     ShelfReq requestBody) {
         return this.service.create(requestBody);
@@ -83,7 +83,7 @@ public class ShelfController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PutMapping("/{id}")
-    ApiRes update(
+    public ApiRes update(
             @Parameter(description = "Shelve update request", required = true) @Valid @RequestBody
                     ShelfReq requestBody,
             @Parameter(
@@ -108,7 +108,7 @@ public class ShelfController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/{id}")
-    ApiRes getById(
+    public ApiRes getById(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -129,7 +129,7 @@ public class ShelfController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PatchMapping("/{id}")
-    ApiRes deleteById(
+    public ApiRes deleteById(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -152,7 +152,7 @@ public class ShelfController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("")
-    ApiRes getAll(
+    public ApiRes getAll(
             @Parameter(description = "Page number", required = true, example = "0")
                     @RequestParam
                     @Min(value = 0, message = "Page must be greater or equal 0") int page,

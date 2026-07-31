@@ -19,6 +19,7 @@ import {
   createSubject,
   getSubjectById,
   updateSubjectSetting,
+  deleteSubject,
   updateSubjectById,
 } from '../../services/SubjectService';
 
@@ -27,6 +28,7 @@ jest.mock('../../services', () => ({
     get: jest.fn(),
     post: jest.fn(),
     put: jest.fn(),
+    patch: jest.fn(),
   },
 }));
 
@@ -234,6 +236,22 @@ describe('SubjectService', () => {
       await expect(
         updateSubjectSetting(shelfId, subjectId, settings)
       ).rejects.toThrow('Settings update failed');
+    });
+  });
+
+  describe('deleteSubject', () => {
+    it('soft-deletes a subject', async () => {
+      const mockResponse = {
+        data: { isSuccess: true, message: 'Deleted', data: null },
+      };
+      (apiClient.patch as jest.Mock).mockResolvedValue(mockResponse);
+
+      const result = await deleteSubject(shelfId, subjectId);
+
+      expect(apiClient.patch).toHaveBeenCalledWith(
+        `/shelves/${shelfId}/subjects/${subjectId}`,
+      );
+      expect(result).toEqual(mockResponse.data);
     });
   });
 

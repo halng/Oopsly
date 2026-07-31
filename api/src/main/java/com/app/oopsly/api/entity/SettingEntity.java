@@ -41,8 +41,12 @@ public class SettingEntity extends Audit {
     private Language language;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "space_config", columnDefinition = "jsonb", nullable = false)
+    @Column(name = "space_config", nullable = false)
     private Map<String, Integer> spaceConfig;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "study_schedule")
+    private StudySchedule studySchedule;
 
     @OneToOne
     @JoinColumn(name = "user_id", unique = true, nullable = false)

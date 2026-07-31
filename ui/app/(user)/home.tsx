@@ -22,6 +22,9 @@ import {
   fetchTestSuitesByShelf,
   TestSuiteRes,
 } from "@/services/TestSuiteService";
+import { getUserStats } from "@/services/UserService";
+import { getProfile } from "@/services/ProfileService";
+import { useAuthStore } from "@/store/AuthStore";
 import { Shelf } from "@/types/Shelf";
 import { SubjectStats } from "@/types/Subject";
 import { Logger } from "@/utils";
@@ -30,7 +33,6 @@ import {
   BarChart2,
   Bookmark,
   BookOpen,
-  Calendar,
   Camera,
   CheckSquare,
   ChevronLeft,
@@ -50,7 +52,6 @@ import {
   PlusCircle,
   Smile,
   Star,
-  StickyNote,
   Target,
   Trophy,
   Umbrella,
@@ -61,7 +62,6 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
-  Image,
   Pressable,
   ScrollView,
   Text,
@@ -75,6 +75,22 @@ import FeedbackMessage from "@/components/common/FeedbackMessage";
 import FadeIn from "@/components/common/FadeIn";
 import { uiTokens } from "@/constants/uiTokens";
 import { useResponsiveLayout } from "@/utils/responsiveLayout";
+
+function getInitials(name?: string | null, email?: string | null): string {
+  const trimmedName = name?.trim();
+  if (trimmedName) {
+    const parts = trimmedName.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return trimmedName.slice(0, 2).toUpperCase();
+  }
+  const trimmedEmail = email?.trim();
+  if (trimmedEmail) {
+    return trimmedEmail[0].toUpperCase();
+  }
+  return "?";
+}
 
 type PanelView =
   | "create-shelf"
@@ -180,6 +196,11 @@ const OopslyApp = () => {
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const userEmail = useAuthStore((s) => s.userEmail);
+  const [dailyStreak, setDailyStreak] = useState(0);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  const avatarInitials = getInitials(displayName, userEmail);
+
   // ── Panel helpers ──────────────────────────────────────────────────────────
 
   const openPanel = (view: PanelView, shelfId?: string) => {
@@ -238,6 +259,20 @@ const OopslyApp = () => {
   useEffect(() => {
     logger.debug("Fetching shelves data on component mount");
     fetchShelvesData();
+    getUserStats()
+      .then((res) => {
+        if (res.isSuccess && res.data) {
+          setDailyStreak(res.data.dailyStreak ?? 0);
+        }
+      })
+      .catch((err) => logger.debug("Stats fetch optional:", err));
+    getProfile()
+      .then((res) => {
+        if (res.isSuccess && res.data) {
+          setDisplayName(res.data.displayName ?? null);
+        }
+      })
+      .catch((err) => logger.debug("Profile fetch optional:", err));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1030,7 +1065,7 @@ const OopslyApp = () => {
           >
             <Flame size={14} color={uiTokens.state.warning.solid} fill={uiTokens.state.warning.solid} />
             <Text style={{ marginLeft: 4, fontWeight: "700", color: "#C2410C", fontSize: 13 }} testID="sidebar-streak-text">
-              7
+              {dailyStreak}
             </Text>
           </View>
         </View>
@@ -1073,6 +1108,15 @@ const OopslyApp = () => {
               action: () => router.push("/stats"),
               active: false,
               testID: "sidebar-stats-btn",
+            },
+            {
+              label: "Leaderboard",
+              icon: Trophy,
+              color: "#F97316",
+              bg: "#FFEDD5",
+              action: () => router.push("/leaderboard"),
+              active: false,
+              testID: "sidebar-leaderboard-btn",
             },
           ] as const
         ).map((item) => (
@@ -1130,12 +1174,22 @@ const OopslyApp = () => {
             marginBottom: 4,
           }}
         >
-          <Image
-            source={{
-              uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D",
+          <View
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              marginRight: 12,
+              backgroundColor: uiTokens.accent.tint,
+              alignItems: "center",
+              justifyContent: "center",
             }}
-            style={{ width: 32, height: 32, borderRadius: 16, marginRight: 12 }}
-          />
+            testID="sidebar-avatar"
+          >
+            <Text style={{ fontSize: 12, fontWeight: "700", color: uiTokens.accent.onTint }}>
+              {avatarInitials}
+            </Text>
+          </View>
           <Text style={{ fontSize: 15, fontWeight: "500", color: uiTokens.text.primary }}>
             Profile
           </Text>
@@ -1196,21 +1250,26 @@ const OopslyApp = () => {
                 <View className="flex-row items-center">
                   <TouchableOpacity
                     onPress={() => router.push("/profile")}
-                    className="w-10 h-10 rounded-full bg-indigo-100 items-center justify-center mr-3"
+                    className="w-10 h-10 rounded-full items-center justify-center mr-3"
+                    style={{ backgroundColor: uiTokens.accent.tint }}
+                    testID="profile-avatar-button"
                   >
-                    <Image
-                      source={{
-                        uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D",
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "700",
+                        color: uiTokens.accent.onTint,
                       }}
-                      className="w-8 h-8 rounded-full"
                       testID="user-avatar"
-                    />
+                    >
+                      {avatarInitials}
+                    </Text>
                   </TouchableOpacity>
                   <Text className="text-2xl font-bold text-gray-800" testID="app-title-text">Oopsly</Text>
                 </View>
                 <View className="flex-row items-center bg-orange-50 px-3 py-1 rounded-full" testID="streak-container">
                   <Flame size={16} color={uiTokens.state.warning.solid} fill={uiTokens.state.warning.solid} />
-                  <Text className="ml-1 font-bold text-orange-700" testID="streak-count-text">7</Text>
+                  <Text className="ml-1 font-bold text-orange-700" testID="streak-count-text">{dailyStreak}</Text>
                 </View>
               </View>
 
@@ -1237,35 +1296,35 @@ const OopslyApp = () => {
 
                 <TouchableOpacity
                   className="items-center"
-                  onPress={() => router.push("/tasks-list")}
-                  testID="tasks-button"
+                  onPress={() => router.push("/discover")}
+                  testID="discover-nav-button"
                 >
-                  <View className="bg-blue-100 p-3 rounded-full mb-1">
-                    <CheckSquare size={24} color="#3B82F6" />
+                  <View className="bg-sky-100 p-3 rounded-full mb-1">
+                    <Compass size={24} color="#0EA5E9" />
                   </View>
-                  <Text className="text-xs text-gray-600" testID="tasks-label-text">Tasks</Text>
+                  <Text className="text-xs text-gray-600" testID="discover-label-text">Discover</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   className="items-center"
-                  onPress={() => router.push("/notes")}
-                  testID="notes-button"
+                  onPress={() => router.push("/leaderboard")}
+                  testID="leaderboard-nav-button"
                 >
-                  <View className="bg-green-100 p-3 rounded-full mb-1">
-                    <StickyNote size={24} color="#10B981" />
+                  <View className="bg-orange-100 p-3 rounded-full mb-1">
+                    <Trophy size={24} color="#F97316" />
                   </View>
-                  <Text className="text-xs text-gray-600" testID="notes-label-text">Notes</Text>
+                  <Text className="text-xs text-gray-600" testID="leaderboard-label-text">Ranks</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   className="items-center"
-                  onPress={() => router.push("/study-planner")}
-                  testID="planner-button"
+                  onPress={() => router.push("/profile")}
+                  testID="profile-nav-button"
                 >
-                  <View className="bg-purple-100 p-3 rounded-full mb-1">
-                    <Calendar size={24} color="#8B5CF6" />
+                  <View className="bg-violet-100 p-3 rounded-full mb-1">
+                    <User size={24} color="#8B5CF6" />
                   </View>
-                  <Text className="text-xs text-gray-600" testID="planner-label-text">Planner</Text>
+                  <Text className="text-xs text-gray-600" testID="profile-label-text">Profile</Text>
                 </TouchableOpacity>
               </View>
             </View>

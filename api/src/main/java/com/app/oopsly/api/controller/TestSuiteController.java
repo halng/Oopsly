@@ -58,7 +58,7 @@ public class TestSuiteController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("")
-    ApiRes create(
+    public ApiRes create(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -85,7 +85,7 @@ public class TestSuiteController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PutMapping("/{id}")
-    ApiRes update(
+    public ApiRes update(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -117,7 +117,7 @@ public class TestSuiteController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/{id}")
-    ApiRes getById(
+    public ApiRes getById(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -146,7 +146,7 @@ public class TestSuiteController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PatchMapping("/{id}")
-    ApiRes deleteById(
+    public ApiRes deleteById(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -175,7 +175,7 @@ public class TestSuiteController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("")
-    ApiRes getAllByShelve(
+    public ApiRes getAllByShelve(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -198,7 +198,7 @@ public class TestSuiteController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("/auto-generate")
-    ApiRes autoGenerate(
+    public ApiRes autoGenerate(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -227,7 +227,7 @@ public class TestSuiteController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("/{id}/run")
-    ApiRes runPreset(
+    public ApiRes runPreset(
             @Parameter(
                             description = "Shelve ID",
                             required = true,

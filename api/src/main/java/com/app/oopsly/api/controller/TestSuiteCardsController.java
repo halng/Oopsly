@@ -59,7 +59,7 @@ public class TestSuiteCardsController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/{testSuiteId}/cards")
-    ApiRes getCards(
+    public ApiRes getCards(
             @Parameter(
                             description = "Test Suite ID",
                             required = true,

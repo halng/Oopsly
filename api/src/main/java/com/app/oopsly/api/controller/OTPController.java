@@ -58,7 +58,7 @@ public class OTPController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping()
-    ApiRes createOTP(
+    public ApiRes createOTP(
             @Parameter(
                             description = "Email address to send OTP",
                             required = true,
@@ -82,7 +82,7 @@ public class OTPController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("/validate")
-    ApiRes validateOTP(
+    public ApiRes validateOTP(
             @Parameter(
                             description = "OTP validation request containing email and OTP code",
                             required = true,

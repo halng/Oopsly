@@ -1,5 +1,5 @@
 /*
- *    Copyright 2025 Hao Nguyen Tan
+ *    Copyright 2026 Hao Nguyen Tan
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -23,9 +23,18 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronRight, Edit3, Save, UserRound, BookOpen, Calendar } from "lucide-react-native";
+import {
+  ChevronRight,
+  Edit3,
+  Save,
+  UserRound,
+  BookOpen,
+  Mail,
+  X,
+} from "lucide-react-native";
 import { getProfile, updateProfile } from "@/services/ProfileService";
 import { UserProfileRes } from "@/types/Profile";
+import { useAuthStore } from "@/store/AuthStore";
 import { Logger } from "@/utils";
 import ScreenContainer from "@/components/common/ScreenContainer";
 import ScreenHeader from "@/components/common/ScreenHeader";
@@ -68,13 +77,14 @@ function FieldLabel({
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const userEmail = useAuthStore((s) => s.userEmail);
   const [profile, setProfile] = useState<UserProfileRes | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
-  const [ageInput, setAgeInput] = useState("");
   const [saving, setSaving] = useState(false);
 
   const loadProfile = () => {
@@ -86,7 +96,6 @@ export default function ProfileScreen() {
           setProfile(res.data);
           setDisplayName(res.data.displayName ?? "");
           setBio(res.data.bio ?? "");
-          setAgeInput(res.data.age ? String(res.data.age) : "");
         } else {
           setError(res.message ?? "Failed to load profile");
         }
@@ -102,30 +111,33 @@ export default function ProfileScreen() {
     loadProfile();
   }, []);
 
+  const handleCancelEdit = () => {
+    setDisplayName(profile?.displayName ?? "");
+    setBio(profile?.bio ?? "");
+    setIsEditing(false);
+    setError(null);
+  };
+
   const handleSave = () => {
     if (!displayName.trim()) {
       setError("Display name is required.");
       return;
     }
-    const parsedAge = ageInput.trim() ? Number(ageInput.trim()) : undefined;
-    if (parsedAge !== undefined && (Number.isNaN(parsedAge) || parsedAge < 5 || parsedAge > 120)) {
-      setError("Age must be a number between 5 and 120.");
-      return;
-    }
     setSaving(true);
     setError(null);
+    setSuccess(null);
     updateProfile({
       displayName: displayName.trim(),
       bio: bio.trim() || undefined,
-      age: parsedAge,
+      age: profile?.age ?? undefined,
     })
       .then((res) => {
         if (res.isSuccess && res.data) {
           setProfile(res.data);
           setDisplayName(res.data.displayName ?? "");
           setBio(res.data.bio ?? "");
-          setAgeInput(res.data.age ? String(res.data.age) : "");
           setIsEditing(false);
+          setSuccess("Profile updated");
         } else {
           setError(res.message ?? "Failed to update profile");
         }
@@ -150,9 +162,11 @@ export default function ProfileScreen() {
     );
   }
 
-  const completionScore = [displayName.trim(), bio.trim(), ageInput.trim()].filter(
-    Boolean,
-  ).length;
+  const completionScore = [
+    displayName.trim(),
+    bio.trim(),
+    (userEmail ?? "").trim(),
+  ].filter(Boolean).length;
   const completionPercent = Math.round((completionScore / 3) * 100);
 
   return (
@@ -167,23 +181,49 @@ export default function ProfileScreen() {
         testID="profile-header"
         rightSlot={
           !isEditing ? (
-            <TouchableOpacity onPress={() => setIsEditing(true)} testID="edit-button">
+            <TouchableOpacity
+              onPress={() => {
+                setIsEditing(true);
+                setSuccess(null);
+              }}
+              testID="edit-button"
+            >
               <Edit3 size={20} color={uiTokens.accent.default} />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity
-              onPress={handleSave}
-              disabled={saving || !displayName.trim()}
-              testID="save-button"
-            >
-              <Save size={20} color={uiTokens.accent.default} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+              <TouchableOpacity
+                onPress={handleCancelEdit}
+                disabled={saving}
+                testID="cancel-edit-button"
+              >
+                <X size={20} color={uiTokens.text.muted} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSave}
+                disabled={saving || !displayName.trim()}
+                testID="save-button"
+              >
+                {saving ? (
+                  <ActivityIndicator size="small" color={uiTokens.accent.default} />
+                ) : (
+                  <Save size={20} color={uiTokens.accent.default} />
+                )}
+              </TouchableOpacity>
+            </View>
           )
         }
       />
       <View className="py-6">
         {error && (
           <FeedbackMessage message={error} tone="error" testID="profile-error" />
+        )}
+        {success && (
+          <FeedbackMessage
+            message={success}
+            tone="success"
+            testID="profile-success"
+          />
         )}
 
         <View
@@ -223,7 +263,7 @@ export default function ProfileScreen() {
           <Text
             style={{ color: uiTokens.accent.onTint, fontSize: 12, marginTop: 8 }}
           >
-            Completing profile helps personalize study pacing and reminders.
+            Add a display name and bio so others know what you are learning.
           </Text>
         </View>
 
@@ -236,26 +276,39 @@ export default function ProfileScreen() {
             borderColor: uiTokens.border.subtle,
           }}
         >
-          <FieldLabel icon={<UserRound size={16} color={uiTokens.text.muted} />}>
-            Display name
+          <FieldLabel icon={<Mail size={16} color={uiTokens.text.muted} />}>
+            Email
           </FieldLabel>
-          {isEditing ? (
-            <TextInput
-              style={inputStyle}
-              value={displayName}
-              onChangeText={setDisplayName}
-              placeholder="Your display name"
-              placeholderTextColor={uiTokens.text.muted}
-              maxLength={50}
-              testID="display-name-input"
-            />
-          ) : (
-            <Text
-              style={{ fontSize: 18, fontWeight: "500", color: uiTokens.text.primary }}
-            >
-              {profile?.displayName ?? "—"}
-            </Text>
-          )}
+          <Text
+            style={{ fontSize: 16, color: uiTokens.text.secondary }}
+            testID="profile-email"
+          >
+            {userEmail || "—"}
+          </Text>
+
+          <View style={{ marginTop: 24 }}>
+            <FieldLabel icon={<UserRound size={16} color={uiTokens.text.muted} />}>
+              Display name
+            </FieldLabel>
+            {isEditing ? (
+              <TextInput
+                style={inputStyle}
+                value={displayName}
+                onChangeText={setDisplayName}
+                placeholder="Your display name"
+                placeholderTextColor={uiTokens.text.muted}
+                maxLength={50}
+                testID="display-name-input"
+              />
+            ) : (
+              <Text
+                style={{ fontSize: 18, fontWeight: "500", color: uiTokens.text.primary }}
+                testID="profile-display-name"
+              >
+                {profile?.displayName ?? "—"}
+              </Text>
+            )}
+          </View>
 
           <View style={{ marginTop: 24 }}>
             <FieldLabel icon={<BookOpen size={16} color={uiTokens.text.muted} />}>
@@ -274,30 +327,11 @@ export default function ProfileScreen() {
                 testID="bio-input"
               />
             ) : (
-              <Text style={{ fontSize: 16, color: uiTokens.text.secondary }}>
+              <Text
+                style={{ fontSize: 16, color: uiTokens.text.secondary }}
+                testID="profile-bio"
+              >
                 {profile?.bio ?? "—"}
-              </Text>
-            )}
-          </View>
-
-          <View style={{ marginTop: 24 }}>
-            <FieldLabel icon={<Calendar size={16} color={uiTokens.text.muted} />}>
-              Age
-            </FieldLabel>
-            {isEditing ? (
-              <TextInput
-                style={inputStyle}
-                value={ageInput}
-                onChangeText={(value) => setAgeInput(value.replace(/[^\d]/g, ""))}
-                placeholder="Enter your age"
-                placeholderTextColor={uiTokens.text.muted}
-                keyboardType="number-pad"
-                maxLength={3}
-                testID="age-input"
-              />
-            ) : (
-              <Text style={{ fontSize: 16, color: uiTokens.text.secondary }}>
-                {profile?.age ?? "—"}
               </Text>
             )}
           </View>

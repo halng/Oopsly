@@ -17,11 +17,13 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { BarChart } from 'react-native-gifted-charts';
 import { getUserStats, UserStats } from '@/services/UserService';
 import { uiTokens } from '@/constants/uiTokens';
@@ -43,6 +45,7 @@ const retentionColor = (rate: number): string => {
 };
 
 const StatsScreen = () => {
+  const router = useRouter();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +93,13 @@ const StatsScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Statistics</Text>
         <Text style={styles.headerSubtitle}>Your learning overview</Text>
+        <Pressable
+          onPress={() => router.push('/leaderboard')}
+          style={styles.leaderboardLink}
+          testID="stats-leaderboard-link"
+        >
+          <Text style={styles.leaderboardLinkText}>View leaderboard preview</Text>
+        </Pressable>
       </View>
 
       {/* Top row: Streak + XP */}
@@ -217,6 +227,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: uiTokens.colors.textMuted,
     marginTop: 2,
+  },
+  leaderboardLink: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+  },
+  leaderboardLinkText: {
+    color: uiTokens.colors.primary,
+    fontWeight: '700',
+    fontSize: 14,
   },
   row: {
     flexDirection: 'row',

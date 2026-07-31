@@ -53,7 +53,7 @@ public class UserProfileController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/profile")
-    ApiRes getProfile() {
+    public ApiRes getProfile() {
         return userService.getProfile();
     }
 
@@ -71,7 +71,7 @@ public class UserProfileController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PatchMapping("/profile")
-    ApiRes updateProfile(
+    public ApiRes updateProfile(
             @Parameter(description = "Profile update request", required = true) @Valid @RequestBody
                     UpdateProfileReq request) {
         return userService.updateProfile(request);
@@ -91,7 +91,7 @@ public class UserProfileController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PatchMapping("/settings")
-    ApiRes updateSettings(
+    public ApiRes updateSettings(
             @Parameter(description = "Settings update request", required = true) @Valid @RequestBody
                     UpdateSettingsReq request) {
         return userService.updateSettings(request);

@@ -38,7 +38,7 @@ public class StatsController {
             description =
                     "Returns streaks, XP, retention rate and card counts for the current user")
     @GetMapping
-    ApiRes getUserStats() {
+    public ApiRes getUserStats() {
         return statsService.getUserStats();
     }
 }

@@ -24,8 +24,7 @@ export const DESKTOP_BREAKPOINT = 1024;
 export const WIDE_BREAKPOINT = 1280;
 export const SIDEBAR_WIDTH = 260;
 
-export function useResponsiveLayout() {
-  const { width, height } = useWindowDimensions();
+export function computeResponsiveLayout(width: number, height: number) {
   const isCompact = width < 360;
   const isTablet = width >= TABLET_BREAKPOINT;
   const isDesktop = width >= DESKTOP_BREAKPOINT;
@@ -61,4 +60,9 @@ export function useResponsiveLayout() {
         ? Math.min(320, Math.max(240, (contentWidth - horizontalPadding * 2 - 24) / 2))
         : Math.min(280, Math.max(220, width * 0.68)),
   };
+}
+
+export function useResponsiveLayout() {
+  const { width, height } = useWindowDimensions();
+  return computeResponsiveLayout(width, height);
 }

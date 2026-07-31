@@ -62,6 +62,7 @@ const LearnModeScreen = ({ shelfId, subjectId }: LearnModeScreenProps) => {
   const [masteredCount, setMasteredCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [mcPhase, setMcPhase] = useState<Set<string>>(new Set());
 
   const pendingTimeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -95,10 +96,11 @@ const LearnModeScreen = ({ shelfId, subjectId }: LearnModeScreenProps) => {
   );
 
   useEffect(() => {
+    setLoadError(null);
     fetchCardsDataBySubjectAndShelf(shelfId, subjectId)
       .then((res) => {
         if (res.isSuccess) {
-          const fetched = res.data.entities;
+          const fetched = res.data.entities ?? [];
           setCards(fetched);
           if (fetched.length > 0) {
             setQueue([...fetched]);
@@ -109,9 +111,14 @@ const LearnModeScreen = ({ shelfId, subjectId }: LearnModeScreenProps) => {
           } else {
             setPhase('results');
           }
+        } else {
+          setLoadError(res.message ?? 'Failed to load cards');
         }
       })
-      .catch((err) => console.error('LearnModeScreen fetch error:', err))
+      .catch((err) => {
+        console.error('LearnModeScreen fetch error:', err);
+        setLoadError(err?.message ?? 'Could not connect to server');
+      })
       .finally(() => setIsLoading(false));
   }, [shelfId, subjectId]);
 
@@ -201,7 +208,40 @@ const LearnModeScreen = ({ shelfId, subjectId }: LearnModeScreenProps) => {
     );
   }
 
+  if (loadError) {
+    return (
+      <View style={styles.centeredContainer} testID="learn-error-state">
+        <Text style={styles.resultsTitle}>Could not load</Text>
+        <Text style={styles.resultsMeta}>{loadError}</Text>
+        <Pressable
+          style={styles.backButton}
+          onPress={() => router.back()}
+          testID="learn-error-back-button"
+        >
+          <Text style={styles.backButtonText}>Back</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   if (phase === 'results') {
+    if (cards.length === 0) {
+      return (
+        <View style={styles.resultsContainer} testID="learn-empty-state">
+          <Text style={styles.resultsTitle}>No cards yet</Text>
+          <Text style={styles.resultsMeta}>
+            Add cards to this subject before starting Learn mode.
+          </Text>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => router.back()}
+            testID="learn-empty-back-button"
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+        </View>
+      );
+    }
     return (
       <View style={styles.resultsContainer} testID="learn-results-screen">
         <Text style={styles.resultsEmoji}>🎉</Text>
@@ -228,7 +268,7 @@ const LearnModeScreen = ({ shelfId, subjectId }: LearnModeScreenProps) => {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, styles.contentMax]}
       keyboardShouldPersistTaps="handled"
       testID="learn-mode-screen"
     >
@@ -299,6 +339,9 @@ const LearnModeScreen = ({ shelfId, subjectId }: LearnModeScreenProps) => {
             onChangeText={setWrittenAnswer}
             autoCorrect={false}
             autoCapitalize="none"
+            returnKeyType="done"
+            onSubmitEditing={handleWrittenCheck}
+            blurOnSubmit
             testID="learn-written-input"
           />
           <Pressable
@@ -322,6 +365,11 @@ const styles = StyleSheet.create({
   content: {
     padding: uiTokens.spacing.md,
     paddingBottom: uiTokens.spacing.xxl,
+  },
+  contentMax: {
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   centeredContainer: {
     flex: 1,

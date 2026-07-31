@@ -2,7 +2,9 @@
 
 Oopsly is a cross-platform flashcard / spaced repetition (SRS) app.
 
-**Stack:** React Native 0.81.5 + Expo 54 + NativeWind 4.2 (`ui/`) · Spring Boot 3.5.8 + Java 21 (`api/`) 
+**Stack:** React Native 0.81.5 + Expo 54 + NativeWind 4.2 (`ui/`) · Spring Boot 3.5.8 + Java 21 (`api/`)
+
+**Human docs:** [docs/README.md](./docs/README.md) (Diátaxis). Prefer those pages over inventing architecture. 
 
 
 ## Build & Test Commands
@@ -19,10 +21,13 @@ Oopsly is a cross-platform flashcard / spaced repetition (SRS) app.
 ### UI (from `ui/`)
 
 ```bash
-pnpm install        # install deps
-pnpm test           # Jest
-pnpm test:coverage  # Jest with coverage
-pnpm lint           # ESLint (required before commit)
+pnpm install             # install deps
+pnpm test                # Jest
+pnpm test:coverage       # Jest with coverage (80% gate on unit-included paths)
+pnpm lint                # ESLint (required before commit)
+pnpm e2e:cypress:ci      # Expo web + Cypress with Istanbul coverage (CI)
+pnpm coverage:check:e2e  # gate screen/ + app/(user)/ from Cypress report
+pnpm coverage:merge      # merge Jest + Cypress → coverage-combined/
 ```
 
 ## Critical Conventions

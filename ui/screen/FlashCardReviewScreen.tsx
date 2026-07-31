@@ -41,6 +41,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [reviewedCards, setReviewedCards] = useState<ReviewedFlashcard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [cards, setCards] = useState<(CardRes & { subjectId?: string })[]>([]);
   const [totalCards, setTotalCards] = useState<number>(0);
@@ -53,6 +54,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
 
   const fetchCards = () => {
     setIsLoading(true);
+    setLoadError(null);
     if (isTestSuiteMode && _shelfId && _testSuiteId) {
       runTestPreset(_shelfId, _testSuiteId)
         .then((response) => {
@@ -62,10 +64,12 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
             setTotalCards(list.length);
           } else {
             console.error("Failed to run test preset:", response.message);
+            setLoadError(response.message ?? "Failed to load test cards");
           }
         })
         .catch((error) => {
           console.error("Error running test preset:", error);
+          setLoadError(error?.message ?? "Could not connect to server");
         })
         .finally(() => setIsLoading(false));
       return;
@@ -74,15 +78,16 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
       fetchCardsDataBySubjectAndShelf(_shelfId, _subjectId)
         .then((response) => {
           if (response.isSuccess) {
-            console.log("Fetched cards:", response.data);
             setCards(response.data.entities);
             setTotalCards(response.data.totalItems);
           } else {
             console.error("Failed to fetch cards:", response.message);
+            setLoadError(response.message ?? "Failed to load cards");
           }
         })
         .catch((error) => {
           console.error("Error fetching cards:", error);
+          setLoadError(error?.message ?? "Could not connect to server");
         })
         .finally(() => setIsLoading(false));
       return;
@@ -341,6 +346,18 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
             <View style={styles.emptyState} testID="cards-loading-state">
               <Text style={styles.emptyTitle}>Loading cards...</Text>
               <Text style={styles.emptySubtitle}>Preparing your session.</Text>
+            </View>
+          ) : loadError ? (
+            <View style={styles.emptyState} testID="review-error-state">
+              <Text style={styles.emptyTitle}>Could not load</Text>
+              <Text style={styles.emptySubtitle}>{loadError}</Text>
+              <Pressable
+                style={styles.emptyBackBtn}
+                onPress={() => router.back()}
+                testID="review-error-back-button"
+              >
+                <Text style={styles.emptyBackBtnText}>Go back</Text>
+              </Pressable>
             </View>
           ) : totalCards === 0 ? (
             <View style={styles.emptyState} testID="empty-cards-state">

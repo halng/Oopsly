@@ -42,3 +42,8 @@ app-example
 /ios
 /android
 coverage/
+coverage-cypress/
+coverage-combined/
+.nyc_output/
+cypress/videos/
+cypress/screenshots/

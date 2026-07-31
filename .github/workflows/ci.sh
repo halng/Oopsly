@@ -98,6 +98,9 @@ run_backend_ci() {
         
         echo "CI::Running Unit Tests..."
         ./gradlew test
+
+        echo "CI::Running Integration Tests..."
+        ./gradlew integrationTest
         
         echo "CI::Running Code Coverage and Verification..."
         ./gradlew jacocoTestCoverageVerification
@@ -144,8 +147,23 @@ run_frontend_ci() {
         echo "CI::Running ESLint..."
         $PKG_MANAGER run lint
         
-        echo "CI::Running Unit Tests with coverage..."
+        echo "CI::Running Unit Tests with coverage (Jest 80% gate)..."
         $PKG_MANAGER run test:coverage
+
+        echo "CI::Installing Cypress binary..."
+        $PKG_MANAGER exec cypress install
+
+        echo "CI::Running Cypress e2e with Istanbul instrumentation..."
+        # web:coverage already sets these; export for any nested tooling.
+        export CYPRESS_COVERAGE=true
+        export BABEL_ENV=cypress
+        $PKG_MANAGER run e2e:cypress:ci
+
+        echo "CI::Checking e2e coverage for screen/ + app/(user)/..."
+        $PKG_MANAGER run coverage:check:e2e
+
+        echo "CI::Merging Jest + Cypress coverage reports..."
+        $PKG_MANAGER run coverage:merge
         
         cd ..
         echo "CI::Frontend CI completed successfully!"

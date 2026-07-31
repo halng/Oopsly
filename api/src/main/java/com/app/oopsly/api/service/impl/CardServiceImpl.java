@@ -445,6 +445,9 @@ public class CardServiceImpl implements CardService {
         if (t instanceof ValidationException ve) {
             return ve;
         }
+        if (t instanceof IllegalArgumentException iae) {
+            return iae;
+        }
         return new RetryLaterException(
                 "Card service is currently unavailable. Please try again later.", t);
     }

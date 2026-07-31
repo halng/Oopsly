@@ -1,5 +1,5 @@
 /*
- *    Copyright 2025 Hao Nguyen Tan
+ *    Copyright 2026 Hao Nguyen Tan
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -14,6 +14,13 @@
  *    limitations under the License.
  */
 
+/** studyDays: 0=Sunday … 6=Saturday (JS Date.getDay() convention). */
+export interface StudySchedule {
+  preferredStudyTime: string;
+  studyDays: number[];
+  reminderEnabled: boolean;
+}
+
 export interface SettingsRes {
   theme: string;
   language: string;
@@ -23,6 +30,7 @@ export interface SettingsRes {
     GOOD: number;
     EASY: number;
   };
+  studySchedule: StudySchedule;
 }
 
 export interface UserProfileRes {
@@ -47,4 +55,11 @@ export interface UpdateSettingsReq {
     GOOD: number;
     EASY: number;
   };
+  studySchedule: StudySchedule;
 }
+
+export const DEFAULT_STUDY_SCHEDULE: StudySchedule = {
+  preferredStudyTime: "09:00",
+  studyDays: [1, 2, 3, 4, 5],
+  reminderEnabled: false,
+};

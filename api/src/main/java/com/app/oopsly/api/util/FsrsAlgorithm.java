@@ -70,23 +70,23 @@ public final class FsrsAlgorithm {
         return new ScheduleResult(Math.max(s, MIN_STABILITY), d, interval, card.repetitions() + 1);
     }
 
-    static double retrievability(double elapsedDays, double stability) {
+    public static double retrievability(double elapsedDays, double stability) {
         return Math.pow(1.0 + elapsedDays / (9.0 * stability), -1.0);
     }
 
-    static double initDifficulty(int grade) {
+    public static double initDifficulty(int grade) {
         double d = W[4] - Math.exp(W[5] * (grade - 1)) + 1;
         return clampDifficulty(d);
     }
 
-    static double nextDifficulty(double d, int grade) {
+    public static double nextDifficulty(double d, int grade) {
         double d0 = initDifficulty(4);
         double dPrime = d + W[6] * (3 - grade);
         double meanReverted = W[7] * d0 + (1.0 - W[7]) * dPrime;
         return clampDifficulty(meanReverted);
     }
 
-    static double recallStability(double d, double s, double r, int grade) {
+    public static double recallStability(double d, double s, double r, int grade) {
         double hardPenalty = (grade == 2) ? W[15] : 1.0;
         double easyBonus = (grade == 4) ? W[16] : 1.0;
         double stabilityBase = Math.max(s, 0.1);
@@ -102,14 +102,14 @@ public final class FsrsAlgorithm {
         return Math.max(sNew, MIN_STABILITY);
     }
 
-    static double forgetStability(double d, double s, double r) {
+    public static double forgetStability(double d, double s, double r) {
         return W[11]
                 * Math.pow(d, -W[12])
                 * (Math.pow(s + 1.0, W[13]) - 1.0)
                 * Math.exp(W[14] * (1.0 - r));
     }
 
-    static double clampDifficulty(double d) {
+    public static double clampDifficulty(double d) {
         return Math.max(1.0, Math.min(10.0, d));
     }
 }

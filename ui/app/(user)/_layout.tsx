@@ -30,6 +30,9 @@ export default function UserLayout() {
       <Stack.Screen name="home" />
       <Stack.Screen name="profile" />
       <Stack.Screen name="settings" />
+      <Stack.Screen name="discover" />
+      <Stack.Screen name="stats" />
+      <Stack.Screen name="leaderboard" />
       <Stack.Screen
         name="take-test/[testSuiteId]"
         options={{

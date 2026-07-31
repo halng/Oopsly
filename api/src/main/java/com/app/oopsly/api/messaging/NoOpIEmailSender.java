@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("test")
+@Profile({"test", "integration"})
 @Slf4j
 public class NoOpIEmailSender implements IEmailSender {
 

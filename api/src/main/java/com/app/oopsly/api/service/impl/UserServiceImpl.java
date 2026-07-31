@@ -18,6 +18,7 @@ package com.app.oopsly.api.service.impl;
 
 import com.app.oopsly.api.entity.Language;
 import com.app.oopsly.api.entity.SettingEntity;
+import com.app.oopsly.api.entity.StudySchedule;
 import com.app.oopsly.api.entity.Theme;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.exception.RetryLaterException;
@@ -33,6 +34,8 @@ import com.app.oopsly.api.viewmodel.ApiRes;
 import com.app.oopsly.api.viewmodel.AuthRes;
 import com.app.oopsly.api.viewmodel.RefreshTokenReq;
 import com.app.oopsly.api.viewmodel.SettingsRes;
+import com.app.oopsly.api.viewmodel.StudyScheduleReq;
+import com.app.oopsly.api.viewmodel.StudyScheduleRes;
 import com.app.oopsly.api.viewmodel.UpdateProfileReq;
 import com.app.oopsly.api.viewmodel.UpdateSettingsReq;
 import com.app.oopsly.api.viewmodel.UserProfileRes;
@@ -40,8 +43,12 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -115,7 +122,7 @@ public class UserServiceImpl implements UserService {
         }
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("id", user.getId());
+        claims.put("id", user.getId().toString());
         claims.put("role", "USER");
 
         String newAccessToken = jwtUtils.generateTokenWithClaims(claims, email);
@@ -139,12 +146,7 @@ public class UserServiceImpl implements UserService {
     public ApiRes getProfile() {
         User user = getCurrentUser();
         SettingEntity setting = ensureSettings(user);
-
-        SettingsRes settingsRes =
-                new SettingsRes(
-                        setting.getTheme().name(),
-                        setting.getLanguage().getCode(),
-                        setting.getSpaceConfig());
+        SettingsRes settingsRes = toSettingsRes(setting);
 
         UserProfileRes profileRes =
                 new UserProfileRes(
@@ -230,6 +232,8 @@ public class UserServiceImpl implements UserService {
         spaceConfigMap.put("GOOD", request.spaceConfig().GOOD());
         spaceConfigMap.put("EASY", request.spaceConfig().EASY());
 
+        StudySchedule studySchedule = toStudySchedule(request.studySchedule());
+
         if (setting == null) {
             // Create new setting
             setting =
@@ -237,6 +241,7 @@ public class UserServiceImpl implements UserService {
                             .theme(theme)
                             .language(language)
                             .spaceConfig(spaceConfigMap)
+                            .studySchedule(studySchedule)
                             .user(user)
                             .build();
         } else {
@@ -244,6 +249,7 @@ public class UserServiceImpl implements UserService {
             setting.setTheme(theme);
             setting.setLanguage(language);
             setting.setSpaceConfig(spaceConfigMap);
+            setting.setStudySchedule(studySchedule);
         }
 
         settingRepository.save(setting);
@@ -266,6 +272,12 @@ public class UserServiceImpl implements UserService {
         log.error(
                 "Refresh token service unavailable for user {}",
                 StringUtils.masked(refreshTokenReq.userEmail()));
+        if (t instanceof UnauthenticatedException ue) {
+            throw ue;
+        }
+        if (t instanceof ValidationException ve) {
+            throw ve;
+        }
         throw new RetryLaterException(
                 "Refresh token service is currently unavailable. Please try again later.", t);
     }
@@ -310,9 +322,46 @@ public class UserServiceImpl implements UserService {
                         .theme(Theme.SYSTEM)
                         .language(Language.ENGLISH)
                         .spaceConfig(defaultSpaceConfig)
+                        .studySchedule(StudySchedule.defaults())
                         .user(user)
                         .build();
         return settingRepository.save(setting);
+    }
+
+    private SettingsRes toSettingsRes(SettingEntity setting) {
+        StudySchedule schedule =
+                setting.getStudySchedule() != null
+                        ? setting.getStudySchedule()
+                        : StudySchedule.defaults();
+        return new SettingsRes(
+                setting.getTheme().name(),
+                setting.getLanguage().getCode(),
+                setting.getSpaceConfig(),
+                new StudyScheduleRes(
+                        schedule.getPreferredStudyTime(),
+                        schedule.getStudyDays(),
+                        schedule.getReminderEnabled()));
+    }
+
+    private StudySchedule toStudySchedule(StudyScheduleReq req) {
+        if (req.studyDays() == null) {
+            throw new ValidationException("Study days cannot be null");
+        }
+        Set<Integer> uniqueDays = new HashSet<>();
+        for (Integer day : req.studyDays()) {
+            if (day == null || day < 0 || day > 6) {
+                throw new ValidationException(
+                        "Study days must be integers from 0 (Sunday) to 6 (Saturday)");
+            }
+            uniqueDays.add(day);
+        }
+        List<Integer> days = new ArrayList<>(uniqueDays);
+        days.sort(Integer::compareTo);
+        return StudySchedule.builder()
+                .preferredStudyTime(req.preferredStudyTime())
+                .studyDays(days)
+                .reminderEnabled(Boolean.TRUE.equals(req.reminderEnabled()))
+                .build();
     }
 
     @Override

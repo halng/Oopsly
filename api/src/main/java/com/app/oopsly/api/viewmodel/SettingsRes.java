@@ -18,4 +18,8 @@ package com.app.oopsly.api.viewmodel;
 
 import java.util.Map;
 
-public record SettingsRes(String theme, String language, Map<String, Integer> spaceConfig) {}
+public record SettingsRes(
+        String theme,
+        String language,
+        Map<String, Integer> spaceConfig,
+        StudyScheduleRes studySchedule) {}

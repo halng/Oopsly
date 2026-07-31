@@ -45,6 +45,7 @@ type FlashState = { id: string; type: 'match' | 'wrong' } | null;
 const MatchingGameScreen = ({ shelfId, subjectId }: MatchingGameScreenProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [fronts, setFronts] = useState<MatchItem[]>([]);
   const [backs, setBacks] = useState<MatchItem[]>([]);
   const [selectedFront, setSelectedFront] = useState<string | null>(null);
@@ -58,10 +59,11 @@ const MatchingGameScreen = ({ shelfId, subjectId }: MatchingGameScreenProps) => 
   const totalPairs = useRef(0);
 
   useEffect(() => {
+    setLoadError(null);
     fetchCardsDataBySubjectAndShelf(shelfId, subjectId)
       .then((res) => {
         if (res.isSuccess) {
-          const raw = res.data.entities.slice(0, 8);
+          const raw = (res.data.entities ?? []).slice(0, 8);
           totalPairs.current = raw.length;
           setFronts(
             raw.map((c) => ({ id: c.id, text: c.front, matched: false })).sort(
@@ -73,12 +75,19 @@ const MatchingGameScreen = ({ shelfId, subjectId }: MatchingGameScreenProps) => 
               () => Math.random() - 0.5,
             ),
           );
-          timerRef.current = setInterval(() => {
-            setElapsedSeconds((s) => s + 1);
-          }, 1000);
+          if (raw.length > 0) {
+            timerRef.current = setInterval(() => {
+              setElapsedSeconds((s) => s + 1);
+            }, 1000);
+          }
+        } else {
+          setLoadError(res.message ?? 'Failed to load cards');
         }
       })
-      .catch((err) => console.error('MatchingGameScreen fetch error:', err))
+      .catch((err) => {
+        console.error('MatchingGameScreen fetch error:', err);
+        setLoadError(err?.message ?? 'Could not connect to server');
+      })
       .finally(() => setIsLoading(false));
 
     return () => {
@@ -161,6 +170,40 @@ const MatchingGameScreen = ({ shelfId, subjectId }: MatchingGameScreenProps) => 
     );
   }
 
+  if (loadError) {
+    return (
+      <View style={styles.centered} testID="match-error-state">
+        <Text style={styles.resultsTitle}>Could not load</Text>
+        <Text style={styles.resultsMeta}>{loadError}</Text>
+        <Pressable
+          style={styles.secondaryButton}
+          onPress={() => router.back()}
+          testID="match-error-back-button"
+        >
+          <Text style={styles.secondaryButtonText}>Back</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (totalPairs.current === 0) {
+    return (
+      <View style={styles.centered} testID="match-empty-state">
+        <Text style={styles.resultsTitle}>No cards yet</Text>
+        <Text style={styles.resultsMeta}>
+          Add at least one card before playing Match.
+        </Text>
+        <Pressable
+          style={styles.secondaryButton}
+          onPress={() => router.back()}
+          testID="match-empty-back-button"
+        >
+          <Text style={styles.secondaryButtonText}>Back</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   if (isComplete) {
     const accuracy =
       totalPairs.current > 0
@@ -216,7 +259,7 @@ const MatchingGameScreen = ({ shelfId, subjectId }: MatchingGameScreenProps) => 
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, styles.contentMax]}
       testID="match-game-screen"
     >
       <View style={styles.header}>
@@ -303,6 +346,11 @@ const styles = StyleSheet.create({
   content: {
     padding: uiTokens.spacing.md,
     paddingBottom: uiTokens.spacing.xxl,
+  },
+  contentMax: {
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   centered: {
     flex: 1,

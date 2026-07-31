@@ -54,6 +54,12 @@ jobs:
       - name: Make ci.sh executable
         run: chmod +x .github/workflows/ci.sh
 
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: ${{ runner.os }}-cypress-${{ hashFiles('ui/pnpm-lock.yaml') }}
+
       - name: Run CI Script
         run: ./.github/workflows/ci.sh
         env:
@@ -63,3 +69,25 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           EVENT_NAME: ${{ github.event_name  }}
           REF: ${{ github.ref }}
+          # Instrument Expo web for Cypress Istanbul coverage collection.
+          CYPRESS_COVERAGE: "true"
+          BABEL_ENV: cypress
+
+      - name: Upload UI coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-coverage
+          path: |
+            ui/coverage/
+            ui/coverage-cypress/
+            ui/coverage-combined/
+          if-no-files-found: ignore
+
+      - name: Upload Cypress screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: ui/cypress/screenshots/
+          if-no-files-found: ignore

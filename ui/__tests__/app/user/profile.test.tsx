@@ -1,5 +1,5 @@
 /*
- *    Copyright 2025 Hao Nguyen Tan
+ *    Copyright 2026 Hao Nguyen Tan
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react-nativ
 import ProfileScreen from "../../../app/(user)/profile";
 import { useRouter } from "expo-router";
 import { getProfile, updateProfile } from "@/services/ProfileService";
+import { useAuthStore } from "@/store/AuthStore";
 
 jest.mock("expo-router", () => ({
   useRouter: jest.fn(),
@@ -29,23 +30,31 @@ jest.mock("@/services/ProfileService", () => ({
   updateProfile: jest.fn(),
 }));
 
+jest.mock("@/store/AuthStore", () => ({
+  useAuthStore: jest.fn(),
+}));
+
 const mockRouter = { back: jest.fn(), push: jest.fn() };
 
 describe("ProfileScreen", () => {
   beforeEach(() => {
+    jest.useRealTimers();
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-  });
-
-  it("renders loaded profile data", async () => {
+    (useAuthStore as jest.Mock).mockImplementation((selector: any) =>
+      selector({ userEmail: "jane@example.com" }),
+    );
     (getProfile as jest.Mock).mockResolvedValue({
       isSuccess: true,
       data: { displayName: "Jane Doe", bio: "Tester", age: 25 },
     });
+  });
 
+  it("renders loaded profile data and email", async () => {
     render(<ProfileScreen />);
 
-    await waitFor(() => expect(screen.getByText("Jane Doe")).toBeTruthy());
+    expect(await screen.findByText("Jane Doe")).toBeTruthy();
+    expect(screen.getByTestId("profile-email")).toHaveTextContent("jane@example.com");
     expect(getProfile).toHaveBeenCalled();
   });
 
@@ -54,7 +63,7 @@ describe("ProfileScreen", () => {
 
     render(<ProfileScreen />);
 
-    await waitFor(() => expect(screen.getByText("Network down")).toBeTruthy());
+    expect(await screen.findByText("Network down")).toBeTruthy();
   });
 
   it("allows editing and saving display name", async () => {
@@ -69,7 +78,7 @@ describe("ProfileScreen", () => {
 
     render(<ProfileScreen />);
 
-    await waitFor(() => expect(screen.getByText("Jane Doe")).toBeTruthy());
+    expect(await screen.findByText("Jane Doe")).toBeTruthy();
 
     fireEvent.press(screen.getByTestId("edit-button"));
 
@@ -82,8 +91,8 @@ describe("ProfileScreen", () => {
         displayName: "New Name",
         bio: "QA",
         age: 22,
-      })
+      }),
     );
-    await waitFor(() => expect(screen.getByText("New Name")).toBeTruthy());
+    expect(await screen.findByText("New Name")).toBeTruthy();
   });
 });

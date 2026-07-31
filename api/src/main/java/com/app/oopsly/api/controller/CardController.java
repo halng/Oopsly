@@ -62,7 +62,7 @@ public class CardController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("")
-    ApiRes create(
+    public ApiRes create(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -95,7 +95,7 @@ public class CardController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("")
-    ApiRes getAllCardsBySubject(
+    public ApiRes getAllCardsBySubject(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -139,7 +139,7 @@ public class CardController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PutMapping("/{id}")
-    ApiRes updateCard(
+    public ApiRes updateCard(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -177,7 +177,7 @@ public class CardController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/{id}")
-    ApiRes getById(
+    public ApiRes getById(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -214,7 +214,7 @@ public class CardController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PutMapping("/difficulty")
-    ApiRes updateDifficulty(
+    public ApiRes updateDifficulty(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -247,7 +247,7 @@ public class CardController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/due")
-    ApiRes getDueCards(
+    public ApiRes getDueCards(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -284,7 +284,7 @@ public class CardController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PatchMapping("/{id}")
-    ApiRes deleteById(
+    public ApiRes deleteById(
             @Parameter(
                             description = "Deck ID",
                             required = true,

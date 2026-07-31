@@ -36,7 +36,7 @@ public class DiscoverController {
             summary = "Discover public decks",
             description = "Search public decks by name or description")
     @GetMapping
-    ApiRes discoverPublicDecks(
+    public ApiRes discoverPublicDecks(
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -47,7 +47,7 @@ public class DiscoverController {
             summary = "Clone a public deck",
             description = "Clones a public deck into the current user's first shelf")
     @PostMapping("/{subjectId}/clone")
-    ApiRes cloneDeck(@PathVariable UUID subjectId) {
+    public ApiRes cloneDeck(@PathVariable UUID subjectId) {
         return subjectService.cloneDeck(subjectId);
     }
 }

@@ -16,6 +16,8 @@ module.exports = {
   collectCoverageFrom: [
     '**/*.{js,jsx,ts,tsx}',
     '!**/coverage/**',
+    '!**/coverage-*/**',
+    '!**/.nyc_output/**',
     '!**/node_modules/**',
     '!**/babel.config.js',
     '!**/jest.config.js',
@@ -40,6 +42,8 @@ module.exports = {
     '!app/\\(user\\)/**',
     '!**/__mocks__/**',
     '!**/__tests__/**',
+    '!**/cypress/**',
+    '!**/cypress.config.ts',
   ],
   coverageThreshold: {
     global: {

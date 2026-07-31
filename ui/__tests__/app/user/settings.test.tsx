@@ -1,5 +1,5 @@
 /*
- *    Copyright 2025 Hao Nguyen Tan
+ *    Copyright 2026 Hao Nguyen Tan
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -37,40 +37,52 @@ jest.mock("@/services/ProfileService", () => ({
 const mockRouter = { back: jest.fn() };
 
 const baseSettings = {
-  theme: "light",
+  theme: "light" as const,
   setTheme: jest.fn(),
+};
+
+const profileSettings = {
+  language: "ENGLISH",
+  spaceConfig: { AGAIN: 1, HARD: 1, GOOD: 5, EASY: 10 },
+  studySchedule: {
+    preferredStudyTime: "09:00",
+    studyDays: [1, 2, 3, 4, 5],
+    reminderEnabled: false,
+  },
 };
 
 describe("SettingsScreen", () => {
   beforeEach(() => {
+    jest.useRealTimers();
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    (useSettingsStore as jest.Mock).mockImplementation((selector: any) => selector(baseSettings));
+    (useSettingsStore as jest.Mock).mockImplementation((selector: any) =>
+      selector(baseSettings),
+    );
     baseSettings.theme = "light";
-  });
-
-  it("renders theme options with current selection", () => {
-    render(<SettingsScreen />);
-
-    expect(screen.getByText("Appearance")).toBeTruthy();
-    expect(screen.getByText("Light")).toBeTruthy();
-  });
-
-  it("changes theme and syncs settings", async () => {
     (getProfile as jest.Mock).mockResolvedValue({
       isSuccess: true,
-      data: {
-        settings: {
-          language: "ENGLISH",
-          spaceConfig: { AGAIN: 1, HARD: 1, GOOD: 5, EASY: 10 },
-        },
-      },
+      data: { settings: profileSettings },
     });
-    (updateSettings as jest.Mock).mockResolvedValue({ isSuccess: true });
+    (updateSettings as jest.Mock).mockResolvedValue({
+      isSuccess: true,
+      data: { settings: profileSettings },
+    });
+  });
 
+  it("renders theme options and study schedule after load", async () => {
     render(<SettingsScreen />);
 
-    fireEvent.press(screen.getByText("Dark"));
+    expect(await screen.findByText("Appearance")).toBeTruthy();
+    expect(screen.getByText("Light")).toBeTruthy();
+    expect(screen.getByTestId("study-schedule-section")).toBeTruthy();
+    expect(screen.getByTestId("study-time-input")).toBeTruthy();
+  });
+
+  it("changes theme and syncs settings including study schedule", async () => {
+    render(<SettingsScreen />);
+
+    fireEvent.press(await screen.findByText("Dark"));
 
     await waitFor(() => expect(baseSettings.setTheme).toHaveBeenCalledWith("dark"));
     await waitFor(() =>
@@ -78,15 +90,37 @@ describe("SettingsScreen", () => {
         theme: "DARK",
         language: "ENGLISH",
         spaceConfig: { AGAIN: 1, HARD: 1, GOOD: 5, EASY: 10 },
-      })
+        studySchedule: profileSettings.studySchedule,
+      }),
     );
   });
 
-  it("navigates back when back button pressed", () => {
+  it("saves study schedule", async () => {
     render(<SettingsScreen />);
 
-    fireEvent.press(screen.getByTestId("back-button"));
+    const timeInput = await screen.findByTestId("study-time-input");
+    fireEvent.changeText(timeInput, "18:30");
+    fireEvent.press(screen.getByTestId("study-day-0"));
+    fireEvent(screen.getByTestId("reminder-toggle"), "valueChange", true);
+    fireEvent.press(screen.getByTestId("save-schedule-button"));
 
+    await waitFor(() =>
+      expect(updateSettings).toHaveBeenCalledWith(
+        expect.objectContaining({
+          studySchedule: expect.objectContaining({
+            preferredStudyTime: "18:30",
+            reminderEnabled: true,
+            studyDays: expect.arrayContaining([0, 1, 2, 3, 4, 5]),
+          }),
+        }),
+      ),
+    );
+    expect(await screen.findByTestId("settings-success")).toBeTruthy();
+  });
+
+  it("navigates back when back button pressed", async () => {
+    render(<SettingsScreen />);
+    fireEvent.press(await screen.findByTestId("settings-header-back-button"));
     expect(mockRouter.back).toHaveBeenCalled();
   });
 });

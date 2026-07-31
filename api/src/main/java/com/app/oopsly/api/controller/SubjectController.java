@@ -63,7 +63,7 @@ public class SubjectController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("")
-    ApiRes create(
+    public ApiRes create(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -91,7 +91,7 @@ public class SubjectController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("")
-    ApiRes getAllByShelve(
+    public ApiRes getAllByShelve(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -126,7 +126,7 @@ public class SubjectController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PutMapping("/{id}")
-    ApiRes update(
+    public ApiRes update(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -146,7 +146,7 @@ public class SubjectController {
     }
 
     @PutMapping("/{id}/settings")
-    ApiRes updateSetting(
+    public ApiRes updateSetting(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -179,7 +179,7 @@ public class SubjectController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/{id}")
-    ApiRes getById(
+    public ApiRes getById(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
@@ -209,7 +209,7 @@ public class SubjectController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PatchMapping("/{id}")
-    ApiRes delete(
+    public ApiRes delete(
             @Parameter(
                             description = "Shelve ID",
                             required = true,
