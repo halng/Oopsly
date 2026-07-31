@@ -38,6 +38,11 @@ beforeAll(() => {
   global.alert = global.alert || jest.fn();
 });
 
+beforeEach(() => {
+  // Ensure each test starts on real timers (verification specs use fake timers).
+  jest.useRealTimers();
+});
+
 afterEach(() => {
   jest.clearAllMocks();
   // Prevent fake-timer leakage (e.g. from verification tests) from hanging waitFor.

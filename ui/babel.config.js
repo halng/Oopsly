@@ -1,10 +1,16 @@
 module.exports = function (api) {
+  // Never instrument under Jest — CI must not export CYPRESS_COVERAGE/BABEL_ENV
+  // for the whole job or istanbul will inflate/break the Jest coverage gate.
+  const isJest = Boolean(process.env.JEST_WORKER_ID) || process.env.NODE_ENV === "test";
   const isCypressCoverage =
-    process.env.CYPRESS_COVERAGE === "true" ||
-    process.env.BABEL_ENV === "cypress";
+    !isJest &&
+    (process.env.CYPRESS_COVERAGE === "true" ||
+      process.env.BABEL_ENV === "cypress");
 
   // Separate cache entries so Jest is never instrumented with istanbul.
-  api.cache.using(() => (isCypressCoverage ? "cypress-coverage" : "default"));
+  api.cache.using(() =>
+    isJest ? "jest" : isCypressCoverage ? "cypress-coverage" : "default",
+  );
 
   return {
     presets: [

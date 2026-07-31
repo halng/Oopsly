@@ -92,6 +92,10 @@ tasks.named('test') {
 	filter {
 		includeTestsMatching 'com.app.oopsly.api.unit.*'
 	}
+	testLogging {
+		events 'passed', 'skipped', 'failed'
+		exceptionFormat 'full'
+	}
 }
 
 tasks.register('integrationTest', Test) {
@@ -100,12 +104,22 @@ tasks.register('integrationTest', Test) {
 	useJUnitPlatform()
 	testClassesDirs = sourceSets.test.output.classesDirs
 	classpath = sourceSets.test.runtimeClasspath
+	// Keep results/exec separate from unit :test so up-to-date checks and JaCoCo don't collide.
+	binaryResultsDirectory = layout.buildDirectory.dir('test-results/integrationTest/binary')
+	reports {
+		junitXml.outputLocation = layout.buildDirectory.dir('test-results/integrationTest')
+		html.outputLocation = layout.buildDirectory.dir('reports/tests/integrationTest')
+	}
 	filter {
 		includeTestsMatching 'com.app.oopsly.api.integration.*'
 		excludeTestsMatching 'com.app.oopsly.api.integration.support.*'
+		setFailOnNoMatchingTests(true)
 	}
 	shouldRunAfter test
-	finalizedBy jacocoTestReport
+	testLogging {
+		events 'passed', 'skipped', 'failed'
+		exceptionFormat 'full'
+	}
 }
 
 def composeFile = 'src/main/resources/docker-compose.yml'
@@ -151,6 +165,8 @@ jacocoTestReport {
 			)
 	)
 
+	executionData.setFrom(fileTree(dir: layout.buildDirectory.dir('jacoco'), includes: ['*.exec']))
+
 	reports {
 		xml.required = true
 		csv.required = false
@@ -163,7 +179,7 @@ jacoco {
 }
 
 jacocoTestCoverageVerification {
-	dependsOn test
+	dependsOn test, integrationTest
 
 	classDirectories.setFrom(
 			files(
@@ -173,7 +189,7 @@ jacocoTestCoverageVerification {
 			)
 	)
 
-	executionData.setFrom(fileTree(dir: project.buildDir, includes: ['jacoco/*.exec']))
+	executionData.setFrom(fileTree(dir: layout.buildDirectory.dir('jacoco'), includes: ['*.exec']))
 
 	violationRules {
 		rule {

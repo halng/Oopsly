@@ -11,7 +11,7 @@ Workflow: [`.github/workflows/ci.yaml`](../../.github/workflows/ci.yaml) → [`.
 1. Validate Java, Node, Python tooling  
 2. **API:** `clean build -x test` → `spotlessCheck` → `test` → `integrationTest` → Jacoco verification (**~90%** gate on included classes)  
 3. **UI:** `pnpm install` → `lint` → `test:coverage` (Jest **~80%** gate on unit-included paths; `screen/` and `app/(user)/` still excluded from Jest — see `ui/jest.config.js`)  
-4. **UI e2e:** start Expo web with Istanbul (`CYPRESS_COVERAGE=true`) → `pnpm e2e:cypress:ci` → `coverage:check:e2e` (gate on `screen/` + `app/(user)/`) → `coverage:merge` (Jest + Cypress → `coverage-combined/`)  
+4. **UI e2e:** start Expo web with Istanbul (`CYPRESS_COVERAGE=true` / `BABEL_ENV=cypress` scoped only to this step — never for Jest) → `pnpm e2e:cypress:ci` → `coverage:check:e2e` (gate on `screen/` + `app/(user)/`) → `coverage:merge` (Jest + Cypress → `coverage-combined/`)  
 5. Snyk on `api/` when `SNYK_TOKEN` is set  
 
 Coverage artifacts (`ui/coverage/`, `ui/coverage-cypress/`, `ui/coverage-combined/`) are uploaded from the CI job.

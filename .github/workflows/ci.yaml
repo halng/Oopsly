@@ -69,9 +69,9 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           EVENT_NAME: ${{ github.event_name  }}
           REF: ${{ github.ref }}
-          # Instrument Expo web for Cypress Istanbul coverage collection.
-          CYPRESS_COVERAGE: "true"
-          BABEL_ENV: cypress
+          # Do NOT set CYPRESS_COVERAGE / BABEL_ENV here — they enable
+          # babel-plugin-istanbul and break the Jest coverage gate.
+          # ci.sh exports them only around the Cypress e2e step.
 
       - name: Upload UI coverage reports
         if: always()

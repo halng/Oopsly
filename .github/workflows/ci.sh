@@ -100,7 +100,7 @@ run_backend_ci() {
         ./gradlew test
 
         echo "CI::Running Integration Tests..."
-        ./gradlew integrationTest
+        ./gradlew integrationTest --rerun
         
         echo "CI::Running Code Coverage and Verification..."
         ./gradlew jacocoTestCoverageVerification
@@ -148,16 +148,15 @@ run_frontend_ci() {
         $PKG_MANAGER run lint
         
         echo "CI::Running Unit Tests with coverage (Jest 80% gate)..."
-        $PKG_MANAGER run test:coverage
+        # Keep Istanbul/Cypress instrumentation env vars off during Jest.
+        env -u CYPRESS_COVERAGE -u BABEL_ENV $PKG_MANAGER run test:coverage
 
         echo "CI::Installing Cypress binary..."
         $PKG_MANAGER exec cypress install
 
         echo "CI::Running Cypress e2e with Istanbul instrumentation..."
-        # web:coverage already sets these; export for any nested tooling.
-        export CYPRESS_COVERAGE=true
-        export BABEL_ENV=cypress
-        $PKG_MANAGER run e2e:cypress:ci
+        # Scope instrumentation env to the e2e process only (not Jest).
+        CYPRESS_COVERAGE=true BABEL_ENV=cypress $PKG_MANAGER run e2e:cypress:ci
 
         echo "CI::Checking e2e coverage for screen/ + app/(user)/..."
         $PKG_MANAGER run coverage:check:e2e
