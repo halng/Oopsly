@@ -39,7 +39,8 @@
 ## CI
 
 ```bash
-./.github/workflows/ci.sh
+./.github/workflows/ci.sh              # API + UI lint/Jest
+./.github/workflows/ci.sh --with-e2e   # also headless Cypress locally
 ```
 
-Orchestrated by `.github/workflows/ci.yaml` on pushes/PRs to `main` and `release/**`.
+GitHub Actions (`.github/workflows/ci.yaml`): job `ci` for API/Jest; job `ui-e2e` for headless Cypress (Electron).

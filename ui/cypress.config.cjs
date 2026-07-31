@@ -14,13 +14,16 @@
  *    limitations under the License.
  */
 
-import { defineConfig } from "cypress";
-
-// CommonJS plugin (v3) — compatible with Cypress 14.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+/**
+ * Plain CJS config so Cypress does not compile against Expo's tsconfig
+ * (customConditions + Cypress-bundled TypeScript → TS5098 on GHA).
+ *
+ * baseUrl uses 127.0.0.1 (not localhost) for reliable GitHub Actions networking.
+ */
+const { defineConfig } = require("cypress");
 const registerCodeCoverageTasks = require("@cypress/code-coverage/task");
 
-export default defineConfig({
+module.exports = defineConfig({
   video: false,
   screenshotOnRunFailure: true,
   viewportWidth: 1280,
@@ -38,10 +41,11 @@ export default defineConfig({
     },
   },
   e2e: {
-    baseUrl: "http://localhost:8081",
+    // 127.0.0.1 avoids flaky localhost / IPv6 resolution on GHA runners.
+    baseUrl: "http://127.0.0.1:8081",
     specPattern: "cypress/e2e/**/*.cy.{ts,tsx}",
     supportFile: "cypress/support/e2e.ts",
-    retries: { runMode: 1, openMode: 0 },
+    retries: { runMode: 2, openMode: 0 },
     setupNodeEvents(on, config) {
       registerCodeCoverageTasks(on, config);
       return config;

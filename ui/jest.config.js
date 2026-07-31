@@ -43,7 +43,7 @@ module.exports = {
     '!**/__mocks__/**',
     '!**/__tests__/**',
     '!**/cypress/**',
-    '!**/cypress.config.ts',
+    '!**/cypress.config.*',
   ],
   coverageThreshold: {
     global: {

@@ -23,6 +23,7 @@ permissions:
   packages: write
 
 jobs:
+  # Backend + UI lint/Jest (no Cypress — keeps Istanbul env off the Jest gate).
   ci:
     runs-on: ubuntu-latest
 
@@ -54,12 +55,6 @@ jobs:
       - name: Make ci.sh executable
         run: chmod +x .github/workflows/ci.sh
 
-      - name: Cache Cypress binary
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/Cypress
-          key: ${{ runner.os }}-cypress-${{ hashFiles('ui/pnpm-lock.yaml') }}
-
       - name: Run CI Script
         run: ./.github/workflows/ci.sh
         env:
@@ -67,21 +62,69 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKER_USERNAME: halng
           DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          EVENT_NAME: ${{ github.event_name  }}
+          EVENT_NAME: ${{ github.event_name }}
           REF: ${{ github.ref }}
-          # Do NOT set CYPRESS_COVERAGE / BABEL_ENV here — they enable
-          # babel-plugin-istanbul and break the Jest coverage gate.
-          # ci.sh exports them only around the Cypress e2e step.
 
-      - name: Upload UI coverage reports
+      - name: Upload Jest coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ui-coverage
+          name: ui-jest-coverage
+          path: ui/coverage/
+          if-no-files-found: ignore
+
+  # Headless Cypress e2e against Expo web (electron).
+  ui-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Cypress e2e (headless electron)
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: ui
+          install-command: pnpm install --frozen-lockfile
+          # Start instrumented Expo web; action waits then runs Cypress headless.
+          start: pnpm web:coverage
+          wait-on: http://127.0.0.1:8081
+          wait-on-timeout: 180
+          browser: electron
+          headed: false
+          command: pnpm e2e:cypress:run
+        env:
+          CI: true
+          CYPRESS_COVERAGE: "true"
+          BABEL_ENV: cypress
+          TS_NODE_PROJECT: ./cypress/tsconfig.json
+          EXPO_NO_TELEMETRY: 1
+
+      - name: Check e2e coverage gates
+        working-directory: ui
+        run: pnpm coverage:check:e2e
+
+      - name: Upload Cypress coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-cypress-coverage
           path: |
-            ui/coverage/
             ui/coverage-cypress/
-            ui/coverage-combined/
+            ui/.nyc_output/
           if-no-files-found: ignore
 
       - name: Upload Cypress screenshots

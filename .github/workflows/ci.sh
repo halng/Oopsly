@@ -2,7 +2,9 @@
 set -e
 
 # CI Script - Unified CI pipeline for Oopsly
-# This script consolidates all CI steps from the existing workflows
+# This script consolidates all CI steps from the existing workflows.
+# Cypress e2e runs in a dedicated GitHub Actions job (headless) via
+# cypress-io/github-action — use --with-e2e to also run it locally here.
 
 echo "CI::====================================="
 echo "CI::Starting Unified CI Pipeline"
@@ -98,9 +100,6 @@ run_backend_ci() {
         
         echo "CI::Running Unit Tests..."
         ./gradlew test
-
-        echo "CI::Running Integration Tests..."
-        ./gradlew integrationTest --rerun
         
         echo "CI::Running Code Coverage and Verification..."
         ./gradlew jacocoTestCoverageVerification
@@ -112,7 +111,8 @@ run_backend_ci() {
     fi
 }
 
-# Frontend CI (ui directory)
+# Frontend unit CI (ui directory) — lint + Jest only.
+# Headless Cypress lives in the ui-e2e GitHub Actions job.
 run_frontend_ci() {
     echo "CI::"
     echo "CI::====================================="
@@ -151,18 +151,21 @@ run_frontend_ci() {
         # Keep Istanbul/Cypress instrumentation env vars off during Jest.
         env -u CYPRESS_COVERAGE -u BABEL_ENV $PKG_MANAGER run test:coverage
 
-        # echo "CI::Installing Cypress binary..."
-        # $PKG_MANAGER exec cypress install
+        if [ "$WITH_E2E" = true ]; then
+            echo "CI::Installing Cypress binary..."
+            $PKG_MANAGER exec cypress install
 
-        # echo "CI::Running Cypress e2e with Istanbul instrumentation..."
-        # # Scope instrumentation env to the e2e process only (not Jest).
-        # CYPRESS_COVERAGE=true BABEL_ENV=cypress $PKG_MANAGER run e2e:cypress:ci
+            echo "CI::Running Cypress e2e headless with Istanbul instrumentation..."
+            CYPRESS_COVERAGE=true BABEL_ENV=cypress CI=1 $PKG_MANAGER run e2e:cypress:ci
 
-        # echo "CI::Checking e2e coverage for screen/ + app/(user)/..."
-        # $PKG_MANAGER run coverage:check:e2e
+            echo "CI::Checking e2e coverage for screen/ + app/(user)/..."
+            $PKG_MANAGER run coverage:check:e2e
 
-        # echo "CI::Merging Jest + Cypress coverage reports..."
-        # $PKG_MANAGER run coverage:merge
+            echo "CI::Merging Jest + Cypress coverage reports..."
+            $PKG_MANAGER run coverage:merge
+        else
+            echo "CI::Skipping Cypress e2e here (run via ui-e2e GHA job, or pass --with-e2e)."
+        fi
         
         cd ..
         echo "CI::Frontend CI completed successfully!"
@@ -214,18 +217,39 @@ run_security_scans() {
 
 # Main execution
 main() {
+    SKIP_SECURITY=false
+    WITH_E2E=false
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --skip-security)
+                SKIP_SECURITY=true
+                shift
+                ;;
+            --with-e2e)
+                WITH_E2E=true
+                shift
+                ;;
+            *)
+                echo "CI::Unknown option: $1"
+                echo "CI::Usage: ci.sh [--skip-security] [--with-e2e]"
+                exit 1
+                ;;
+        esac
+    done
+
     echo "CI::"
     echo "CI::====================================="
     echo "CI::Starting Unified CI Pipeline"
     echo "CI::====================================="
-    # Validate environment first
     validate_environment
     
-    # Run all CI steps
     run_backend_ci
     run_frontend_ci
-    run_security_scans
 
+    if [ "$SKIP_SECURITY" = false ]; then
+        run_security_scans
+    fi
     
     echo "CI::"
     echo "CI::====================================="

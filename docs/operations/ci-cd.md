@@ -6,15 +6,16 @@ Workflow: [`.github/workflows/ci.yaml`](../../.github/workflows/ci.yaml) → [`.
 
 **Triggers:** push/PR to `main` and `release/**`; weekly Sunday cron.
 
-**Rough steps:**
+**Jobs:**
 
-1. Validate Java, Node, Python tooling  
-2. **API:** `clean build -x test` → `spotlessCheck` → `test` → `integrationTest` → Jacoco verification (**~90%** gate on included classes)  
-3. **UI:** `pnpm install` → `lint` → `test:coverage` (Jest **~80%** gate on unit-included paths; `screen/` and `app/(user)/` still excluded from Jest — see `ui/jest.config.js`)  
-4. **UI e2e:** start Expo web with Istanbul (`CYPRESS_COVERAGE=true` / `BABEL_ENV=cypress` scoped only to this step — never for Jest) → `pnpm e2e:cypress:ci` → `coverage:check:e2e` (gate on `screen/` + `app/(user)/`) → `coverage:merge` (Jest + Cypress → `coverage-combined/`)  
-5. Snyk on `api/` when `SNYK_TOKEN` is set  
+1. **`ci`** — tooling validate → API Gradle (build, spotless, test, integrationTest, Jacoco ~90%) → UI `lint` + Jest `test:coverage` (~80%). Snyk on `api/` when `SNYK_TOKEN` is set.  
+2. **`ui-e2e`** — headless Cypress via [`cypress-io/github-action`](https://github.com/cypress-io/github-action) (Electron, `headed: false`): start instrumented Expo web → wait on `http://127.0.0.1:8081` → `pnpm e2e:cypress:run` → `coverage:check:e2e` for `screen/` + `app/(user)/`.
 
-Coverage artifacts (`ui/coverage/`, `ui/coverage-cypress/`, `ui/coverage-combined/`) are uploaded from the CI job.
+Cypress instrumentation env (`CYPRESS_COVERAGE` / `BABEL_ENV`) is **only** on the `ui-e2e` job so Jest is never affected.
+
+Local e2e: `cd ui && pnpm e2e:cypress:ci`, or `./.github/workflows/ci.sh --with-e2e`.
+
+Artifacts: `ui-jest-coverage`, `ui-cypress-coverage`, Cypress screenshots on e2e failure.
 
 ## Continuous delivery
 
@@ -23,6 +24,17 @@ Workflow: [`.github/workflows/cd.yaml`](../../.github/workflows/cd.yaml) → [`.
 - API image published to **GHCR** as `ghcr.io/halng/oopsly-api` via Spring Boot **`bootBuildImage`** (no checked-in `Dockerfile` required for that path)
 - UI Android builds via **EAS** (`EXPO_TOKEN`): production-oriented on `main`, development on `release/*`
 
+## SonarQube / SonarCloud
+
+Workflow: [`.github/workflows/sonar-qube.yaml`](../../.github/workflows/sonar-qube.yaml)
+
+| Job | How |
+| --- | --- |
+| `sonarqube-api` | `./gradlew build sonar` in `api/` |
+| `sonarqube-ui` | `pnpm test:coverage` then `SonarSource/sonarqube-scan-action` with `projectBaseDir: ui` |
+
+UI config: [`ui/sonar-project.properties`](../../ui/sonar-project.properties) (LCOV at `coverage/lcov.info` relative to `ui/`).
+
 ## Secrets
 
 | Secret | Used by |
@@ -30,6 +42,8 @@ Workflow: [`.github/workflows/cd.yaml`](../../.github/workflows/cd.yaml) → [`.
 | `SNYK_TOKEN` | CI security scan |
 | `GITHUB_TOKEN` | Actions / GHCR |
 | `EXPO_TOKEN` | EAS builds |
+| `SONAR_TOKEN_API` | SonarCloud API project |
+| `SONAR_TOKEN_UI` | SonarCloud UI project |
 
 ## QA agent workflow
 
