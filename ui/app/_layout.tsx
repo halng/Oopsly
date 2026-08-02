@@ -253,11 +253,17 @@ export default function RootLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen
         name="onboard"
-        options={{ animation: "slide_from_right" }}
+        options={{
+          animation: "slide_from_right",
+          contentStyle: { flex: 1, backgroundColor: uiTokens.surface.canvas },
+        }}
       />
       <Stack.Screen
         name="verification"
-        options={{ animation: "slide_from_right" }}
+        options={{
+          animation: "slide_from_right",
+          contentStyle: { flex: 1, backgroundColor: uiTokens.surface.canvas },
+        }}
       />
     </Stack>
   );

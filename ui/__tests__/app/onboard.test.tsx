@@ -62,11 +62,6 @@ describe('EmailInputScreen', () => {
   });
 
   describe('Rendering', () => {
-    it('renders header with back button', () => {
-      render(<EmailInputScreen />);
-      expect(screen.getByTestId('header-container-back-button')).toBeTruthy();
-    });
-
     it('renders title text', () => {
       render(<EmailInputScreen />);
       expect(screen.getByTestId('title-text')).toBeTruthy();
@@ -90,14 +85,6 @@ describe('EmailInputScreen', () => {
       expect(screen.getByTestId('continue-button')).toBeTruthy();
       expect(screen.getByTestId('continue-button-text')).toBeTruthy();
       expect(screen.getByTestId('continue-button-text').props.children).toBe('Continue');
-    });
-  });
-
-  describe('Navigation', () => {
-    it('navigates to home when back button is pressed', () => {
-      render(<EmailInputScreen />);
-      fireEvent.press(screen.getByTestId('header-container-back-button'));
-      expect(mockPush).toHaveBeenCalledWith('/');
     });
   });
 

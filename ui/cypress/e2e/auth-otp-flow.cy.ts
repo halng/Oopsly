@@ -16,18 +16,37 @@
 
 import { USER } from "../fixtures/api";
 
+function expectDisabled(buttonTestId: string) {
+  cy.tid(buttonTestId).should(($el) => {
+    const ariaDisabled = $el.attr("aria-disabled");
+    const disabled = $el.attr("disabled");
+    const isDisabled =
+      ariaDisabled === "true" ||
+      disabled === "true" ||
+      disabled === "" ||
+      $el.is(":disabled");
+    expect(isDisabled, `${buttonTestId} should be disabled`).to.eq(true);
+  });
+}
+
 describe("OTP authentication flow", () => {
-  it("validates email UI and rejects empty submit", () => {
+  it("validates email UI and keeps Continue disabled without a valid email", () => {
     cy.mockCommonApis();
     cy.visit("/onboard");
 
-    cy.contains("Email verification").should("be.visible");
-    cy.tid("title-text").should("contain.text", "What's your email?");
+    cy.tid("email-input-screen").should("exist");
+    cy.tid("title-text").should("be.visible").and("contain.text", "What's your email?");
+    cy.tid("description-text")
+      .should("be.visible")
+      .and("contain.text", "We'll send you a secure code");
     cy.tid("email-input")
       .should("have.attr", "placeholder", "name@example.com")
       .and("be.visible");
-    cy.tid("continue-button").should("contain.text", "Continue").click();
-    cy.tid("error-message").should("be.visible");
+    cy.tid("continue-button").should("contain.text", "Continue");
+    expectDisabled("continue-button");
+
+    cy.tid("email-input").type("not-an-email");
+    expectDisabled("continue-button");
   });
 
   it("sends OTP, verifies digits, and lands on home with mocked library", () => {
@@ -39,8 +58,8 @@ describe("OTP authentication flow", () => {
     cy.wait("@createOtp");
     cy.url().should("include", "/verification");
 
-    cy.tid("verification-screen").should("be.visible");
-    cy.contains("Verify your email").should("be.visible");
+    cy.tid("verification-screen").should("exist");
+    cy.tid("title-text").should("be.visible").and("contain.text", "Verify your email");
     cy.tid("user-email-display").should("contain.text", USER.email);
     cy.tid("verify-button").should("contain.text", "Verify");
 

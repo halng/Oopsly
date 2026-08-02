@@ -24,18 +24,16 @@ concurrency:
 permissions:
   contents: read
   actions: read
-  security-events: write
-  packages: write
 
 jobs:
   api:
+    name: Analyze API
     runs-on: ubuntu-latest
-    env:
-      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     defaults:
       run:
         working-directory: api
-
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_API }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,19 +49,42 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v5
 
-      - name: Build (skip tests)
-        run: ./gradlew clean build -x test
+      - name: Cache Sonar scanner
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar-api
+          restore-keys: |
+            ${{ runner.os }}-sonar-api
+            ${{ runner.os }}-sonar-
 
+      # Compile + format gate first (fail fast; no clean — cache-friendly).
       - name: Spotless check
-        run: ./gradlew spotlessCheck
+        run: ./gradlew spotlessCheck --no-daemon
+
+      - name: Compile
+        run: ./gradlew classes testClasses --no-daemon
 
       - name: Unit tests
-        run: ./gradlew test
+        run: ./gradlew test --no-daemon
+
+      - name: Integration tests
+        run: ./gradlew integrationTest --rerun --no-daemon
 
       - name: Jacoco coverage verification
-        run: ./gradlew jacocoTestCoverageVerification
+        run: ./gradlew jacocoTestCoverageVerification --no-daemon
 
-      - name: Upload Jacoco report
+      - name: SonarQube analysis
+        if: env.SONAR_TOKEN != ''
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_API }}
+        run: ./gradlew sonar --no-daemon
+
+      - name: Skip Sonar — token not configured
+        if: env.SONAR_TOKEN == ''
+        run: echo "SONAR_TOKEN_API not set; skipping SonarQube upload."
+
+      - name: Upload Jacoco / test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -71,16 +92,6 @@ jobs:
           path: |
             api/build/reports/jacoco/
             api/build/reports/tests/
-          if-no-files-found: ignore
-
-      - name: Snyk (API)
-        if: env.SNYK_TOKEN != ''
-        uses: snyk/actions/gradle-jdk21@master
-        continue-on-error: true
-        with:
-          command: code test
-          args: >-
-            ./api
-            --org=a8c77c31-638a-4516-ab03-0e14eb961631
-            --report
-            --project-name=OOPSLY-API
+            api/build/reports/jacocoHtml/
+          if-no-files-found: warn
+          retention-days: 7

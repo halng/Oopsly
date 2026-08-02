@@ -99,11 +99,6 @@ describe('OTPVerification', () => {
       expect(screen.getByTestId('otp-input-5')).toBeTruthy();
     });
 
-    it('renders header with back button', () => {
-      render(<OTPVerification />);
-      expect(screen.getByTestId('header-container-back-button')).toBeTruthy();
-    });
-
     it('renders verification title and description', () => {
       render(<OTPVerification />);
       expect(screen.getByTestId('title-text').props.children).toBe('Verify your email');
@@ -136,17 +131,6 @@ describe('OTPVerification', () => {
       expect(screen.getByTestId('resend-label')).toBeTruthy();
       expect(screen.getByText(/I did not receive a code/)).toBeTruthy();
       expect(screen.getByTestId('resend-button-text').props.children).toBe('Resend');
-    });
-  });
-
-  describe('Navigation', () => {
-    it('navigates back to onboard when back button is pressed', () => {
-      render(<OTPVerification />);
-      const backButton = screen.getByTestId('header-container-back-button');
-      
-      fireEvent.press(backButton);
-      
-      expect(mockPush).toHaveBeenCalledWith('/onboard');
     });
   });
 

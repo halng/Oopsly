@@ -44,10 +44,24 @@ function loadNycOutputDir(dir) {
 
 fs.mkdirSync(nycDir, { recursive: true });
 
+function stripInvalidCoveragePaths(coverage) {
+  if (!coverage || typeof coverage !== "object") return coverage;
+  for (const key of Object.keys(coverage)) {
+    if (
+      typeof key !== "string" ||
+      key.includes("\0") ||
+      /(?:^|[/\\])\0?shim:/.test(key)
+    ) {
+      delete coverage[key];
+    }
+  }
+  return coverage;
+}
+
 const map = createCoverageMap({});
 
-const jestCoverage = readJsonIfExists(
-  path.join(root, "coverage", "coverage-final.json"),
+const jestCoverage = stripInvalidCoveragePaths(
+  readJsonIfExists(path.join(root, "coverage", "coverage-final.json")),
 );
 if (jestCoverage) {
   map.merge(jestCoverage);
@@ -59,7 +73,9 @@ if (jestCoverage) {
 const cypressFiles = [
   ...loadNycOutputDir(path.join(root, ".nyc_output")),
   readJsonIfExists(path.join(root, "coverage-cypress", "coverage-final.json")),
-].filter(Boolean);
+]
+  .filter(Boolean)
+  .map(stripInvalidCoveragePaths);
 
 if (cypressFiles.length === 0) {
   console.warn("merge-coverage: no Cypress coverage found (skipped)");

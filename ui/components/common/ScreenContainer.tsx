@@ -42,6 +42,7 @@ export default function ScreenContainer({
   const frameStyle = contentMaxWidth
     ? { width: "100%" as const, maxWidth: contentMaxWidth, alignSelf: "center" as const }
     : undefined;
+
   const body = scrollable ? (
     <ScrollView
       className="flex-1"

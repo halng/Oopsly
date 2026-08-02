@@ -24,12 +24,10 @@ import { useRouter } from 'expo-router';
 import { AuthService } from '@/services/AuthService';
 import { useAuthStore } from '@/store';
 import { Logger } from '@/utils';
-import ScreenContainer from "@/components/common/ScreenContainer";
-import ScreenHeader from "@/components/common/ScreenHeader";
+import AuthScreenLayout from "@/components/common/AuthScreenLayout";
 import AppButton from "@/components/common/AppButton";
 import FeedbackMessage from "@/components/common/FeedbackMessage";
 import { uiTokens } from "@/constants/uiTokens";
-import { MAX_FORM_WIDTH } from "@/utils/responsiveLayout";
 
 export default function EmailInputScreen() {
   const logger = Logger.extend('EmailInputScreen');
@@ -76,64 +74,56 @@ export default function EmailInputScreen() {
   const isEmailValid = isValidEmail(email);
 
   return (
-    <ScreenContainer contentMaxWidth={MAX_FORM_WIDTH} testID="email-input-screen">
-      <ScreenHeader
-        title="Email verification"
-        subtitle="Secure sign in with one-time code"
-        onBack={() => router.push("/")}
-        testID="header-container"
-      />
-      <View className="flex-1 pt-6" testID="content-container">
-        <Text
-          style={{ color: uiTokens.text.primary, fontSize: 28, fontWeight: "700", marginBottom: 8 }}
-          testID="title-text"
-        >
-          What's your email?
-        </Text>
-        <Text
-          style={{ color: uiTokens.text.muted, fontSize: 16, marginBottom: 32 }}
-          testID="description-text"
-        >
-          We'll send you a secure code to verify your account.
-        </Text>
+    <AuthScreenLayout testID="email-input-screen">
+      <Text
+        style={{ color: uiTokens.text.primary, fontSize: 28, fontWeight: "700", marginBottom: 8 }}
+        testID="title-text"
+      >
+        What's your email?
+      </Text>
+      <Text
+        style={{ color: uiTokens.text.muted, fontSize: 16, marginBottom: 32 }}
+        testID="description-text"
+      >
+        We'll send you a secure code to verify your account.
+      </Text>
 
-        <View className="mb-6" testID="email-input-container">
-          <TextInput
-            style={{
-              width: "100%",
-              height: 56,
-              paddingHorizontal: 16,
-              borderRadius: 12,
-              borderWidth: 2,
-              borderColor: email
-                ? isEmailValid
-                  ? uiTokens.accent.default
-                  : uiTokens.state.error.solid
-                : uiTokens.border.subtle,
-              color: uiTokens.text.primary,
-              fontSize: 16,
-              backgroundColor: uiTokens.surface.default,
-            }}
-            placeholder="name@example.com"
-            placeholderTextColor={uiTokens.text.muted}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            accessibilityLabel="Email input field"
-            accessibilityHint="Enter your email address"
-            testID="email-input"
-          />
-          {error ? (
-            <View style={{ marginTop: 12 }}>
-              <FeedbackMessage message={error} tone="error" testID="error-message" />
-            </View>
-          ) : null}
-        </View>
+      <View className="mb-6" testID="email-input-container">
+        <TextInput
+          style={{
+            width: "100%",
+            height: 56,
+            paddingHorizontal: 16,
+            borderRadius: 12,
+            borderWidth: 2,
+            borderColor: email
+              ? isEmailValid
+                ? uiTokens.accent.default
+                : uiTokens.state.error.solid
+              : uiTokens.border.subtle,
+            color: uiTokens.text.primary,
+            fontSize: 16,
+            backgroundColor: uiTokens.surface.default,
+          }}
+          placeholder="name@example.com"
+          placeholderTextColor={uiTokens.text.muted}
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          accessibilityLabel="Email input field"
+          accessibilityHint="Enter your email address"
+          testID="email-input"
+        />
+        {error ? (
+          <View style={{ marginTop: 12 }}>
+            <FeedbackMessage message={error} tone="error" testID="error-message" />
+          </View>
+        ) : null}
       </View>
 
-      <View className="px-4 pb-8" testID="button-container">
+      <View testID="button-container">
         <AppButton
           label="Continue"
           onPress={handleContinue}
@@ -143,6 +133,6 @@ export default function EmailInputScreen() {
           testID="continue-button"
         />
       </View>
-    </ScreenContainer>
+    </AuthScreenLayout>
   );
 }
