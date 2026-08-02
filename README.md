@@ -1,5 +1,12 @@
 # Oopsly
 
+[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=Oopsly%3A%3AAPI)](https://sonarcloud.io/summary/new_code?id=Oopsly%3A%3AAPI)
+
+[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=Oopsly%3A%3AUI)](https://sonarcloud.io/summary/new_code?id=Oopsly%3A%3AUI)
+
+[![CodeQL - Snyk](https://github.com/halng/Oopsly/actions/workflows/codeql-snyk.yaml/badge.svg?branch=main)](https://github.com/halng/Oopsly/actions/workflows/codeql-snyk.yaml)
+
+
 Cross-platform **flashcard** and **spaced repetition (SRS)** app — approachable study UX with FSRS-backed scheduling.
 
 | Layer | Stack |
