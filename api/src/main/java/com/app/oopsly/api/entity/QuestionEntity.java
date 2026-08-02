@@ -37,7 +37,6 @@ public class QuestionEntity extends Audit {
     private QuestionType type;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
     private String metadata;
 
     @JsonIgnore

@@ -30,4 +30,9 @@ public interface TestSuiteService {
     ApiRes getById(UUID shelveId, UUID testSuiteId);
 
     ApiRes getAllByShelve(UUID shelveId);
+
+    /** Resolves flashcards from the preset (read-only; does not change SRS schedules). */
+    ApiRes run(UUID shelveId, UUID testSuiteId);
+
+    ApiRes autoGenerate(UUID shelveId, UUID subjectId, int numQuestions);
 }

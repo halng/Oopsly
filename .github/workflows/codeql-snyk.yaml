@@ -1,0 +1,105 @@
+name: CodeQL - Snyk
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release/**
+  push:
+    branches:
+      - main
+      - release/**
+  schedule:
+    - cron: "0 0 * * *" # daily 00:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ssc-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  packages: read
+
+jobs:
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: java-kotlin
+            build-mode: none
+          - language: javascript-typescript
+            build-mode: none
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  snyk-api:
+    name: Snyk (API)
+    runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Snyk Code is SAST on source — skip Gradle build/cache here.
+      - name: Snyk code test (API)
+        if: env.SNYK_TOKEN != ''
+        uses: snyk/actions/gradle-jdk21@master
+        continue-on-error: true
+        with:
+          command: code test
+          args: >-
+            ./api
+            --org=a8c77c31-638a-4516-ab03-0e14eb961631
+            --report
+            --project-name=OOPSLY-API
+
+      - name: Skip Snyk (API) — token not configured
+        if: env.SNYK_TOKEN == ''
+        run: echo "SNYK_TOKEN not set; skipping API Snyk scan."
+
+  snyk-ui:
+    name: Snyk (UI)
+    runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Snyk Code is SAST on source — no pnpm install needed.
+      - name: Snyk code test (UI)
+        if: env.SNYK_TOKEN != ''
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        with:
+          command: code test
+          args: >-
+            ./ui
+            --org=a8c77c31-638a-4516-ab03-0e14eb961631
+            --report
+            --project-name=OOPSLY-UI
+
+      - name: Skip Snyk (UI) — token not configured
+        if: env.SNYK_TOKEN == ''
+        run: echo "SNYK_TOKEN not set; skipping UI Snyk scan."

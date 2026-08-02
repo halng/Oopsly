@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  deleteRefreshTokenSecure,
+  saveRefreshTokenSecure,
+} from "@/utils/secureTokens";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -23,19 +27,25 @@ export const useAuthStore = create<AuthState>()(
       accessToken: "",
       refreshToken: "",
 
-      setAuthTokens: (accessToken: string, refreshToken: string) =>
-        set({ accessToken, refreshToken, isAuthenticated: true }),
+      setAuthTokens: (accessToken: string, refreshToken: string) => {
+        set({ accessToken, refreshToken, isAuthenticated: true });
+        void saveRefreshTokenSecure(refreshToken);
+      },
 
-      setCredentials: (email: string, accessToken: string, refreshToken: string) =>
-        set({ userEmail: email, accessToken, refreshToken, isAuthenticated: true }),
+      setCredentials: (email: string, accessToken: string, refreshToken: string) => {
+        set({ userEmail: email, accessToken, refreshToken, isAuthenticated: true });
+        void saveRefreshTokenSecure(refreshToken);
+      },
 
-      clearAuth: () =>
+      clearAuth: () => {
+        void deleteRefreshTokenSecure();
         set({
           isAuthenticated: false,
           userEmail: "",
           accessToken: "",
           refreshToken: "",
-        }),
+        });
+      },
 
       setUserEmail: (email: string) => set({ userEmail: email }),
       setIsAuthenticated: (auth: boolean) => set({ isAuthenticated: auth }),

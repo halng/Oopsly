@@ -43,12 +43,14 @@ jest.mock('@/services/AuthService', () => ({
 }));
 
 const mockSetAuthTokens = jest.fn();
+const mockSetCredentials = jest.fn();
 
 jest.mock('../../store/AuthStore', () => {
   const mockStore = jest.fn((selector) => {
     const state = {
       userEmail: 'test@example.com',
       setAuthTokens: mockSetAuthTokens,
+      setCredentials: mockSetCredentials,
     };
     return selector ? selector(state) : state;
   });
@@ -56,6 +58,7 @@ jest.mock('../../store/AuthStore', () => {
   // Add getState to the mock function
   (mockStore as any).getState = () => ({
     setAuthTokens: mockSetAuthTokens,
+    setCredentials: mockSetCredentials,
   });
   
   return {
@@ -65,16 +68,22 @@ jest.mock('../../store/AuthStore', () => {
 
 describe('OTPVerification', () => {
   const mockPush = jest.fn();
+  const mockReplace = jest.fn();
   const mockBack = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useRouter as jest.Mock).mockReturnValue({ push: mockPush, back: mockBack });
+    (useRouter as jest.Mock).mockReturnValue({
+      push: mockPush,
+      replace: mockReplace,
+      back: mockBack,
+    });
     jest.useFakeTimers();
     (AuthService.CreateOTP as jest.Mock).mockResolvedValue({ isSuccess: true });
   });
 
   afterEach(() => {
+    jest.clearAllTimers();
     jest.useRealTimers();
   });
 
@@ -90,29 +99,26 @@ describe('OTPVerification', () => {
       expect(screen.getByTestId('otp-input-5')).toBeTruthy();
     });
 
-    it('renders header with back button', () => {
-      render(<OTPVerification />);
-      expect(screen.getByTestId('back-button')).toBeTruthy();
-    });
-
     it('renders verification title and description', () => {
       render(<OTPVerification />);
       expect(screen.getByTestId('title-text').props.children).toBe('Verify your email');
-      const descriptionText = screen.getByTestId('description-text').props.children;
-      // Description has nested elements, check if it's an array containing the text
-      expect(Array.isArray(descriptionText) && descriptionText[0]).toBe('Enter the code sent to ');
+      expect(screen.getByTestId('description-text')).toBeTruthy();
+      expect(screen.getByTestId('user-email-display')).toBeTruthy();
     });
 
     it('displays user email username part', () => {
       render(<OTPVerification />);
-      // The email is test@example.com, so it should display "test"
-      expect(screen.getByTestId('user-email-display').props.children).toBe('test');
+      expect(screen.getByTestId('user-email-display').props.children).toBe(
+        'test@example.com',
+      );
     });
 
     it('renders verify button', () => {
       render(<OTPVerification />);
       expect(screen.getByTestId('verify-button')).toBeTruthy();
-      expect(screen.getByTestId('verify-button-text').props.children).toBe('Verify & Create Account');
+      expect(screen.getByTestId('verify-button-text').props.children).toBe(
+        'Verify and continue',
+      );
     });
 
     it('renders timer with initial value of 02:00', () => {
@@ -122,19 +128,9 @@ describe('OTPVerification', () => {
 
     it('renders resend text and button', () => {
       render(<OTPVerification />);
-      expect(screen.getByTestId('resend-label').props.children).toBe("I didn't receive code.");
+      expect(screen.getByTestId('resend-label')).toBeTruthy();
+      expect(screen.getByText(/I did not receive a code/)).toBeTruthy();
       expect(screen.getByTestId('resend-button-text').props.children).toBe('Resend');
-    });
-  });
-
-  describe('Navigation', () => {
-    it('navigates back to onboard when back button is pressed', () => {
-      render(<OTPVerification />);
-      const backButton = screen.getByTestId('back-button');
-      
-      fireEvent.press(backButton);
-      
-      expect(mockPush).toHaveBeenCalledWith('/onboard');
     });
   });
 
@@ -429,7 +425,6 @@ describe('OTPVerification', () => {
     });
 
     it('handles resend OTP error gracefully', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       (AuthService.CreateOTP as jest.Mock).mockRejectedValue(new Error('Network error'));
       
       render(<OTPVerification />);
@@ -445,8 +440,10 @@ describe('OTPVerification', () => {
         await Promise.resolve();
       });
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error resending OTP:', expect.any(Error));
-      consoleErrorSpy.mockRestore();
+      await waitFor(() => {
+        expect(screen.getByTestId('verify-error-message')).toBeTruthy();
+        expect(screen.getByText('Could not resend code. Try again.')).toBeTruthy();
+      });
     });
   });
 
@@ -489,7 +486,7 @@ describe('OTPVerification', () => {
       fireEvent.press(verifyBtn);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/home');
+        expect(mockReplace).toHaveBeenCalledWith('/home');
       });
     });
 
@@ -507,12 +504,15 @@ describe('OTPVerification', () => {
       fireEvent.press(verifyBtn);
 
       await waitFor(() => {
-        expect(mockSetAuthTokens).toHaveBeenCalledWith('access123', 'refresh123');
+        expect(mockSetCredentials).toHaveBeenCalledWith(
+          'test@example.com',
+          'access123',
+          'refresh123',
+        );
       });
     });
 
     it('does not navigate on failed verification', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       (AuthService.ValidateOTP as jest.Mock).mockResolvedValue({
         isSuccess: false,
         message: 'Invalid OTP',
@@ -526,16 +526,15 @@ describe('OTPVerification', () => {
       fireEvent.press(verifyBtn);
 
       await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalledWith('OTP verification failed:', 'Invalid OTP');
+        expect(screen.getByTestId('verify-error-message')).toBeTruthy();
+        expect(screen.getByText('Invalid OTP')).toBeTruthy();
       });
 
+      expect(mockReplace).not.toHaveBeenCalledWith('/home');
       expect(mockPush).not.toHaveBeenCalledWith('/home');
-      expect(consoleErrorSpy).toHaveBeenCalledWith('OTP verification failed:', 'Invalid OTP');
-      consoleErrorSpy.mockRestore();
     });
 
     it('handles verification API error gracefully', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       (AuthService.ValidateOTP as jest.Mock).mockRejectedValue(new Error('Network error'));
 
       render(<OTPVerification />);
@@ -546,9 +545,11 @@ describe('OTPVerification', () => {
       fireEvent.press(verifyBtn);
 
       await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Error verifying OTP:', expect.any(Error));
+        expect(screen.getByTestId('verify-error-message')).toBeTruthy();
+        expect(
+          screen.getByText('Something went wrong. Check your connection.'),
+        ).toBeTruthy();
       });
-      consoleErrorSpy.mockRestore();
     });
 
     it('does not store tokens on failed verification', async () => {

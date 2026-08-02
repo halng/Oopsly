@@ -33,4 +33,8 @@ public interface SubjectService {
     ApiRes getById(UUID shelveId, UUID subjectId);
 
     ApiRes getAllByShelve(UUID shelveId, int page, int size);
+
+    ApiRes discoverPublicDecks(String query, int page, int size);
+
+    ApiRes cloneDeck(UUID subjectId);
 }

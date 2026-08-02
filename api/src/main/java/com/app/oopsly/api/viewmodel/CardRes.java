@@ -26,4 +26,8 @@ public record CardRes(
         String back,
         DifficultyLevel difficultyLevel,
         Instant nextPracticeTime,
-        Integer numberOfPractice) {}
+        Integer numberOfPractice,
+        Double fsrsStability,
+        Double fsrsDifficulty,
+        Integer fsrsIntervalDays,
+        Integer fsrsRepetitions) {}

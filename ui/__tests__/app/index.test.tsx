@@ -18,18 +18,44 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import WelcomeScreen from '../../app/index'; // Adjust path if needed
+import { useResponsiveLayout } from '@/utils/responsiveLayout';
 
 // Mock Expo Router
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
 }));
 
+jest.mock('@/utils/responsiveLayout', () => ({
+  useResponsiveLayout: jest.fn(),
+}));
+
+const mockLayout = {
+  width: 390,
+  height: 800,
+  isCompact: false,
+  isTablet: false,
+  isDesktop: false,
+  isWide: false,
+  horizontalPadding: 16,
+  sidebarWidth: 0,
+  contentWidth: 390,
+  modalCentered: false,
+  formMaxWidth: 560,
+  contentMaxWidth: 720,
+  modalMaxHeight: 656,
+  sheetMaxWidth: undefined,
+  otpCellSize: 48,
+  subjectCardWidth: 260,
+};
+
 describe('WelcomeScreen', () => {
   const mockPush = jest.fn();
 
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
+    (useResponsiveLayout as jest.Mock).mockReturnValue(mockLayout);
     jest.clearAllMocks();
+    (useResponsiveLayout as jest.Mock).mockReturnValue(mockLayout);
   });
 
   it('renders the first slide correctly', () => {
@@ -98,5 +124,39 @@ describe('WelcomeScreen', () => {
     // Click it
     fireEvent.press(nextButton);
     expect(mockPush).toHaveBeenCalledWith('/onboard');
+  });
+
+  it('renders desktop layout when isDesktop is true', () => {
+    (useResponsiveLayout as jest.Mock).mockReturnValue({
+      ...mockLayout,
+      width: 1280,
+      height: 900,
+      isTablet: true,
+      isDesktop: true,
+      isWide: true,
+      sidebarWidth: 260,
+      contentWidth: 1020,
+      formMaxWidth: 560,
+    });
+
+    render(<WelcomeScreen />);
+
+    expect(screen.getByTestId('content-view-title').props.children).toBe(
+      'Welcome to Oopsly',
+    );
+    expect(screen.getByTestId('next-button')).toBeTruthy();
+  });
+
+  it('uses tablet hero sizing when isTablet and not desktop', () => {
+    (useResponsiveLayout as jest.Mock).mockReturnValue({
+      ...mockLayout,
+      width: 800,
+      height: 1000,
+      isTablet: true,
+      isDesktop: false,
+    });
+
+    render(<WelcomeScreen />);
+    expect(screen.getByTestId('content-view-title')).toBeTruthy();
   });
 });

@@ -1,5 +1,5 @@
 /*
- *    Copyright 2025 Hao Nguyen Tan
+ *    Copyright 2026 Hao Nguyen Tan
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -23,36 +23,56 @@ import {
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
 import { AuthService } from "@/services/AuthService";
 import { useAuthStore } from "@/store";
 import { ApiResponse } from "@/types/ApiRes";
+import AuthScreenLayout from "@/components/common/AuthScreenLayout";
+import AppButton from "@/components/common/AppButton";
+import FeedbackMessage from "@/components/common/FeedbackMessage";
+import { uiTokens } from "@/constants/uiTokens";
+import { useResponsiveLayout } from "@/utils/responsiveLayout";
 
 export default function OTPVerification() {
   const router = useRouter();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState(120); // 2 minutes in seconds
+  const [timer, setTimer] = useState(120);
   const [isResendActive, setIsResendActive] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [resendBusy, setResendBusy] = useState(false);
+  const { formMaxWidth, otpCellSize } = useResponsiveLayout();
   const inputRefs = useRef<Array<TextInput | null>>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const userEmail = useAuthStore((state) => state.userEmail);
 
-  useEffect(() => {
-    // Auto-focus first input on mount
-    inputRefs.current[0]?.focus();
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
 
-    // Timer countdown
-    const timerInterval = setInterval(() => {
+  const startTimer = () => {
+    clearTimer();
+    setTimer(120);
+    setIsResendActive(false);
+    timerRef.current = setInterval(() => {
       setTimer((prev) => {
         if (prev <= 1) {
+          clearTimer();
           setIsResendActive(true);
-          clearInterval(timerInterval);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
+  };
 
-    return () => clearInterval(timerInterval);
+  useEffect(() => {
+    inputRefs.current[0]?.focus();
+    startTimer();
+    return () => clearTimer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formatTime = (seconds: number) => {
@@ -64,21 +84,19 @@ export default function OTPVerification() {
   };
 
   const handleOtpChange = (text: string, index: number) => {
-    // Only allow numbers
+    setVerifyError(null);
     if (!/^\d*$/.test(text)) return;
 
     const newOtp = [...otp];
     newOtp[index] = text;
     setOtp(newOtp);
 
-    // Auto-advance to next input
     if (text.length === 1 && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
 
-  const handleKeyPress = (e: any, index: number) => {
-    // Handle backspace
+  const handleKeyPress = (e: { nativeEvent: { key: string } }, index: number) => {
     if (e.nativeEvent.key === "Backspace" && !otp[index]) {
       if (index > 0) {
         inputRefs.current[index - 1]?.focus();
@@ -86,130 +104,165 @@ export default function OTPVerification() {
     }
   };
 
-  const handleResend = () => {
-    if (!isResendActive) return;
-
-    AuthService.CreateOTP(userEmail)
-      .then(() => {
-        console.log("OTP resent successfully");
-        setOtp(["", "", "", "", "", ""]);
-        setTimer(120);
-        setIsResendActive(false);
-
-        // Restart timer
-        const timerInterval = setInterval(() => {
-          setTimer((prev) => {
-            if (prev <= 1) {
-              setIsResendActive(true);
-              clearInterval(timerInterval);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      })
-      .catch((error) => {
-        console.error("Error resending OTP:", error);
-      });
+  const handleResend = async () => {
+    if (!isResendActive || resendBusy || !userEmail) return;
+    setResendBusy(true);
+    setVerifyError(null);
+    try {
+      await AuthService.CreateOTP(userEmail);
+      setOtp(["", "", "", "", "", ""]);
+      startTimer();
+      inputRefs.current[0]?.focus();
+    } catch {
+      setVerifyError("Could not resend code. Try again.");
+    } finally {
+      setResendBusy(false);
+    }
   };
 
-  const handleVerify = () => {
-    AuthService.ValidateOTP(userEmail, otp.join(""))
-      .then((response: ApiResponse) => {
-        if (!response.isSuccess) {
-          console.error("OTP verification failed:", response.message);
-          return;
-        }
-
-        const { access_token, refresh_token } = response.data;
-        useAuthStore.getState().setAuthTokens(access_token, refresh_token);
-        router.push("/home");
-      })
-      .catch((error) => {
-        console.error("Error verifying OTP:", error);
-      });
+  const handleVerify = async () => {
+    if (!userEmail) {
+      setVerifyError("Missing email. Go back and enter your email.");
+      return;
+    }
+    setVerifyLoading(true);
+    setVerifyError(null);
+    try {
+      const response: ApiResponse = await AuthService.ValidateOTP(
+        userEmail,
+        otp.join(""),
+      );
+      if (!response.isSuccess) {
+        setVerifyError(
+          response.message || "Invalid or expired code. Try again.",
+        );
+        return;
+      }
+      const { access_token, refresh_token } = response.data;
+      useAuthStore
+        .getState()
+        .setCredentials(userEmail, access_token, refresh_token);
+      router.replace("/home");
+    } catch {
+      setVerifyError("Something went wrong. Check your connection.");
+    } finally {
+      setVerifyLoading(false);
+    }
   };
 
   const isOtpComplete = otp.every((digit) => digit !== "");
 
   return (
-    <View className="flex-1 bg-white" testID="verification-screen">
-      {/* Header */}
-      <View className="p-4 flex-row items-center" testID="header-container">
-        <TouchableOpacity
-          onPress={() => router.push("/onboard")}
-          className="p-2"
-          accessibilityLabel="Go back"
-          testID="back-button"
+    <AuthScreenLayout
+      contentMaxWidth={formMaxWidth}
+      testID="verification-screen"
+    >
+      <Text
+        style={{ color: uiTokens.text.primary, fontSize: 24, fontWeight: "700" }}
+        testID="title-text"
+      >
+        Verify your email
+      </Text>
+      <Text
+        style={{ color: uiTokens.text.secondary, marginTop: 8 }}
+        testID="description-text"
+      >
+        Enter the code sent to{" "}
+        <Text
+          style={{ color: uiTokens.text.primary, fontWeight: "600" }}
+          testID="user-email-display"
         >
-          <ArrowLeft size={24} color="#1F2937" />
-        </TouchableOpacity>
+          {userEmail || "your inbox"}
+        </Text>
+      </Text>
+
+      <View
+        className="flex-row justify-between mt-8"
+        testID="otp-input-container"
+      >
+        {otp.map((digit, index) => (
+          <TextInput
+            key={index}
+            ref={(ref) => {
+              inputRefs.current[index] = ref;
+            }}
+            style={[
+              {
+                maxWidth: otpCellSize,
+                flex: 1,
+                aspectRatio: 1,
+                borderWidth: 2,
+                borderRadius: 12,
+                textAlign: "center",
+                fontSize: 20,
+                color: uiTokens.text.primary,
+                borderColor: digit
+                  ? uiTokens.accent.default
+                  : uiTokens.border.subtle,
+                backgroundColor: uiTokens.surface.default,
+              },
+              Platform.OS === "ios" ? { lineHeight: otpCellSize - 2 } : null,
+            ]}
+            maxLength={1}
+            keyboardType="number-pad"
+            value={digit}
+            onChangeText={(text) => handleOtpChange(text, index)}
+            onKeyPress={(e) => handleKeyPress(e, index)}
+            accessibilityLabel={`OTP digit ${index + 1}`}
+            testID={`otp-input-${index}`}
+          />
+        ))}
       </View>
 
-      {/* Content */}
-      <View className="px-6 pt-6" testID="content-container">
-        <Text className="text-2xl font-bold text-gray-900" testID="title-text">
-          Verify your email
-        </Text>
-        <Text className="mt-2 text-gray-600" testID="description-text">
-          Enter the code sent to <Text style={{ fontWeight: 'bold' }} testID="user-email-display">{userEmail.split("@")[0]}</Text>
-        </Text>
-
-        {/* OTP Input Grid */}
-        <View className="flex-row justify-between mt-8" testID="otp-input-container">
-          {otp.map((digit, index) => (
-            <TextInput
-              key={index}
-              ref={(ref) => (inputRefs.current[index] = ref)}
-              className={`w-12 h-12 border-2 rounded-xl text-center text-xl
-                ${digit ? "border-indigo-600" : "border-gray-300"}
-                ${Platform.select({
-                  ios: "leading-[46px]", // Center text vertically on iOS
-                  android: "", // Android centers text automatically
-                })}`}
-              maxLength={1}
-              keyboardType="number-pad"
-              value={digit}
-              onChangeText={(text) => handleOtpChange(text, index)}
-              onKeyPress={(e) => handleKeyPress(e, index)}
-              accessibilityLabel={`OTP digit ${index + 1}`}
-              testID={`otp-input-${index}`}
-            />
-          ))}
+      {verifyError ? (
+        <View className="mt-4">
+          <FeedbackMessage
+            message={verifyError}
+            tone="error"
+            testID="verify-error-message"
+          />
         </View>
+      ) : null}
 
-        {/* Timer and Resend */}
-        <View className="flex-row items-center justify-center mt-8 space-x-1" testID="timer-resend-container">
-          <Text className="text-gray-600" testID="timer-text">{formatTime(timer)}</Text>
-          <Text className="text-gray-600" testID="resend-label">I didn't receive code.</Text>
-          <TouchableOpacity onPress={handleResend} disabled={!isResendActive} testID="resend-button">
-            <Text
-              className={`${
-                isResendActive ? "text-indigo-600" : "text-gray-400"
-              }`}
-              testID="resend-button-text"
-            >
-              Resend
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Footer */}
-      <View className="px-6 absolute bottom-8 w-full" testID="footer-container">
+      <View
+        className="flex-row items-center justify-center mt-8 gap-1 flex-wrap"
+        testID="timer-resend-container"
+      >
+        <Text style={{ color: uiTokens.text.secondary }} testID="timer-text">
+          {formatTime(timer)}
+        </Text>
+        <Text style={{ color: uiTokens.text.secondary }} testID="resend-label">
+          {" "}
+          I did not receive a code.
+        </Text>
         <TouchableOpacity
-          onPress={handleVerify}
-          disabled={!isOtpComplete}
-          className={`py-4 rounded-xl items-center
-            ${isOtpComplete ? "bg-indigo-600" : "bg-gray-300"}`}
-          accessibilityLabel="Verify and create account"
-          testID="verify-button"
+          onPress={handleResend}
+          disabled={!isResendActive || resendBusy}
+          testID="resend-button"
         >
-          <Text className="text-white font-semibold" testID="verify-button-text">
-            Verify & Create Account
+          <Text
+            className={
+              isResendActive && !resendBusy
+                ? "text-indigo-600 font-medium"
+                : "text-gray-400 font-medium"
+            }
+            testID="resend-button-text"
+          >
+            {resendBusy ? "Sending…" : "Resend"}
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+
+      <View className="mt-8" testID="footer-container">
+        <AppButton
+          label="Verify and continue"
+          onPress={handleVerify}
+          disabled={!isOtpComplete}
+          loading={verifyLoading}
+          accessibilityLabel="Verify and sign in"
+          testID="verify-button"
+        />
+      </View>
+    </AuthScreenLayout>
   );
 }

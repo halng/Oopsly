@@ -16,6 +16,13 @@
 
 package com.app.oopsly.api.viewmodel;
 
+import com.app.oopsly.api.entity.TestSuiteSelectionPayload;
+import java.util.List;
 import java.util.UUID;
 
-public record TestSuiteRes(UUID id, String title, Boolean isActive) {}
+public record TestSuiteRes(
+        UUID id,
+        String title,
+        Boolean isActive,
+        List<UUID> subjectIds,
+        TestSuiteSelectionPayload selection) {}

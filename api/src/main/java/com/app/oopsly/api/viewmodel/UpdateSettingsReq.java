@@ -23,4 +23,5 @@ import jakarta.validation.constraints.NotNull;
 public record UpdateSettingsReq(
         @NotBlank(message = "Theme cannot be blank") String theme,
         @NotBlank(message = "Language cannot be blank") String language,
-        @NotNull(message = "Space configuration cannot be null") @Valid SpaceConfigReq spaceConfig) {}
+        @NotNull(message = "Space configuration cannot be null") @Valid SpaceConfigReq spaceConfig,
+        @NotNull(message = "Study schedule cannot be null") @Valid StudyScheduleReq studySchedule) {}

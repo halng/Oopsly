@@ -19,6 +19,7 @@ package com.app.oopsly.api.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.List;
 import lombok.*;
 
 @Getter
@@ -40,8 +41,22 @@ public class CardEntity extends Audit {
 
     @Builder.Default private Integer numberOfPractice = 0;
 
+    @Builder.Default private Double fsrsStability = 0.0;
+    @Builder.Default private Double fsrsDifficulty = 0.0;
+    @Builder.Default private Integer fsrsIntervalDays = 0;
+    @Builder.Default private Integer fsrsRepetitions = 0;
+
+    private Instant lastReviewedAt;
+
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", nullable = false)
     private SubjectEntity subject;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "card_tags",
+            joinColumns = @JoinColumn(name = "card_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private List<TagEntity> tags;
 }

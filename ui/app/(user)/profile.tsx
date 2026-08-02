@@ -1,5 +1,5 @@
 /*
- *    Copyright 2025 Hao Nguyen Tan
+ *    Copyright 2026 Hao Nguyen Tan
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,26 +18,73 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronLeft, Edit3, Save, X } from "lucide-react-native";
+import {
+  ChevronRight,
+  Edit3,
+  Save,
+  UserRound,
+  BookOpen,
+  Mail,
+  X,
+} from "lucide-react-native";
 import { getProfile, updateProfile } from "@/services/ProfileService";
 import { UserProfileRes } from "@/types/Profile";
+import { useAuthStore } from "@/store/AuthStore";
 import { Logger } from "@/utils";
+import ScreenContainer from "@/components/common/ScreenContainer";
+import ScreenHeader from "@/components/common/ScreenHeader";
+import FeedbackMessage from "@/components/common/FeedbackMessage";
+import { uiTokens } from "@/constants/uiTokens";
+import { MAX_READING_WIDTH } from "@/utils/responsiveLayout";
 
 const logger = Logger.extend("ProfileScreen");
 
+const inputStyle = {
+  backgroundColor: uiTokens.surface.subtle,
+  borderRadius: 12,
+  padding: 16,
+  color: uiTokens.text.primary,
+  borderWidth: 1,
+  borderColor: uiTokens.border.subtle,
+  fontSize: 16,
+} as const;
+
+function FieldLabel({
+  children,
+  icon,
+}: {
+  children: React.ReactNode;
+  icon: React.ReactNode;
+}) {
+  return (
+    <View
+      style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}
+    >
+      {icon}
+      <Text
+        style={{ color: uiTokens.text.muted, fontSize: 14, marginLeft: 8 }}
+      >
+        {children}
+      </Text>
+    </View>
+  );
+}
+
 export default function ProfileScreen() {
   const router = useRouter();
+  const userEmail = useAuthStore((s) => s.userEmail);
   const [profile, setProfile] = useState<UserProfileRes | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
 
   const loadProfile = () => {
@@ -48,6 +95,7 @@ export default function ProfileScreen() {
         if (res.isSuccess && res.data) {
           setProfile(res.data);
           setDisplayName(res.data.displayName ?? "");
+          setBio(res.data.bio ?? "");
         } else {
           setError(res.message ?? "Failed to load profile");
         }
@@ -63,21 +111,33 @@ export default function ProfileScreen() {
     loadProfile();
   }, []);
 
+  const handleCancelEdit = () => {
+    setDisplayName(profile?.displayName ?? "");
+    setBio(profile?.bio ?? "");
+    setIsEditing(false);
+    setError(null);
+  };
+
   const handleSave = () => {
     if (!displayName.trim()) {
+      setError("Display name is required.");
       return;
     }
     setSaving(true);
+    setError(null);
+    setSuccess(null);
     updateProfile({
       displayName: displayName.trim(),
-      bio: profile?.bio ?? undefined,
+      bio: bio.trim() || undefined,
       age: profile?.age ?? undefined,
     })
       .then((res) => {
         if (res.isSuccess && res.data) {
           setProfile(res.data);
           setDisplayName(res.data.displayName ?? "");
+          setBio(res.data.bio ?? "");
           setIsEditing(false);
+          setSuccess("Profile updated");
         } else {
           setError(res.message ?? "Failed to update profile");
         }
@@ -91,76 +151,213 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-gray-50 items-center justify-center">
-        <ActivityIndicator size="large" color="#4F46E5" />
-        <Text className="text-gray-600 mt-4">Loading profile...</Text>
-      </View>
+      <ScreenContainer testID="profile-loading-screen">
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color={uiTokens.accent.default} />
+          <Text style={{ color: uiTokens.text.muted, marginTop: 16 }}>
+            Loading profile...
+          </Text>
+        </View>
+      </ScreenContainer>
     );
   }
 
+  const completionScore = [
+    displayName.trim(),
+    bio.trim(),
+    (userEmail ?? "").trim(),
+  ].filter(Boolean).length;
+  const completionPercent = Math.round((completionScore / 3) * 100);
+
   return (
-    <View className="flex-1 bg-gray-50">
-      <View className="bg-white pt-12 pb-4 px-4 shadow-sm">
-        <View className="flex-row items-center justify-between">
-          <TouchableOpacity
-            className="flex-row items-center"
-            onPress={() => router.back()}
-            testID="back-button"
-          >
-            <ChevronLeft size={24} color="#4F46E5" />
-            <Text className="text-indigo-600 font-medium ml-1">Back</Text>
-          </TouchableOpacity>
-          <Text className="text-xl font-bold text-gray-800">Profile</Text>
-          {!isEditing ? (
-            <TouchableOpacity onPress={() => setIsEditing(true)} testID="edit-button">
-              <Edit3 size={20} color="#4F46E5" />
+    <ScreenContainer
+      scrollable
+      contentMaxWidth={MAX_READING_WIDTH}
+      testID="profile-screen"
+    >
+      <ScreenHeader
+        title="Profile"
+        onBack={() => router.back()}
+        testID="profile-header"
+        rightSlot={
+          !isEditing ? (
+            <TouchableOpacity
+              onPress={() => {
+                setIsEditing(true);
+                setSuccess(null);
+              }}
+              testID="edit-button"
+            >
+              <Edit3 size={20} color={uiTokens.accent.default} />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity
-              onPress={handleSave}
-              disabled={saving || !displayName.trim()}
-              testID="save-button"
-            >
-              <Save size={20} color="#4F46E5" />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      <ScrollView className="flex-1 px-4 py-6">
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+              <TouchableOpacity
+                onPress={handleCancelEdit}
+                disabled={saving}
+                testID="cancel-edit-button"
+              >
+                <X size={20} color={uiTokens.text.muted} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSave}
+                disabled={saving || !displayName.trim()}
+                testID="save-button"
+              >
+                {saving ? (
+                  <ActivityIndicator size="small" color={uiTokens.accent.default} />
+                ) : (
+                  <Save size={20} color={uiTokens.accent.default} />
+                )}
+              </TouchableOpacity>
+            </View>
+          )
+        }
+      />
+      <View className="py-6">
         {error && (
-          <View className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-            <Text className="text-red-700">{error}</Text>
-          </View>
+          <FeedbackMessage message={error} tone="error" testID="profile-error" />
+        )}
+        {success && (
+          <FeedbackMessage
+            message={success}
+            tone="success"
+            testID="profile-success"
+          />
         )}
 
-        <View className="bg-white rounded-xl p-6 shadow-sm">
-          <Text className="text-gray-500 text-sm mb-1">Display name</Text>
-          {isEditing ? (
-            <TextInput
-              className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200"
-              value={displayName}
-              onChangeText={setDisplayName}
-              placeholder="Your display name"
-              placeholderTextColor="#9CA3AF"
-              maxLength={50}
-              testID="display-name-input"
+        <View
+          style={{
+            backgroundColor: uiTokens.accent.tint,
+            borderRadius: 16,
+            padding: 16,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: uiTokens.border.subtle,
+          }}
+        >
+          <Text
+            style={{ color: uiTokens.accent.onTint, fontWeight: "600" }}
+            testID="profile-completion-title"
+          >
+            Profile completeness: {completionPercent}%
+          </Text>
+          <View
+            style={{
+              marginTop: 8,
+              height: 8,
+              backgroundColor: uiTokens.surface.default,
+              borderRadius: 999,
+              overflow: "hidden",
+            }}
+          >
+            <View
+              style={{
+                height: "100%",
+                backgroundColor: uiTokens.accent.default,
+                width: `${completionPercent}%`,
+              }}
+              testID="profile-completion-progress"
             />
-          ) : (
-            <Text className="text-lg font-medium text-gray-800">
-              {profile?.displayName ?? "—"}
-            </Text>
-          )}
+          </View>
+          <Text
+            style={{ color: uiTokens.accent.onTint, fontSize: 12, marginTop: 8 }}
+          >
+            Add a display name and bio so others know what you are learning.
+          </Text>
+        </View>
+
+        <View
+          style={{
+            backgroundColor: uiTokens.surface.default,
+            borderRadius: 16,
+            padding: 24,
+            borderWidth: 1,
+            borderColor: uiTokens.border.subtle,
+          }}
+        >
+          <FieldLabel icon={<Mail size={16} color={uiTokens.text.muted} />}>
+            Email
+          </FieldLabel>
+          <Text
+            style={{ fontSize: 16, color: uiTokens.text.secondary }}
+            testID="profile-email"
+          >
+            {userEmail || "—"}
+          </Text>
+
+          <View style={{ marginTop: 24 }}>
+            <FieldLabel icon={<UserRound size={16} color={uiTokens.text.muted} />}>
+              Display name
+            </FieldLabel>
+            {isEditing ? (
+              <TextInput
+                style={inputStyle}
+                value={displayName}
+                onChangeText={setDisplayName}
+                placeholder="Your display name"
+                placeholderTextColor={uiTokens.text.muted}
+                maxLength={50}
+                testID="display-name-input"
+              />
+            ) : (
+              <Text
+                style={{ fontSize: 18, fontWeight: "500", color: uiTokens.text.primary }}
+                testID="profile-display-name"
+              >
+                {profile?.displayName ?? "—"}
+              </Text>
+            )}
+          </View>
+
+          <View style={{ marginTop: 24 }}>
+            <FieldLabel icon={<BookOpen size={16} color={uiTokens.text.muted} />}>
+              Bio (learning focus)
+            </FieldLabel>
+            {isEditing ? (
+              <TextInput
+                style={[inputStyle, { minHeight: 96, textAlignVertical: "top" }]}
+                value={bio}
+                onChangeText={setBio}
+                placeholder="Tell us what you are learning (e.g. TOEIC, Java, SAT Math)"
+                placeholderTextColor={uiTokens.text.muted}
+                multiline
+                numberOfLines={4}
+                maxLength={200}
+                testID="bio-input"
+              />
+            ) : (
+              <Text
+                style={{ fontSize: 16, color: uiTokens.text.secondary }}
+                testID="profile-bio"
+              >
+                {profile?.bio ?? "—"}
+              </Text>
+            )}
+          </View>
         </View>
 
         <TouchableOpacity
-          className="bg-white rounded-xl p-4 mt-4 shadow-sm flex-row items-center justify-between"
+          style={{
+            backgroundColor: uiTokens.surface.default,
+            borderRadius: 16,
+            padding: 16,
+            marginTop: 16,
+            borderWidth: 1,
+            borderColor: uiTokens.border.subtle,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
           onPress={() => router.push("/settings")}
+          testID="profile-settings-link"
         >
-          <Text className="text-gray-800 font-medium">Settings</Text>
-          <ChevronLeft size={20} color="#9CA3AF" />
+          <Text style={{ color: uiTokens.text.primary, fontWeight: "500" }}>
+            Settings
+          </Text>
+          <ChevronRight size={20} color={uiTokens.text.muted} />
         </TouchableOpacity>
-      </ScrollView>
-    </View>
+      </View>
+    </ScreenContainer>
   );
 }

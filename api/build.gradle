@@ -6,6 +6,7 @@ plugins {
 	id 'com.diffplug.spotless' version '8.1.0'
 	id 'jacoco'
 	id 'org.barfuin.gradle.jacocolog' version '4.0.0'
+	id "org.sonarqube" version "7.3.1.8318"
 }
 group = 'com.app.oopsly'
 version = '0.0.1-SNAPSHOT'
@@ -15,6 +16,14 @@ java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(21)
 	}
+}
+
+sonar {
+  properties {
+    property "sonar.projectKey", "Oopsly::API"
+    property "sonar.organization", "tanhao111"
+	property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
+  }
 }
 
 configurations {
@@ -72,7 +81,9 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'com.github.fppt:jedis-mock:1.1.8'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testRuntimeOnly 'com.h2database:h2'
 }
 
 dependencyManagement {
@@ -82,8 +93,42 @@ dependencyManagement {
 	}
 }
 
+// GraalVM AOT test processing is slow and pulls every @SpringBootTest into context; keep it off for local/CI unit+IT runs.
+tasks.named('processTestAot').configure { enabled = false }
+
 tasks.named('test') {
 	useJUnitPlatform()
+	filter {
+		includeTestsMatching 'com.app.oopsly.api.unit.*'
+	}
+	testLogging {
+		events 'passed', 'skipped', 'failed'
+		exceptionFormat 'full'
+	}
+}
+
+tasks.register('integrationTest', Test) {
+	description = 'Runs controller-layer integration tests (H2 + embedded Redis, profile=integration)'
+	group = 'verification'
+	useJUnitPlatform()
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	// Keep results/exec separate from unit :test so up-to-date checks and JaCoCo don't collide.
+	binaryResultsDirectory = layout.buildDirectory.dir('test-results/integrationTest/binary')
+	reports {
+		junitXml.outputLocation = layout.buildDirectory.dir('test-results/integrationTest')
+		html.outputLocation = layout.buildDirectory.dir('reports/tests/integrationTest')
+	}
+	filter {
+		includeTestsMatching 'com.app.oopsly.api.integration.*'
+		excludeTestsMatching 'com.app.oopsly.api.integration.support.*'
+		setFailOnNoMatchingTests(true)
+	}
+	shouldRunAfter test
+	testLogging {
+		events 'passed', 'skipped', 'failed'
+		exceptionFormat 'full'
+	}
 }
 
 def composeFile = 'src/main/resources/docker-compose.yml'
@@ -109,8 +154,27 @@ tasks.register('composeDown', Exec) {
 	}
 }
 
+def jacocoExcludes = [
+		'**/ApiApplication**',
+		'**/Constant**',
+		'**/viewmodel/**',
+		'**/NoOpIEmailSender**',
+		// Spring Security DSL lambdas are not unit-testable without full filter-chain boot
+		'**/SecurityConfig**',
+]
+
 jacocoTestReport {
 	dependsOn test
+
+	classDirectories.setFrom(
+			files(
+					sourceSets.main.output.classesDirs.asFileTree.matching {
+						exclude jacocoExcludes
+					}
+			)
+	)
+
+	executionData.setFrom(fileTree(dir: layout.buildDirectory.dir('jacoco'), includes: ['*.exec']))
 
 	reports {
 		xml.required = true
@@ -124,24 +188,49 @@ jacoco {
 }
 
 jacocoTestCoverageVerification {
-	dependsOn test
+	dependsOn test, integrationTest
 
 	classDirectories.setFrom(
 			files(
 					sourceSets.main.output.classesDirs.asFileTree.matching {
-						exclude '**/ApiApplication**', '**/Constant**', '**/viewmodel/**', '**/NoOpIEmailSender**'
+						exclude jacocoExcludes
 					}
 			)
 	)
 
-	executionData.setFrom(fileTree(dir: project.buildDir, includes: ['jacoco/*.exec']))
+	executionData.setFrom(fileTree(dir: layout.buildDirectory.dir('jacoco'), includes: ['*.exec']))
 
 	violationRules {
 		rule {
 			enabled = true
-			element = 'CLASS'
+			element = 'BUNDLE'
 			limit {
 				counter = 'CLASS'
+				value = 'COVEREDRATIO'
+				minimum = 0.9
+			}
+			limit {
+				counter = 'METHOD'
+				value = 'COVEREDRATIO'
+				minimum = 0.9
+			}
+			limit {
+				counter = 'LINE'
+				value = 'COVEREDRATIO'
+				minimum = 0.9
+			}
+			limit {
+				counter = 'BRANCH'
+				value = 'COVEREDRATIO'
+				minimum = 0.9
+			}
+			limit {
+				counter = 'INSTRUCTION'
+				value = 'COVEREDRATIO'
+				minimum = 0.9
+			}
+			limit {
+				counter = 'COMPLEXITY'
 				value = 'COVEREDRATIO'
 				minimum = 0.9
 			}

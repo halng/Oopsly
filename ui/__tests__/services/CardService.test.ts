@@ -20,6 +20,7 @@ import {
   createNewCard,
   updateCard,
   deleteCard,
+  updateDifficultyLevels,
 } from '../../services/CardService';
 
 jest.mock('../../services', () => ({
@@ -312,6 +313,26 @@ describe('CardService', () => {
       await expect(
         fetchCardsDataBySubjectAndShelf(shelfId, subjectId)
       ).rejects.toThrow('Timeout');
+    });
+  });
+
+  describe('updateDifficultyLevels', () => {
+    it('updates reviewed flashcard difficulty', async () => {
+      const reviewed = [
+        { id: cardId, difficulty: 3, subjectId },
+      ];
+      const mockResponse = {
+        data: { isSuccess: true, message: 'Updated', data: null },
+      };
+      (apiClient.put as jest.Mock).mockResolvedValue(mockResponse);
+
+      const result = await updateDifficultyLevels(shelfId, subjectId, reviewed as any);
+
+      expect(apiClient.put).toHaveBeenCalledWith(
+        `/shelves/${shelfId}/subjects/${subjectId}/cards/difficulty`,
+        reviewed,
+      );
+      expect(result).toEqual(mockResponse.data);
     });
   });
 });

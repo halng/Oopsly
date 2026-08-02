@@ -20,7 +20,9 @@ import "react-native-reanimated";
 import "@/global.css";
 import { useAuthStore, useSettingsStore } from "@/store";
 import { Logger } from "@/utils";
+import { getRefreshTokenSecure } from "@/utils/secureTokens";
 import { AuthService } from "@/services/AuthService";
+import { getProfile } from "@/services/ProfileService";
 import {
   View,
   ActivityIndicator,
@@ -28,6 +30,7 @@ import {
   Appearance,
   Platform,
 } from "react-native";
+import { uiTokens } from "@/constants/uiTokens";
 
 const logger = Logger.extend("RootLayout");
 
@@ -53,7 +56,7 @@ export default function RootLayout() {
   }, [theme]);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let isCancelled = false;
 
     const checkAuthStatus = async () => {
@@ -92,14 +95,63 @@ export default function RootLayout() {
           }
         }
 
-        const currentAccessToken = useAuthStore.getState().accessToken;
-        const currentRefreshToken = useAuthStore.getState().refreshToken;
+        let currentAccessToken = useAuthStore.getState().accessToken;
+        let currentRefreshToken = useAuthStore.getState().refreshToken;
         const currentUserEmail = useAuthStore.getState().userEmail;
         const clearAuth = useAuthStore.getState().clearAuth;
         const setAuthTokens = useAuthStore.getState().setAuthTokens;
 
-        if (!currentAccessToken || !currentRefreshToken) {
-          logger.debug("No tokens found in storage");
+        if (!currentRefreshToken) {
+          const fromSecure = await getRefreshTokenSecure();
+          if (fromSecure) {
+            useAuthStore.setState({ refreshToken: fromSecure });
+            currentRefreshToken = fromSecure;
+          }
+        }
+
+        const syncThemeFromProfile = async () => {
+          try {
+            const profile = await getProfile();
+            if (profile.isSuccess && profile.data?.settings) {
+              useSettingsStore.getState().syncFromServer(profile.data.settings);
+            }
+          } catch {
+            /* ignore */
+          }
+        };
+
+        const refreshSession = async (): Promise<boolean> => {
+          try {
+            const response = await AuthService.RefreshToken(
+              currentRefreshToken!,
+              currentUserEmail,
+            );
+            if (response.isSuccess && response.data) {
+              const { access_token, refresh_token } = response.data;
+              setAuthTokens(access_token, refresh_token);
+              logger.info("Token refreshed successfully");
+              await syncThemeFromProfile();
+              return true;
+            }
+            logger.error("Token refresh failed:", response.message);
+            clearAuth();
+            return false;
+          } catch (refreshError) {
+            logger.error("Token refresh error:", refreshError);
+            clearAuth();
+            return false;
+          }
+        };
+
+        if (!currentRefreshToken || !currentUserEmail?.trim()) {
+          logger.debug("No refresh token or email in storage");
+          setIsReady(true);
+          return;
+        }
+
+        if (!currentAccessToken) {
+          logger.debug("Access token missing; refreshing with stored refresh token");
+          await refreshSession();
           setIsReady(true);
           return;
         }
@@ -107,35 +159,15 @@ export default function RootLayout() {
         logger.debug("Tokens found, validating...");
 
         try {
-          // Try to validate the current access token
           await AuthService.ValidateToken();
           logger.info("Access token is valid");
-          setIsReady(true);
+          await syncThemeFromProfile();
         } catch {
           logger.warn("Access token validation failed, attempting refresh...");
-
-          try {
-            // Try to refresh the token
-            const response = await AuthService.RefreshToken(
-              currentRefreshToken,
-              currentUserEmail,
-            );
-
-            if (response.isSuccess && response.data) {
-              const { access_token, refresh_token } = response.data;
-              setAuthTokens(access_token, refresh_token);
-              logger.info("Token refreshed successfully");
-            } else {
-              logger.error("Token refresh failed:", response.message);
-              clearAuth();
-            }
-          } catch (refreshError) {
-            logger.error("Token refresh error:", refreshError);
-            clearAuth();
-          }
-
-          setIsReady(true);
+          await refreshSession();
         }
+
+        setIsReady(true);
       } catch (error) {
         logger.error("Error checking auth status:", error);
         const clearAuth = useAuthStore.getState().clearAuth;
@@ -174,16 +206,21 @@ export default function RootLayout() {
   if (!isReady) {
     return (
       <View
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: uiTokens.surface.canvas,
+        }}
         testID="auth-loading-screen"
       >
         <ActivityIndicator
           size="large"
-          color="#5B5BFD"
+          color={uiTokens.accent.default}
           testID="auth-loading-spinner"
         />
         <Text
-          style={{ marginTop: 16, color: "#6B7280" }}
+          style={{ marginTop: 16, color: uiTokens.text.muted }}
           testID="auth-loading-text"
         >
           Loading...
@@ -195,12 +232,39 @@ export default function RootLayout() {
   logger.debug("RootLayout rendered, isAuthenticated:", isAuthenticated);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "fade",
+        animationDuration: 220,
+        gestureEnabled: true,
+      }}
+    >
       <Stack.Protected guard={isAuthenticated}>
-        <Stack.Screen name="(user)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="(user)"
+          options={{
+            headerShown: false,
+            animation: "slide_from_right",
+          }}
+        />
       </Stack.Protected>
 
       <Stack.Screen name="index" />
+      <Stack.Screen
+        name="onboard"
+        options={{
+          animation: "slide_from_right",
+          contentStyle: { flex: 1, backgroundColor: uiTokens.surface.canvas },
+        }}
+      />
+      <Stack.Screen
+        name="verification"
+        options={{
+          animation: "slide_from_right",
+          contentStyle: { flex: 1, backgroundColor: uiTokens.surface.canvas },
+        }}
+      />
     </Stack>
   );
 }

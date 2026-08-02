@@ -45,4 +45,6 @@ public interface CardService {
     ApiRes updateCard(UUID shelfId, UUID subjectId, UUID cardId, CardItemReq request);
 
     Pair<Integer, Double> getShortPracticeStats(SubjectEntity subject);
+
+    ApiRes getDueCards(UUID shelfId, UUID subjectId, int limit);
 }

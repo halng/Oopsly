@@ -1,6 +1,6 @@
 # Features
 
-> This directory contains the feature files for the project. Each feature file describes a specific functionality or behavior of the application in a human-readable format using markdown syntax. These files are used for behavior-driven development (BDD) and serve as a bridge between technical and non-technical stakeholders, ensuring that everyone has a clear understanding of the requirements and expected outcomes.
+> Part of the [documentation library](../README.md). This directory contains feature packs (OKRs, TODOs, BDD-style specs) organized by milestone. Use these for product planning; for shipped behavior see [Product overview](../product/overview.md) and [Milestone 1](../architecture/MILESTONE_1.md).
 
 ## Structure
 

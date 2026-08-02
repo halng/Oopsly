@@ -17,12 +17,15 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { SettingsRes } from "@/types/Profile";
 
 export type ThemeMode = "light" | "dark" | "system";
 
 interface SettingsState {
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
+  /** Last-write-wins: server profile settings overwrite local theme when logging in / refreshing tokens. */
+  syncFromServer: (settings: SettingsRes) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -30,6 +33,12 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       theme: "system",
       setTheme: (theme: ThemeMode) => set({ theme }),
+      syncFromServer: (settings: SettingsRes) => {
+        const t = settings.theme?.toLowerCase();
+        if (t === "light" || t === "dark" || t === "system") {
+          set({ theme: t });
+        }
+      },
     }),
     {
       name: "settings-storage",

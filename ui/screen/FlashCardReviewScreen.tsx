@@ -7,79 +7,99 @@ import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
   interpolate,
   Extrapolate,
   withSequence,
   withDelay,
+  Easing,
 } from "react-native-reanimated";
 import {
   fetchCardsDataBySubjectAndShelf,
   updateDifficultyLevels,
 } from "@/services/CardService";
-import { getCardsForTestSuite } from "@/services/TestSuiteService";
-import { CardRes, ReviewedFlashcard } from "@/types/Card";
+import { runTestPreset } from "@/services/TestSuiteService";
+import { CardRes, ReviewedFlashcard, TestRunCardRes } from "@/types/Card";
+import { uiTokens } from "@/constants/uiTokens";
+import { useResponsiveLayout } from "@/utils/responsiveLayout";
 
 type FlashcardReviewProps =
-  | { _shelfId: string; _subjectId: string; _testSuiteId?: never }
-  | { _shelfId?: never; _subjectId?: never; _testSuiteId: string };
+  | { _shelfId: string; _subjectId: string; _testSuiteId?: undefined }
+  | { _shelfId: string; _testSuiteId: string; _subjectId?: undefined };
 
 const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
   const { _shelfId, _subjectId, _testSuiteId } = props;
-  const isTestSuiteMode = Boolean(_testSuiteId);
+  const isTestSuiteMode = Boolean(_testSuiteId && _shelfId);
   const startTime = Date.now();
   const router = useRouter();
+  const { width, height, isCompact, contentMaxWidth } = useResponsiveLayout();
+  const shouldWrapRatings = width < 430;
+  const cardMinHeight = Math.min(400, Math.max(260, Math.floor(height * 0.42)));
+  const cardPadding = isCompact ? 24 : 32;
+  const ratingMinHeight = shouldWrapRatings ? 64 : 80;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [reviewedCards, setReviewedCards] = useState<ReviewedFlashcard[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [cards, setCards] = useState<CardRes[]>([]);
+  const [cards, setCards] = useState<(CardRes & { subjectId?: string })[]>([]);
   const [totalCards, setTotalCards] = useState<number>(0);
   // Animation values
   const flipRotation = useSharedValue(0);
   const cardScale = useSharedValue(1);
   const buttonOpacity = useSharedValue(0);
   const buttonTranslateY = useSharedValue(20);
+  const hintOpacity = useSharedValue(1);
 
   const fetchCards = () => {
-    if (_testSuiteId) {
-      getCardsForTestSuite(_testSuiteId)
+    setIsLoading(true);
+    setLoadError(null);
+    if (isTestSuiteMode && _shelfId && _testSuiteId) {
+      runTestPreset(_shelfId, _testSuiteId)
         .then((response) => {
           if (response.isSuccess && Array.isArray(response.data)) {
-            setCards(response.data);
-            setTotalCards(response.data.length);
+            const list = response.data as TestRunCardRes[];
+            setCards(list);
+            setTotalCards(list.length);
           } else {
-            console.error("Failed to fetch cards for test suite:", response.message);
+            console.error("Failed to run test preset:", response.message);
+            setLoadError(response.message ?? "Failed to load test cards");
           }
         })
         .catch((error) => {
-          console.error("Error fetching cards for test suite:", error);
-        });
+          console.error("Error running test preset:", error);
+          setLoadError(error?.message ?? "Could not connect to server");
+        })
+        .finally(() => setIsLoading(false));
       return;
     }
     if (_shelfId && _subjectId) {
       fetchCardsDataBySubjectAndShelf(_shelfId, _subjectId)
         .then((response) => {
           if (response.isSuccess) {
-            console.log("Fetched cards:", response.data);
             setCards(response.data.entities);
             setTotalCards(response.data.totalItems);
           } else {
             console.error("Failed to fetch cards:", response.message);
+            setLoadError(response.message ?? "Failed to load cards");
           }
         })
         .catch((error) => {
           console.error("Error fetching cards:", error);
-        });
+          setLoadError(error?.message ?? "Could not connect to server");
+        })
+        .finally(() => setIsLoading(false));
+      return;
     }
+    setIsLoading(false);
   };
 
   useEffect(() => {
     fetchCards();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_shelfId, _subjectId, _testSuiteId]);
+  }, [_shelfId, _subjectId, _testSuiteId, isTestSuiteMode]);
 
   // Animated styles for card flip
   const frontAnimatedStyle = useAnimatedStyle(() => {
@@ -123,36 +143,42 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
     transform: [{ translateY: buttonTranslateY.value }],
   }));
 
+  const hintAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: hintOpacity.value,
+  }));
+
   // Handle card flip
   const handleCardPress = () => {
     if (!isFlipped) {
       setIsFlipped(true);
-      flipRotation.value = withSpring(1, { damping: 15, stiffness: 100 });
+      hintOpacity.value = withTiming(0, { duration: 150 });
+      flipRotation.value = withTiming(1, {
+        duration: 350,
+        easing: Easing.bezier(0.25, 0.46, 0.45, 0.94),
+      });
       cardScale.value = withSequence(
         withTiming(0.95, { duration: 100 }),
         withTiming(1, { duration: 100 }),
       );
       buttonOpacity.value = withDelay(200, withTiming(1, { duration: 300 }));
-      buttonTranslateY.value = withDelay(200, withSpring(0, { damping: 12 }));
+      buttonTranslateY.value = withDelay(200, withTiming(0, { duration: 300 }));
     }
   };
 
   // Handle rating selection
   const handleRating = (rating: "again" | "hard" | "good" | "easy") => {
-    // Animate card out
+    if (!cards.length || !cards[currentIndex]) return;
+
     cardScale.value = withTiming(0.9, { duration: 150 });
     buttonOpacity.value = withTiming(0, { duration: 150 });
 
-    // Mark card as reviewed
-    setReviewedCards([
-      ...reviewedCards,
-      {
-        cardId: cards[currentIndex].id,
-        newLevel: rating.toUpperCase() as "HARD" | "GOOD" | "EASY" | "AGAIN",
-      },
-    ]);
+    const entry: ReviewedFlashcard = {
+      cardId: cards[currentIndex].id,
+      newLevel: rating.toUpperCase() as "HARD" | "GOOD" | "EASY" | "AGAIN",
+    };
+    const nextReviewed = [...reviewedCards, entry];
+    setReviewedCards(nextReviewed);
 
-    // Move to next card or finish
     setTimeout(() => {
       if (rating === "again") {
         setCurrentIndex(currentIndex);
@@ -161,43 +187,64 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
         cardScale.value = 1;
         buttonOpacity.value = 0;
         buttonTranslateY.value = 20;
-      } else {
-        if (currentIndex < totalCards - 1) {
-          setCurrentIndex(currentIndex + 1);
-          setIsFlipped(false);
-          flipRotation.value = 0;
-          cardScale.value = 1;
-          buttonOpacity.value = 0;
-          buttonTranslateY.value = 20;
-        } else {
-          if (isTestSuiteMode) {
+        hintOpacity.value = 1;
+        return;
+      }
+      if (currentIndex < totalCards - 1) {
+        setCurrentIndex(currentIndex + 1);
+        setIsFlipped(false);
+        flipRotation.value = 0;
+        cardScale.value = 1;
+        buttonOpacity.value = 0;
+        buttonTranslateY.value = 20;
+        hintOpacity.value = 1;
+        return;
+      }
+
+      if (isTestSuiteMode && _shelfId) {
+        const bySubject = new Map<string, ReviewedFlashcard[]>();
+        for (const r of nextReviewed) {
+          const sid = cards.find((c) => c.id === r.cardId)?.subjectId;
+          if (!sid) continue;
+          const arr = bySubject.get(sid) ?? [];
+          arr.push(r);
+          bySubject.set(sid, arr);
+        }
+        Promise.all(
+          Array.from(bySubject.entries()).map(([subjectId, batch]) =>
+            updateDifficultyLevels(_shelfId, subjectId, batch),
+          ),
+        )
+          .then(() => {
             const endTime = Date.now();
             const duration = endTime - startTime;
             router.replace(`/home?testComplete=1&duration=${duration}`);
-            return;
-          }
-          updateDifficultyLevels(_shelfId!, _subjectId!, reviewedCards)
-            .then((response) => {
-              if (response.isSuccess) {
-                // Session complete - navigate to results
-                const endTime = Date.now();
-                const duration = endTime - startTime;
-                router.push(
-                  `/${_shelfId}/complete/${_subjectId}?duration=${duration}`,
-                );
-                console.log("Updated difficulty levels successfully");
-              } else {
-                console.error(
-                  "Failed to update difficulty levels:",
-                  response.message,
-                );
-              }
-            })
-            .catch((error) => {
-              console.error("Error updating difficulty levels:", error);
-            });
-        }
+          })
+          .catch((error) => {
+            console.error("Error updating difficulty after test:", error);
+            router.replace("/home");
+          });
+        return;
       }
+
+      updateDifficultyLevels(_shelfId!, _subjectId!, nextReviewed)
+        .then((response) => {
+          if (response.isSuccess) {
+            const endTime = Date.now();
+            const duration = endTime - startTime;
+            router.push(
+              `/${_shelfId}/complete/${_subjectId}?duration=${duration}`,
+            );
+          } else {
+            console.error(
+              "Failed to update difficulty levels:",
+              response.message,
+            );
+          }
+        })
+        .catch((error) => {
+          console.error("Error updating difficulty levels:", error);
+        });
     }, 200);
   };
 
@@ -216,11 +263,15 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#6366F1" />
+      <StatusBar barStyle="light-content" backgroundColor={uiTokens.review.gradientStart} />
 
       {/* Gradient Background */}
       <LinearGradient
-        colors={["#6366F1", "#8B5CF6", "#EC4899"]}
+        colors={[
+          uiTokens.review.gradientStart,
+          uiTokens.review.gradientMid,
+          uiTokens.review.gradientEnd,
+        ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFillObject}
@@ -228,32 +279,42 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
 
       <SafeAreaView style={styles.safeArea}>
         {/* Progress Bar */}
-        <View style={styles.progressContainer}>
+        <View style={[styles.progressContainer, { maxWidth: contentMaxWidth }]}>
           <View style={styles.progressBar}>
             <Animated.View
               style={[
                 styles.progressFill,
-                { width: `${((currentIndex + 1) / totalCards) * 100}%` },
+                {
+                  width: `${
+                    (Math.min(currentIndex + 1, Math.max(totalCards, 1)) /
+                      Math.max(totalCards, 1)) *
+                    100
+                  }%`,
+                },
               ]}
             />
           </View>
           <View style={styles.progressTextContainer}>
-            <Sparkles size={16} color="#FFF" strokeWidth={2} />
+            <Sparkles size={16} color={uiTokens.text.onAccent} strokeWidth={2} />
             <Text style={styles.progressText}>
-              {currentIndex + 1} of {totalCards}
+              {totalCards > 0 ? `${currentIndex + 1} of ${totalCards}` : "No cards"}
             </Text>
           </View>
+          <Text style={styles.sessionModeHint} testID="session-mode-label">
+            {isTestSuiteMode ? "Test from preset · ratings save to SRS" : "Study · SRS session"}
+          </Text>
         </View>
 
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { maxWidth: contentMaxWidth }]}>
           <Pressable
             style={styles.iconButton}
             onPress={() => router.back()}
             hitSlop={8}
+            testID="review-close-button"
           >
             <View style={styles.iconButtonInner}>
-              <X size={22} color="#FFF" strokeWidth={2.5} />
+              <X size={22} color={uiTokens.text.onAccent} strokeWidth={2.5} />
             </View>
           </Pressable>
 
@@ -262,6 +323,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
             onPress={handleReset}
             disabled={currentIndex === 0}
             hitSlop={8}
+            testID="review-reset-button"
           >
             <View
               style={[
@@ -271,7 +333,7 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
             >
               <RotateCcw
                 size={20}
-                color={currentIndex === 0 ? "#A5B4FC" : "#FFF"}
+                color={currentIndex === 0 ? uiTokens.accent.disabled : uiTokens.text.onAccent}
                 strokeWidth={2.5}
               />
             </View>
@@ -279,30 +341,65 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
         </View>
 
         {/* Card Container */}
-        <View style={styles.cardContainer}>
-          {!isFlipped ? (
+        <View style={[styles.cardContainer, { maxWidth: contentMaxWidth }]}>
+          {isLoading ? (
+            <View style={styles.emptyState} testID="cards-loading-state">
+              <Text style={styles.emptyTitle}>Loading cards...</Text>
+              <Text style={styles.emptySubtitle}>Preparing your session.</Text>
+            </View>
+          ) : loadError ? (
+            <View style={styles.emptyState} testID="review-error-state">
+              <Text style={styles.emptyTitle}>Could not load</Text>
+              <Text style={styles.emptySubtitle}>{loadError}</Text>
+              <Pressable
+                style={styles.emptyBackBtn}
+                onPress={() => router.back()}
+                testID="review-error-back-button"
+              >
+                <Text style={styles.emptyBackBtnText}>Go back</Text>
+              </Pressable>
+            </View>
+          ) : totalCards === 0 ? (
+            <View style={styles.emptyState} testID="empty-cards-state">
+              <Text style={styles.emptyTitle}>Nothing to review</Text>
+              <Text style={styles.emptySubtitle}>
+                Try a different preset or add cards to your subject first.
+              </Text>
+              <Pressable
+                style={styles.emptyBackBtn}
+                onPress={() => router.back()}
+                testID="empty-go-back-button"
+              >
+                <Text style={styles.emptyBackBtnText}>Go back</Text>
+              </Pressable>
+            </View>
+          ) : !isFlipped ? (
             // Front of card (Question)
-            <Animated.View style={[styles.card, frontAnimatedStyle]}>
+            <Animated.View
+              style={[styles.card, { minHeight: cardMinHeight }, frontAnimatedStyle]}
+            >
               <Pressable style={styles.cardPressable} onPress={handleCardPress}>
-                <View style={styles.cardContent}>
+                <View style={[styles.cardContent, { padding: cardPadding }]}>
                   <View style={styles.questionBadge}>
                     <Text style={styles.questionBadgeText}>Question</Text>
                   </View>
                   <Text style={styles.questionText}>
                     {cards[currentIndex]?.front}
                   </Text>
-                  <View style={styles.tapHintContainer}>
+                  <Animated.View style={[styles.tapHintContainer, hintAnimatedStyle]}>
                     <View style={styles.tapHintDot} />
                     <Text style={styles.tapHint}>Tap to reveal answer</Text>
                     <View style={styles.tapHintDot} />
-                  </View>
+                  </Animated.View>
                 </View>
               </Pressable>
             </Animated.View>
           ) : (
             // Back of card (Answer)
-            <Animated.View style={[styles.card, backAnimatedStyle]}>
-              <View style={styles.cardContent}>
+            <Animated.View
+              style={[styles.card, { minHeight: cardMinHeight }, backAnimatedStyle]}
+            >
+              <View style={[styles.cardContent, { padding: cardPadding }]}>
                 <View style={styles.questionBadge}>
                   <Text style={styles.questionBadgeText}>Question</Text>
                 </View>
@@ -324,8 +421,8 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
         </View>
 
         {/* Footer Controls */}
-        <View style={styles.footer}>
-          {!isFlipped ? (
+        <View style={[styles.footer, { maxWidth: contentMaxWidth }]}>
+          {totalCards === 0 ? null : !isFlipped ? (
             <View style={styles.footerHintContainer}>
               <View style={styles.footerHintDot} />
               <Text style={styles.footerHint}>
@@ -333,65 +430,87 @@ const FlashcardReviewScreen = (props: FlashcardReviewProps) => {
               </Text>
             </View>
           ) : (
-            <Animated.View style={[styles.buttonRow, buttonAnimatedStyle]}>
+            <Animated.View
+              style={[
+                styles.buttonRow,
+                shouldWrapRatings && styles.buttonRowWrapped,
+                buttonAnimatedStyle,
+              ]}
+            >
               <Pressable
                 style={({ pressed }) => [
                   styles.ratingButton,
+                  shouldWrapRatings && styles.ratingButtonWrapped,
                   pressed && styles.ratingButtonPressed,
                 ]}
                 onPress={() => handleRating("again")}
+                testID="rating-again-button"
               >
-                <LinearGradient
-                  colors={["#EF4444", "#DC2626"]}
-                  style={styles.ratingButtonGradient}
+                <View
+                  style={[
+                    styles.ratingButtonSolid,
+                    { backgroundColor: uiTokens.review.rating.again, minHeight: ratingMinHeight },
+                  ]}
                 >
                   <Text style={styles.buttonLabel}>Again</Text>
-                </LinearGradient>
+                </View>
               </Pressable>
 
               <Pressable
                 style={({ pressed }) => [
                   styles.ratingButton,
+                  shouldWrapRatings && styles.ratingButtonWrapped,
                   pressed && styles.ratingButtonPressed,
                 ]}
                 onPress={() => handleRating("hard")}
+                testID="rating-hard-button"
               >
-                <LinearGradient
-                  colors={["#F97316", "#EA580C"]}
-                  style={styles.ratingButtonGradient}
+                <View
+                  style={[
+                    styles.ratingButtonSolid,
+                    { backgroundColor: uiTokens.review.rating.hard, minHeight: ratingMinHeight },
+                  ]}
                 >
                   <Text style={styles.buttonLabel}>Hard</Text>
-                </LinearGradient>
+                </View>
               </Pressable>
 
               <Pressable
                 style={({ pressed }) => [
                   styles.ratingButton,
+                  shouldWrapRatings && styles.ratingButtonWrapped,
                   pressed && styles.ratingButtonPressed,
                 ]}
                 onPress={() => handleRating("good")}
+                testID="rating-good-button"
               >
-                <LinearGradient
-                  colors={["#3B82F6", "#2563EB"]}
-                  style={styles.ratingButtonGradient}
+                <View
+                  style={[
+                    styles.ratingButtonSolid,
+                    { backgroundColor: uiTokens.review.rating.good, minHeight: ratingMinHeight },
+                  ]}
                 >
                   <Text style={styles.buttonLabel}>Good</Text>
-                </LinearGradient>
+                </View>
               </Pressable>
 
               <Pressable
                 style={({ pressed }) => [
                   styles.ratingButton,
+                  shouldWrapRatings && styles.ratingButtonWrapped,
                   pressed && styles.ratingButtonPressed,
                 ]}
                 onPress={() => handleRating("easy")}
+                testID="rating-easy-button"
               >
-                <LinearGradient
-                  colors={["#10B981", "#059669"]}
-                  style={styles.ratingButtonGradient}
+                <View
+                  style={[
+                    styles.ratingButtonSolid,
+                    { backgroundColor: uiTokens.review.rating.easy, minHeight: ratingMinHeight },
+                  ]}
                 >
                   <Text style={styles.buttonLabel}>Easy</Text>
-                </LinearGradient>
+                </View>
               </Pressable>
             </Animated.View>
           )}
@@ -407,8 +526,10 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    alignItems: "center",
   },
   progressContainer: {
+    width: "100%",
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 16,
@@ -436,7 +557,45 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontWeight: "600",
   },
+  sessionModeHint: {
+    marginTop: 6,
+    textAlign: "center",
+    fontSize: 12,
+    color: "rgba(255,255,255,0.85)",
+    fontWeight: "500",
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontSize: 15,
+    color: "rgba(255,255,255,0.9)",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  emptyBackBtn: {
+    backgroundColor: "rgba(255,255,255,0.28)",
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+  },
+  emptyBackBtnText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: 16,
+  },
   header: {
+    width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -458,6 +617,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   cardContainer: {
+    width: "100%",
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: 20,
@@ -466,12 +626,13 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 24,
-    minHeight: 400,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    shadowColor: "#1E1B4B",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   cardPressable: {
     flex: 1,
@@ -499,14 +660,14 @@ const styles = StyleSheet.create({
   questionText: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#111827",
+    color: "#1E1B4B",
     textAlign: "center",
     lineHeight: 38,
   },
   questionTextSmall: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#374151",
+    color: "#1E1B4B",
     textAlign: "center",
     lineHeight: 28,
   },
@@ -552,7 +713,7 @@ const styles = StyleSheet.create({
   answerText: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#3B82F6",
+    color: "#1E1B4B",
     textAlign: "center",
     lineHeight: 32,
   },
@@ -584,9 +745,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 10,
   },
+  buttonRowWrapped: {
+    flexWrap: "wrap",
+  },
   ratingButton: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -594,15 +758,17 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  ratingButtonWrapped: {
+    flexBasis: "48%",
+  },
   ratingButtonPressed: {
     transform: [{ scale: 0.95 }],
   },
-  ratingButtonGradient: {
+  ratingButtonSolid: {
     paddingVertical: 18,
     paddingHorizontal: 8,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 80,
   },
   buttonLabel: {
     fontSize: 16,

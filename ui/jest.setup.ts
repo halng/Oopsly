@@ -1,5 +1,15 @@
 import { jest } from '@jest/globals';
 
+jest.mock('expo-secure-store', () => ({
+  setItemAsync: jest.fn(() => Promise.resolve()),
+  getItemAsync: jest.fn(() => Promise.resolve(null)),
+  deleteItemAsync: jest.fn(() => Promise.resolve()),
+}));
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
 // Provide a lightweight logger mock to silence async console noise in tests
 jest.mock('react-native-logs', () => {
   const mockLogger = {
@@ -28,6 +38,13 @@ beforeAll(() => {
   global.alert = global.alert || jest.fn();
 });
 
+beforeEach(() => {
+  // Ensure each test starts on real timers (verification specs use fake timers).
+  jest.useRealTimers();
+});
+
 afterEach(() => {
   jest.clearAllMocks();
+  // Prevent fake-timer leakage (e.g. from verification tests) from hanging waitFor.
+  jest.useRealTimers();
 });

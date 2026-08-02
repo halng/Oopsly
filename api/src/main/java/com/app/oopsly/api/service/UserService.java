@@ -38,4 +38,6 @@ public interface UserService {
     ApiRes logout();
 
     ApiRes validateToken();
+
+    void updateUserProgress(int xpGained);
 }

@@ -1,0 +1,274 @@
+name: CI UI
+
+on:
+  push:
+    branches:
+      - main
+      - release/**
+    paths:
+      - "ui/**"
+      - ".github/workflows/ci-ui.yaml"
+  pull_request:
+    branches:
+      - main
+      - release/**
+    paths:
+      - "ui/**"
+      - ".github/workflows/ci-ui.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-ui-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9"
+
+jobs:
+  ui:
+    name: Analyze UI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          package_json_file: ui/package.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Cache Expo / Metro
+        uses: actions/cache@v4
+        with:
+          path: |
+            ui/.expo
+            ui/node_modules/.cache
+          key: ${{ runner.os }}-expo-${{ hashFiles('ui/pnpm-lock.yaml') }}-${{ hashFiles('ui/app.json', 'ui/babel.config.js', 'ui/metro.config.js') }}
+          restore-keys: |
+            ${{ runner.os }}-expo-${{ hashFiles('ui/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-expo-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          # Jest/lint do not need the Cypress binary.
+          CYPRESS_INSTALL_BINARY: "0"
+
+      - name: ESLint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
+      - name: Jest with coverage
+        run: env -u CYPRESS_COVERAGE -u BABEL_ENV pnpm test:coverage
+
+      - name: Upload Jest coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-jest-coverage
+          path: ui/coverage
+          if-no-files-found: warn
+          retention-days: 7
+
+  e2e:
+    name: Cypress e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          package_json_file: ui/package.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Cache Expo / Metro
+        uses: actions/cache@v4
+        with:
+          path: |
+            ui/.expo
+            ui/node_modules/.cache
+          key: ${{ runner.os }}-expo-${{ hashFiles('ui/pnpm-lock.yaml') }}-${{ hashFiles('ui/app.json', 'ui/babel.config.js', 'ui/metro.config.js') }}
+          restore-keys: |
+            ${{ runner.os }}-expo-${{ hashFiles('ui/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-expo-
+
+      - name: Cypress e2e (headless electron)
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: ui
+          install-command: pnpm install --frozen-lockfile
+          # Caches Cypress binary + pnpm store via the action.
+          cache-key: ${{ runner.os }}-cypress-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          start: pnpm web:coverage
+          wait-on: http://127.0.0.1:8081
+          wait-on-timeout: 360
+          browser: electron
+          headed: false
+          command: pnpm e2e:cypress:run
+        env:
+          CI: true
+          CYPRESS_COVERAGE: "true"
+          BABEL_ENV: cypress
+          TS_NODE_PROJECT: ./cypress/tsconfig.json
+          EXPO_NO_TELEMETRY: "1"
+
+      - name: Check e2e coverage gates
+        working-directory: ui
+        run: pnpm coverage:check:e2e
+
+      - name: Stage Cypress coverage for artifact
+        if: always()
+        working-directory: ui
+        run: |
+          mkdir -p /tmp/ui-cypress-coverage
+          if [ -d coverage-cypress ]; then cp -a coverage-cypress /tmp/ui-cypress-coverage/; fi
+          if [ -d .nyc_output ]; then cp -a .nyc_output /tmp/ui-cypress-coverage/; fi
+          ls -la /tmp/ui-cypress-coverage || true
+
+      - name: Upload Cypress coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-cypress-coverage
+          path: /tmp/ui-cypress-coverage
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload Cypress screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: ui/cypress/screenshots/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  sonar:
+    name: Merge coverage · SonarQube
+    runs-on: ubuntu-latest
+    needs: [ui, e2e]
+    # Publish Jest coverage even if e2e failed; skip if unit job failed.
+    if: ${{ always() && needs.ui.result == 'success' }}
+    defaults:
+      run:
+        working-directory: ui
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_UI }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          package_json_file: ui/package.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Cache Sonar scanner
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar-ui
+          restore-keys: |
+            ${{ runner.os }}-sonar-ui
+            ${{ runner.os }}-sonar-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          CYPRESS_INSTALL_BINARY: "0"
+
+      - name: Download Jest coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: ui-jest-coverage
+          path: ui/coverage
+
+      - name: Download Cypress coverage
+        if: ${{ needs.e2e.result == 'success' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ui-cypress-coverage
+          path: /tmp/ui-cypress-coverage
+
+      - name: Place Cypress coverage for merge
+        if: ${{ needs.e2e.result == 'success' }}
+        continue-on-error: true
+        run: |
+          if [ -d /tmp/ui-cypress-coverage/coverage-cypress ]; then
+            rm -rf ui/coverage-cypress
+            mv /tmp/ui-cypress-coverage/coverage-cypress ui/coverage-cypress
+          fi
+          if [ -d /tmp/ui-cypress-coverage/.nyc_output ]; then
+            rm -rf ui/.nyc_output
+            mv /tmp/ui-cypress-coverage/.nyc_output ui/.nyc_output
+          fi
+
+      - name: Merge coverage reports
+        run: pnpm coverage:merge
+
+      - name: Upload combined coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-coverage-combined
+          path: ui/coverage-combined/
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: SonarQube Scan
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@v8.2.1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_UI }}
+        with:
+          projectBaseDir: ui
+          args: >
+            -Dsonar.javascript.lcov.reportPaths=coverage-combined/lcov.info,coverage/lcov.info
+
+      - name: Skip Sonar — token not configured
+        if: env.SONAR_TOKEN == ''
+        run: echo "SONAR_TOKEN_UI not set; skipping SonarQube upload."

@@ -19,8 +19,14 @@ export interface CardRes {
   front: string;
   back: string;
   difficultyLevel: string;
-  nextPracticeTime: number;
+  /** ISO-8601 string or epoch from API */
+  nextPracticeTime: string | number;
   numberOfPractice: number;
+}
+
+/** Card returned from test preset run (includes subject for SRS PATCH routes). */
+export interface TestRunCardRes extends CardRes {
+  subjectId: string;
 }
 
 export interface CardCreateRequest {

@@ -15,12 +15,19 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
 import { AuthService } from '@/services/AuthService';
 import { useAuthStore } from '@/store';
 import { Logger } from '@/utils';
+import AuthScreenLayout from "@/components/common/AuthScreenLayout";
+import AppButton from "@/components/common/AppButton";
+import FeedbackMessage from "@/components/common/FeedbackMessage";
+import { uiTokens } from "@/constants/uiTokens";
 
 export default function EmailInputScreen() {
   const logger = Logger.extend('EmailInputScreen');
@@ -47,12 +54,14 @@ export default function EmailInputScreen() {
     AuthService.CreateOTP(email)
       .then((res) => {
         if (res.isSuccess) {
-          logger.info('OTP sent successfully');
+          logger.info("OTP sent successfully");
           authState.setUserEmail(email);
-          setIsLoading(false);  
-          router.push('/verification');
+          setIsLoading(false);
+          router.push("/verification");
+          return;
         }
-        
+        setError(res.message || "Could not send code. Try again.");
+        setIsLoading(false);
       })
       .catch((error) => {
         setError('Failed to send OTP. Please try again.');
@@ -65,70 +74,65 @@ export default function EmailInputScreen() {
   const isEmailValid = isValidEmail(email);
 
   return (
-    <View className="flex-1 bg-white" testID="email-input-screen">
-      {/* Header */}
-      <View className="px-4 pt-12 pb-4" testID="header-container">
-        <TouchableOpacity
-          onPress={() => router.push("/")}
-          className="w-10 h-10 items-center justify-center"
-          accessibilityLabel="Go back"
-          testID="back-button"
-        >
-          <ArrowLeft size={24} color="#1F2937" />
-        </TouchableOpacity>
+    <AuthScreenLayout testID="email-input-screen">
+      <Text
+        style={{ color: uiTokens.text.primary, fontSize: 28, fontWeight: "700", marginBottom: 8 }}
+        testID="title-text"
+      >
+        What's your email?
+      </Text>
+      <Text
+        style={{ color: uiTokens.text.muted, fontSize: 16, marginBottom: 32 }}
+        testID="description-text"
+      >
+        We'll send you a secure code to verify your account.
+      </Text>
+
+      <View className="mb-6" testID="email-input-container">
+        <TextInput
+          style={{
+            width: "100%",
+            height: 56,
+            paddingHorizontal: 16,
+            borderRadius: 12,
+            borderWidth: 2,
+            borderColor: email
+              ? isEmailValid
+                ? uiTokens.accent.default
+                : uiTokens.state.error.solid
+              : uiTokens.border.subtle,
+            color: uiTokens.text.primary,
+            fontSize: 16,
+            backgroundColor: uiTokens.surface.default,
+          }}
+          placeholder="name@example.com"
+          placeholderTextColor={uiTokens.text.muted}
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          accessibilityLabel="Email input field"
+          accessibilityHint="Enter your email address"
+          testID="email-input"
+        />
+        {error ? (
+          <View style={{ marginTop: 12 }}>
+            <FeedbackMessage message={error} tone="error" testID="error-message" />
+          </View>
+        ) : null}
       </View>
 
-      {/* Content */}
-      <View className="flex-1 px-4" testID="content-container">
-        <Text className="text-3xl font-bold text-gray-900 mb-2" testID="title-text">
-          What's your email?
-        </Text>
-        <Text className="text-base text-gray-500 mb-8" testID="description-text">
-          We'll send you a secure code to verify your account.
-        </Text>
-
-        {/* Email Input */}
-        <View className="mb-6" testID="email-input-container">
-          <TextInput
-            className={`w-full h-14 px-4 rounded-xl border-2 ${
-              email ? (isEmailValid ? 'border-indigo-600' : 'border-red-500') 
-              : 'border-gray-200'
-            } text-gray-900 text-base`}
-            placeholder="name@example.com"
-            placeholderTextColor="#9CA3AF"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            accessibilityLabel="Email input field"
-            accessibilityHint="Enter your email address"
-            testID="email-input"
-          />
-          {error && <Text className="text-red-500 mt-2" testID="error-message">{error}</Text>}
-        </View>
-      </View>
-
-      {/* Bottom Button */}
-      <View className="px-4 pb-8" testID="button-container">
-        <TouchableOpacity
+      <View testID="button-container">
+        <AppButton
+          label="Continue"
           onPress={handleContinue}
-          disabled={!isEmailValid || isLoading}
-          className={`w-full h-14 rounded-xl justify-center items-center bg-indigo-600 
-            ${(!isEmailValid || isLoading) ? 'opacity-50' : 'opacity-100'}`}
+          disabled={!isEmailValid}
+          loading={isLoading}
           accessibilityLabel="Continue button"
-          accessibilityHint="Proceed to verification"
           testID="continue-button"
-        >
-          {isLoading ? (
-            <ActivityIndicator color="white" testID="loading-indicator" />
-          ) : (
-            <Text className="text-white text-base font-semibold" testID="continue-button-text">
-              Continue
-            </Text>
-          )}
-        </TouchableOpacity>
+        />
       </View>
-    </View>
+    </AuthScreenLayout>
   );
 }

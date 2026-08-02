@@ -4,6 +4,7 @@ module.exports = {
   content: [
     './app/**/*.{html,js,jsx,ts,tsx,mdx}',
     './components/**/*.{html,js,jsx,ts,tsx,mdx}',
+    './screen/**/*.{html,js,jsx,ts,tsx,mdx}',
     './utils/**/*.{html,js,jsx,ts,tsx,mdx}',
     './*.{html,js,jsx,ts,tsx,mdx}',
     './src/**/*.{html,js,jsx,ts,tsx,mdx}',
@@ -175,13 +176,14 @@ module.exports = {
         },
       },
       fontFamily: {
-        heading: undefined,
-        body: undefined,
-        mono: undefined,
+        heading: ['DM-Sans', 'Inter', 'sans-serif'],
+        body: ['Inter', 'DM-Sans', 'sans-serif'],
+        mono: ['var(--font-space-mono)', 'monospace'],
+        'dm-sans': ['DM-Sans', 'sans-serif'],
         jakarta: ['var(--font-plus-jakarta-sans)'],
         roboto: ['var(--font-roboto)'],
         code: ['var(--font-source-code-pro)'],
-        inter: ['var(--font-inter)'],
+        inter: ['var(--font-inter)', 'Inter', 'sans-serif'],
         'space-mono': ['var(--font-space-mono)'],
       },
       fontWeight: {

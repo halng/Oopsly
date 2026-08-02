@@ -17,9 +17,12 @@
 import { render, screen, waitFor } from '@testing-library/react-native';
 import { useRouter, useSegments } from 'expo-router';
 import React from 'react';
+import { Appearance, Platform } from 'react-native';
 import RootLayout from '../../app/_layout';
 import { useAuthStore } from '../../store/AuthStore';
 import { AuthService } from '@/services/AuthService';
+import { getRefreshTokenSecure } from '@/utils/secureTokens';
+import { useSettingsStore } from '../../store/SettingsStore';
 
 // Mock AsyncStorage for tests
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -64,9 +67,55 @@ jest.mock('@/services/AuthService', () => ({
   },
 }));
 
+jest.mock('@/services/ProfileService', () => ({
+  getProfile: jest.fn(() =>
+    Promise.resolve({
+      isSuccess: true,
+      data: { settings: { theme: 'SYSTEM', language: 'en', spaceConfig: {}, studySchedule: null } },
+    }),
+  ),
+}));
+
+jest.mock('@/utils/secureTokens', () => ({
+  getRefreshTokenSecure: jest.fn(() => Promise.resolve(null)),
+  saveRefreshTokenSecure: jest.fn(() => Promise.resolve()),
+  deleteRefreshTokenSecure: jest.fn(() => Promise.resolve()),
+}));
+
 jest.mock('../../store/AuthStore', () => ({
   useAuthStore: jest.fn(),
 }));
+
+jest.mock('../../store/SettingsStore', () => ({
+  useSettingsStore: Object.assign(
+    jest.fn((selector) => {
+      const state = {
+        theme: 'system',
+        setTheme: jest.fn(),
+        syncFromServer: jest.fn(),
+      };
+      return selector ? selector(state) : state;
+    }),
+    {
+      getState: jest.fn(() => ({
+        theme: 'system',
+        setTheme: jest.fn(),
+        syncFromServer: jest.fn(),
+      })),
+    },
+  ),
+}));
+
+type MockAuthStore = jest.Mock & {
+  persist: {
+    hasHydrated: jest.Mock;
+    onFinishHydration: jest.Mock;
+  };
+  getState: jest.Mock;
+  setState: jest.Mock;
+};
+
+const mockedAuthStore = useAuthStore as unknown as MockAuthStore;
 
 describe('RootLayout', () => {
   const mockReplace = jest.fn();
@@ -82,7 +131,7 @@ describe('RootLayout', () => {
     (useSegments as jest.Mock).mockReturnValue([]);
     
     // Mock default auth store state
-    (useAuthStore as unknown as jest.Mock).mockImplementation((selector) => {
+    mockedAuthStore.mockImplementation((selector) => {
       const state = {
         isAuthenticated: false,
         accessToken: '',
@@ -93,8 +142,8 @@ describe('RootLayout', () => {
       return selector ? selector(state) : state;
     });
 
-    (useAuthStore as unknown as jest.Mock).persist = mockPersist;
-    (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+    mockedAuthStore.persist = mockPersist;
+    mockedAuthStore.getState = jest.fn().mockReturnValue({
       accessToken: '',
       refreshToken: '',
       clearAuth: jest.fn(),
@@ -126,7 +175,7 @@ describe('RootLayout', () => {
     it('should not redirect when no tokens are stored', async () => {
       mockPersist.hasHydrated.mockReturnValue(true);
 
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: '',
         refreshToken: '',
         clearAuth: jest.fn(),
@@ -149,9 +198,10 @@ describe('RootLayout', () => {
       mockPersist.hasHydrated.mockReturnValue(true);
 
       const mockSetAuthTokens = jest.fn();
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: 'valid-access-token',
         refreshToken: 'valid-refresh-token',
+        userEmail: 'test@example.com',
         clearAuth: jest.fn(),
         setAuthTokens: mockSetAuthTokens,
       });
@@ -170,6 +220,95 @@ describe('RootLayout', () => {
       expect(AuthService.RefreshToken).not.toHaveBeenCalled();
       expect(mockSetAuthTokens).not.toHaveBeenCalled();
     });
+
+    it('refreshes when access token is missing but refresh token exists', async () => {
+      mockPersist.hasHydrated.mockReturnValue(true);
+      const mockSetAuthTokens = jest.fn();
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
+        accessToken: '',
+        refreshToken: 'valid-refresh-token',
+        userEmail: 'test@example.com',
+        clearAuth: jest.fn(),
+        setAuthTokens: mockSetAuthTokens,
+      });
+      (AuthService.RefreshToken as jest.Mock).mockResolvedValue({
+        isSuccess: true,
+        data: { access_token: 'new-access', refresh_token: 'new-refresh' },
+      });
+
+      render(<RootLayout />);
+
+      await waitFor(() => {
+        expect(AuthService.RefreshToken).toHaveBeenCalledWith(
+          'valid-refresh-token',
+          'test@example.com',
+        );
+      });
+      expect(AuthService.ValidateToken).not.toHaveBeenCalled();
+      expect(mockSetAuthTokens).toHaveBeenCalledWith('new-access', 'new-refresh');
+    });
+
+    it('restores refresh token from secure storage', async () => {
+      mockPersist.hasHydrated.mockReturnValue(true);
+      (getRefreshTokenSecure as jest.Mock).mockResolvedValueOnce('secure-refresh');
+      const setState = jest.fn();
+      mockedAuthStore.setState = setState;
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
+        accessToken: 'access',
+        refreshToken: '',
+        userEmail: 'test@example.com',
+        clearAuth: jest.fn(),
+        setAuthTokens: jest.fn(),
+      });
+      (AuthService.ValidateToken as jest.Mock).mockResolvedValue({ isSuccess: true });
+
+      render(<RootLayout />);
+
+      await waitFor(() => {
+        expect(getRefreshTokenSecure).toHaveBeenCalled();
+        expect(setState).toHaveBeenCalledWith({ refreshToken: 'secure-refresh' });
+      });
+    });
+  });
+
+  describe('Theme application', () => {
+    const originalOS = Platform.OS;
+
+    afterEach(() => {
+      Object.defineProperty(Platform, 'OS', { configurable: true, value: originalOS });
+    });
+
+    it('applies explicit theme on native platforms', async () => {
+      Object.defineProperty(Platform, 'OS', { configurable: true, value: 'ios' });
+      const setColorScheme = jest.spyOn(Appearance, 'setColorScheme').mockImplementation(() => {});
+      mockPersist.hasHydrated.mockReturnValue(true);
+      (useSettingsStore as unknown as jest.Mock).mockImplementation((selector: any) =>
+        selector({ theme: 'dark', setTheme: jest.fn(), syncFromServer: jest.fn() }),
+      );
+
+      render(<RootLayout />);
+
+      await waitFor(() => {
+        expect(setColorScheme).toHaveBeenCalledWith('dark');
+      });
+      setColorScheme.mockRestore();
+    });
+
+    it('clears color scheme for system theme on native', async () => {
+      Object.defineProperty(Platform, 'OS', { configurable: true, value: 'android' });
+      const setColorScheme = jest.spyOn(Appearance, 'setColorScheme').mockImplementation(() => {});
+      mockPersist.hasHydrated.mockReturnValue(true);
+      (useSettingsStore as unknown as jest.Mock).mockImplementation((selector: any) =>
+        selector({ theme: 'system', setTheme: jest.fn(), syncFromServer: jest.fn() }),
+      );
+
+      render(<RootLayout />);
+
+      await waitFor(() => {
+        expect(setColorScheme).toHaveBeenCalledWith(null);
+      });
+      setColorScheme.mockRestore();
+    });
   });
 
   describe('Token Refresh Scenario', () => {
@@ -179,7 +318,7 @@ describe('RootLayout', () => {
       const mockSetAuthTokens = jest.fn();
       const mockClearAuth = jest.fn();
       
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: 'expired-access-token',
         refreshToken: 'valid-refresh-token',
         userEmail: 'test@example.com',
@@ -216,9 +355,10 @@ describe('RootLayout', () => {
 
       const mockClearAuth = jest.fn();
       
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: 'expired-access-token',
         refreshToken: 'invalid-refresh-token',
+        userEmail: 'test@example.com',
         clearAuth: mockClearAuth,
         setAuthTokens: jest.fn(),
       });
@@ -248,7 +388,7 @@ describe('RootLayout', () => {
       mockPersist.hasHydrated.mockReturnValue(true);
       (useSegments as jest.Mock).mockReturnValue([]);
 
-      (useAuthStore as unknown as jest.Mock).mockImplementation((selector) => {
+      mockedAuthStore.mockImplementation((selector) => {
         const state = {
           isAuthenticated: true,
           accessToken: 'valid-token',
@@ -257,7 +397,7 @@ describe('RootLayout', () => {
         return selector ? selector(state) : state;
       });
 
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: '',
         refreshToken: '',
         clearAuth: jest.fn(),
@@ -275,7 +415,7 @@ describe('RootLayout', () => {
       mockPersist.hasHydrated.mockReturnValue(true);
       (useSegments as jest.Mock).mockReturnValue(['(user)', 'home']);
 
-      (useAuthStore as unknown as jest.Mock).mockImplementation((selector) => {
+      mockedAuthStore.mockImplementation((selector) => {
         const state = {
           isAuthenticated: false,
           accessToken: '',
@@ -284,7 +424,7 @@ describe('RootLayout', () => {
         return selector ? selector(state) : state;
       });
 
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: '',
         refreshToken: '',
         clearAuth: jest.fn(),
@@ -305,9 +445,10 @@ describe('RootLayout', () => {
 
       const mockClearAuth = jest.fn();
       
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: 'some-token',
         refreshToken: 'some-refresh',
+        userEmail: 'test@example.com',
         clearAuth: mockClearAuth,
         setAuthTokens: jest.fn(),
       });
@@ -334,9 +475,10 @@ describe('RootLayout', () => {
 
       const mockClearAuth = jest.fn();
       
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: 'expired-token',
         refreshToken: 'valid-refresh',
+        userEmail: 'test@example.com',
         clearAuth: mockClearAuth,
         setAuthTokens: jest.fn(),
       });
@@ -365,12 +507,12 @@ describe('RootLayout', () => {
     it('should ONLY render the public index screen when unauthenticated', async () => {
       mockPersist.hasHydrated.mockReturnValue(true);
       
-      (useAuthStore as unknown as jest.Mock).mockImplementation((selector) => {
+      mockedAuthStore.mockImplementation((selector) => {
         const state = { isAuthenticated: false };
         return selector ? selector(state) : state;
       });
 
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: '',
         refreshToken: '',
         clearAuth: jest.fn(),
@@ -390,12 +532,12 @@ describe('RootLayout', () => {
     it('should render the protected (user) group when authenticated', async () => {
       mockPersist.hasHydrated.mockReturnValue(true);
       
-      (useAuthStore as unknown as jest.Mock).mockImplementation((selector) => {
+      mockedAuthStore.mockImplementation((selector) => {
         const state = { isAuthenticated: true };
         return selector ? selector(state) : state;
       });
 
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: '',
         refreshToken: '',
         clearAuth: jest.fn(),

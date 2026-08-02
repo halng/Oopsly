@@ -16,6 +16,7 @@
 
 package com.app.oopsly.api.service.impl;
 
+import com.app.oopsly.api.entity.CardEntity;
 import com.app.oopsly.api.entity.ShelfEntity;
 import com.app.oopsly.api.entity.SubjectEntity;
 import com.app.oopsly.api.entity.User;
@@ -23,6 +24,7 @@ import com.app.oopsly.api.exception.NotFoundException;
 import com.app.oopsly.api.exception.RetryLaterException;
 import com.app.oopsly.api.exception.UnauthenticatedException;
 import com.app.oopsly.api.exception.ValidationException;
+import com.app.oopsly.api.repository.CardRepository;
 import com.app.oopsly.api.repository.ShelfRepository;
 import com.app.oopsly.api.repository.SubjectRepository;
 import com.app.oopsly.api.service.CardService;
@@ -32,6 +34,7 @@ import com.app.oopsly.api.util.StringUtils;
 import com.app.oopsly.api.viewmodel.*;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -51,6 +54,7 @@ public class SubjectServiceImpl implements SubjectService {
     private final ShelfRepository shelfRepository;
     private final UserService userService;
     private final CardService cardService;
+    private final CardRepository cardRepository;
 
     @Override
     @CircuitBreaker(name = "subjectServiceCircuitBreaker", fallbackMethod = "createFallback")
@@ -210,6 +214,87 @@ public class SubjectServiceImpl implements SubjectService {
                 entity.getDailyLimit(),
                 entity.getNewCardsPerDay(),
                 entity.getInterval());
+    }
+
+    @Override
+    public ApiRes discoverPublicDecks(String query, int page, int size) {
+        log.info(
+                "Discovering public decks with query: '{}', page: {}, size: {}", query, page, size);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<SubjectEntity> pageData =
+                (query == null || query.isBlank())
+                        ? subjectRepository.findAllPublic(pageable)
+                        : subjectRepository.findPublicByQuery(query, pageable);
+
+        List<SubjectRes> subjects =
+                pageData.getContent().stream().map(this::toSubjectRes).collect(Collectors.toList());
+        PagingRes<SubjectRes> pagingRes =
+                new PagingRes<>(
+                        subjects,
+                        pageable.getPageNumber(),
+                        pageData.getTotalElements(),
+                        pageData.getTotalPages(),
+                        pageData.hasNext());
+        return ApiRes.success("Public decks fetched successfully", pagingRes);
+    }
+
+    @Override
+    @Transactional
+    public ApiRes cloneDeck(UUID subjectId) {
+        User currentUser = userService.getCurrentUser();
+        log.info("Cloning public deck: {} for user: {}", subjectId, currentUser.getId());
+
+        SubjectEntity source =
+                subjectRepository
+                        .findById(subjectId)
+                        .filter(
+                                s ->
+                                        Boolean.TRUE.equals(s.getIsPublic())
+                                                && !Boolean.TRUE.equals(s.getDeleted()))
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                "Public subject not found with id: " + subjectId));
+
+        List<ShelfEntity> shelves =
+                shelfRepository.findAllByUser(currentUser, PageRequest.of(0, 1)).getContent();
+        if (shelves.isEmpty()) {
+            return ApiRes.badRequest("No shelves found. Create a shelf first.");
+        }
+        ShelfEntity targetShelf = shelves.get(0);
+
+        SubjectEntity cloned =
+                SubjectEntity.builder()
+                        .name(source.getName())
+                        .description(source.getDescription())
+                        .dailyLimit(source.getDailyLimit())
+                        .newCardsPerDay(source.getNewCardsPerDay())
+                        .interval(source.getInterval())
+                        .isPublic(false)
+                        .shelf(targetShelf)
+                        .parentSubject(source)
+                        .build();
+        SubjectEntity savedClone = subjectRepository.save(cloned);
+
+        if (source.getCards() != null) {
+            List<CardEntity> clonedCards =
+                    source.getCards().stream()
+                            .filter(c -> !Boolean.TRUE.equals(c.getDeleted()))
+                            .map(
+                                    c ->
+                                            CardEntity.builder()
+                                                    .front(c.getFront())
+                                                    .back(c.getBack())
+                                                    .difficultyLevel(c.getDifficultyLevel())
+                                                    .nextPracticeTime(Instant.now())
+                                                    .subject(savedClone)
+                                                    .build())
+                            .collect(Collectors.toList());
+            cardRepository.saveAll(clonedCards);
+        }
+
+        log.info("Successfully cloned deck: {} as: {}", subjectId, savedClone.getId());
+        return ApiRes.created("Deck cloned successfully", toSubjectRes(savedClone));
     }
 
     private ShelfEntity getShelfForCurrentUser(UUID shelfId) {

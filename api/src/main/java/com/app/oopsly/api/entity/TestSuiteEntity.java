@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
@@ -35,6 +37,9 @@ public class TestSuiteEntity extends Audit {
     private Boolean isActive;
 
     private Integer highestScore;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    private TestSuiteSelectionPayload selection;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)

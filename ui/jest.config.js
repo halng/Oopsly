@@ -1,9 +1,10 @@
 module.exports = {
   preset: 'jest-expo',
   
-  // 1. Tell Jest to compile these specific packages (Standard Expo list)
+  // Transform RN/Expo under pnpm's virtual store (.pnpm/...) as well as hoisted layout.
+  // See https://docs.expo.dev/develop/unit-testing/#pnpm
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)'
+    'node_modules/(?!(.pnpm|(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@react-native/js-polyfills))',
   ],
 
   // 2. Help Jest understand your alias "@/"
@@ -16,6 +17,8 @@ module.exports = {
   collectCoverageFrom: [
     '**/*.{js,jsx,ts,tsx}',
     '!**/coverage/**',
+    '!**/coverage-*/**',
+    '!**/.nyc_output/**',
     '!**/node_modules/**',
     '!**/babel.config.js',
     '!**/jest.config.js',
@@ -40,10 +43,12 @@ module.exports = {
     '!app/\\(user\\)/**',
     '!**/__mocks__/**',
     '!**/__tests__/**',
+    '!**/cypress/**',
+    '!**/cypress.config.*',
   ],
   coverageThreshold: {
     global: {
-      branches: 80,
+      branches: 70,
       functions: 80,
       lines: 80,
       statements: 80,

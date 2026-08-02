@@ -62,7 +62,7 @@ public class QuestionController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PostMapping("")
-    ApiRes create(
+    public ApiRes create(
             @Parameter(
                             description = "Test Suite ID",
                             required = true,
@@ -93,7 +93,7 @@ public class QuestionController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @PutMapping("/{id}")
-    ApiRes update(
+    public ApiRes update(
             @Parameter(
                             description = "Test Suite ID",
                             required = true,
@@ -126,7 +126,7 @@ public class QuestionController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/{id}")
-    ApiRes getById(
+    public ApiRes getById(
             @Parameter(
                             description = "Test Suite ID",
                             required = true,
@@ -149,15 +149,15 @@ public class QuestionController {
             value = {
                 @ApiResponse(
                         responseCode = "200",
-                        description = "Question deleted successfully",
+                        description = "Question soft-deleted successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
                 @ApiResponse(
                         responseCode = "404",
                         description = "Question or test suite not found"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
-    @DeleteMapping("/{id}")
-    ApiRes deleteById(
+    @PatchMapping("/{id}")
+    public ApiRes deleteById(
             @Parameter(
                             description = "Test Suite ID",
                             required = true,
@@ -186,7 +186,7 @@ public class QuestionController {
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("")
-    ApiRes getAllByTestSuite(
+    public ApiRes getAllByTestSuite(
             @Parameter(
                             description = "Test Suite ID",
                             required = true,

@@ -1,5 +1,5 @@
 /*
- *    Copyright 2025 Hao Nguyen Tan
+ *    Copyright 2026 Hao Nguyen Tan
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -41,20 +41,26 @@ describe("TakeTestScreen", () => {
     jest.clearAllMocks();
   });
 
-  it("renders flashcard review screen when testSuiteId is provided", () => {
-    (useLocalSearchParams as jest.Mock).mockReturnValue({ testSuiteId: "suite-123" });
+  it("renders flashcard review when testSuiteId and shelfId are provided", () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({
+      testSuiteId: "suite-123",
+      shelfId: "shelf-456",
+    });
 
     render(<TakeTestScreen />);
 
-    expect(mockFlashcard).toHaveBeenCalledWith({ _testSuiteId: "suite-123" });
+    expect(mockFlashcard).toHaveBeenCalledWith({
+      _shelfId: "shelf-456",
+      _testSuiteId: "suite-123",
+    });
   });
 
-  it("returns null when testSuiteId is missing", () => {
+  it("renders error UI when ids are missing", () => {
     (useLocalSearchParams as jest.Mock).mockReturnValue({});
 
-    const { toJSON } = render(<TakeTestScreen />);
+    const { getByTestId } = render(<TakeTestScreen />);
 
-    expect(toJSON()).toBeNull();
+    expect(getByTestId("take-test-missing-params")).toBeTruthy();
     expect(mockFlashcard).not.toHaveBeenCalled();
   });
 });

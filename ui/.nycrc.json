@@ -1,0 +1,32 @@
+{
+  "all": false,
+  "report-dir": "coverage-cypress",
+  "temp-dir": ".nyc_output",
+  "reporter": ["text", "text-summary", "lcov", "json"],
+  "include": [
+    "app/**/*.{js,jsx,ts,tsx}",
+    "screen/**/*.{js,jsx,ts,tsx}",
+    "components/**/*.{js,jsx,ts,tsx}",
+    "services/**/*.{js,jsx,ts,tsx}",
+    "store/**/*.{js,jsx,ts,tsx}",
+    "utils/**/*.{js,jsx,ts,tsx}",
+    "hooks/**/*.{js,jsx,ts,tsx}"
+  ],
+  "exclude": [
+    "**/cypress/**",
+    "**/__tests__/**",
+    "**/__mocks__/**",
+    "**/node_modules/**",
+    "**/coverage/**",
+    "**/coverage-*/**",
+    "**/*.d.ts",
+    "**/temp/**"
+  ],
+  "extension": [".js", ".jsx", ".ts", ".tsx"],
+  "watermarks": {
+    "statements": [50, 80],
+    "functions": [50, 80],
+    "branches": [40, 70],
+    "lines": [50, 80]
+  }
+}

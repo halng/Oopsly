@@ -11,6 +11,12 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   },
 }));
 
+jest.mock('@/utils/secureTokens', () => ({
+  saveRefreshTokenSecure: jest.fn(() => Promise.resolve()),
+  deleteRefreshTokenSecure: jest.fn(() => Promise.resolve()),
+  getRefreshTokenSecure: jest.fn(() => Promise.resolve(null)),
+}));
+
 describe('useAuthStore', () => {
   const initialState = useAuthStore.getState();
 

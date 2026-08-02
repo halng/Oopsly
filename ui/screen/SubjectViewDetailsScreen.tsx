@@ -7,7 +7,9 @@ import {
   TextInput,
   Modal,
   Pressable,
+  ActivityIndicator,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   ChevronLeft,
@@ -26,6 +28,8 @@ import {
   deleteCard,
 } from "@/services/CardService";
 import { Logger } from "@/utils";
+import { uiTokens } from "@/constants/uiTokens";
+import { useResponsiveLayout } from "@/utils/responsiveLayout";
 import { SubjectStats } from "@/types/Subject";
 import { CardCreateRequest, CardRes } from "@/types/Card";
 import {
@@ -34,6 +38,7 @@ import {
   updateSubjectSetting,
   deleteSubject as deleteSubjectApi,
 } from "@/services/SubjectService";
+import FeedbackMessage from "@/components/common/FeedbackMessage";
 
 
 const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjectId: string }) => {
@@ -41,6 +46,12 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
 
   const router = useRouter();
   const params = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
+  const { contentMaxWidth, sheetMaxWidth } = useResponsiveLayout();
+  const contentFrameStyle = { width: "100%" as const, maxWidth: contentMaxWidth, alignSelf: "center" as const };
+  const sheetFrameStyle = sheetMaxWidth
+    ? { width: "100%" as const, maxWidth: sheetMaxWidth, alignSelf: "center" as const }
+    : undefined;
 
   const [isEditing, setIsEditing] = useState(false);
   const [subjectName, setSubjectName] = useState("");
@@ -48,6 +59,11 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
   const [editingCardId, setEditingCardId] = useState('');
   const [showAddCardModal, setShowAddCardModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [cardBusy, setCardBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [cardToDelete, setCardToDelete] = useState<string | null>(null);
 
   const [subjectStatsData, setSubjectStatsData] = useState<SubjectStats>();
   const [cardsData, setCardsData] = useState<CardRes[]>([]);
@@ -99,13 +115,17 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
 
   useEffect(() => {
     logger.debug("useEffect triggered for fetching data with subject ID:", _subjectId);
+    setLoading(true);
+    setLoadError(null);
     Promise.all([fetchSubjectStatsData(), fetchCardsData()])
       .then(() => {
         logger.debug("Fetched subject stats and cards data");
       })
       .catch((error) => {
         logger.error("Error fetching subject stats or cards data:", error);
-      });
+        setLoadError("Could not load this subject. Please try again.");
+      })
+      .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_subjectId]);
   // Toggle edit mode
@@ -129,86 +149,81 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
 
   // Add a new card
   const addNewCard = () => {
-    if (editCard.front.trim() && editCard.back.trim()) {
-      const _shelfId = params.shelfId as string;
-      const _subjectId = params.id as string;
-      createNewCard(_shelfId, _subjectId, [editCard])
-        .then((res) => {
-          if (res.isSuccess) {
-            logger.debug("Created new card successfully:", res.data);
-            fetchCardsData();
-          } else {
-            logger.error("Failed to create new card");
-          }
-          setShowAddCardModal(false);
-          setEditCard({ front: "", back: ""});
-        })
-        .catch((error) => {
-          logger.error("Error creating new card:", error);
-        });
+    if (!editCard.front.trim() || !editCard.back.trim()) {
+      setActionError("Front and back are required.");
+      return;
     }
+    setCardBusy(true);
+    setActionError(null);
+    createNewCard(_shelfId, _subjectId, [editCard])
+      .then((res) => {
+        if (res.isSuccess) {
+          logger.debug("Created new card successfully:", res.data);
+          fetchCardsData();
+          setShowAddCardModal(false);
+          setEditCard({ front: "", back: "" });
+        } else {
+          setActionError(res.message ?? "Failed to create card");
+        }
+      })
+      .catch((error) => {
+        logger.error("Error creating new card:", error);
+        setActionError(error?.message ?? "Failed to create card");
+      })
+      .finally(() => setCardBusy(false));
   };
 
   // Update an existing card
   const updateExitCard = () => {
-    if (editCard.front.trim() && editCard.back.trim() && editingCardId) {
-      updateCard(
-        _shelfId,
-        _subjectId,
-        editingCardId,
-        editCard
-      )
-        .then((res) => {
-          if (res.isSuccess) {
-            logger.debug("Updated card successfully:", res.data);
-            fetchCardsData();
-          } else {
-            logger.error("Failed to update card");
-          }
-        })
-        .catch((error) => {
-          logger.error("Error updating card:", error);
-        })
-        .finally(() => {
-          setShowAddCardModal(false);
-          setEditCard({ front: "", back: ""});
-          setEditingCardId('');
-        });
+    if (!editCard.front.trim() || !editCard.back.trim() || !editingCardId) {
+      setActionError("Front and back are required.");
+      return;
     }
+    setCardBusy(true);
+    setActionError(null);
+    updateCard(_shelfId, _subjectId, editingCardId, editCard)
+      .then((res) => {
+        if (res.isSuccess) {
+          logger.debug("Updated card successfully:", res.data);
+          fetchCardsData();
+          setShowAddCardModal(false);
+          setEditCard({ front: "", back: "" });
+          setEditingCardId("");
+        } else {
+          setActionError(res.message ?? "Failed to update card");
+        }
+      })
+      .catch((error) => {
+        logger.error("Error updating card:", error);
+        setActionError(error?.message ?? "Failed to update card");
+      })
+      .finally(() => setCardBusy(false));
   };
 
-  // Delete a card
-  const deleteExistCard = (cardId: string) => {
-     deleteCard(_shelfId, _subjectId, cardId)
-              .then((res) => {
-                if (res.isSuccess) {
-                  logger.debug("Deleted card successfully:", res.data);
-                  fetchCardsData();
-                } else {
-                  logger.error("Failed to delete card");
-                }
-              })
-              .catch((error) => {
-                logger.error("Error deleting card:", error);
-              });
-    // Alert.alert(
-    //   "Delete Card",
-    //   "Are you sure you want to delete this card? This action cannot be undone.",
-    //   [
-    //     { text: "Cancel", style: "cancel" },
-    //     {
-    //       text: "Delete",
-    //       style: "destructive",
-    //       onPress: () => {
-           
-    //       },
-    //     },
-    //   ],
-    // );
+  const confirmDeleteCard = () => {
+    if (!cardToDelete) return;
+    setCardBusy(true);
+    setActionError(null);
+    deleteCard(_shelfId, _subjectId, cardToDelete)
+      .then((res) => {
+        if (res.isSuccess) {
+          logger.debug("Deleted card successfully:", res.data);
+          fetchCardsData();
+          setCardToDelete(null);
+        } else {
+          setActionError(res.message ?? "Failed to delete card");
+        }
+      })
+      .catch((error) => {
+        logger.error("Error deleting card:", error);
+        setActionError(error?.message ?? "Failed to delete card");
+      })
+      .finally(() => setCardBusy(false));
   };
 
   // Open modal to edit card
   const openEditCardModal = (card: { id: string; front: string; back: string }) => {
+    setActionError(null);
     setEditCard({ front: card.front, back: card.back });
     setEditingCardId(card.id);
     setShowAddCardModal(true);
@@ -216,16 +231,19 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
 
   // Open modal to add new card
   const openAddCardModal = () => {
+    setActionError(null);
+    setEditingCardId("");
+    setEditCard({ front: "", back: "" });
     setShowAddCardModal(true);
   };
 
   // Save settings
   const saveSettings = () => {
-    // setSubject({ ...subject, settings });
     if (params.shelfId && params.id && subjectStatsData) {
-      const _shelfId = params.shelfId as string;
-      const _id = params.id as string;
-      updateSubjectSetting(_shelfId, _id, {
+      const shelfId = params.shelfId as string;
+      const id = params.id as string;
+      setActionError(null);
+      updateSubjectSetting(shelfId, id, {
         dailyLimit: subjectStatsData.dailyLimit,
         newCardsPerDay: subjectStatsData.newCardsPerDay,
         interval: subjectStatsData.interval,
@@ -233,14 +251,15 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
         .then((res) => {
           if (res.isSuccess) {
             logger.debug("Updated subject settings successfully");
+            setShowSettingsModal(false);
+            fetchSubjectStatsData();
           } else {
-            logger.error("Failed to update subject settings");
+            setActionError(res.message ?? "Failed to update settings");
           }
-          setShowSettingsModal(false);
-          fetchSubjectStatsData();
         })
         .catch((error) => {
           logger.error("Error updating subject settings:", error);
+          setActionError(error?.message ?? "Failed to update settings");
         });
     }
   };
@@ -268,7 +287,12 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
   return (
     <View className="flex-1 bg-gray-50" testID="subject-detail-screen">
       {/* Header */}
-      <View className="bg-white pt-12 pb-4 px-4 shadow-sm" testID="header-container">
+      <View
+        className="bg-white pb-4 px-4 shadow-sm items-center"
+        style={{ paddingTop: Math.max(insets.top, 12) }}
+        testID="header-container"
+      >
+        <View className="w-full" style={contentFrameStyle}>
         <View className="flex-row items-center justify-between" testID="header-top-row">
           <View className="flex-row items-center" testID="header-left">
             <TouchableOpacity
@@ -276,7 +300,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
               onPress={() => router.back()}
               testID="back-button"
             >
-              <ChevronLeft size={24} color="#4B5563" />
+              <ChevronLeft size={24} color={uiTokens.text.secondary} />
             </TouchableOpacity>
 
             {isEditing ? (
@@ -297,9 +321,9 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
 
           <TouchableOpacity className="p-2" onPress={toggleEditMode} testID="edit-toggle-button">
             {isEditing ? (
-              <Save size={20} color="#4F46E5" />
+              <Save size={20} color={uiTokens.accent.default} />
             ) : (
-              <Edit3 size={20} color="#4B5563" />
+              <Edit3 size={20} color={uiTokens.text.secondary} />
             )}
           </TouchableOpacity>
         </View>
@@ -309,42 +333,75 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
           <View className="flex-row justify-between mb-1" testID="progress-header">
             <Text className="text-gray-600 font-medium" testID="progress-label">Progress</Text>
             <Text className="text-gray-600 font-medium" testID="progress-percentage">
-              {subjectStatsData?.completedPercent}%
+              {subjectStatsData?.completedPercent ?? 0}%
             </Text>
           </View>
           <View className="bg-gray-200 rounded-full h-3" testID="progress-bar-background">
             <View
               className="bg-indigo-500 h-3 rounded-full"
-              style={{ width: `${subjectStatsData?.completedPercent}%` }}
+              style={{ width: `${subjectStatsData?.completedPercent ?? 0}%` }}
               testID="progress-bar-fill"
             />
           </View>
         </View>
+        </View>
       </View>
+
+      {loading && (
+        <View className="items-center py-8" testID="subject-loading-state">
+          <ActivityIndicator size="large" color={uiTokens.accent.default} />
+        </View>
+      )}
+
+      {loadError && (
+        <View className="px-4 mt-4" style={contentFrameStyle}>
+          <FeedbackMessage message={loadError} tone="error" testID="subject-load-error" />
+        </View>
+      )}
+
+      {actionError && !showAddCardModal && !showSettingsModal && (
+        <View className="px-4 mt-4" style={contentFrameStyle}>
+          <FeedbackMessage message={actionError} tone="error" testID="subject-action-error" />
+        </View>
+      )}
 
       {/* Main Actions */}
       
-      <View className="px-4 mt-6" testID="main-actions-container">
-        {!isEditing && 
-        <TouchableOpacity
-          className="bg-indigo-600 rounded-xl py-5 mb-4 items-center shadow-sm"
-          onPress={() => router.push(`/${_shelfId}/review/${_subjectId}`)}
-          testID="review-due-cards-button"
-        >
-          <Text className="text-white text-lg font-bold" testID="review-due-cards-title">Review Due Cards</Text>
-          <Text className="text-indigo-200 mt-1" testID="review-due-cards-count">
-            {subjectStatsData?.overdue} cards ready for review
-          </Text>
-        </TouchableOpacity>}
-
-        {/* TODO: will be enable with subscription user or phase 2 */}
-        {/* <TouchableOpacity 
-          className="bg-white rounded-xl py-5 items-center border border-gray-200 mb-4"
-          onPress={() => {}}
-        >
-          <Text className="text-gray-800 text-lg font-bold">Take AI Quiz</Text>
-          <Text className="text-gray-500 mt-1">Generate personalized quiz</Text>
-        </TouchableOpacity> */}
+      <View
+        className="px-4 mt-6"
+        style={contentFrameStyle}
+        testID="main-actions-container"
+      >
+        {!isEditing && cardsData.length > 0 && (
+          <>
+            <TouchableOpacity
+              className="bg-indigo-600 rounded-xl py-5 mb-3 items-center shadow-sm"
+              onPress={() => router.push(`/${_shelfId}/review/${_subjectId}`)}
+              testID="review-due-cards-button"
+            >
+              <Text className="text-white text-lg font-bold" testID="review-due-cards-title">Review Due Cards</Text>
+              <Text className="text-indigo-200 mt-1" testID="review-due-cards-count">
+                {subjectStatsData?.overdue ?? 0} cards ready for review
+              </Text>
+            </TouchableOpacity>
+            <View className="flex-row gap-3 mb-4" testID="study-modes-row">
+              <TouchableOpacity
+                className="flex-1 bg-white rounded-xl py-4 items-center border border-gray-200"
+                onPress={() => router.push(`/${_shelfId}/learn/${_subjectId}`)}
+                testID="learn-mode-button"
+              >
+                <Text className="text-gray-800 font-bold" testID="learn-mode-button-text">Learn</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-1 bg-white rounded-xl py-4 items-center border border-gray-200"
+                onPress={() => router.push(`/${_shelfId}/match/${_subjectId}`)}
+                testID="match-mode-button"
+              >
+                <Text className="text-gray-800 font-bold" testID="match-mode-button-text">Match</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
         <View className="flex-col gap-3 mt-2" testID="action-buttons-container">
           <View className="flex-row gap-3" testID="add-settings-row">
@@ -353,16 +410,19 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
               onPress={openAddCardModal}
               testID="add-card-button"
             >
-              <Plus size={20} color="#4B5563" />
+              <Plus size={20} color={uiTokens.text.secondary} />
               <Text className="text-gray-800 font-bold ml-2" testID="add-card-button-text">{cardsData.length === 0 ? "Add Your First Card" : "Add Card"}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               className="flex-1 bg-white rounded-xl py-4 items-center border border-gray-200 flex-row justify-center"
-              onPress={() => setShowSettingsModal(true)}
+              onPress={() => {
+                setActionError(null);
+                setShowSettingsModal(true);
+              }}
               testID="settings-button"
             >
-              <Settings size={20} color="#4B5563" />
+              <Settings size={20} color={uiTokens.text.secondary} />
               <Text className="text-gray-800 font-bold ml-2" testID="settings-button-text">Settings</Text>
             </TouchableOpacity>
           </View>
@@ -372,7 +432,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
               onPress={openDeleteSubjectModal}
               testID="delete-subject-button"
             >
-              <Trash2 size={20} color="#EF4444" />
+              <Trash2 size={20} color={uiTokens.state.error.solid} />
               <Text className="text-red-600 font-bold ml-2" testID="delete-subject-button-text">
                 Delete Subject
               </Text>
@@ -382,7 +442,11 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
       </View>
 
       {/* Card List */}
-      <View className="mt-6 px-4 flex-1" testID="card-list-container">
+      <View
+        className="mt-6 px-4 flex-1"
+        style={contentFrameStyle}
+        testID="card-list-container"
+      >
         <View className="flex-row justify-between items-center mb-3" testID="card-list-header">
           <Text className="text-gray-700 font-bold" testID="card-list-title">Cards in this subject</Text>
           <Text className="text-gray-500 text-sm" testID="card-list-count">
@@ -390,14 +454,21 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
           </Text>
         </View>
 
-        {cardsData.length === 0 ? (
+        {!loading && cardsData.length === 0 ? (
           <View className="flex-1 items-center justify-center py-12" testID="empty-cards-container">
-            <BookOpen size={48} color="#9CA3AF" />
+            <BookOpen size={48} color={uiTokens.text.muted} />
             <Text className="text-gray-500 mt-4 text-center" testID="empty-cards-text">
               No cards in this subject yet
             </Text>
+            <TouchableOpacity
+              className="mt-4 bg-indigo-600 rounded-xl px-5 py-3"
+              onPress={openAddCardModal}
+              testID="empty-add-card-cta"
+            >
+              <Text className="text-white font-bold">Add your first card</Text>
+            </TouchableOpacity>
           </View>
-        ) : (
+        ) : !loading ? (
           <FlatList
             data={cardsData}
             keyExtractor={(item) => item.id}
@@ -421,14 +492,14 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
                           onPress={() => openEditCardModal(item)}
                           testID={`edit-card-button-${item.id}`}
                         >
-                          <Edit3 size={18} color="#4B5563" />
+                          <Edit3 size={18} color={uiTokens.text.secondary} />
                         </TouchableOpacity>
                         <TouchableOpacity
                           className="p-2"
-                          onPress={() => deleteExistCard(item.id)}
+                          onPress={() => setCardToDelete(item.id)}
                           testID={`delete-card-button-${item.id}`}
                         >
-                          <Trash2 size={18} color="#EF4444" />
+                          <Trash2 size={18} color={uiTokens.state.error.solid} />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -438,7 +509,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
                         onPress={openAddCardModal}
                         testID="add-another-card-button"
                       >
-                        <Plus size={16} color="#4F46E5" />
+                        <Plus size={16} color={uiTokens.accent.default} />
                         <Text className="text-indigo-600 font-medium ml-1" testID="add-another-card-text">
                           Add Another Card
                         </Text>
@@ -458,7 +529,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
               </View>
             )}
           />
-        )}
+        ) : null}
       </View>
 
       {/* Add/Edit Card Modal */}
@@ -466,23 +537,42 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
         visible={showAddCardModal}
         transparent={true}
         animationType="slide"
+        presentationStyle="overFullScreen"
         onRequestClose={() => setShowAddCardModal(false)}
         testID="add-edit-card-modal"
       >
-        <View className="flex-1 bg-black/50 justify-end" testID="modal-backdrop">
-          <View className="bg-white rounded-t-2xl p-6" testID="modal-content">
+        <Pressable
+          className="flex-1 bg-black/50 justify-end"
+          onPress={() => setShowAddCardModal(false)}
+          testID="modal-backdrop"
+        >
+          <Pressable
+            className="mt-auto bg-white rounded-t-2xl p-6 pb-8"
+            style={sheetFrameStyle}
+            onPress={(e) => e.stopPropagation()}
+            testID="modal-content"
+          >
             <View className="flex-row justify-between items-center mb-4" testID="modal-header">
               <Text className="text-xl font-bold text-gray-800" testID="modal-title">
                 {editingCardId ? "Edit Card" : "Add New Card"}
               </Text>
               <TouchableOpacity
                 className="p-2"
-                onPress={() => setShowAddCardModal(false)}
+                onPress={() => {
+                  setShowAddCardModal(false);
+                  setActionError(null);
+                }}
                 testID="modal-close-button"
               >
-                <X size={24} color="#9CA3AF" />
+                <X size={24} color={uiTokens.text.muted} />
               </TouchableOpacity>
             </View>
+
+            {actionError && (
+              <View className="mb-3">
+                <FeedbackMessage message={actionError} tone="error" testID="card-modal-error" />
+              </View>
+            )}
 
             <View className="mb-4" testID="front-input-container">
               <Text className="text-gray-700 font-medium mb-2" testID="front-label">Front</Text>
@@ -526,23 +616,80 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
             <TouchableOpacity
               className={`rounded-xl py-4 items-center ${
                  editCard.front.trim() &&
-                editCard.back.trim()
+                editCard.back.trim() &&
+                !cardBusy
                   ? "bg-indigo-600"
                   : "bg-gray-300"
               }`}
               disabled={
                 !editCard.front.trim() ||
-                !editCard.back.trim()
+                !editCard.back.trim() ||
+                cardBusy
               }
               onPress={editingCardId !== '' ? updateExitCard : addNewCard}
               testID="submit-card-button"
             >
-              <Text className="text-white font-bold" testID="submit-card-button-text">
-                {editingCardId ? "Update Card" : "Add Card"}
-              </Text>
+              {cardBusy ? (
+                <ActivityIndicator color="#FFFFFF" testID="submit-card-spinner" />
+              ) : (
+                <Text className="text-white font-bold" testID="submit-card-button-text">
+                  {editingCardId ? "Update Card" : "Add Card"}
+                </Text>
+              )}
             </TouchableOpacity>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Delete Card Confirmation Modal */}
+      <Modal
+        visible={cardToDelete !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCardToDelete(null)}
+        testID="delete-card-modal"
+      >
+        <Pressable
+          className="flex-1 bg-black/50 justify-center items-center px-6"
+          onPress={() => setCardToDelete(null)}
+        >
+          <Pressable
+            className="bg-white rounded-2xl w-full max-w-md p-6"
+            onPress={(e) => e.stopPropagation()}
+            testID="delete-card-modal-content"
+          >
+            <Text className="text-xl font-bold text-gray-800 mb-2">Delete card?</Text>
+            <Text className="text-gray-600 mb-4">
+              This soft-deletes the card. You can cancel if this was a mistake.
+            </Text>
+            {actionError && (
+              <View className="mb-3">
+                <FeedbackMessage message={actionError} tone="error" testID="delete-card-error" />
+              </View>
+            )}
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                className="flex-1 bg-gray-200 rounded-xl py-3 items-center"
+                onPress={() => setCardToDelete(null)}
+                testID="delete-card-cancel"
+              >
+                <Text className="text-gray-700 font-bold">Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-1 bg-red-500 rounded-xl py-3 items-center"
+                onPress={confirmDeleteCard}
+                disabled={cardBusy}
+                testID="delete-card-confirm"
+              >
+                {cardBusy ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text className="text-white font-bold">Delete</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* Settings Modal */}
@@ -550,11 +697,21 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
         visible={showSettingsModal}
         transparent={true}
         animationType="slide"
+        presentationStyle="overFullScreen"
         onRequestClose={() => setShowSettingsModal(false)}
         testID="settings-modal"
       >
-        <View className="flex-1 bg-black/50 justify-end" testID="settings-modal-backdrop">
-          <View className="bg-white rounded-t-2xl p-6" testID="settings-modal-content">
+        <Pressable
+          className="flex-1 bg-black/50 justify-end"
+          onPress={() => setShowSettingsModal(false)}
+          testID="settings-modal-backdrop"
+        >
+          <Pressable
+            className="mt-auto bg-white rounded-t-2xl p-6 pb-8"
+            style={sheetFrameStyle}
+            onPress={(e) => e.stopPropagation()}
+            testID="settings-modal-content"
+          >
             <View className="flex-row justify-between items-center mb-4" testID="settings-modal-header">
               <Text className="text-xl font-bold text-gray-800" testID="settings-modal-title">
                 Study Settings
@@ -564,7 +721,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
                 onPress={() => setShowSettingsModal(false)}
                 testID="settings-modal-close-button"
               >
-                <X size={24} color="#9CA3AF" />
+                <X size={24} color={uiTokens.text.muted} />
               </TouchableOpacity>
             </View>
 
@@ -644,8 +801,8 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
             >
               <Text className="text-white font-bold" testID="save-settings-button-text">Save Settings</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* Delete Subject Confirmation Modal */}
@@ -674,7 +831,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
                 }}
                 className="p-1"
               >
-                <X size={24} color="#6B7280" />
+                <X size={24} color={uiTokens.text.muted} />
               </TouchableOpacity>
             </View>
             <View className="px-6 py-4">
@@ -690,7 +847,7 @@ const SubjectDetailScreen = ({_shelfId, _subjectId}: { _shelfId: string, _subjec
               <TextInput
                 className="bg-gray-50 rounded-xl p-4 text-gray-800 border border-gray-200 mt-2 mb-4"
                 placeholder="Type confirm to acknowledge"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={uiTokens.text.muted}
                 value={deleteSubjectConfirmText}
                 onChangeText={setDeleteSubjectConfirmText}
               />

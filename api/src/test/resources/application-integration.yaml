@@ -1,0 +1,84 @@
+app:
+  allowed-origins: http://localhost:8081
+  jwt:
+    secret: 057ba03d6c44104863dc7361fe4578965d1887360f90a0895882e58a6248fc86
+    expiration-in-ms: 3600000
+    refresh-expiration-in-ms: 86400000
+  google:
+    client-id: integration-test-client
+  features:
+    authWithGoogle: false
+    authWithJwt: true
+  test-emails:
+    - integration@oopsly.com
+    - integration2@oopsly.com
+    - user1@oopsly.com
+    - user2@oopsly.com
+
+server:
+  port: 0
+  active:
+    version: v1
+  servlet:
+    context-path: /api/${server.active.version}/oopsly
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  cache:
+    type: none
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+  datasource:
+    url: jdbc:h2:mem:oopsly_integration;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;NON_KEYWORDS=INTERVAL,VALUE,YEAR,MONTH,DAY
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        globally_quoted_identifiers: true
+  data:
+    redis:
+      host: 127.0.0.1
+      port: ${EMBEDDED_REDIS_PORT:6379}
+  mail:
+    host: localhost
+    port: 25
+    username: unused
+    password: unused
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: false
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 100
+        failureRateThreshold: 100
+        waitDurationInOpenState: 1s
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        ignore-exceptions:
+          - org.springframework.web.client.HttpClientErrorException
+          - com.app.oopsly.api.exception.NotFoundException
+          - com.app.oopsly.api.exception.UnauthenticatedException
+          - com.app.oopsly.api.exception.ValidationException
+          - com.app.oopsly.api.exception.RetryLaterException
+          - java.lang.IllegalArgumentException
+
+management:
+  health:
+    mail:
+      enabled: false
+    redis:
+      enabled: false
+
+logging:
+  level:
+    root: WARN
+    com.app.oopsly.api: INFO
