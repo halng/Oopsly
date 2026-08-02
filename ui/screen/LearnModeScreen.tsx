@@ -301,8 +301,8 @@ const LearnModeScreen = ({ shelfId, subjectId }: LearnModeScreenProps) => {
           {options.map((opt, i) => {
             const isSelected = selected === opt;
             const isCorrect = currentCard ? opt === currentCard.back : false;
-            let bg = uiTokens.colors.card;
-            let borderColor = uiTokens.colors.border;
+            let bg: string = uiTokens.colors.card;
+            let borderColor: string = uiTokens.colors.border;
             if (isSelected) {
               bg = isCorrect ? uiTokens.colors.successLight : '#FEE2E2';
               borderColor = isCorrect ? uiTokens.colors.success : uiTokens.colors.error;

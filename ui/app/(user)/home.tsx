@@ -28,7 +28,7 @@ import { useAuthStore } from "@/store/AuthStore";
 import { Shelf } from "@/types/Shelf";
 import { SubjectStats } from "@/types/Subject";
 import { Logger } from "@/utils";
-import { useRouter } from "expo-router";
+import { type Href, useRouter } from "expo-router";
 import {
   BarChart2,
   Bookmark,
@@ -472,7 +472,9 @@ const OopslyApp = () => {
             key={subject.id}
             className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
             style={{ width: subjectCardWidth }}
-            onPress={() => router.push(`${shelfId}/view/${subject.id}`)}
+            onPress={() =>
+              router.push(`/${shelfId}/view/${subject.id}` as Href)
+            }
             testID={`subject-card-${subject.id}`}
           >
             <View className="flex-row justify-between items-start mb-2">
@@ -1341,7 +1343,6 @@ const OopslyApp = () => {
           {isDesktop && (
             <View
               style={{
-                width: "100%",
                 ...contentFrameStyle,
                 paddingHorizontal: 24,
                 paddingTop: Math.max(insets.top, 24),

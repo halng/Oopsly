@@ -56,7 +56,7 @@ export default function RootLayout() {
   }, [theme]);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let isCancelled = false;
 
     const checkAuthStatus = async () => {

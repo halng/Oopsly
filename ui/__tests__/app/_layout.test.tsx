@@ -106,6 +106,17 @@ jest.mock('../../store/SettingsStore', () => ({
   ),
 }));
 
+type MockAuthStore = jest.Mock & {
+  persist: {
+    hasHydrated: jest.Mock;
+    onFinishHydration: jest.Mock;
+  };
+  getState: jest.Mock;
+  setState: jest.Mock;
+};
+
+const mockedAuthStore = useAuthStore as unknown as MockAuthStore;
+
 describe('RootLayout', () => {
   const mockReplace = jest.fn();
   const mockPersist = {
@@ -120,7 +131,7 @@ describe('RootLayout', () => {
     (useSegments as jest.Mock).mockReturnValue([]);
     
     // Mock default auth store state
-    (useAuthStore as unknown as jest.Mock).mockImplementation((selector) => {
+    mockedAuthStore.mockImplementation((selector) => {
       const state = {
         isAuthenticated: false,
         accessToken: '',
@@ -131,8 +142,8 @@ describe('RootLayout', () => {
       return selector ? selector(state) : state;
     });
 
-    (useAuthStore as unknown as jest.Mock).persist = mockPersist;
-    (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+    mockedAuthStore.persist = mockPersist;
+    mockedAuthStore.getState = jest.fn().mockReturnValue({
       accessToken: '',
       refreshToken: '',
       clearAuth: jest.fn(),
@@ -164,7 +175,7 @@ describe('RootLayout', () => {
     it('should not redirect when no tokens are stored', async () => {
       mockPersist.hasHydrated.mockReturnValue(true);
 
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: '',
         refreshToken: '',
         clearAuth: jest.fn(),
@@ -187,7 +198,7 @@ describe('RootLayout', () => {
       mockPersist.hasHydrated.mockReturnValue(true);
 
       const mockSetAuthTokens = jest.fn();
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: 'valid-access-token',
         refreshToken: 'valid-refresh-token',
         userEmail: 'test@example.com',
@@ -213,7 +224,7 @@ describe('RootLayout', () => {
     it('refreshes when access token is missing but refresh token exists', async () => {
       mockPersist.hasHydrated.mockReturnValue(true);
       const mockSetAuthTokens = jest.fn();
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: '',
         refreshToken: 'valid-refresh-token',
         userEmail: 'test@example.com',
@@ -241,8 +252,8 @@ describe('RootLayout', () => {
       mockPersist.hasHydrated.mockReturnValue(true);
       (getRefreshTokenSecure as jest.Mock).mockResolvedValueOnce('secure-refresh');
       const setState = jest.fn();
-      (useAuthStore as unknown as jest.Mock).setState = setState;
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.setState = setState;
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: 'access',
         refreshToken: '',
         userEmail: 'test@example.com',
@@ -307,7 +318,7 @@ describe('RootLayout', () => {
       const mockSetAuthTokens = jest.fn();
       const mockClearAuth = jest.fn();
       
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: 'expired-access-token',
         refreshToken: 'valid-refresh-token',
         userEmail: 'test@example.com',
@@ -344,7 +355,7 @@ describe('RootLayout', () => {
 
       const mockClearAuth = jest.fn();
       
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: 'expired-access-token',
         refreshToken: 'invalid-refresh-token',
         userEmail: 'test@example.com',
@@ -377,7 +388,7 @@ describe('RootLayout', () => {
       mockPersist.hasHydrated.mockReturnValue(true);
       (useSegments as jest.Mock).mockReturnValue([]);
 
-      (useAuthStore as unknown as jest.Mock).mockImplementation((selector) => {
+      mockedAuthStore.mockImplementation((selector) => {
         const state = {
           isAuthenticated: true,
           accessToken: 'valid-token',
@@ -386,7 +397,7 @@ describe('RootLayout', () => {
         return selector ? selector(state) : state;
       });
 
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: '',
         refreshToken: '',
         clearAuth: jest.fn(),
@@ -404,7 +415,7 @@ describe('RootLayout', () => {
       mockPersist.hasHydrated.mockReturnValue(true);
       (useSegments as jest.Mock).mockReturnValue(['(user)', 'home']);
 
-      (useAuthStore as unknown as jest.Mock).mockImplementation((selector) => {
+      mockedAuthStore.mockImplementation((selector) => {
         const state = {
           isAuthenticated: false,
           accessToken: '',
@@ -413,7 +424,7 @@ describe('RootLayout', () => {
         return selector ? selector(state) : state;
       });
 
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: '',
         refreshToken: '',
         clearAuth: jest.fn(),
@@ -434,7 +445,7 @@ describe('RootLayout', () => {
 
       const mockClearAuth = jest.fn();
       
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: 'some-token',
         refreshToken: 'some-refresh',
         userEmail: 'test@example.com',
@@ -464,7 +475,7 @@ describe('RootLayout', () => {
 
       const mockClearAuth = jest.fn();
       
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: 'expired-token',
         refreshToken: 'valid-refresh',
         userEmail: 'test@example.com',
@@ -496,12 +507,12 @@ describe('RootLayout', () => {
     it('should ONLY render the public index screen when unauthenticated', async () => {
       mockPersist.hasHydrated.mockReturnValue(true);
       
-      (useAuthStore as unknown as jest.Mock).mockImplementation((selector) => {
+      mockedAuthStore.mockImplementation((selector) => {
         const state = { isAuthenticated: false };
         return selector ? selector(state) : state;
       });
 
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: '',
         refreshToken: '',
         clearAuth: jest.fn(),
@@ -521,12 +532,12 @@ describe('RootLayout', () => {
     it('should render the protected (user) group when authenticated', async () => {
       mockPersist.hasHydrated.mockReturnValue(true);
       
-      (useAuthStore as unknown as jest.Mock).mockImplementation((selector) => {
+      mockedAuthStore.mockImplementation((selector) => {
         const state = { isAuthenticated: true };
         return selector ? selector(state) : state;
       });
 
-      (useAuthStore as unknown as jest.Mock).getState = jest.fn().mockReturnValue({
+      mockedAuthStore.getState = jest.fn().mockReturnValue({
         accessToken: '',
         refreshToken: '',
         clearAuth: jest.fn(),

@@ -41,7 +41,7 @@ describe("ProfileScreen", () => {
     jest.useRealTimers();
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    (useAuthStore as jest.Mock).mockImplementation((selector: any) =>
+    (useAuthStore as unknown as jest.Mock).mockImplementation((selector: any) =>
       selector({ userEmail: "jane@example.com" }),
     );
     (getProfile as jest.Mock).mockResolvedValue({

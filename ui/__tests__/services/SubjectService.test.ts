@@ -205,8 +205,9 @@ describe('SubjectService', () => {
   describe('updateSubjectSetting', () => {
     it('updates subject settings successfully', async () => {
       const settings = {
-        reviewInterval: 7,
-        cardsPerDay: 20,
+        dailyLimit: 20,
+        newCardsPerDay: 20,
+        interval: 7,
       };
 
       const mockResponse = {
@@ -229,7 +230,11 @@ describe('SubjectService', () => {
     });
 
     it('handles settings update error', async () => {
-      const settings = { reviewInterval: 5 };
+      const settings = {
+        dailyLimit: 10,
+        newCardsPerDay: 5,
+        interval: 5,
+      };
       const error = new Error('Settings update failed');
       (apiClient.put as jest.Mock).mockRejectedValue(error);
 

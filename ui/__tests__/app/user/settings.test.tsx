@@ -56,7 +56,7 @@ describe("SettingsScreen", () => {
     jest.useRealTimers();
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    (useSettingsStore as jest.Mock).mockImplementation((selector: any) =>
+    (useSettingsStore as unknown as jest.Mock).mockImplementation((selector: any) =>
       selector(baseSettings),
     );
     baseSettings.theme = "light";
