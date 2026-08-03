@@ -44,7 +44,7 @@ service account must be able to verify Firebase Authentication tokens.
 
 ## 4. Verify the flow
 
-1. Open the welcome screen and continue to `/firebase-login`.
+1. Open the welcome screen and continue to `/login`.
 2. Request an email link and open it in the same browser/app context.
 3. Confirm a new account is sent to `/profile-setup`.
 4. Save the profile and confirm `/profile` shows the contact and hobby fields.
@@ -65,8 +65,7 @@ Expo web to `ui/dist`, and deploys that directory to Firebase Hosting.
 
 ## Troubleshooting
 
-- **API fails during startup:** Application Default Credentials are missing while
-  `authWithFirebase` is enabled.
+- **API fails during startup:** Application Default Credentials are missing.
 - **Email link rejected:** verify the continue URL and authorized domain.
 - **Phone code cannot be sent:** the platform has not completed Firebase app verification
   or the Phone provider is disabled.

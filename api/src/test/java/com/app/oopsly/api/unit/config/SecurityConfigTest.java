@@ -20,8 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.config.AppConfig;
-import com.app.oopsly.api.config.JwtAuthenticationFilter;
+import com.app.oopsly.api.config.FirebaseAuthenticationFilter;
 import com.app.oopsly.api.config.SecurityConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
@@ -42,15 +41,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @ExtendWith(MockitoExtension.class)
 class SecurityConfigTest {
 
-    @Mock private JwtAuthenticationFilter jwtAuthFilter;
+    @Mock private FirebaseAuthenticationFilter firebaseAuthFilter;
 
     private SecurityConfig securityConfig;
-    @Mock private AppConfig appConfig;
     @Mock private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        securityConfig = new SecurityConfig(jwtAuthFilter, appConfig, objectMapper);
+        securityConfig = new SecurityConfig(firebaseAuthFilter, objectMapper);
     }
 
     @Test
@@ -97,7 +95,8 @@ class SecurityConfigTest {
         verify(httpSecurity).authorizeHttpRequests(any());
         verify(httpSecurity).formLogin(any());
         verify(httpSecurity)
-                .addFilterBefore(eq(jwtAuthFilter), eq(UsernamePasswordAuthenticationFilter.class));
+                .addFilterBefore(
+                        eq(firebaseAuthFilter), eq(UsernamePasswordAuthenticationFilter.class));
         verify(httpSecurity).build();
     }
 

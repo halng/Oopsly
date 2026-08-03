@@ -1,5 +1,5 @@
 /*
- *    Copyright 2025 Hao Nguyen Tan
+ *    Copyright 2026 Hao Nguyen Tan
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -16,18 +16,17 @@
 
 package com.app.oopsly.api.config;
 
-import com.app.oopsly.api.util.JwtUtils;
 import com.app.oopsly.api.entity.User;
 import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.firebase.auth.FirebaseToken;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
-import com.google.firebase.auth.FirebaseToken;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -41,13 +40,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 @RequiredArgsConstructor
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
-    private final JwtUtils jwtUtils;
+public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(FirebaseAuthenticationFilter.class);
+
     private final ObjectMapper objectMapper;
     private final FirebaseTokenVerifier firebaseTokenVerifier;
     private final UserRepository userRepository;
-    private final AppConfig appConfig;
 
     @Override
     protected void doFilterInternal(
@@ -59,52 +58,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String requestPlatform = request.getHeader("X-Platform");
         MDC.put("XID", requestId);
         MDC.put("XP", requestPlatform);
-        LOGGER.info("Filtering request: {}", request.getRequestURI());
-        final String authHeader = request.getHeader("authorization");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            LOGGER.warn("Authorization header not present");
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        String jwt = authHeader.substring(7);
         try {
-            if (appConfig != null && appConfig.getFeatures().isSkipAuth()) {
+            final String authHeader = request.getHeader("authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 filterChain.doFilter(request, response);
                 return;
             }
-            LOGGER.info("Attempting to authenticate using jwt");
-            String userId;
-            String userRole;
-            if (appConfig != null && appConfig.getFeatures().isAuthWithFirebase()) {
-                FirebaseToken token = firebaseTokenVerifier.verify(jwt);
-                User user =
-                        userRepository
-                                .findByFirebaseUid(token.getUid())
-                                .orElseGet(() -> provisionFirebaseUser(token));
-                userId = user.getId().toString();
-                userRole = "ROLE_USER";
-            } else {
-                userId = jwtUtils.extractUserId(jwt);
-                userRole = jwtUtils.extractUserRole(jwt);
-            }
 
-            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            final String idToken = authHeader.substring(7);
+            final FirebaseToken token = firebaseTokenVerifier.verify(idToken);
+            final User user =
+                    userRepository
+                            .findByFirebaseUid(token.getUid())
+                            .orElseGet(() -> provisionFirebaseUser(token));
 
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
-                                userId, null, List.of((GrantedAuthority) () -> userRole));
+                                user.getId().toString(),
+                                null,
+                                List.of((GrantedAuthority) () -> "ROLE_USER"));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                LOGGER.info("User {} authenticated with role {}", userId, userRole);
             }
+
             filterChain.doFilter(request, response);
         } catch (Exception e) {
             LOGGER.error(
-                    "JWT authentication failed with exception {} and message: {}",
+                    "Firebase authentication failed with exception {} and message: {}",
                     e.getClass().getSimpleName(),
                     e.getMessage());
-            sendErrorResponse(response, "EXPIRED_OR_INVALID_JWT");
+            sendErrorResponse(response, "EXPIRED_OR_INVALID_FIREBASE_TOKEN");
         } finally {
             MDC.clear();
         }
@@ -116,6 +100,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             email = token.getUid() + "@phone.firebase";
         }
         final String resolvedEmail = email;
+
         return userRepository
                 .findByEmail(resolvedEmail)
                 .map(
@@ -128,11 +113,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             User user =
                                     User.builder()
                                             .firebaseUid(token.getUid())
-                                        .email(resolvedEmail)
-                                            .phone(
-                                                    (String)
-                                                            token.getClaims()
-                                                                    .get("phone_number"))
+                                            .email(resolvedEmail)
+                                            .phone((String) token.getClaims().get("phone_number"))
                                             .displayName(token.getName())
                                             .build();
                             return userRepository.save(user);
@@ -141,11 +123,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private void sendErrorResponse(HttpServletResponse response, String message)
             throws IOException {
-        LOGGER.info("Sending error response: {}", message);
         if (response.isCommitted()) {
             LOGGER.warn("Response already committed; skipping error response write");
             return;
         }
+
         ApiRes apiRes = ApiRes.unauthorized(message);
         response.setStatus(apiRes.getStatusCode().value());
         response.setContentType("application/json");

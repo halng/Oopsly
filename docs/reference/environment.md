@@ -15,7 +15,7 @@ Defined primarily in `api/src/main/resources/application.yaml` and overrideable 
 | `REDIS_PORT` | `6379` | Redis port |
 | `JWT_SECRET` | (dev default in yaml) | HMAC secret for JWTs — **override in every non-local env** |
 | `ALLOWED_ORIGINS` | `http://localhost:8081` | CORS allowed origins |
-| `GOOGLE_CLIENT_ID` | `changeme` | Google Sign-In (feature-flagged off by default) |
+| `GOOGLE_CLIENT_ID` | `changeme` | Reserved for future Google Sign-In compatibility |
 | `GOOGLE_APPLICATION_CREDENTIALS` | *(unset)* | Path to the Firebase Admin service-account JSON for local API runs |
 | `EMAIL_USERNAME` | `changeme@gmail.com` | SMTP username |
 | `EMAIL_PASSWORD` | `changeme` | SMTP password / app password |
@@ -24,15 +24,6 @@ Defined primarily in `api/src/main/resources/application.yaml` and overrideable 
 | `EXPO_TOKEN` | *(CI)* | EAS builds in CD |
 
 Env file loading for `bootRun`: `-Pprofile=test` → `api/.env.test`; default loader profile `prod` → `api/.env`.
-
-Feature flags in config:
-
-| Key | Default | Meaning |
-| --- | ------- | ------- |
-| `app.features.authWithGoogle` | `false` | Google auth |
-| `app.features.authWithJwt` | `false` | Legacy API-issued JWT verification |
-| `app.features.authWithFirebase` | `true` | Firebase ID-token verification |
-| `app.features.skipAuth` | `false` | Authentication bypass for the isolated `perf` profile only |
 
 JWT lifetimes (yaml, not env by default):
 
@@ -67,6 +58,12 @@ Referenced by GitHub Actions:
 
 The CD workflow also reads repository variables `EXPO_PUBLIC_BACKEND_API` and
 `FIREBASE_PROJECT_ID`.
+
+Manual perf workflow uses:
+
+- variable `GCP_PROJECT_ID`
+- variable `GCP_REGION`
+- secret `GCP_SERVICE_ACCOUNT_KEY`
 
 Never commit production JWT secrets, SMTP passwords, Firebase service-account JSON, or
 other cloud credentials into the repository. Firebase web API keys are not Admin secrets,

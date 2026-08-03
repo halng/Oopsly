@@ -1,0 +1,113 @@
+name: Manual Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Deployment platform
+        required: true
+        type: choice
+        options:
+          - web
+          - ios
+          - android
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate input and deployment prerequisites
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+          EXPO_PUBLIC_BACKEND_API: ${{ vars.EXPO_PUBLIC_BACKEND_API }}
+          BACKEND_HEALTHCHECK_URL: ${{ vars.BACKEND_HEALTHCHECK_URL }}
+        run: |
+          set -euo pipefail
+          case "$PLATFORM" in
+            web|ios|android) ;;
+            *) echo "Unsupported platform '$PLATFORM'"; exit 1 ;;
+          esac
+
+          if [ -z "${EXPO_TOKEN}" ]; then
+            echo "Missing EXPO_TOKEN secret"
+            exit 1
+          fi
+
+          if [ "$PLATFORM" = "web" ]; then
+            [ -n "${FIREBASE_API_KEY}" ] || { echo "Missing FIREBASE_API_KEY secret"; exit 1; }
+            [ -n "${FIREBASE_SERVICE_ACCOUNT}" ] || { echo "Missing FIREBASE_SERVICE_ACCOUNT secret"; exit 1; }
+            [ -n "${FIREBASE_PROJECT_ID}" ] || { echo "Missing FIREBASE_PROJECT_ID variable"; exit 1; }
+          fi
+
+          HEALTHCHECK_URL="${BACKEND_HEALTHCHECK_URL}"
+          if [ -z "$HEALTHCHECK_URL" ] && [ -n "${EXPO_PUBLIC_BACKEND_API}" ]; then
+            HEALTHCHECK_URL="${EXPO_PUBLIC_BACKEND_API%/}/actuator/health"
+          fi
+
+          [ -n "$HEALTHCHECK_URL" ] || { echo "Missing BACKEND_HEALTHCHECK_URL or EXPO_PUBLIC_BACKEND_API"; exit 1; }
+          echo "Checking backend health at: $HEALTHCHECK_URL"
+          curl --fail --silent --show-error "$HEALTHCHECK_URL" > /tmp/backend-health.json
+          cat /tmp/backend-health.json
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          package_json_file: ui/package.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Install UI dependencies
+        working-directory: ui
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy Web (Firebase Hosting)
+        if: ${{ inputs.platform == 'web' }}
+        working-directory: ui
+        run: pnpm exec expo export --platform web
+        env:
+          EXPO_PUBLIC_BACKEND_API: ${{ vars.EXPO_PUBLIC_BACKEND_API }}
+          EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+
+      - name: Publish Web to Firebase Hosting
+        if: ${{ inputs.platform == 'web' }}
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          channelId: live
+          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
+
+      - name: Install EAS CLI
+        if: ${{ inputs.platform != 'web' }}
+        run: npm install -g eas-cli
+
+      - name: Deploy Mobile Build
+        if: ${{ inputs.platform != 'web' }}
+        working-directory: ui
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          eas whoami || eas login --token "$EXPO_TOKEN"
+          pnpm exec eas build --platform "${{ inputs.platform }}" --profile production --non-interactive

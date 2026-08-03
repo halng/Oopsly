@@ -6,10 +6,6 @@ app:
     refresh-expiration-in-ms: 86400000
   google:
     client-id: integration-test-client
-  features:
-    authWithGoogle: false
-    authWithJwt: true
-    authWithFirebase: false
   test-emails:
     - integration@oopsly.com
     - integration2@oopsly.com

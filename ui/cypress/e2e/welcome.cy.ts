@@ -33,7 +33,7 @@ describe("Welcome carousel", () => {
     cy.tid("next-button").should("be.visible");
   });
 
-  it("navigates through all slides and reaches onboard", () => {
+  it("navigates through all slides and reaches login", () => {
     cy.tid("next-button").click();
     cy.tid("content-view-title").should("contain.text", "Learn Smarter");
     cy.tid("pagination-dot-1").assertRgb("background-color", tokens.accent);
@@ -43,12 +43,12 @@ describe("Welcome carousel", () => {
     cy.tid("get-started-text").should("contain.text", "Get Started");
 
     cy.tid("next-button").click();
-    cy.url().should("include", "/onboard");
+    cy.url().should("include", "/login");
   });
 
-  it("skips intro to email onboard", () => {
+  it("skips intro to login", () => {
     cy.tid("skip-button").click();
-    cy.url().should("include", "/onboard");
-    cy.tid("title-text").should("contain.text", "What's your email?");
+    cy.url().should("include", "/login");
+    cy.tid("login-screen").should("exist");
   });
 });

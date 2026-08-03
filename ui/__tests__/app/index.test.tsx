@@ -101,11 +101,11 @@ describe('WelcomeScreen', () => {
     expect(screen.getByTestId('content-view-title').props.children).toBe('Welcome to Oopsly');
   });
 
-  it('navigates to /onboard when clicking Skip', () => {
+  it('navigates to /login when clicking Skip', () => {
     render(<WelcomeScreen />);
     
     fireEvent.press(screen.getByTestId('skip-button'));
-    expect(mockPush).toHaveBeenCalledWith('/firebase-login');
+    expect(mockPush).toHaveBeenCalledWith('/login');
   });
 
   it('changes button to "Get Started" on the last slide and navigates', () => {
@@ -123,7 +123,7 @@ describe('WelcomeScreen', () => {
 
     // Click it
     fireEvent.press(nextButton);
-    expect(mockPush).toHaveBeenCalledWith('/firebase-login');
+    expect(mockPush).toHaveBeenCalledWith('/login');
   });
 
   it('renders desktop layout when isDesktop is true', () => {

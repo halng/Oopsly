@@ -24,7 +24,7 @@ import jakarta.validation.constraints.Size;
 public record UpdateProfileReq(
         @NotBlank(message = "Display name cannot be blank") @Size(max = 50, message = "Display name must not exceed 50 characters") String displayName,
         @Size(max = 255, message = "Bio must not exceed 255 characters") String bio,
-        @Min(value = 1, message = "Age must be at least 1") @Max(value = 120, message = "Age must not exceed 120") Integer age,
+        @Min(value = 8, message = "Age must be at least 8") @Max(value = 100, message = "Age must not exceed 100") Integer age,
         @Size(max = 500, message = "Hobbies must not exceed 500 characters") String hobbies,
         @Size(max = 32, message = "Phone must not exceed 32 characters") String phone) {
     public UpdateProfileReq(String displayName, String bio, Integer age) {

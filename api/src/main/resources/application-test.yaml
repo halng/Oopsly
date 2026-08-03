@@ -1,6 +1,4 @@
 app:
-  features:
-    authWithFirebase: false
   test-emails:
     - test@oopsly.com
     - user1@oopsly.com

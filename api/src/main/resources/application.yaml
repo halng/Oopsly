@@ -13,11 +13,6 @@ app:
     refresh-expiration-in-ms: 604800000
   google:
     client-id: ${GOOGLE_CLIENT_ID:changeme}
-  features:
-    authWithGoogle: false
-    authWithJwt: false
-    authWithFirebase: true
-    skipAuth: false
 
 springdoc:
   api-docs:

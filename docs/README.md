@@ -82,7 +82,7 @@ This library follows the [Diátaxis](https://diataxis.fr/) framework: tutorials 
 | [Features (BDD / OKRs)](./features/README.md) | Milestone feature packs |
 | [EdTech research](./EdTech_RESEARCH.md) | Market & cognitive-science background |
 | [CI / CD](./operations/ci-cd.md) | GitHub Actions, GHCR, EAS, Firebase Hosting |
-| [Performance tests](../performance/README.md) | Run k6 smoke, flaky, stress, and spike profiles |
+| [Performance tests](../performance/README.md) | Run k6 smoke, flaky, stress, and spike profiles from `api/src/test/perf/k6` |
 | [API package README](../api/README.md) | Thin backend entry |
 | [UI package README](../ui/README.md) | Thin frontend entry |
 

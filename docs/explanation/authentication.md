@@ -2,8 +2,8 @@
 
 Oopsly uses **Firebase Authentication** for passwordless sign-in. The client obtains a
 Firebase ID token and the API verifies that token with the Firebase Admin SDK on every
-protected request. The previous API-issued OTP/JWT endpoints remain available as a
-compatibility path while clients migrate.
+protected request. Legacy OTP endpoints remain public, but protected APIs accept Firebase
+bearer tokens only.
 
 ---
 
@@ -19,7 +19,7 @@ Welcome
 
 ### Email
 
-1. The user enters an email address on `/firebase-login`.
+1. The user enters an email address on `/login`.
 2. The UI calls Firebase Identity Toolkit `sendOobCode` with `EMAIL_SIGNIN`.
 3. Firebase sends a sign-in link whose continue URL points back to `/verification`.
 4. The verification screen exchanges the link's `oobCode` for an ID token and refresh token.
@@ -54,7 +54,7 @@ visible later on `/profile`.
 2. Before a protected API request, the Axios interceptor asks `FirebaseAuthService` for
    the current ID token. The service refreshes it through Firebase Secure Token.
 3. The client sends `Authorization: Bearer <firebase-id-token>`.
-4. `JwtAuthenticationFilter` uses the Firebase Admin SDK to validate signature, expiry,
+4. `FirebaseAuthenticationFilter` uses the Firebase Admin SDK to validate signature, expiry,
    revocation status, issuer, and audience.
 5. The API finds the local user by `firebase_uid`. On first request it links an existing
    record with the same email or provisions a new record.
@@ -79,15 +79,8 @@ All other requests receive a Firebase ID token when a Firebase session exists.
 
 ---
 
-## Feature flags
+## Profiles
 
-| Property | Default | Purpose |
-| --- | --- | --- |
-| `app.features.authWithFirebase` | `true` | Verify bearer tokens with Firebase Admin |
-| `app.features.authWithJwt` | `false` | Retain the legacy locally signed JWT path |
-| `app.features.skipAuth` | `false` | Permit requests without authentication; use only with `perf` |
-| `app.features.authWithGoogle` | `false` | Reserved Google sign-in feature flag |
-
-The `test` and `integration` profiles turn Firebase verification off so automated backend
-tests do not require cloud credentials. The `perf` profile disables both token mechanisms
-and enables `skipAuth`.
+`integration` tests mock `FirebaseTokenVerifier` so backend tests do not require cloud
+credentials. The `perf` profile enables a dedicated permissive `SecurityFilterChain` via
+`@Profile("perf")` instead of runtime auth flags.

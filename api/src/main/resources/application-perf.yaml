@@ -1,13 +1,16 @@
 # Copyright 2026 Hao Nguyen Tan
 # Licensed under the Apache License, Version 2.0
-app:
-  features:
-    authWithFirebase: false
-    authWithJwt: false
-    skipAuth: true
 spring:
   flyway:
     enabled: false
   jpa:
+    show-sql: true
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        generate_statistics: true
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.stat: debug

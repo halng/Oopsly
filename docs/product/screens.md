@@ -10,7 +10,7 @@ Expo Router file routes live under `ui/app/`. Heavier study UIs live under `ui/s
 | ---------- | ---- |
 | `app/index.tsx` | Entry / landing |
 | `app/onboard.tsx` | Legacy email OTP entry (compatibility route) |
-| `app/firebase-login.tsx` | Firebase email/phone passwordless sign-in |
+| `app/login.tsx` | Firebase email/phone passwordless sign-in |
 | `app/verification.tsx` | Firebase or legacy OTP verification |
 | `app/profile-setup.tsx` | Required basic profile setup for new Firebase users |
 | `app/(user)/home.tsx` | Authenticated home / library hub |

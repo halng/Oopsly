@@ -36,16 +36,12 @@ class AppConfigTest {
 
         assertNotNull(config.getJwt(), "jwt should be initialized by default");
         assertNotNull(config.getGoogle(), "google should be initialized by default");
-        assertNotNull(config.getFeatures(), "features should be initialized by default");
 
         // defaults
         assertNull(config.getJwt().getSecret(), "default jwt.secret should be null");
         assertEquals(
                 0L, config.getJwt().getExpirationInMs(), "default jwt.expirationInMs should be 0");
         assertNull(config.getGoogle().getClientId(), "default google.clientId should be null");
-        assertFalse(
-                config.getFeatures().isAuthWithGoogle(), "default authWithGoogle should be false");
-        assertFalse(config.getFeatures().isAuthWithJwt(), "default authWithJwt should be false");
     }
 
     @Test
@@ -73,16 +69,12 @@ class AppConfigTest {
     }
 
     @Test
-    void givenAppconfig_withGoogleAndFeaturesSet_thenGettersReturnValues() {
+    void givenAppconfig_withGoogleSet_thenGettersReturnValues() {
         AppConfig config = new AppConfig();
 
         config.getGoogle().setClientId("client-123");
-        config.getFeatures().setAuthWithGoogle(true);
-        config.getFeatures().setAuthWithJwt(true);
 
         assertEquals("client-123", config.getGoogle().getClientId());
-        assertTrue(config.getFeatures().isAuthWithGoogle());
-        assertTrue(config.getFeatures().isAuthWithJwt());
     }
 
     @Test

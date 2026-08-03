@@ -23,6 +23,7 @@ import { Logger } from '@/utils';
 import { uiTokens } from '@/constants/uiTokens';
 import FadeIn from '@/components/common/FadeIn';
 import { useResponsiveLayout } from '@/utils/responsiveLayout';
+import { APP_ROUTES } from '@/constants/routes';
 
 const ONBOARDING_DATA = [
   {
@@ -56,7 +57,7 @@ export default function WelcomeScreen() {
 
   const handleNext = () => {
     if (currentIndex === ONBOARDING_DATA.length - 1) {
-      router.push('/firebase-login');
+      router.push(APP_ROUTES.login);
     } else {
       setCurrentIndex(prev => prev + 1);
     }
@@ -70,7 +71,7 @@ export default function WelcomeScreen() {
 
   const handleSkip = () => {
     logger.info('User skipped onboarding');
-    router.push('/firebase-login');
+    router.push(APP_ROUTES.login);
   };
 
   const currentSlide = ONBOARDING_DATA[currentIndex];

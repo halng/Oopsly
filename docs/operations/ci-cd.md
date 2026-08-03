@@ -35,6 +35,11 @@ Firebase Hosting deployment requires:
 The hosting settings live in `firebase.json`; the exported static files are read from
 `ui/dist`, and unknown routes rewrite to `index.html` for Expo Router.
 
+Manual workflows:
+
+- [`.github/workflows/manual-deploy.yaml`](../../.github/workflows/manual-deploy.yaml) runs only by `workflow_dispatch`, requires a `platform` input (`web`, `ios`, `android`), validates required secrets/variables, checks backend health, then deploys the selected platform.
+- [`.github/workflows/perf-test.yaml`](../../.github/workflows/perf-test.yaml) runs only by `workflow_dispatch`, takes a `test_profile` input (`smoke`, `flaky`, `stress`, `spike`), deploys API to Cloud Run with `SPRING_PROFILES_ACTIVE=perf`, runs k6 from `api/src/test/perf/k6`, uploads report artifacts, and deletes the temporary Cloud Run service.
+
 ## Secrets
 
 | Secret | Used by |

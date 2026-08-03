@@ -33,10 +33,13 @@ import FeedbackMessage from "@/components/common/FeedbackMessage";
 import { uiTokens } from "@/constants/uiTokens";
 import { useResponsiveLayout } from "@/utils/responsiveLayout";
 import { FirebaseAuthService } from "@/services/FirebaseAuthService";
+import { AUTH_METHOD_EMAIL } from "@/constants/auth";
+import { APP_ROUTES } from "@/constants/routes";
 
 export default function OTPVerification() {
   const router = useRouter();
   const params = useLocalSearchParams<{ method?: string; identifier?: string; oobCode?: string; sessionInfo?: string }>();
+  const identifier = params.identifier ?? "";
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(120);
   const [isResendActive, setIsResendActive] = useState(false);
@@ -57,7 +60,7 @@ export default function OTPVerification() {
       result.idToken,
       result.refreshToken,
     );
-    router.replace(result.isNewUser ? "/profile-setup" : "/home");
+    router.replace(result.isNewUser ? APP_ROUTES.profileSetup : APP_ROUTES.home);
   };
 
   useEffect(() => {
@@ -148,14 +151,17 @@ export default function OTPVerification() {
   };
 
   const handleResend = async () => {
-    if (!isResendActive || resendBusy || !userEmail) return;
+    if (!isResendActive || resendBusy) return;
     setResendBusy(true);
     setVerifyError(null);
     try {
-      if (params.method === "email" && params.identifier) {
-        await FirebaseAuthService.sendEmailLink(params.identifier);
+      if (params.method === AUTH_METHOD_EMAIL && identifier) {
+        await FirebaseAuthService.sendEmailLink(identifier);
       } else if (userEmail) {
         await AuthService.CreateOTP(userEmail);
+      } else {
+        setVerifyError("Missing email. Go back and enter your email.");
+        return;
       }
       setOtp(["", "", "", "", "", ""]);
       startTimer();
@@ -172,10 +178,10 @@ export default function OTPVerification() {
       setVerifyLoading(true);
       setVerifyError(null);
       try {
-        const result = params.method === "email"
-          ? await FirebaseAuthService.verifyEmailLink(params.identifier ?? "", params.oobCode ?? otp.join(""))
+        const result = params.method === AUTH_METHOD_EMAIL
+          ? await FirebaseAuthService.verifyEmailLink(identifier, params.oobCode ?? otp.join(""))
           : await FirebaseAuthService.verifyPhoneCode(params.sessionInfo ?? "", otp.join(""));
-        await finishFirebaseSignIn(result, params.identifier ?? "");
+        await finishFirebaseSignIn(result, identifier);
       } catch (e) {
         setVerifyError(e instanceof Error ? e.message : "Firebase verification failed");
       } finally { setVerifyLoading(false); }
@@ -202,7 +208,7 @@ export default function OTPVerification() {
       useAuthStore
         .getState()
         .setCredentials(userEmail, access_token, refresh_token);
-      router.replace("/home");
+      router.replace(APP_ROUTES.home);
     } catch {
       setVerifyError("Something went wrong. Check your connection.");
     } finally {
@@ -232,7 +238,7 @@ export default function OTPVerification() {
           style={{ color: uiTokens.text.primary, fontWeight: "600" }}
           testID="user-email-display"
         >
-          {params.identifier || userEmail || "your inbox"}
+          {identifier || userEmail || "your inbox"}
         </Text>
       </Text>
 

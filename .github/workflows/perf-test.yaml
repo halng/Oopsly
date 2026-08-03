@@ -1,0 +1,102 @@
+name: Performance Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_profile:
+        description: k6 profile
+        required: true
+        type: choice
+        options:
+          - smoke
+          - flaky
+          - stress
+          - spike
+
+permissions:
+  contents: read
+
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ vars.GCP_REGION }}
+      SERVICE_NAME: oopsly-perf-${{ github.run_id }}
+      TEST_PROFILE: ${{ inputs.test_profile }}
+    steps:
+      - name: Validate input and GCP settings
+        env:
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+        run: |
+          set -euo pipefail
+          case "$TEST_PROFILE" in
+            smoke|flaky|stress|spike) ;;
+            *) echo "Unsupported test_profile '$TEST_PROFILE'"; exit 1 ;;
+          esac
+          [ -n "${GCP_PROJECT_ID}" ] || { echo "Missing GCP_PROJECT_ID variable"; exit 1; }
+          [ -n "${GCP_REGION}" ] || { echo "Missing GCP_REGION variable"; exit 1; }
+          [ -n "${GCP_SERVICE_ACCOUNT_KEY}" ] || { echo "Missing GCP_SERVICE_ACCOUNT_KEY secret"; exit 1; }
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy API for perf run
+        run: |
+          set -euo pipefail
+          gcloud run deploy "$SERVICE_NAME" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$GCP_REGION" \
+            --source ./api \
+            --allow-unauthenticated \
+            --set-env-vars SPRING_PROFILES_ACTIVE=perf \
+            --quiet
+
+      - name: Resolve deployed URL
+        id: resolve_url
+        run: |
+          set -euo pipefail
+          SERVICE_URL=$(gcloud run services describe "$SERVICE_NAME" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$GCP_REGION" \
+            --format='value(status.url)')
+          echo "service_url=${SERVICE_URL}" >> "$GITHUB_OUTPUT"
+          echo "base_url=${SERVICE_URL}/api/v1/oopsly" >> "$GITHUB_OUTPUT"
+
+      - name: Set up k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run k6 profile
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/perf-reports
+          k6 run \
+            -e BASE_URL="${{ steps.resolve_url.outputs.base_url }}" \
+            -e TEST_PROFILE="$TEST_PROFILE" \
+            --summary-export /tmp/perf-reports/summary.json \
+            api/src/test/perf/k6/backend.js
+
+      - name: Upload perf report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-report-${{ inputs.test_profile }}
+          path: /tmp/perf-reports
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Cleanup Cloud Run service
+        if: always()
+        run: |
+          gcloud run services delete "$SERVICE_NAME" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$GCP_REGION" \
+            --quiet || true

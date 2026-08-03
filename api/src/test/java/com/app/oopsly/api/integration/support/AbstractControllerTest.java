@@ -16,13 +16,25 @@
 
 package com.app.oopsly.api.integration.support;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.app.oopsly.api.config.FirebaseTokenVerifier;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.firebase.auth.FirebaseToken;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import java.util.Map;
 import java.util.UUID;
+import javax.crypto.SecretKey;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -32,6 +44,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
@@ -47,9 +60,37 @@ public abstract class AbstractControllerTest {
     protected static final String EMAIL = "integration@oopsly.com";
     protected static final String EMAIL_2 = "integration2@oopsly.com";
     protected static final String TEST_OTP = "000000";
+    private static final SecretKey TEST_JWT_KEY =
+            Keys.hmacShaKeyFor(
+                    Decoders.BASE64.decode(
+                            "057ba03d6c44104863dc7361fe4578965d1887360f90a0895882e58a6248fc86"));
 
     @Autowired protected MockMvc mockMvc;
     @Autowired protected ObjectMapper objectMapper;
+    @MockitoBean protected FirebaseTokenVerifier firebaseTokenVerifier;
+
+    @BeforeEach
+    void mockFirebaseVerification() throws Exception {
+        lenient()
+                .when(firebaseTokenVerifier.verify(anyString()))
+                .thenAnswer(
+                        invocation -> {
+                            String token = invocation.getArgument(0, String.class);
+                            String email =
+                                    Jwts.parser()
+                                            .verifyWith(TEST_JWT_KEY)
+                                            .build()
+                                            .parseSignedClaims(token)
+                                            .getPayload()
+                                            .getSubject();
+                            FirebaseToken firebaseToken = mock(FirebaseToken.class);
+                            when(firebaseToken.getUid()).thenReturn(email);
+                            when(firebaseToken.getEmail()).thenReturn(email);
+                            when(firebaseToken.getName()).thenReturn(email);
+                            when(firebaseToken.getClaims()).thenReturn(Map.of());
+                            return firebaseToken;
+                        });
+    }
 
     @DynamicPropertySource
     static void redisProperties(DynamicPropertyRegistry registry) throws Exception {

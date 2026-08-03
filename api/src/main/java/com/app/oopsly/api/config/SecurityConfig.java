@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -38,16 +39,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity
+@Profile("!perf")
 public class SecurityConfig {
     private static final Logger LOG = LoggerFactory.getLogger(SecurityConfig.class);
-    private final JwtAuthenticationFilter jwtAuthFilter;
-    private final AppConfig appConfig;
+    private final FirebaseAuthenticationFilter firebaseAuthFilter;
     private final ObjectMapper objectMapper;
 
     public SecurityConfig(
-            JwtAuthenticationFilter jwtAuthFilter, AppConfig appConfig, ObjectMapper objectMapper) {
-        this.jwtAuthFilter = jwtAuthFilter;
-        this.appConfig = appConfig;
+            FirebaseAuthenticationFilter firebaseAuthFilter, ObjectMapper objectMapper) {
+        this.firebaseAuthFilter = firebaseAuthFilter;
         this.objectMapper = objectMapper;
     }
 
@@ -77,9 +77,7 @@ public class SecurityConfig {
                                                                                 + " resource."))))
                 .authorizeHttpRequests(
                         req ->
-                                req.requestMatchers(appConfig.getFeatures().isSkipAuth() ? "/**" : "/__no_match__")
-                                        .permitAll()
-                                        .requestMatchers(
+                                req.requestMatchers(
                                                 "/otp/**",
                                                 "/actuator/health",
                                                 "**/refresh-token",
@@ -91,7 +89,7 @@ public class SecurityConfig {
                                         .anyRequest()
                                         .authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(firebaseAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

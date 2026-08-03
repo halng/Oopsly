@@ -265,6 +265,13 @@ export default function RootLayout() {
           contentStyle: { flex: 1, backgroundColor: uiTokens.surface.canvas },
         }}
       />
+      <Stack.Screen
+        name="login"
+        options={{
+          animation: "slide_from_right",
+          contentStyle: { flex: 1, backgroundColor: uiTokens.surface.canvas },
+        }}
+      />
     </Stack>
   );
 }
