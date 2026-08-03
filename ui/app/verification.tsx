@@ -23,6 +23,7 @@ import {
   Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import * as Linking from "expo-linking";
 import { AuthService } from "@/services/AuthService";
 import { useAuthStore } from "@/store";
 import { ApiResponse } from "@/types/ApiRes";
@@ -43,9 +44,49 @@ export default function OTPVerification() {
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [resendBusy, setResendBusy] = useState(false);
   const { formMaxWidth, otpCellSize } = useResponsiveLayout();
-  const inputRefs = useRef<Array<TextInput | null>>([]);
+  const inputRefs = useRef<(TextInput | null)[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const userEmail = useAuthStore((state) => state.userEmail);
+
+  const finishFirebaseSignIn = async (
+    result: Awaited<ReturnType<typeof FirebaseAuthService.verifyEmailLink>>,
+    identifier: string,
+  ) => {
+    useAuthStore.getState().setCredentials(
+      identifier || result.email || result.phoneNumber || "",
+      result.idToken,
+      result.refreshToken,
+    );
+    router.replace(result.isNewUser ? "/profile-setup" : "/home");
+  };
+
+  useEffect(() => {
+    let active = true;
+    const completeLink = async (url?: string | null) => {
+      const callbackCode = url
+        ? (Linking.parse(url).queryParams?.oobCode as string | undefined)
+        : undefined;
+      const oobCode = params.oobCode || callbackCode;
+      if (!oobCode) return;
+      setVerifyLoading(true);
+      setVerifyError(null);
+      try {
+        const email = params.identifier || await FirebaseAuthService.getPendingEmail();
+        if (!email) throw new Error("Open this sign-in link on the device where you requested it.");
+        const result = await FirebaseAuthService.verifyEmailLink(email, oobCode);
+        if (active) await finishFirebaseSignIn(result, email);
+      } catch (error) {
+        if (active) setVerifyError(error instanceof Error ? error.message : "Firebase verification failed");
+      } finally {
+        if (active) setVerifyLoading(false);
+      }
+    };
+    void Linking.getInitialURL().then(completeLink);
+    const subscription = Linking.addEventListener("url", ({ url }) => void completeLink(url));
+    return () => { active = false; subscription.remove(); };
+    // Route params identify a single callback and must not retrigger on state changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.method, params.oobCode, params.identifier]);
 
   const clearTimer = () => {
     if (timerRef.current) {
@@ -134,8 +175,7 @@ export default function OTPVerification() {
         const result = params.method === "email"
           ? await FirebaseAuthService.verifyEmailLink(params.identifier ?? "", params.oobCode ?? otp.join(""))
           : await FirebaseAuthService.verifyPhoneCode(params.sessionInfo ?? "", otp.join(""));
-        useAuthStore.getState().setCredentials(params.identifier ?? "", result.idToken, result.refreshToken);
-        router.replace(result.isNewUser ? "/profile-setup" : "/home");
+        await finishFirebaseSignIn(result, params.identifier ?? "");
       } catch (e) {
         setVerifyError(e instanceof Error ? e.message : "Firebase verification failed");
       } finally { setVerifyLoading(false); }
@@ -277,7 +317,7 @@ export default function OTPVerification() {
         <AppButton
           label="Verify and continue"
           onPress={handleVerify}
-          disabled={!isOtpComplete}
+          disabled={!isOtpComplete || (params.method === "email" && !params.oobCode)}
           loading={verifyLoading}
           accessibilityLabel="Verify and sign in"
           testID="verify-button"

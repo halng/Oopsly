@@ -12,7 +12,12 @@ import { updateProfile } from "@/services/ProfileService";
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
 jest.mock("expo-router", () => ({ useRouter: () => ({ push: mockPush, replace: mockReplace }) }));
-jest.mock("@/services/FirebaseAuthService", () => ({ FirebaseAuthService: { sendEmailLink: jest.fn() } }));
+jest.mock("@/services/FirebaseAuthService", () => ({
+  FirebaseAuthService: {
+    sendEmailLink: jest.fn(),
+    startPhoneVerification: jest.fn(),
+  },
+}));
 jest.mock("@/services/ProfileService", () => ({ updateProfile: jest.fn() }));
 
 describe("Firebase onboarding", () => {
@@ -31,6 +36,20 @@ describe("Firebase onboarding", () => {
     render(<FirebaseLoginScreen />);
     fireEvent.press(screen.getByTestId("login-method-phone"));
     expect(screen.getByTestId("login-identifier").props.keyboardType).toBe("phone-pad");
+  });
+
+  it("starts SMS verification before opening phone code entry", async () => {
+    (FirebaseAuthService.startPhoneVerification as jest.Mock).mockResolvedValue({
+      sessionInfo: "firebase-phone-session",
+    });
+    render(<FirebaseLoginScreen />);
+    fireEvent.press(screen.getByTestId("login-method-phone"));
+    fireEvent.changeText(screen.getByTestId("login-identifier"), "+15551234567");
+    fireEvent.press(screen.getByTestId("send-otp-button"));
+    await waitFor(() => expect(FirebaseAuthService.startPhoneVerification).toHaveBeenCalledWith("+15551234567"));
+    expect(mockPush).toHaveBeenCalledWith(expect.objectContaining({
+      params: expect.objectContaining({ sessionInfo: "firebase-phone-session" }),
+    }));
   });
 
   it("saves basic profile information", async () => {
