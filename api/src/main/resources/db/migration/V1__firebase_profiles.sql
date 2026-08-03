@@ -15,6 +15,8 @@
 --
 -- Baseline schema for installations that did not previously use Flyway.
 
+BEGIN;
+
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,
@@ -29,7 +31,11 @@ CREATE TABLE IF NOT EXISTS users (
     age INTEGER,
     daily_streak INTEGER DEFAULT 0,
     total_xp INTEGER DEFAULT 0,
-    last_reviewed_at TIMESTAMPTZ
+    last_reviewed_at TIMESTAMPTZ,
+    firebase_uid VARCHAR(128),
+    phone VARCHAR(32),
+    hobbies VARCHAR(500),
+    onboarding_complete BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS shelves (
@@ -132,7 +138,4 @@ CREATE TABLE IF NOT EXISTS settings (
     user_id UUID NOT NULL UNIQUE REFERENCES users(id)
 );
 
-ALTER TABLE users ADD COLUMN IF NOT EXISTS firebase_uid VARCHAR(128);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(32);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS hobbies VARCHAR(500);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_complete BOOLEAN NOT NULL DEFAULT FALSE;
+COMMIT;

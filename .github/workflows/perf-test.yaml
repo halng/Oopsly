@@ -1,8 +1,14 @@
 name: Performance Test
 
 on:
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
+      release_tag:
+        description: Release tag to test (defaults to the triggering release)
+        required: false
+        type: string
       test_profile:
         description: k6 profile
         required: true
@@ -23,7 +29,8 @@ jobs:
       GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
       GCP_REGION: ${{ vars.GCP_REGION }}
       SERVICE_NAME: oopsly-perf-${{ github.run_id }}
-      TEST_PROFILE: ${{ inputs.test_profile }}
+      TEST_PROFILE: ${{ inputs.test_profile || 'smoke' }}
+      RELEASE_TAG: ${{ inputs.release_tag || github.event.release.tag_name }}
     steps:
       - name: Validate input and GCP settings
         env:
@@ -37,9 +44,12 @@ jobs:
           [ -n "${GCP_PROJECT_ID}" ] || { echo "Missing GCP_PROJECT_ID variable"; exit 1; }
           [ -n "${GCP_REGION}" ] || { echo "Missing GCP_REGION variable"; exit 1; }
           [ -n "${GCP_SERVICE_ACCOUNT_KEY}" ] || { echo "Missing GCP_SERVICE_ACCOUNT_KEY secret"; exit 1; }
+          [ -n "${RELEASE_TAG}" ] || { echo "A release tag is required"; exit 1; }
 
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -82,7 +92,7 @@ jobs:
             -e BASE_URL="${{ steps.resolve_url.outputs.base_url }}" \
             -e TEST_PROFILE="$TEST_PROFILE" \
             --summary-export /tmp/perf-reports/summary.json \
-            api/src/test/perf/k6/backend.js
+            api/src/test/java/com/app/oopsly/api/perf/backend.js
 
       - name: Upload perf report
         if: always()

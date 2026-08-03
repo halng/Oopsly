@@ -14,5 +14,9 @@
 -- limitations under the License.
 --
 
+BEGIN;
+
 CREATE UNIQUE INDEX IF NOT EXISTS uk_users_firebase_uid ON users(firebase_uid);
 CREATE UNIQUE INDEX IF NOT EXISTS uk_users_phone ON users(phone);
+
+COMMIT;

@@ -1,0 +1,62 @@
+# Copyright 2026 Hao Nguyen Tan
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied.
+
+name: Build Release Artifacts
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "9"
+          run_install: false
+          package_json_file: ui/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+      - name: Build web release
+        working-directory: ui
+        env:
+          EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+        run: |
+          [ -n "$EXPO_PUBLIC_FIREBASE_API_KEY" ] || { echo "Missing FIREBASE_API_KEY secret"; exit 1; }
+          pnpm install --frozen-lockfile
+          pnpm exec expo export --platform web
+          cd dist && zip -r "../../oopsly-web-${{ github.event.release.tag_name }}.zip" .
+      - name: Attach web artifact to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "oopsly-web-${{ github.event.release.tag_name }}.zip" --clobber
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v5
+      - name: Publish backend image
+        working-directory: api
+        env:
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_PASSWORD: ${{ github.token }}
+        run: |
+          echo "$REGISTRY_PASSWORD" | docker login ghcr.io -u "$REGISTRY_USER" --password-stdin
+          ./gradlew bootBuildImage --imageName="ghcr.io/${GITHUB_REPOSITORY,,}/api:${{ github.event.release.tag_name }}"
+          docker push "ghcr.io/${GITHUB_REPOSITORY,,}/api:${{ github.event.release.tag_name }}"
