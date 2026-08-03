@@ -53,7 +53,7 @@ describe("Firebase onboarding", () => {
     (FirebaseAuthService.startPhoneVerification as jest.Mock).mockResolvedValue({
       sessionInfo: "firebase-phone-session",
     });
-    render(<FirebaseLoginScreen />);
+    render(<LoginScreen />);
     fireEvent.press(screen.getByTestId("login-method-phone"));
     fireEvent.changeText(screen.getByTestId("login-identifier"), "+15551234567");
     fireEvent.press(screen.getByTestId("send-otp-button"));
