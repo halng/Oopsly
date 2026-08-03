@@ -2,12 +2,6 @@
 
 ## Continuous integration
 
-### Unified (legacy)
-
-Workflow: [`.github/workflows/ci.yaml`](../../.github/workflows/ci.yaml) → [`.github/workflows/ci.sh`](../../.github/workflows/ci.sh)
-
-Runs API + UI via one shell script. Still available.
-
 ### Split pipelines (native GitHub Actions)
 
 | Pipeline | Workflow | Jobs |
@@ -27,17 +21,19 @@ Workflow: [`.github/workflows/cd.yaml`](../../.github/workflows/cd.yaml) → [`.
 
 - API image published to **GHCR** as `ghcr.io/halng/oopsly-api` via Spring Boot **`bootBuildImage`** (no checked-in `Dockerfile` required for that path)
 - UI Android builds via **EAS** (`EXPO_TOKEN`): production-oriented on `main`, development on `release/*`
+- UI web export via `expo export --platform web`, followed by deployment to **Firebase Hosting**
 
-## SonarQube / SonarCloud
+Firebase Hosting deployment requires:
 
-Workflow: [`.github/workflows/sonar-qube.yaml`](../../.github/workflows/sonar-qube.yaml)
+| Name | Kind | Purpose |
+| --- | --- | --- |
+| `FIREBASE_SERVICE_ACCOUNT` | Secret | JSON credentials consumed by `action-hosting-deploy` |
+| `FIREBASE_API_KEY` | Secret | Firebase web key injected during Expo export |
+| `FIREBASE_PROJECT_ID` | Repository variable | Hosting project selected by the deploy action |
+| `EXPO_PUBLIC_BACKEND_API` | Repository variable | Production API origin embedded in the web build |
 
-| Job | How |
-| --- | --- |
-| `sonarqube-api` | `./gradlew build sonar` in `api/` |
-| `sonarqube-ui` | `pnpm test:coverage` then `SonarSource/sonarqube-scan-action` with `projectBaseDir: ui` |
-
-UI config: [`ui/sonar-project.properties`](../../ui/sonar-project.properties) (LCOV at `coverage/lcov.info` relative to `ui/`).
+The hosting settings live in `firebase.json`; the exported static files are read from
+`ui/dist`, and unknown routes rewrite to `index.html` for Expo Router.
 
 ## Secrets
 
@@ -46,9 +42,8 @@ UI config: [`ui/sonar-project.properties`](../../ui/sonar-project.properties) (L
 | `SNYK_TOKEN` | CI security scan |
 | `GITHUB_TOKEN` | Actions / GHCR |
 | `EXPO_TOKEN` | EAS builds |
-| `SONAR_TOKEN_API` | SonarCloud API project |
-| `SONAR_TOKEN_UI` | SonarCloud UI project |
+| `FIREBASE_API_KEY` | Firebase web export |
+| `FIREBASE_SERVICE_ACCOUNT` | Firebase Hosting deployment |
 
-## QA agent workflow
-
-[`.github/workflows/qa-agent.yml`](../../.github/workflows/qa-agent.yml) — label-driven automation. It may reference docs paths that are not yet present; treat those as optional until wired.
+Static Sonar configuration remains in the packages, but there is currently no dedicated
+Sonar GitHub Actions workflow in this repository.

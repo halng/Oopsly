@@ -36,6 +36,7 @@ This library follows the [Diátaxis](https://diataxis.fr/) framework: tutorials 
 | [Contribute](./how-to/contribute.md) | Branching, commits, checks before PR |
 | [Run the API](./how-to/run-api.md) | Boot Spring Boot locally or in Docker |
 | [Run the UI](./how-to/run-ui.md) | Start Expo / React Native client |
+| [Configure Firebase authentication](./how-to/configure-firebase-auth.md) | Configure passwordless email/phone auth for UI and API |
 | [Troubleshoot](./how-to/troubleshoot.md) | Common local-dev failures |
 
 ---
@@ -62,7 +63,7 @@ This library follows the [Diátaxis](https://diataxis.fr/) framework: tutorials 
 | -------- | ----------- |
 | [Architecture](./explanation/architecture.md) | Layers, stack, deployment shape |
 | [Data model](./explanation/data-model.md) | Entities and relationships |
-| [Authentication](./explanation/authentication.md) | OTP → JWT flow |
+| [Authentication](./explanation/authentication.md) | Firebase passwordless sign-in and API token verification |
 | [SRS / FSRS](./explanation/srs.md) | Spaced repetition design |
 | [Milestone 1](./architecture/MILESTONE_1.md) | First shippable product slice |
 
@@ -80,7 +81,8 @@ This library follows the [Diátaxis](https://diataxis.fr/) framework: tutorials 
 | [Theme & colors](./design/theme.md) | Visual tokens |
 | [Features (BDD / OKRs)](./features/README.md) | Milestone feature packs |
 | [EdTech research](./EdTech_RESEARCH.md) | Market & cognitive-science background |
-| [CI / CD](./operations/ci-cd.md) | GitHub Actions, GHCR, EAS |
+| [CI / CD](./operations/ci-cd.md) | GitHub Actions, GHCR, EAS, Firebase Hosting |
+| [Performance tests](../performance/README.md) | Run k6 smoke, flaky, stress, and spike profiles |
 | [API package README](../api/README.md) | Thin backend entry |
 | [UI package README](../ui/README.md) | Thin frontend entry |
 

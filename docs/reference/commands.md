@@ -35,15 +35,25 @@
 | `./gradlew composeUp` | Start Postgres + Redis |
 | `./gradlew composeDown` | Stop and remove volumes |
 | `./gradlew bootRun -Pprofile=test` | Run API loading `.env.test` |
+| `./gradlew bootRun -Pprofile=perf` | Run API with authentication bypassed for isolated performance testing |
 
-## CI
+## Performance (`repository root`)
+
+Start the API with the `perf` profile, then select a k6 scenario:
 
 ```bash
-./.github/workflows/ci.sh [--skip-security] [--with-e2e]  # unified local script (legacy)
+k6 run -e TEST_PROFILE=smoke performance/k6/backend.js
+k6 run -e TEST_PROFILE=flaky performance/k6/backend.js
+k6 run -e TEST_PROFILE=stress performance/k6/backend.js
+k6 run -e TEST_PROFILE=spike performance/k6/backend.js
 ```
+
+Override the target with `-e BASE_URL=https://example/api/v1/oopsly`. Never expose a
+`skipAuth` deployment to untrusted networks.
 
 GitHub Actions (native steps, path-filtered):
 
 - [`.github/workflows/ci-api.yaml`](../../.github/workflows/ci-api.yaml) — API
 - [`.github/workflows/ci-ui.yaml`](../../.github/workflows/ci-ui.yaml) — UI lint/Jest + headless Cypress
-- [`.github/workflows/ci.yaml`](../../.github/workflows/ci.yaml) — unified script (legacy)
+- [`.github/workflows/codeql-snyk.yaml`](../../.github/workflows/codeql-snyk.yaml) — security analysis
+- [`.github/workflows/cd.yaml`](../../.github/workflows/cd.yaml) — API image, EAS artifacts, and Firebase Hosting
