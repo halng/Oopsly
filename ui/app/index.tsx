@@ -56,7 +56,7 @@ export default function WelcomeScreen() {
 
   const handleNext = () => {
     if (currentIndex === ONBOARDING_DATA.length - 1) {
-      router.push('/onboard');
+      router.push('/firebase-login');
     } else {
       setCurrentIndex(prev => prev + 1);
     }
@@ -70,7 +70,7 @@ export default function WelcomeScreen() {
 
   const handleSkip = () => {
     logger.info('User skipped onboarding');
-    router.push('/onboard');
+    router.push('/firebase-login');
   };
 
   const currentSlide = ONBOARDING_DATA[currentIndex];

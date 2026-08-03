@@ -37,6 +37,10 @@ export interface UserProfileRes {
   displayName: string;
   bio: string | null;
   age: number | null;
+  email: string | null;
+  phone: string | null;
+  hobbies: string | null;
+  onboardingComplete: boolean;
   settings: SettingsRes;
 }
 
@@ -44,6 +48,8 @@ export interface UpdateProfileReq {
   displayName: string;
   bio?: string;
   age?: number;
+  phone?: string;
+  hobbies?: string;
 }
 
 export interface UpdateSettingsReq {

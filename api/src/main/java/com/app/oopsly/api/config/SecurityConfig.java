@@ -77,7 +77,9 @@ public class SecurityConfig {
                                                                                 + " resource."))))
                 .authorizeHttpRequests(
                         req ->
-                                req.requestMatchers(
+                                req.requestMatchers(appConfig.getFeatures().isSkipAuth() ? "/**" : "/__no_match__")
+                                        .permitAll()
+                                        .requestMatchers(
                                                 "/otp/**",
                                                 "/actuator/health",
                                                 "**/refresh-token",

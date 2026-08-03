@@ -63,6 +63,8 @@ public class AppConfig {
     public static class Features {
         private boolean authWithGoogle;
         private boolean authWithJwt;
+        private boolean authWithFirebase;
+        private boolean skipAuth;
     }
 
     public boolean isTestEmail(String email) {

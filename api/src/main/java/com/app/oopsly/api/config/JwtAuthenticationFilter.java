@@ -17,6 +17,8 @@
 package com.app.oopsly.api.config;
 
 import com.app.oopsly.api.util.JwtUtils;
+import com.app.oopsly.api.entity.User;
+import com.app.oopsly.api.repository.UserRepository;
 import com.app.oopsly.api.viewmodel.ApiRes;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -25,6 +27,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import com.google.firebase.auth.FirebaseToken;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -42,6 +45,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtUtils jwtUtils;
     private final ObjectMapper objectMapper;
+    private final FirebaseTokenVerifier firebaseTokenVerifier;
+    private final UserRepository userRepository;
+    private final AppConfig appConfig;
 
     @Override
     protected void doFilterInternal(
@@ -64,9 +70,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String jwt = authHeader.substring(7);
         try {
+            if (appConfig != null && appConfig.getFeatures().isSkipAuth()) {
+                filterChain.doFilter(request, response);
+                return;
+            }
             LOGGER.info("Attempting to authenticate using jwt");
-            String userId = jwtUtils.extractUserId(jwt);
-            String userRole = jwtUtils.extractUserRole(jwt);
+            String userId;
+            String userRole;
+            if (appConfig != null && appConfig.getFeatures().isAuthWithFirebase()) {
+                FirebaseToken token = firebaseTokenVerifier.verify(jwt);
+                User user =
+                        userRepository
+                                .findByFirebaseUid(token.getUid())
+                                .orElseGet(() -> provisionFirebaseUser(token));
+                userId = user.getId().toString();
+                userRole = "ROLE_USER";
+            } else {
+                userId = jwtUtils.extractUserId(jwt);
+                userRole = jwtUtils.extractUserRole(jwt);
+            }
 
             if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
@@ -86,6 +108,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } finally {
             MDC.clear();
         }
+    }
+
+    private User provisionFirebaseUser(FirebaseToken token) {
+        String email = token.getEmail();
+        if (email == null || email.isBlank()) {
+            email = token.getUid() + "@phone.firebase";
+        }
+        final String resolvedEmail = email;
+        return userRepository
+                .findByEmail(resolvedEmail)
+                .map(
+                        existing -> {
+                            existing.setFirebaseUid(token.getUid());
+                            return userRepository.save(existing);
+                        })
+                .orElseGet(
+                        () -> {
+                            User user =
+                                    User.builder()
+                                            .firebaseUid(token.getUid())
+                                        .email(resolvedEmail)
+                                            .phone(
+                                                    (String)
+                                                            token.getClaims()
+                                                                    .get("phone_number"))
+                                            .displayName(token.getName())
+                                            .build();
+                            return userRepository.save(user);
+                        });
     }
 
     private void sendErrorResponse(HttpServletResponse response, String message)

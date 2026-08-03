@@ -16,4 +16,16 @@
 
 package com.app.oopsly.api.viewmodel;
 
-public record UserProfileRes(String displayName, String bio, Integer age, SettingsRes settings) {}
+public record UserProfileRes(
+        String displayName,
+        String bio,
+        Integer age,
+        String email,
+        String phone,
+        String hobbies,
+        boolean onboardingComplete,
+        SettingsRes settings) {
+    public UserProfileRes(String displayName, String bio, Integer age, SettingsRes settings) {
+        this(displayName, bio, age, null, null, null, false, settings);
+    }
+}

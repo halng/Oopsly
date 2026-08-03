@@ -33,6 +33,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
+  useLocalSearchParams: jest.fn(() => ({})),
 }));
 
 jest.mock('@/services/AuthService', () => ({

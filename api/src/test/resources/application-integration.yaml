@@ -9,6 +9,7 @@ app:
   features:
     authWithGoogle: false
     authWithJwt: true
+    authWithFirebase: false
   test-emails:
     - integration@oopsly.com
     - integration2@oopsly.com
@@ -23,6 +24,8 @@ server:
     context-path: /api/${server.active.version}/oopsly
 
 spring:
+  flyway:
+    enabled: false
   main:
     allow-bean-definition-overriding: true
   cache:

@@ -30,6 +30,8 @@ import org.springframework.stereotype.Repository;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
 
+    Optional<User> findByFirebaseUid(String firebaseUid);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM users u WHERE u.id = :id")
     Optional<User> findByIdWithLock(@Param("id") UUID id);

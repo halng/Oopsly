@@ -85,6 +85,8 @@ export default function ProfileScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
+  const [phone, setPhone] = useState("");
+  const [hobbies, setHobbies] = useState("");
   const [saving, setSaving] = useState(false);
 
   const loadProfile = () => {
@@ -96,6 +98,8 @@ export default function ProfileScreen() {
           setProfile(res.data);
           setDisplayName(res.data.displayName ?? "");
           setBio(res.data.bio ?? "");
+          setPhone(res.data.phone ?? "");
+          setHobbies(res.data.hobbies ?? "");
         } else {
           setError(res.message ?? "Failed to load profile");
         }
@@ -114,6 +118,8 @@ export default function ProfileScreen() {
   const handleCancelEdit = () => {
     setDisplayName(profile?.displayName ?? "");
     setBio(profile?.bio ?? "");
+    setPhone(profile?.phone ?? "");
+    setHobbies(profile?.hobbies ?? "");
     setIsEditing(false);
     setError(null);
   };
@@ -130,12 +136,16 @@ export default function ProfileScreen() {
       displayName: displayName.trim(),
       bio: bio.trim() || undefined,
       age: profile?.age ?? undefined,
+      phone: phone.trim() || undefined,
+      hobbies: hobbies.trim() || undefined,
     })
       .then((res) => {
         if (res.isSuccess && res.data) {
           setProfile(res.data);
           setDisplayName(res.data.displayName ?? "");
           setBio(res.data.bio ?? "");
+          setPhone(res.data.phone ?? "");
+          setHobbies(res.data.hobbies ?? "");
           setIsEditing(false);
           setSuccess("Profile updated");
         } else {
@@ -165,7 +175,7 @@ export default function ProfileScreen() {
   const completionScore = [
     displayName.trim(),
     bio.trim(),
-    (userEmail ?? "").trim(),
+    (profile?.email ?? userEmail ?? "").trim(),
   ].filter(Boolean).length;
   const completionPercent = Math.round((completionScore / 3) * 100);
 
@@ -283,7 +293,7 @@ export default function ProfileScreen() {
             style={{ fontSize: 16, color: uiTokens.text.secondary }}
             testID="profile-email"
           >
-            {userEmail || "—"}
+            {profile?.email || userEmail || "—"}
           </Text>
 
           <View style={{ marginTop: 24 }}>
@@ -334,6 +344,16 @@ export default function ProfileScreen() {
                 {profile?.bio ?? "—"}
               </Text>
             )}
+          </View>
+
+          <View style={{ marginTop: 24 }}>
+            <FieldLabel icon={<Mail size={16} color={uiTokens.text.muted} />}>Phone</FieldLabel>
+            {isEditing ? <TextInput style={inputStyle} value={phone} onChangeText={setPhone} keyboardType="phone-pad" testID="phone-input" /> : <Text style={{ fontSize: 16, color: uiTokens.text.secondary }} testID="profile-phone">{profile?.phone ?? "—"}</Text>}
+          </View>
+
+          <View style={{ marginTop: 24 }}>
+            <FieldLabel icon={<BookOpen size={16} color={uiTokens.text.muted} />}>Hobbies</FieldLabel>
+            {isEditing ? <TextInput style={inputStyle} value={hobbies} onChangeText={setHobbies} maxLength={500} testID="hobbies-input" /> : <Text style={{ fontSize: 16, color: uiTokens.text.secondary }} testID="profile-hobbies">{profile?.hobbies ?? "—"}</Text>}
           </View>
         </View>
 

@@ -15,7 +15,9 @@ app:
     client-id: ${GOOGLE_CLIENT_ID:changeme}
   features:
     authWithGoogle: false
-    authWithJwt: true
+    authWithJwt: false
+    authWithFirebase: true
+    skipAuth: false
 
 springdoc:
   api-docs:
@@ -54,9 +56,13 @@ spring:
       port: ${REDIS_PORT:6379}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     generate-ddl: false
     show-sql: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
   mail:
     host: smtp.gmail.com
     port: 587

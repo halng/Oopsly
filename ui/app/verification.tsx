@@ -22,7 +22,7 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { AuthService } from "@/services/AuthService";
 import { useAuthStore } from "@/store";
 import { ApiResponse } from "@/types/ApiRes";
@@ -31,9 +31,11 @@ import AppButton from "@/components/common/AppButton";
 import FeedbackMessage from "@/components/common/FeedbackMessage";
 import { uiTokens } from "@/constants/uiTokens";
 import { useResponsiveLayout } from "@/utils/responsiveLayout";
+import { FirebaseAuthService } from "@/services/FirebaseAuthService";
 
 export default function OTPVerification() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ method?: string; identifier?: string; oobCode?: string; sessionInfo?: string }>();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(120);
   const [isResendActive, setIsResendActive] = useState(false);
@@ -109,7 +111,11 @@ export default function OTPVerification() {
     setResendBusy(true);
     setVerifyError(null);
     try {
-      await AuthService.CreateOTP(userEmail);
+      if (params.method === "email" && params.identifier) {
+        await FirebaseAuthService.sendEmailLink(params.identifier);
+      } else if (userEmail) {
+        await AuthService.CreateOTP(userEmail);
+      }
       setOtp(["", "", "", "", "", ""]);
       startTimer();
       inputRefs.current[0]?.focus();
@@ -121,6 +127,20 @@ export default function OTPVerification() {
   };
 
   const handleVerify = async () => {
+    if (params.method) {
+      setVerifyLoading(true);
+      setVerifyError(null);
+      try {
+        const result = params.method === "email"
+          ? await FirebaseAuthService.verifyEmailLink(params.identifier ?? "", params.oobCode ?? otp.join(""))
+          : await FirebaseAuthService.verifyPhoneCode(params.sessionInfo ?? "", otp.join(""));
+        useAuthStore.getState().setCredentials(params.identifier ?? "", result.idToken, result.refreshToken);
+        router.replace(result.isNewUser ? "/profile-setup" : "/home");
+      } catch (e) {
+        setVerifyError(e instanceof Error ? e.message : "Firebase verification failed");
+      } finally { setVerifyLoading(false); }
+      return;
+    }
     if (!userEmail) {
       setVerifyError("Missing email. Go back and enter your email.");
       return;
@@ -161,7 +181,7 @@ export default function OTPVerification() {
         style={{ color: uiTokens.text.primary, fontSize: 24, fontWeight: "700" }}
         testID="title-text"
       >
-        Verify your email
+        {`Verify your ${params.method ?? "email"}`}
       </Text>
       <Text
         style={{ color: uiTokens.text.secondary, marginTop: 8 }}
@@ -172,7 +192,7 @@ export default function OTPVerification() {
           style={{ color: uiTokens.text.primary, fontWeight: "600" }}
           testID="user-email-display"
         >
-          {userEmail || "your inbox"}
+          {params.identifier || userEmail || "your inbox"}
         </Text>
       </Text>
 

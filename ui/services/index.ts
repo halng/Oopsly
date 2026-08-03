@@ -20,6 +20,7 @@ import { useAuthStore } from "@/store";
 import { Logger } from "@/utils";
 import { Platform } from "react-native";
 import { ulid } from "ulid";
+import { FirebaseAuthService } from "./FirebaseAuthService";
 
 const logger = Logger.extend("apiClient");
 const XRequestIdHeader = "X-Request-ID";
@@ -58,7 +59,7 @@ const apiClient = axios.create({
 
 // Request interceptor
 apiClient.interceptors.request.use(
-  (config) => {
+  async (config) => {
     let requestId = ulid();
     config.headers.set(XRequestIdHeader, requestId);
     config.headers.set(XPlatformHeader, Platform.OS);
@@ -85,7 +86,8 @@ apiClient.interceptors.request.use(
       return config;
     }
 
-    const { accessToken } = useAuthStore.getState();
+    const firebaseToken = await FirebaseAuthService.getIdToken();
+    const accessToken = firebaseToken ?? useAuthStore.getState().accessToken;
     if (accessToken) {
       config.headers.set("Authorization", `Bearer ${accessToken}`);
       logger.debug("Added Authorization header");

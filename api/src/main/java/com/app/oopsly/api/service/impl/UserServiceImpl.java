@@ -150,7 +150,14 @@ public class UserServiceImpl implements UserService {
 
         UserProfileRes profileRes =
                 new UserProfileRes(
-                        user.getDisplayName(), user.getBio(), user.getAge(), settingsRes);
+                        user.getDisplayName(),
+                        user.getBio(),
+                        user.getAge(),
+                        user.getEmail(),
+                        user.getPhone(),
+                        user.getHobbies(),
+                        user.isOnboardingComplete(),
+                        settingsRes);
 
         return ApiRes.ok("Profile retrieved successfully", profileRes);
     }
@@ -178,6 +185,9 @@ public class UserServiceImpl implements UserService {
         user.setDisplayName(request.displayName());
         user.setBio(request.bio());
         user.setAge(request.age());
+        user.setHobbies(request.hobbies());
+        user.setPhone(request.phone());
+        user.setOnboardingComplete(true);
         userRepository.save(user);
 
         // Create default setting if not exists

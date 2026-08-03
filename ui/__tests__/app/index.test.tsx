@@ -105,7 +105,7 @@ describe('WelcomeScreen', () => {
     render(<WelcomeScreen />);
     
     fireEvent.press(screen.getByTestId('skip-button'));
-    expect(mockPush).toHaveBeenCalledWith('/onboard');
+    expect(mockPush).toHaveBeenCalledWith('/firebase-login');
   });
 
   it('changes button to "Get Started" on the last slide and navigates', () => {
@@ -123,7 +123,7 @@ describe('WelcomeScreen', () => {
 
     // Click it
     fireEvent.press(nextButton);
-    expect(mockPush).toHaveBeenCalledWith('/onboard');
+    expect(mockPush).toHaveBeenCalledWith('/firebase-login');
   });
 
   it('renders desktop layout when isDesktop is true', () => {

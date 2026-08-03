@@ -38,6 +38,19 @@ public class User extends Audit {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(name = "firebase_uid", unique = true, length = 128)
+    private String firebaseUid;
+
+    @Column(unique = true, length = 32)
+    private String phone;
+
+    @Column(length = 500)
+    private String hobbies;
+
+    @Column(name = "onboarding_complete", nullable = false)
+    @Builder.Default
+    private boolean onboardingComplete = false;
+
     private String pictureUrl;
 
     @Column(name = "display_name", length = 50)
