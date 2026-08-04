@@ -14,5 +14,5 @@
  *    limitations under the License.
  */
 
-export const AUTH_METHOD_EMAIL = "email";
-export const AUTH_METHOD_PHONE = "phone";
+export const AUTH_METHOD_EMAIL = "email" as const;
+export const AUTH_METHOD_PHONE = "phone" as const;

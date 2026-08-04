@@ -37,8 +37,7 @@ class PerfSecurityConfigTest {
     @Test
     void givenPerfProfile_whenSecurityChainBuilt_thenFirebaseAuthenticationIsConfigured()
             throws Exception {
-        FirebaseAuthenticationFilter firebaseAuthFilter =
-                mock(FirebaseAuthenticationFilter.class);
+        FirebaseAuthenticationFilter firebaseAuthFilter = mock(FirebaseAuthenticationFilter.class);
         PerfSecurityConfig config = new PerfSecurityConfig(firebaseAuthFilter);
         HttpSecurity httpSecurity = mock(HttpSecurity.class, RETURNS_DEEP_STUBS);
         when(httpSecurity.csrf(any())).thenReturn(httpSecurity);
