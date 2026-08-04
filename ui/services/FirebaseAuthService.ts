@@ -5,12 +5,55 @@
  */
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 import { useAuthStore } from "@/store";
 
 const API_KEY = process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? "";
 const PENDING_EMAIL_KEY = "firebase-pending-email";
 const identityUrl = (method: string) =>
   `https://identitytoolkit.googleapis.com/v1/accounts:${method}?key=${API_KEY}`;
+const recaptchaParamsUrl = () =>
+  `https://identitytoolkit.googleapis.com/v1/recaptchaParams?key=${API_KEY}`;
+
+type RecaptchaApi = {
+  execute(widgetId: number): Promise<string>;
+  render(container: HTMLElement, options: { sitekey: string; size: "invisible" }): number;
+};
+
+async function getWebRecaptchaToken() {
+  if (Platform.OS !== "web" || typeof document === "undefined") {
+    throw new Error("Phone sign-in requires native Firebase app verification on this platform");
+  }
+  const paramsResponse = await fetch(recaptchaParamsUrl());
+  const params = await paramsResponse.json();
+  if (!paramsResponse.ok || !params.recaptchaSiteKey) {
+    throw new Error(params?.error?.message ?? "Could not initialize phone app verification");
+  }
+
+  if (!(globalThis as unknown as { grecaptcha?: RecaptchaApi }).grecaptcha) {
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://www.google.com/recaptcha/api.js?render=explicit";
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Could not load phone app verification"));
+      document.head.appendChild(script);
+    });
+  }
+
+  const recaptcha = (globalThis as unknown as { grecaptcha: RecaptchaApi }).grecaptcha;
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  try {
+    const widgetId = recaptcha.render(container, {
+      sitekey: params.recaptchaSiteKey,
+      size: "invisible",
+    });
+    return await recaptcha.execute(widgetId);
+  } finally {
+    container.remove();
+  }
+}
 
 type FirebaseSession = {
   idToken: string;
@@ -66,10 +109,14 @@ export const FirebaseAuthService = {
   getPendingEmail() {
     return AsyncStorage.getItem(PENDING_EMAIL_KEY);
   },
-  startPhoneVerification(phoneNumber: string) {
-    // Firebase validates the platform (reCAPTCHA on web, APNs/Play Integrity on
-    // native) for this request and returns the session needed to verify the SMS.
-    return firebaseRequest<{ sessionInfo: string }>("sendVerificationCode", { phoneNumber });
+  async startPhoneVerification(phoneNumber: string) {
+    const recaptchaToken = await getWebRecaptchaToken();
+    return firebaseRequest<{ sessionInfo: string }>("sendVerificationCode", {
+      phoneNumber,
+      recaptchaToken,
+      recaptchaVersion: "RECAPTCHA_V2",
+      clientType: "CLIENT_TYPE_WEB",
+    });
   },
   async verifyPhoneCode(sessionInfo: string, code: string) {
     session = await firebaseRequest<FirebaseSession>("signInWithPhoneNumber", { sessionInfo, code });
