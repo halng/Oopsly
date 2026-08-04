@@ -22,7 +22,7 @@ type RecaptchaApi = {
 
 async function getWebRecaptchaToken() {
   if (Platform.OS !== "web" || typeof document === "undefined") {
-    throw new Error("Phone sign-in requires native Firebase app verification on this platform");
+    throw new Error("Phone sign-in is currently supported on web only. Native builds require Firebase app verification (APNs/Play Integrity) via the native SDK.");
   }
   const paramsResponse = await fetch(recaptchaParamsUrl());
   const params = await paramsResponse.json();
