@@ -15,6 +15,7 @@
  */
 
 import http from "k6/http";
+import { randomUUID } from "k6/crypto";
 import { check, sleep } from "k6";
 import { profiles, thresholds } from "./profiles.js";
 
@@ -25,8 +26,7 @@ if (!baseUrl) throw new Error("BASE_URL is required");
 http.setResponseCallback(http.expectedStatuses({ min: 200, max: 499 }));
 
 export const options = { ...profiles[profile], thresholds };
-const id = "00000000-0000-0000-0000-000000000000";
-const endpoints = [
+const endpoints = (id) => [
   ["GET", "/actuator/health"], ["GET", "/users/validate"],
   ["POST", "/users/refresh-token"], ["POST", "/users/logout"],
   ["POST", "/otp"], ["POST", "/otp/validate"],
@@ -55,7 +55,8 @@ const endpoints = [
 ];
 
 export default function () {
-  for (const [method, path] of endpoints) {
+  const iterationId = randomUUID();
+  for (const [method, path] of endpoints(iterationId)) {
     const response = http.request(method, `${baseUrl}${path}`, "{}", {
       headers: { "Content-Type": "application/json" }, tags: { endpoint: `${method} ${path}` },
     });

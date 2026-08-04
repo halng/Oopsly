@@ -63,7 +63,7 @@ jobs:
           URL=$(gcloud run services describe "$SERVICE" --project "$GCP_PROJECT_ID" --region "$GCP_REGION" --format='value(status.url)')
           echo "url=$URL" >> "$GITHUB_OUTPUT"
 
-  deploy:
+  deploy-ui:
     needs: deploy-api
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest

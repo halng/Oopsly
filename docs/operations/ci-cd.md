@@ -37,8 +37,8 @@ The hosting settings live in `firebase.json`; the exported static files are read
 
 Manual workflows:
 
-- [`.github/workflows/manual-deploy.yaml`](../../.github/workflows/manual-deploy.yaml) runs only by `workflow_dispatch`, requires a `platform` input (`web`, `ios`, `android`), validates required secrets/variables, checks backend health, then deploys the selected platform.
-- [`.github/workflows/perf-test.yaml`](../../.github/workflows/perf-test.yaml) runs only by `workflow_dispatch`, takes a `test_profile` input (`smoke`, `flaky`, `stress`, `spike`), deploys API to Cloud Run with `SPRING_PROFILES_ACTIVE=perf`, runs k6 from `api/src/test/perf/k6`, uploads report artifacts, and deletes the temporary Cloud Run service.
+- [`.github/workflows/deploy.yaml`](../../.github/workflows/deploy.yaml) runs only by `workflow_dispatch`, requires release tag, environment (`stg`, `perf`, `prod`), and platform (`web`, `ios`, `android`) inputs, deploys the tagged API image, checks backend health, then deploys the selected UI artifact.
+- [`.github/workflows/perf-test.yaml`](../../.github/workflows/perf-test.yaml) runs for published releases or by `workflow_dispatch`, accepts a release tag and test profile (`smoke`, `flaky`, `stress`, `spike`), deploys API to Cloud Run with `SPRING_PROFILES_ACTIVE=perf`, runs k6 from `api/src/test/java/com/app/oopsly/api/perf`, uploads report artifacts, and deletes the temporary Cloud Run service.
 
 ## Secrets
 

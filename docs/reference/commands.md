@@ -54,5 +54,5 @@ GitHub Actions (native steps, path-filtered):
 - [`.github/workflows/ci-ui.yaml`](../../.github/workflows/ci-ui.yaml) — UI lint/Jest + headless Cypress
 - [`.github/workflows/codeql-snyk.yaml`](../../.github/workflows/codeql-snyk.yaml) — security analysis
 - [`.github/workflows/cd.yaml`](../../.github/workflows/cd.yaml) — API image, EAS artifacts, and Firebase Hosting
-- [`.github/workflows/manual-deploy.yaml`](../../.github/workflows/manual-deploy.yaml) — manual deploy by platform with prerequisite and health checks
-- [`.github/workflows/perf-test.yaml`](../../.github/workflows/perf-test.yaml) — manual GCP deploy, k6 run, report upload, cleanup
+- [`.github/workflows/deploy.yaml`](../../.github/workflows/deploy.yaml) — tagged release deployment by environment and platform, with prerequisite and health checks
+- [`.github/workflows/perf-test.yaml`](../../.github/workflows/perf-test.yaml) — release/manual GCP deploy, k6 run, report upload, cleanup
