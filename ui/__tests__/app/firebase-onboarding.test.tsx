@@ -73,4 +73,21 @@ describe("Firebase onboarding", () => {
     await waitFor(() => expect(updateProfile).toHaveBeenCalledWith(expect.objectContaining({ displayName: "Ada", hobbies: "Reading" })));
     expect(mockReplace).toHaveBeenCalledWith("/home");
   });
+
+  it("shows error when email link sending fails", async () => {
+    (FirebaseAuthService.sendEmailLink as jest.Mock).mockRejectedValue(new Error("Network error"));
+    render(<LoginScreen />);
+    fireEvent.changeText(screen.getByTestId("login-identifier"), "learner@example.com");
+    fireEvent.press(screen.getByTestId("send-otp-button"));
+    await waitFor(() => expect(screen.getByTestId("login-error")).toBeTruthy());
+  });
+
+  it("shows error when phone verification fails", async () => {
+    (FirebaseAuthService.startPhoneVerification as jest.Mock).mockRejectedValue(new Error("SMS failed"));
+    render(<LoginScreen />);
+    fireEvent.press(screen.getByTestId("login-method-phone"));
+    fireEvent.changeText(screen.getByTestId("login-identifier"), "+15551234567");
+    fireEvent.press(screen.getByTestId("send-otp-button"));
+    await waitFor(() => expect(screen.getByTestId("login-error")).toBeTruthy());
+  });
 });

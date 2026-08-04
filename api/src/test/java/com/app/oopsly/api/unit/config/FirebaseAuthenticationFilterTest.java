@@ -31,6 +31,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -41,6 +42,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -132,5 +134,144 @@ class FirebaseAuthenticationFilterTest {
         verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         verify(writer).write(anyString());
         verifyNoInteractions(filterChain);
+    }
+
+    @Test
+    @DisplayName("Should provision new user when firebase uid not found and email exists")
+    void doFilterInternal_ProvisionUser_ExistingEmail() throws Exception {
+        String idToken = "valid.firebase.token";
+        FirebaseToken token = mock(FirebaseToken.class);
+        UUID userId = UUID.randomUUID();
+        User existingUser = new User();
+        existingUser.setId(userId);
+        existingUser.setEmail("existing@oopsly.com");
+
+        when(request.getHeader("authorization")).thenReturn("Bearer " + idToken);
+        when(firebaseTokenVerifier.verify(idToken)).thenReturn(token);
+        when(token.getUid()).thenReturn("uid-new");
+        when(token.getEmail()).thenReturn("existing@oopsly.com");
+        when(userRepository.findByFirebaseUid("uid-new")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("existing@oopsly.com"))
+                .thenReturn(Optional.of(existingUser));
+        when(userRepository.save(existingUser)).thenReturn(existingUser);
+
+        firebaseAuthenticationFilter.doFilter(request, response, filterChain);
+
+        verify(userRepository).save(existingUser);
+        assertEquals("uid-new", existingUser.getFirebaseUid());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("Should provision brand new user when firebase uid and email not found")
+    void doFilterInternal_ProvisionUser_NewUser() throws Exception {
+        String idToken = "valid.firebase.token";
+        FirebaseToken token = mock(FirebaseToken.class);
+        User savedUser = new User();
+        savedUser.setId(UUID.randomUUID());
+
+        when(request.getHeader("authorization")).thenReturn("Bearer " + idToken);
+        when(firebaseTokenVerifier.verify(idToken)).thenReturn(token);
+        when(token.getUid()).thenReturn("uid-brand-new");
+        when(token.getEmail()).thenReturn("new@oopsly.com");
+        when(token.getName()).thenReturn("New User");
+        when(token.getClaims()).thenReturn(java.util.Map.of());
+        when(userRepository.findByFirebaseUid("uid-brand-new")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("new@oopsly.com")).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        firebaseAuthenticationFilter.doFilter(request, response, filterChain);
+
+        verify(userRepository).save(any(User.class));
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("Should use phone.firebase email when token email is null")
+    void doFilterInternal_ProvisionUser_NullEmail() throws Exception {
+        String idToken = "valid.firebase.token";
+        FirebaseToken token = mock(FirebaseToken.class);
+        User savedUser = new User();
+        savedUser.setId(UUID.randomUUID());
+
+        when(request.getHeader("authorization")).thenReturn("Bearer " + idToken);
+        when(firebaseTokenVerifier.verify(idToken)).thenReturn(token);
+        when(token.getUid()).thenReturn("uid-phone");
+        when(token.getEmail()).thenReturn(null);
+        when(token.getName()).thenReturn("Phone User");
+        when(token.getClaims()).thenReturn(java.util.Map.of("phone_number", "+15551234567"));
+        when(userRepository.findByFirebaseUid("uid-phone")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("uid-phone@phone.firebase")).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        firebaseAuthenticationFilter.doFilter(request, response, filterChain);
+
+        verify(userRepository).findByEmail("uid-phone@phone.firebase");
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("Should use phone.firebase email when token email is blank")
+    void doFilterInternal_ProvisionUser_BlankEmail() throws Exception {
+        String idToken = "valid.firebase.token";
+        FirebaseToken token = mock(FirebaseToken.class);
+        User savedUser = new User();
+        savedUser.setId(UUID.randomUUID());
+
+        when(request.getHeader("authorization")).thenReturn("Bearer " + idToken);
+        when(firebaseTokenVerifier.verify(idToken)).thenReturn(token);
+        when(token.getUid()).thenReturn("uid-blank");
+        when(token.getEmail()).thenReturn("   ");
+        when(token.getName()).thenReturn(null);
+        when(token.getClaims()).thenReturn(java.util.Map.of());
+        when(userRepository.findByFirebaseUid("uid-blank")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("uid-blank@phone.firebase")).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        firebaseAuthenticationFilter.doFilter(request, response, filterChain);
+
+        verify(userRepository).findByEmail("uid-blank@phone.firebase");
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("Should skip error response when response is already committed")
+    void doFilterInternal_ResponseCommitted() throws Exception {
+        when(request.getHeader("authorization")).thenReturn("******");
+        when(firebaseTokenVerifier.verify("bad-token")).thenThrow(new RuntimeException("expired"));
+        when(response.isCommitted()).thenReturn(true);
+
+        firebaseAuthenticationFilter.doFilter(request, response, filterChain);
+
+        verify(response, never()).setStatus(anyInt());
+        verify(response, never()).getWriter();
+        verifyNoInteractions(filterChain);
+    }
+
+    @Test
+    @DisplayName("Should skip authentication when SecurityContext is already set")
+    void doFilterInternal_SecurityContextAlreadySet() throws Exception {
+        String idToken = "valid.firebase.token";
+        FirebaseToken token = mock(FirebaseToken.class);
+        UUID userId = UUID.randomUUID();
+        User user = new User();
+        user.setId(userId);
+        user.setFirebaseUid("uid-1");
+
+        when(request.getHeader("authorization")).thenReturn("Bearer " + idToken);
+        when(firebaseTokenVerifier.verify(idToken)).thenReturn(token);
+        when(token.getUid()).thenReturn("uid-1");
+        when(userRepository.findByFirebaseUid("uid-1")).thenReturn(Optional.of(user));
+
+        UsernamePasswordAuthenticationToken existingAuth =
+                new UsernamePasswordAuthenticationToken("existing-user", null, List.of());
+        SecurityContextHolder.getContext().setAuthentication(existingAuth);
+
+        firebaseAuthenticationFilter.doFilter(request, response, filterChain);
+
+        assertEquals(
+                "existing-user",
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        verify(filterChain).doFilter(request, response);
     }
 }

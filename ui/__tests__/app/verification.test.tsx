@@ -15,8 +15,9 @@
  */
 
 import { AuthService } from '@/services/AuthService';
+import { FirebaseAuthService } from '@/services/FirebaseAuthService';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import OTPVerification from '../../app/verification';
 
@@ -34,6 +35,22 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
   useLocalSearchParams: jest.fn(() => ({})),
+}));
+
+jest.mock('expo-linking', () => ({
+  getInitialURL: jest.fn(() => Promise.resolve(null)),
+  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+  parse: jest.fn((url: string) => ({ queryParams: {} })),
+}));
+
+jest.mock('@/services/FirebaseAuthService', () => ({
+  FirebaseAuthService: {
+    sendEmailLink: jest.fn(),
+    verifyEmailLink: jest.fn(),
+    verifyPhoneCode: jest.fn(),
+    getPendingEmail: jest.fn(() => Promise.resolve(null)),
+    startPhoneVerification: jest.fn(),
+  },
 }));
 
 jest.mock('@/services/AuthService', () => ({
@@ -631,6 +648,113 @@ describe('OTPVerification', () => {
       [0, 1, 2, 3, 4, 5].forEach(idx => {
         expect(screen.getByTestId(`otp-input-${idx}`).props.value).toBe(`${idx + 1}`);
       });
+    });
+  });
+
+  describe('Firebase verification flow', () => {
+    const mockReplace = jest.fn();
+
+    beforeEach(() => {
+      jest.useRealTimers();
+      jest.clearAllMocks();
+      (useRouter as jest.Mock).mockReturnValue({
+        push: jest.fn(),
+        replace: mockReplace,
+        back: jest.fn(),
+      });
+    });
+
+    it('verifies phone code when method is phone', async () => {
+      (useLocalSearchParams as jest.Mock).mockReturnValue({
+        method: 'phone',
+        identifier: '+15551234567',
+        sessionInfo: 'session-123',
+      });
+      (FirebaseAuthService.verifyPhoneCode as jest.Mock).mockResolvedValue({
+        idToken: 'id-tok',
+        refreshToken: 'ref-tok',
+        isNewUser: false,
+      });
+
+      render(<OTPVerification />);
+
+      // Fill OTP
+      for (let i = 0; i < 6; i++) {
+        fireEvent.changeText(screen.getByTestId(`otp-input-${i}`), '1');
+      }
+      fireEvent.press(screen.getByTestId('verify-button'));
+
+      await waitFor(() => {
+        expect(FirebaseAuthService.verifyPhoneCode).toHaveBeenCalledWith('session-123', '111111');
+      });
+      await waitFor(() => {
+        expect(mockReplace).toHaveBeenCalledWith('/home');
+      });
+    });
+
+    it('verifies email link when method is email', async () => {
+      (useLocalSearchParams as jest.Mock).mockReturnValue({
+        method: 'email',
+        identifier: 'user@test.com',
+        oobCode: 'oob-123',
+      });
+      (FirebaseAuthService.verifyEmailLink as jest.Mock).mockResolvedValue({
+        idToken: 'id-tok',
+        refreshToken: 'ref-tok',
+        isNewUser: true,
+      });
+
+      render(<OTPVerification />);
+      fireEvent.press(screen.getByTestId('verify-button'));
+
+      await waitFor(() => {
+        expect(FirebaseAuthService.verifyEmailLink).toHaveBeenCalledWith('user@test.com', 'oob-123');
+      });
+      await waitFor(() => {
+        expect(mockReplace).toHaveBeenCalledWith('/profile-setup');
+      });
+    });
+
+    it('shows error when Firebase verification fails', async () => {
+      (useLocalSearchParams as jest.Mock).mockReturnValue({
+        method: 'phone',
+        identifier: '+15551234567',
+        sessionInfo: 'session-123',
+      });
+      (FirebaseAuthService.verifyPhoneCode as jest.Mock).mockRejectedValue(
+        new Error('Invalid code')
+      );
+
+      render(<OTPVerification />);
+      for (let i = 0; i < 6; i++) {
+        fireEvent.changeText(screen.getByTestId(`otp-input-${i}`), '9');
+      }
+      fireEvent.press(screen.getByTestId('verify-button'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('verify-error-message')).toBeTruthy();
+      });
+    });
+
+    it('resends email link for Firebase email method', async () => {
+      (useLocalSearchParams as jest.Mock).mockReturnValue({
+        method: 'email',
+        identifier: 'user@test.com',
+      });
+      (FirebaseAuthService.sendEmailLink as jest.Mock).mockResolvedValue({});
+
+      jest.useFakeTimers();
+      render(<OTPVerification />);
+
+      // Advance timer to make resend active
+      act(() => { jest.advanceTimersByTime(121000); });
+
+      fireEvent.press(screen.getByTestId('resend-button'));
+
+      await waitFor(() => {
+        expect(FirebaseAuthService.sendEmailLink).toHaveBeenCalledWith('user@test.com');
+      });
+      jest.useRealTimers();
     });
   });
 });
