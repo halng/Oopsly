@@ -38,6 +38,14 @@ CREATE TABLE IF NOT EXISTS users (
     onboarding_complete BOOLEAN NOT NULL DEFAULT FALSE
 );
 
+-- CREATE TABLE IF NOT EXISTS does not reconcile an existing pre-Flyway table.
+-- Keep the baseline migration safe for those installations before V2 indexes
+-- the new Firebase profile columns.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS firebase_uid VARCHAR(128);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(32);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS hobbies VARCHAR(500);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_complete BOOLEAN NOT NULL DEFAULT FALSE;
+
 CREATE TABLE IF NOT EXISTS shelves (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,

@@ -49,7 +49,9 @@ Manual workflows:
 | `EXPO_TOKEN` | EAS builds |
 | `FIREBASE_API_KEY` | Firebase web export |
 | `FIREBASE_SERVICE_ACCOUNT` | Firebase Hosting deployment |
-| `PERF_AUTH_TOKEN` | Firebase authentication for database-backed k6 transactions |
+| `PERF_FIREBASE_REFRESH_TOKEN` | Refresh credential used to mint a short-lived Firebase ID token for each k6 run |
+| `PERF_DB_HOST`, `PERF_DB_PORT`, `PERF_DB_NAME` | PostgreSQL endpoint used by the ephemeral performance service |
+| `PERF_DB_USERNAME`, `PERF_DB_PASSWORD` | PostgreSQL credentials used by the ephemeral performance service |
 
 Static Sonar configuration remains in the packages, but there is currently no dedicated
 Sonar GitHub Actions workflow in this repository.

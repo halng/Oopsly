@@ -60,14 +60,24 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Deploy API for perf run
+        env:
+          PERF_DB_HOST: ${{ secrets.PERF_DB_HOST }}
+          PERF_DB_PORT: ${{ secrets.PERF_DB_PORT }}
+          PERF_DB_NAME: ${{ secrets.PERF_DB_NAME }}
+          PERF_DB_USERNAME: ${{ secrets.PERF_DB_USERNAME }}
+          PERF_DB_PASSWORD: ${{ secrets.PERF_DB_PASSWORD }}
         run: |
           set -euo pipefail
+          for variable in PERF_DB_HOST PERF_DB_NAME PERF_DB_USERNAME PERF_DB_PASSWORD; do
+            [ -n "${!variable}" ] || { echo "Missing ${variable} secret"; exit 1; }
+          done
+          PERF_DB_PORT="${PERF_DB_PORT:-5432}"
           gcloud run deploy "$SERVICE_NAME" \
             --project "$GCP_PROJECT_ID" \
             --region "$GCP_REGION" \
             --source ./api \
             --allow-unauthenticated \
-            --set-env-vars SPRING_PROFILES_ACTIVE=perf \
+            --set-env-vars "SPRING_PROFILES_ACTIVE=perf,DB_HOST=${PERF_DB_HOST},DB_PORT=${PERF_DB_PORT},DB_NAME=${PERF_DB_NAME},DB_USERNAME=${PERF_DB_USERNAME},DB_PASSWORD=${PERF_DB_PASSWORD}" \
             --quiet
 
       - name: Resolve deployed URL
@@ -86,10 +96,18 @@ jobs:
 
       - name: Run k6 profile
         env:
-          PERF_AUTH_TOKEN: ${{ secrets.PERF_AUTH_TOKEN }}
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          PERF_FIREBASE_REFRESH_TOKEN: ${{ secrets.PERF_FIREBASE_REFRESH_TOKEN }}
         run: |
           set -euo pipefail
-          [ -n "$PERF_AUTH_TOKEN" ] || { echo "Missing PERF_AUTH_TOKEN secret"; exit 1; }
+          [ -n "$FIREBASE_API_KEY" ] || { echo "Missing FIREBASE_API_KEY secret"; exit 1; }
+          [ -n "$PERF_FIREBASE_REFRESH_TOKEN" ] || { echo "Missing PERF_FIREBASE_REFRESH_TOKEN secret"; exit 1; }
+          TOKEN_RESPONSE=$(curl --fail-with-body --silent --show-error \
+            -X POST "https://securetoken.googleapis.com/v1/token?key=${FIREBASE_API_KEY}" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            --data-urlencode "grant_type=refresh_token" \
+            --data-urlencode "refresh_token=${PERF_FIREBASE_REFRESH_TOKEN}")
+          PERF_AUTH_TOKEN=$(jq -er '.id_token' <<<"$TOKEN_RESPONSE")
           mkdir -p /tmp/perf-reports
           k6 run \
             -e BASE_URL="${{ steps.resolve_url.outputs.base_url }}" \

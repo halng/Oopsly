@@ -37,8 +37,12 @@ jobs:
         working-directory: ui
         env:
           EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          EXPO_PUBLIC_FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+          EXPO_PUBLIC_BACKEND_API: ${{ vars.EXPO_PUBLIC_BACKEND_API }}
         run: |
           [ -n "$EXPO_PUBLIC_FIREBASE_API_KEY" ] || { echo "Missing FIREBASE_API_KEY secret"; exit 1; }
+          [ -n "$EXPO_PUBLIC_FIREBASE_PROJECT_ID" ] || { echo "Missing FIREBASE_PROJECT_ID variable"; exit 1; }
+          [ -n "$EXPO_PUBLIC_BACKEND_API" ] || { echo "Missing EXPO_PUBLIC_BACKEND_API variable"; exit 1; }
           pnpm install --frozen-lockfile
           pnpm exec expo export --platform web
           cd dist && zip -r "../../oopsly-web-${{ github.event.release.tag_name }}.zip" .
