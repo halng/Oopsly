@@ -15,52 +15,61 @@
  */
 
 import http from "k6/http";
-import { randomUUID } from "k6/crypto";
-import { check, sleep } from "k6";
+import { check, fail, sleep } from "k6";
 import { profiles, thresholds } from "./profiles.js";
 
 const profile = __ENV.TEST_PROFILE;
 const baseUrl = __ENV.BASE_URL;
+const authToken = __ENV.AUTH_TOKEN;
+
 if (!profile || !profiles[profile]) throw new Error(`Unsupported TEST_PROFILE '${profile}'`);
 if (!baseUrl) throw new Error("BASE_URL is required");
-http.setResponseCallback(http.expectedStatuses({ min: 200, max: 499 }));
+if (!authToken) throw new Error("AUTH_TOKEN is required");
 
 export const options = { ...profiles[profile], thresholds };
-const endpoints = (id) => [
-  ["GET", "/actuator/health"], ["GET", "/users/validate"],
-  ["POST", "/users/refresh-token"], ["POST", "/users/logout"],
-  ["POST", "/otp"], ["POST", "/otp/validate"],
-  ["GET", "/user/profile"], ["PATCH", "/user/profile"], ["PATCH", "/user/settings"],
-  ["GET", "/users/me/stats"], ["GET", "/discover"], ["POST", `/discover/${id}/clone`],
-  ["GET", "/shelves"], ["POST", "/shelves"], ["GET", `/shelves/${id}`],
-  ["PUT", `/shelves/${id}`], ["PATCH", `/shelves/${id}`],
-  ["GET", `/shelves/${id}/subjects`], ["POST", `/shelves/${id}/subjects`],
-  ["GET", `/shelves/${id}/subjects/${id}`], ["PUT", `/shelves/${id}/subjects/${id}`],
-  ["PUT", `/shelves/${id}/subjects/${id}/settings`], ["PATCH", `/shelves/${id}/subjects/${id}`],
-  ["GET", `/shelves/${id}/subjects/${id}/cards`], ["POST", `/shelves/${id}/subjects/${id}/cards`],
-  ["GET", `/shelves/${id}/subjects/${id}/cards/${id}`], ["PUT", `/shelves/${id}/subjects/${id}/cards/${id}`],
-  ["PATCH", `/shelves/${id}/subjects/${id}/cards/${id}`], ["GET", `/shelves/${id}/subjects/${id}/cards/due`],
-  ["PUT", `/shelves/${id}/subjects/${id}/cards/difficulty`],
-  ["POST", `/shelves/${id}/subjects/${id}/cards/${id}/media`],
-  ["GET", "/tags"], ["POST", "/tags"], ["PATCH", `/tags/${id}`],
-  ["POST", `/shelves/${id}/subjects/${id}/cards/${id}/tags/${id}`],
-  ["GET", `/shelves/${id}/subjects/${id}/cards/by-tag/${id}`],
-  ["GET", `/shelves/${id}/test-suites`], ["POST", `/shelves/${id}/test-suites`],
-  ["GET", `/shelves/${id}/test-suites/${id}`], ["PUT", `/shelves/${id}/test-suites/${id}`],
-  ["PATCH", `/shelves/${id}/test-suites/${id}`], ["POST", `/shelves/${id}/test-suites/auto-generate`],
-  ["POST", `/shelves/${id}/test-suites/${id}/run`], ["GET", `/test-suites/${id}/cards`],
-  ["GET", `/test-suites/${id}/questions`], ["POST", `/test-suites/${id}/questions`],
-  ["GET", `/test-suites/${id}/questions/${id}`], ["PUT", `/test-suites/${id}/questions/${id}`],
-  ["PATCH", `/test-suites/${id}/questions/${id}`],
-];
+const requestParams = {
+  headers: {
+    Authorization: `Bearer ${authToken}`,
+    "Content-Type": "application/json",
+  },
+};
+
+function request(method, path, body, transaction) {
+  const response = http.request(method, `${baseUrl}${path}`, body === null ? null : JSON.stringify(body), {
+    ...requestParams,
+    tags: { transaction },
+  });
+  check(response, { [`${transaction} succeeds`]: (result) => result.status >= 200 && result.status < 300 });
+  return response;
+}
+
+function responseId(response, transaction) {
+  try {
+    const id = response.json("data.id");
+    if (id) return id;
+  } catch (_) {
+    // The failure below includes the response body for diagnosis.
+  }
+  fail(`${transaction} did not return data.id: ${response.status} ${response.body}`);
+}
 
 export default function () {
-  const iterationId = randomUUID();
-  for (const [method, path] of endpoints(iterationId)) {
-    const response = http.request(method, `${baseUrl}${path}`, "{}", {
-      headers: { "Content-Type": "application/json" }, tags: { endpoint: `${method} ${path}` },
-    });
-    check(response, { [`${method} ${path} responds`]: (r) => r.status < 500 });
-  }
+  // Every lifecycle starts by inserting a real row. Subsequent reads, updates,
+  // and soft deletes therefore measure database work against an existing ID.
+  const uniqueName = `k6-${__VU}-${__ITER}-${Date.now()}`;
+  const createResponse = request("POST", "/shelves", {
+    icon: "book",
+    name: uniqueName,
+    description: "Performance test fixture shelf",
+  }, "shelf.create");
+  const shelfId = responseId(createResponse, "shelf.create");
+
+  request("GET", `/shelves/${shelfId}`, null, "shelf.get");
+  request("PUT", `/shelves/${shelfId}`, {
+    icon: "book-open",
+    name: `${uniqueName}-updated`,
+    description: "Updated performance fixture shelf",
+  }, "shelf.update");
+  request("PATCH", `/shelves/${shelfId}`, null, "shelf.soft-delete");
   sleep(1);
 }

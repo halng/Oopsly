@@ -19,22 +19,41 @@ package com.app.oopsly.api.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.config.Customizer;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.RequestHeaderRequestMatcher;
 
 @Configuration
 @Profile("perf")
 public class PerfSecurityConfig {
+    private final FirebaseAuthenticationFilter firebaseAuthenticationFilter;
+
+    public PerfSecurityConfig(FirebaseAuthenticationFilter firebaseAuthenticationFilter) {
+        this.firebaseAuthenticationFilter = firebaseAuthenticationFilter;
+    }
 
     @Bean
     public SecurityFilterChain perfSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(Customizer.withDefaults())
+        http.csrf(
+                        csrf ->
+                                csrf.ignoringRequestMatchers(
+                                        new RequestHeaderRequestMatcher("Authorization")))
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(req -> req.anyRequest().permitAll())
+                .authorizeHttpRequests(
+                        req ->
+                                req.requestMatchers("/actuator/health")
+                                        .permitAll()
+                                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                                        .permitAll()
+                                        .anyRequest()
+                                        .authenticated())
+                .addFilterBefore(
+                        firebaseAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable);
 
         return http.build();

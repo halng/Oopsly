@@ -49,6 +49,7 @@ Manual workflows:
 | `EXPO_TOKEN` | EAS builds |
 | `FIREBASE_API_KEY` | Firebase web export |
 | `FIREBASE_SERVICE_ACCOUNT` | Firebase Hosting deployment |
+| `PERF_AUTH_TOKEN` | Firebase authentication for database-backed k6 transactions |
 
 Static Sonar configuration remains in the packages, but there is currently no dedicated
 Sonar GitHub Actions workflow in this repository.

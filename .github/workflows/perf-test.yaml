@@ -85,12 +85,16 @@ jobs:
         uses: grafana/setup-k6-action@v1
 
       - name: Run k6 profile
+        env:
+          PERF_AUTH_TOKEN: ${{ secrets.PERF_AUTH_TOKEN }}
         run: |
           set -euo pipefail
+          [ -n "$PERF_AUTH_TOKEN" ] || { echo "Missing PERF_AUTH_TOKEN secret"; exit 1; }
           mkdir -p /tmp/perf-reports
           k6 run \
             -e BASE_URL="${{ steps.resolve_url.outputs.base_url }}" \
             -e TEST_PROFILE="$TEST_PROFILE" \
+            -e AUTH_TOKEN="$PERF_AUTH_TOKEN" \
             --summary-export /tmp/perf-reports/summary.json \
             api/src/test/java/com/app/oopsly/api/perf/backend.js
 
