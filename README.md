@@ -6,7 +6,6 @@
 
 [![CodeQL - Snyk](https://github.com/halng/Oopsly/actions/workflows/codeql-snyk.yaml/badge.svg?branch=main)](https://github.com/halng/Oopsly/actions/workflows/codeql-snyk.yaml)
 
-
 Cross-platform **flashcard** and **spaced repetition (SRS)** app — approachable study UX with FSRS-backed scheduling.
 
 | Layer | Stack |
