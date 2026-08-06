@@ -52,7 +52,7 @@ pnpm install
 pnpm start
 ```
 
-Set `EXPO_PUBLIC_BACKEND_API=http://localhost:9009` in `ui/.env`.
+Set `EXPO_PUBLIC_BACKEND_API=http://localhost:9009` and other env in `ui/.env`.
 
 Full walkthrough: [docs/tutorials/getting-started.md](./docs/tutorials/getting-started.md).
 
