@@ -14,4 +14,39 @@
  *    limitations under the License.
  */
 
-export { default as Logger } from './Logger';
+import { logger, consoleTransport } from "react-native-logs";
+
+export const Logger = logger.createLogger({
+  levels: {
+    debug: 0,
+    info: 1,
+    warn: 2,
+    error: 3,
+  },
+  severity: __DEV__ ? "debug" : "info",
+  transport: consoleTransport,
+  transportOptions: {
+    colors: {
+      debug: "cyanBright",
+      info: "blueBright",
+      warn: "yellowBright",
+      error: "redBright",
+    },
+  },
+  async: true,
+  dateFormat: "time",
+  printLevel: true,
+  printDate: true,
+  fixedExtLvlLength: false,
+  enabled: true,
+});
+
+export function isEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+export function isValidPhoneNumber(phoneNumber: string): boolean {
+  const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+  return phoneRegex.test(phoneNumber);
+}

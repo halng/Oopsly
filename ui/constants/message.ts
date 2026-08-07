@@ -14,5 +14,9 @@
  *    limitations under the License.
  */
 
-export const AUTH_METHOD_EMAIL = "email" as const;
-export const AUTH_METHOD_PHONE = "phone" as const;
+
+export const MESSAGES = {
+  LOGIN: {
+    GENERIC_ERROR: "An error occurred. Please try again.",
+  },
+};

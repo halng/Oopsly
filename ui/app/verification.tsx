@@ -32,13 +32,12 @@ import AppButton from "@/components/common/AppButton";
 import FeedbackMessage from "@/components/common/FeedbackMessage";
 import { uiTokens } from "@/constants/uiTokens";
 import { useResponsiveLayout } from "@/utils/responsiveLayout";
-import { FirebaseAuthService } from "@/services/FirebaseAuthService";
-import { AUTH_METHOD_EMAIL } from "@/constants/auth";
 import { APP_ROUTES } from "@/constants/routes";
-
+import { verifyEmailLinkAndGetToken } from "@/services/FirebaseAuthService";
+// https://localhost:8081/?apiKey=AIzaSyDZDEDFXdQSMw1Xu3gsl24y6hFDE0xZK88&oobCode=JxzC1YiZAar6PNJXnIjgY9shnqiyUn37t5mCLPa0AkcAAAGf3GicAQ&mode=signIn&lang=en
 export default function OTPVerification() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ method?: string; identifier?: string; oobCode?: string; sessionInfo?: string }>();
+  const params = useLocalSearchParams<{apiKey?: string; method?: string; identifier?: string; oobCode?: string; sessionInfo?: string; mode?: string; lang?: string }>();
   const identifier = params.identifier ?? "";
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(120);
@@ -51,45 +50,46 @@ export default function OTPVerification() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const userEmail = useAuthStore((state) => state.userEmail);
 
-  const finishFirebaseSignIn = async (
-    result: Awaited<ReturnType<typeof FirebaseAuthService.verifyEmailLink>>,
-    identifier: string,
-  ) => {
-    useAuthStore.getState().setCredentials(
-      identifier || result.email || result.phoneNumber || "",
-      result.idToken,
-      result.refreshToken,
-    );
-    router.replace(result.isNewUser ? APP_ROUTES.profileSetup : APP_ROUTES.home);
-  };
+  
 
   useEffect(() => {
     let active = true;
-    const completeLink = async (url?: string | null) => {
-      const callbackCode = url
-        ? (Linking.parse(url).queryParams?.oobCode as string | undefined)
-        : undefined;
-      const oobCode = params.oobCode || callbackCode;
-      if (!oobCode) return;
-      setVerifyLoading(true);
-      setVerifyError(null);
-      try {
-        const email = params.identifier || await FirebaseAuthService.getPendingEmail();
-        if (!email) throw new Error("Open this sign-in link on the device where you requested it.");
-        const result = await FirebaseAuthService.verifyEmailLink(email, oobCode);
-        if (active) await finishFirebaseSignIn(result, email);
-      } catch (error) {
+    const currentHref =  window.location.href;
+    if (params.method === "email" && params.oobCode && params.identifier) {
+      verifyEmailLinkAndGetToken(params.identifier, currentHref).then((token) => {
+          alert("Token received: " + token);
+          useAuthStore.getState().setCredentials(params.identifier!, token, "");
+          router.replace(APP_ROUTES.home);
+      }).catch((error) => {
         if (active) setVerifyError(error instanceof Error ? error.message : "Firebase verification failed");
-      } finally {
-        if (active) setVerifyLoading(false);
-      }
-    };
-    void Linking.getInitialURL().then(completeLink);
-    const subscription = Linking.addEventListener("url", ({ url }) => void completeLink(url));
-    return () => { active = false; subscription.remove(); };
-    // Route params identify a single callback and must not retrigger on state changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.method, params.oobCode, params.identifier]);
+      });
+    }
+
+    // const completeLink = async (url?: string | null) => {
+    //   const callbackCode = url
+    //     ? (Linking.parse(url).queryParams?.oobCode as string | undefined)
+    //     : undefined;
+    //   const oobCode = params.oobCode || callbackCode;
+    //   if (!oobCode) return;
+    //   setVerifyLoading(true);
+    //   setVerifyError(null);
+    //   try {
+    //     const email = params.identifier || await FirebaseAuthService.getPendingEmail();
+    //     if (!email) throw new Error("Open this sign-in link on the device where you requested it.");
+    //     const result = await FirebaseAuthService.verifyEmailLink(email, oobCode);
+    //     if (active) await finishFirebaseSignIn(result, email);
+    //   } catch (error) {
+    //     if (active) setVerifyError(error instanceof Error ? error.message : "Firebase verification failed");
+    //   } finally {
+    //     if (active) setVerifyLoading(false);
+    //   }
+    // };
+    // void Linking.getInitialURL().then(completeLink);
+    // const subscription = Linking.addEventListener("url", ({ url }) => void completeLink(url));
+    // return () => { active = false; subscription.remove(); };
+    // // Route params identify a single callback and must not retrigger on state changes.
+    // // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.method, params.oobCode, params.identifier, router]);
 
   const clearTimer = () => {
     if (timerRef.current) {
@@ -151,69 +151,69 @@ export default function OTPVerification() {
   };
 
   const handleResend = async () => {
-    if (!isResendActive || resendBusy) return;
-    setResendBusy(true);
-    setVerifyError(null);
-    try {
-      if (params.method === AUTH_METHOD_EMAIL && identifier) {
-        await FirebaseAuthService.sendEmailLink(identifier);
-      } else if (userEmail) {
-        await AuthService.CreateOTP(userEmail);
-      } else {
-        setVerifyError("Missing email. Go back and enter your email.");
-        return;
-      }
-      setOtp(["", "", "", "", "", ""]);
-      startTimer();
-      inputRefs.current[0]?.focus();
-    } catch {
-      setVerifyError("Could not resend code. Try again.");
-    } finally {
-      setResendBusy(false);
-    }
+    // if (!isResendActive || resendBusy) return;
+    // setResendBusy(true);
+    // setVerifyError(null);
+    // try {
+    //   if (params.method === AUTH_METHOD_EMAIL && identifier) {
+    //     await FirebaseAuthService.sendEmailLink(identifier);
+    //   } else if (userEmail) {
+    //     await AuthService.CreateOTP(userEmail);
+    //   } else {
+    //     setVerifyError("Missing email. Go back and enter your email.");
+    //     return;
+    //   }
+    //   setOtp(["", "", "", "", "", ""]);
+    //   startTimer();
+    //   inputRefs.current[0]?.focus();
+    // } catch {
+    //   setVerifyError("Could not resend code. Try again.");
+    // } finally {
+    //   setResendBusy(false);
+    // }
   };
 
   const handleVerify = async () => {
-    if (params.method) {
-      setVerifyLoading(true);
-      setVerifyError(null);
-      try {
-        const result = params.method === AUTH_METHOD_EMAIL
-          ? await FirebaseAuthService.verifyEmailLink(identifier, params.oobCode ?? otp.join(""))
-          : await FirebaseAuthService.verifyPhoneCode(params.sessionInfo ?? "", otp.join(""));
-        await finishFirebaseSignIn(result, identifier);
-      } catch (e) {
-        setVerifyError(e instanceof Error ? e.message : "Firebase verification failed");
-      } finally { setVerifyLoading(false); }
-      return;
-    }
-    if (!userEmail) {
-      setVerifyError("Missing email. Go back and enter your email.");
-      return;
-    }
-    setVerifyLoading(true);
-    setVerifyError(null);
-    try {
-      const response: ApiResponse = await AuthService.ValidateOTP(
-        userEmail,
-        otp.join(""),
-      );
-      if (!response.isSuccess) {
-        setVerifyError(
-          response.message || "Invalid or expired code. Try again.",
-        );
-        return;
-      }
-      const { access_token, refresh_token } = response.data;
-      useAuthStore
-        .getState()
-        .setCredentials(userEmail, access_token, refresh_token);
-      router.replace(APP_ROUTES.home);
-    } catch {
-      setVerifyError("Something went wrong. Check your connection.");
-    } finally {
-      setVerifyLoading(false);
-    }
+    // if (params.method) {
+    //   setVerifyLoading(true);
+    //   setVerifyError(null);
+    //   try {
+    //     const result = params.method === AUTH_METHOD_EMAIL
+    //       ? await FirebaseAuthService.verifyEmailLink(identifier, params.oobCode ?? otp.join(""))
+    //       : await FirebaseAuthService.verifyPhoneCode(params.sessionInfo ?? "", otp.join(""));
+    //     await finishFirebaseSignIn(result, identifier);
+    //   } catch (e) {
+    //     setVerifyError(e instanceof Error ? e.message : "Firebase verification failed");
+    //   } finally { setVerifyLoading(false); }
+    //   return;
+    // }
+    // if (!userEmail) {
+    //   setVerifyError("Missing email. Go back and enter your email.");
+    //   return;
+    // }
+    // setVerifyLoading(true);
+    // setVerifyError(null);
+    // try {
+    //   const response: ApiResponse = await AuthService.ValidateOTP(
+    //     userEmail,
+    //     otp.join(""),
+    //   );
+    //   if (!response.isSuccess) {
+    //     setVerifyError(
+    //       response.message || "Invalid or expired code. Try again.",
+    //     );
+    //     return;
+    //   }
+    //   const { access_token, refresh_token } = response.data;
+    //   useAuthStore
+    //     .getState()
+    //     .setCredentials(userEmail, access_token, refresh_token);
+    //   router.replace(APP_ROUTES.home);
+    // } catch {
+    //   setVerifyError("Something went wrong. Check your connection.");
+    // } finally {
+    //   setVerifyLoading(false);
+    // }
   };
 
   const isOtpComplete = otp.every((digit) => digit !== "");
