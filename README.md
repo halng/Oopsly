@@ -6,7 +6,6 @@
 
 [![CodeQL - Snyk](https://github.com/halng/Oopsly/actions/workflows/codeql-snyk.yaml/badge.svg?branch=main)](https://github.com/halng/Oopsly/actions/workflows/codeql-snyk.yaml)
 
-
 Cross-platform **flashcard** and **spaced repetition (SRS)** app — approachable study UX with FSRS-backed scheduling.
 
 | Layer | Stack |
@@ -53,7 +52,7 @@ pnpm install
 pnpm start
 ```
 
-Set `EXPO_PUBLIC_BACKEND_API=http://localhost:9009` in `ui/.env`.
+Set `EXPO_PUBLIC_BACKEND_API=http://localhost:9009` and other env in `ui/.env`.
 
 Full walkthrough: [docs/tutorials/getting-started.md](./docs/tutorials/getting-started.md).
 
