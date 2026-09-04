@@ -33,6 +33,8 @@ public interface UserService {
 
     ApiRes updateSettings(UpdateSettingsReq request);
 
+    ApiRes updateIsNewComerStatus();
+
     ApiRes refreshToken(RefreshTokenReq refreshTokenReq);
 
     ApiRes logout();

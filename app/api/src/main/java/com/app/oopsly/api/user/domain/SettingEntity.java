@@ -56,6 +56,8 @@ public class SettingEntity extends Audit {
     @Builder.Default private Boolean hapticFeedbackEnabled = true;
     @Builder.Default private Boolean autoPlayAudio = false;
     @Builder.Default private Boolean allowReminders = true;
+    @Builder.Default
+    private Boolean isNewComer = true;
 
     @OneToOne
     @JoinColumn(name = "user_id", unique = true, nullable = false)

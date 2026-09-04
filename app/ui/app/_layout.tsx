@@ -39,208 +39,201 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  const [isReady, setIsReady] = useState(false);
-  const router = useRouter();
-  const segments = useSegments();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const theme = useSettingsStore((state) => state.theme);
+  // const [isReady, setIsReady] = useState(false);
+  // const router = useRouter();
+  // const segments = useSegments();
+  // const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  // const theme = useSettingsStore((state) => state.theme);
 
-  useEffect(() => {
-    if (Platform.OS !== "web") {
-      if (theme === "system") {
-        Appearance.setColorScheme(null);
-      } else {
-        Appearance.setColorScheme(theme);
-      }
-    }
-  }, [theme]);
+  // useEffect(() => {
+  //   if (Platform.OS !== "web") {
+  //     if (theme === "system") {
+  //       Appearance.setColorScheme(null);
+  //     } else {
+  //       Appearance.setColorScheme(theme);
+  //     }
+  //   }
+  // }, [theme]);
 
-  useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    let isCancelled = false;
+  // useEffect(() => {
+  //   let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  //   let isCancelled = false;
 
-    const checkAuthStatus = async () => {
-      if (isCancelled) return;
-      logger.debug("Checking auth status...");
+  //   const checkAuthStatus = async () => {
+  //     if (isCancelled) return;
+  //     logger.debug("Checking auth status...");
 
-      try {
-        // Wait for store to hydrate with timeout
-        if (!useAuthStore.persist.hasHydrated()) {
-          logger.debug("Waiting for store hydration...");
+  //     try {
+  //       // Wait for store to hydrate with timeout
+  //       if (!useAuthStore.persist.hasHydrated()) {
+  //         logger.debug("Waiting for store hydration...");
 
-          const hydrationPromise = new Promise<void>((resolve) => {
-            const unsub = useAuthStore.persist.onFinishHydration(() => {
-              logger.debug("Store hydrated");
-              unsub();
-              resolve();
-            });
-          });
+  //         const hydrationPromise = new Promise<void>((resolve) => {
+  //           const unsub = useAuthStore.persist.onFinishHydration(() => {
+  //             logger.debug("Store hydrated");
+  //             unsub();
+  //             resolve();
+  //           });
+  //         });
 
-          const timeoutPromise = new Promise<void>((resolve) => {
-            timeoutId = setTimeout(() => {
-              if (!isCancelled) {
-                logger.warn("Store hydration timeout after 5 seconds");
-                resolve();
-              }
-            }, 5000);
-          });
+  //         const timeoutPromise = new Promise<void>((resolve) => {
+  //           timeoutId = setTimeout(() => {
+  //             if (!isCancelled) {
+  //               logger.warn("Store hydration timeout after 5 seconds");
+  //               resolve();
+  //             }
+  //           }, 5000);
+  //         });
 
-          // Wait for either hydration or timeout
-          await Promise.race([hydrationPromise, timeoutPromise]);
+  //         // Wait for either hydration or timeout
+  //         await Promise.race([hydrationPromise, timeoutPromise]);
 
-          // Clean up timeout if hydration finished first
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-            timeoutId = null;
-          }
-        }
+  //         // Clean up timeout if hydration finished first
+  //         if (timeoutId) {
+  //           clearTimeout(timeoutId);
+  //           timeoutId = null;
+  //         }
+  //       }
 
-        let currentAccessToken = useAuthStore.getState().accessToken;
-        let currentRefreshToken = useAuthStore.getState().refreshToken;
-        const currentUserEmail = useAuthStore.getState().userEmail;
-        const clearAuth = useAuthStore.getState().clearAuth;
-        const setAuthTokens = useAuthStore.getState().setAuthTokens;
+  //       let currentAccessToken = useAuthStore.getState().accessToken;
+  //       let currentRefreshToken = useAuthStore.getState().refreshToken;
+  //       const currentUserEmail = useAuthStore.getState().userEmail;
+  //       const clearAuth = useAuthStore.getState().clearAuth;
+  //       const setAuthTokens = useAuthStore.getState().setAuthTokens;
 
-        if (!currentRefreshToken) {
-          const fromSecure = await getRefreshTokenSecure();
-          if (fromSecure) {
-            useAuthStore.setState({ refreshToken: fromSecure });
-            currentRefreshToken = fromSecure;
-          }
-        }
+  //       if (!currentRefreshToken) {
+  //         const fromSecure = await getRefreshTokenSecure();
+  //         if (fromSecure) {
+  //           useAuthStore.setState({ refreshToken: fromSecure });
+  //           currentRefreshToken = fromSecure;
+  //         }
+  //       }
 
-        const syncThemeFromProfile = async () => {
-          try {
-            const profile = await getProfile();
-            if (profile.isSuccess && profile.data?.settings) {
-              useSettingsStore.getState().syncFromServer(profile.data.settings);
-            }
-          } catch {
-            /* ignore */
-          }
-        };
+  //       const syncThemeFromProfile = async () => {
+  //         try {
+  //           const profile = await getProfile();
+  //           if (profile.isSuccess && profile.data?.settings) {
+  //             useSettingsStore.getState().syncFromServer(profile.data.settings);
+  //           }
+  //         } catch {
+  //           /* ignore */
+  //         }
+  //       };
 
-        const refreshSession = async (): Promise<boolean> => {
-          try {
-            const response = await AuthService.RefreshToken(
-              currentRefreshToken!,
-              currentUserEmail,
-            );
-            if (response.isSuccess && response.data) {
-              const { access_token, refresh_token } = response.data;
-              setAuthTokens(access_token, refresh_token);
-              logger.info("Token refreshed successfully");
-              await syncThemeFromProfile();
-              return true;
-            }
-            logger.error("Token refresh failed:", response.message);
-            clearAuth();
-            return false;
-          } catch (refreshError) {
-            logger.error("Token refresh error:", refreshError);
-            clearAuth();
-            return false;
-          }
-        };
+  //       const refreshSession = async (): Promise<boolean> => {
+  //         try {
+  //           const response = await AuthService.RefreshToken(
+  //             currentRefreshToken!,
+  //             currentUserEmail,
+  //           );
+  //           if (response.isSuccess && response.data) {
+  //             const { access_token, refresh_token } = response.data;
+  //             setAuthTokens(access_token, refresh_token);
+  //             logger.info("Token refreshed successfully");
+  //             await syncThemeFromProfile();
+  //             return true;
+  //           }
+  //           logger.error("Token refresh failed:", response.message);
+  //           clearAuth();
+  //           return false;
+  //         } catch (refreshError) {
+  //           logger.error("Token refresh error:", refreshError);
+  //           clearAuth();
+  //           return false;
+  //         }
+  //       };
 
-        if (!currentRefreshToken || !currentUserEmail?.trim()) {
-          logger.debug("No refresh token or email in storage");
-          setIsReady(true);
-          return;
-        }
+  //       if (!currentRefreshToken || !currentUserEmail?.trim()) {
+  //         logger.debug("No refresh token or email in storage");
+  //         setIsReady(true);
+  //         return;
+  //       }
 
-        if (!currentAccessToken) {
-          logger.debug("Access token missing; refreshing with stored refresh token");
-          await refreshSession();
-          setIsReady(true);
-          return;
-        }
+  //       if (!currentAccessToken) {
+  //         logger.debug("Access token missing; refreshing with stored refresh token");
+  //         await refreshSession();
+  //         setIsReady(true);
+  //         return;
+  //       }
 
-        logger.debug("Tokens found, validating...");
+  //       logger.debug("Tokens found, validating...");
 
-        try {
-          await AuthService.ValidateToken();
-          logger.info("Access token is valid");
-          await syncThemeFromProfile();
-        } catch {
-          logger.warn("Access token validation failed, attempting refresh...");
-          await refreshSession();
-        }
+  //       try {
+  //         await AuthService.ValidateToken();
+  //         logger.info("Access token is valid");
+  //         await syncThemeFromProfile();
+  //       } catch {
+  //         logger.warn("Access token validation failed, attempting refresh...");
+  //         await refreshSession();
+  //       }
 
-        setIsReady(true);
-      } catch (error) {
-        logger.error("Error checking auth status:", error);
-        const clearAuth = useAuthStore.getState().clearAuth;
-        clearAuth();
-        setIsReady(true);
-      }
-    };
+  //       setIsReady(true);
+  //     } catch (error) {
+  //       logger.error("Error checking auth status:", error);
+  //       const clearAuth = useAuthStore.getState().clearAuth;
+  //       clearAuth();
+  //       setIsReady(true);
+  //     }
+  //   };
 
-    checkAuthStatus();
+  //   checkAuthStatus();
 
-    // Cleanup function to cancel async operations and clear timers
-    return () => {
-      isCancelled = true;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, []);
+  //   // Cleanup function to cancel async operations and clear timers
+  //   return () => {
+  //     isCancelled = true;
+  //     if (timeoutId) {
+  //       clearTimeout(timeoutId);
+  //     }
+  //   };
+  // }, []);
 
-  // Redirect based on authentication status
-  useEffect(() => {
-    if (!isReady) return;
+  // // Redirect based on authentication status
+  // useEffect(() => {
+  //   if (!isReady) return;
 
-    const inAuthGroup = segments[0] === "(user)";
+  //   const inAuthGroup = segments[0] === "(user)";
 
-    if (!isAuthenticated && inAuthGroup) {
-      // Redirect to onboarding if not authenticated
-      router.replace("/");
-    } else if (isAuthenticated && !inAuthGroup) {
-      // Redirect to home if authenticated
-      router.replace("/home");
-    }
-  }, [isAuthenticated, segments, isReady, router]);
+  //   if (!isAuthenticated && inAuthGroup) {
+  //     // Redirect to onboarding if not authenticated
+  //     router.replace("/");
+  //   } else if (isAuthenticated && !inAuthGroup) {
+  //     // Redirect to home if authenticated
+  //     router.replace("/home");
+  //   }
+  // }, [isAuthenticated, segments, isReady, router]);
 
-  // Show loading screen while checking auth
-  if (!isReady) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: uiTokens.surface.canvas,
-        }}
-        testID="auth-loading-screen"
-      >
-        <ActivityIndicator
-          size="large"
-          color={uiTokens.accent.default}
-          testID="auth-loading-spinner"
-        />
-        <Text
-          style={{ marginTop: 16, color: uiTokens.text.muted }}
-          testID="auth-loading-text"
-        >
-          Loading...
-        </Text>
-      </View>
-    );
-  }
+  // // Show loading screen while checking auth
+  // if (!isReady) {
+  //   return (
+  //     <View
+  //       style={{
+  //         flex: 1,
+  //         justifyContent: "center",
+  //         alignItems: "center",
+  //         backgroundColor: uiTokens.surface.canvas,
+  //       }}
+  //       testID="auth-loading-screen"
+  //     >
+  //       <ActivityIndicator
+  //         size="large"
+  //         color={uiTokens.accent.default}
+  //         testID="auth-loading-spinner"
+  //       />
+  //       <Text
+  //         style={{ marginTop: 16, color: uiTokens.text.muted }}
+  //         testID="auth-loading-text"
+  //       >
+  //         Loading...
+  //       </Text>
+  //     </View>
+  //   );
+  // }
 
-  logger.debug("RootLayout rendered, isAuthenticated:", isAuthenticated);
+  // logger.debug("RootLayout rendered, isAuthenticated:", isAuthenticated);
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        animation: "fade",
-        animationDuration: 220,
-        gestureEnabled: true,
-      }}
-    >
-      <Stack.Protected guard={isAuthenticated}>
+    <Stack>
+      {/* <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen
           name="(user)"
           options={{
@@ -248,9 +241,9 @@ export default function RootLayout() {
             animation: "slide_from_right",
           }}
         />
-      </Stack.Protected>
+      </Stack.Protected> */} */}
 
-      <Stack.Screen name="index" />
+       <Stack.Screen name="index" />
       <Stack.Screen
         name="onboard"
         options={{
@@ -272,6 +265,7 @@ export default function RootLayout() {
           contentStyle: { flex: 1, backgroundColor: uiTokens.surface.canvas },
         }}
       />
+      
     </Stack>
   );
 }
