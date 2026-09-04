@@ -1,0 +1,20 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "/api/user/profile"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "products": [
+            { "id": 1, "name": "Laptop", "price": 999 },
+            { "id": 2, "name": "Phone", "price": 499 }
+          ]
+        }
+      }
+    }
+  ]
+}
