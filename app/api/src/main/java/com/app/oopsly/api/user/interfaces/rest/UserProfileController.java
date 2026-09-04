@@ -37,80 +37,80 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "User Profile", description = "User profile and settings management APIs")
 public class UserProfileController {
 
-  private final UserService userService;
+    private final UserService userService;
 
-  @Operation(
-      summary = "Get user profile",
-      description = "Retrieves the current user's profile and settings")
-  @ApiResponses(
-      value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Profile retrieved successfully",
-            content = @Content(schema = @Schema(implementation = ApiRes.class))),
-        @ApiResponse(responseCode = "404", description = "Profile not found"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-      })
-  @GetMapping("/profile")
-  public ApiRes getProfile() {
-    return userService.getProfile();
-  }
+    @Operation(
+            summary = "Get user profile",
+            description = "Retrieves the current user's profile and settings")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Profile retrieved successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "404", description = "Profile not found"),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
+    @GetMapping("/profile")
+    public ApiRes getProfile() {
+        return userService.getProfile();
+    }
 
-  @Operation(
-      summary = "Update user profile",
-      description = "Updates the current user's profile information")
-  @ApiResponses(
-      value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Profile updated successfully",
-            content = @Content(schema = @Schema(implementation = ApiRes.class))),
-        @ApiResponse(responseCode = "400", description = "Invalid request body"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-      })
-  @PatchMapping("/profile")
-  public ApiRes updateProfile(
-      @Parameter(description = "Profile update request", required = true) @Valid @RequestBody
-          UpdateProfileReq request) {
-    return userService.updateProfile(request);
-  }
+    @Operation(
+            summary = "Update user profile",
+            description = "Updates the current user's profile information")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Profile updated successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "400", description = "Invalid request body"),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
+    @PatchMapping("/profile")
+    public ApiRes updateProfile(
+            @Parameter(description = "Profile update request", required = true) @Valid @RequestBody
+                    UpdateProfileReq request) {
+        return userService.updateProfile(request);
+    }
 
-  @Operation(
-      summary = "Update user settings",
-      description = "Updates the current user's application settings")
-  @ApiResponses(
-      value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Settings updated successfully",
-            content = @Content(schema = @Schema(implementation = ApiRes.class))),
-        @ApiResponse(responseCode = "400", description = "Invalid request body"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-      })
-  @PatchMapping("/settings")
-  public ApiRes updateSettings(
-      @Parameter(description = "Settings update request", required = true) @Valid @RequestBody
-          UpdateSettingsReq request) {
-    return userService.updateSettings(request);
-  }
+    @Operation(
+            summary = "Update user settings",
+            description = "Updates the current user's application settings")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Settings updated successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "400", description = "Invalid request body"),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
+    @PatchMapping("/settings")
+    public ApiRes updateSettings(
+            @Parameter(description = "Settings update request", required = true) @Valid @RequestBody
+                    UpdateSettingsReq request) {
+        return userService.updateSettings(request);
+    }
 
-  @PutMapping("/newcomer")
-  @Operation(
-      summary = "Update Newcomer Status",
-      description = "Updates the current user's newcomer status to false")
-  @ApiResponses(
-      value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Newcomer status updated successfully",
-            content = @Content(schema = @Schema(implementation = ApiRes.class))),
-        @ApiResponse(responseCode = "401", description = "Unauthorized"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-      })
-  public ApiRes updateIsNewComerStatus() {
-    return userService.updateIsNewComerStatus();
-  }
+    @PutMapping("/newcomer")
+    @Operation(
+            summary = "Update Newcomer Status",
+            description = "Updates the current user's newcomer status to false")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Newcomer status updated successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
+    public ApiRes updateIsNewComerStatus() {
+        return userService.updateIsNewComerStatus();
+    }
 }

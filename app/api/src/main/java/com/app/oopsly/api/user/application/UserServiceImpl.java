@@ -259,7 +259,13 @@ public class UserServiceImpl implements UserService {
     public ApiRes updateIsNewComerStatus() {
         log.info("Updating isNewComer status for user");
         User user = getCurrentUser();
-        SettingEntity setting = settingRepository.findByUserId(user.getId()).orElseThrow(() -> new ValidationException("Setting not found for user: " + user.getId()));
+        SettingEntity setting =
+                settingRepository
+                        .findByUserId(user.getId())
+                        .orElseThrow(
+                                () ->
+                                        new ValidationException(
+                                                "Setting not found for user: " + user.getId()));
         setting.setIsNewComer(false);
         settingRepository.save(setting);
         log.info("Setting isNewComer status for user: {}", user.getId());
