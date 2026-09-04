@@ -9,8 +9,10 @@ Expo Router file routes live under `ui/app/`. Heavier study UIs live under `ui/s
 | Route file | Role |
 | ---------- | ---- |
 | `app/index.tsx` | Entry / landing |
-| `app/onboard.tsx` | Onboarding |
-| `app/verification.tsx` | OTP verification |
+| `app/onboard.tsx` | Legacy email OTP entry (compatibility route) |
+| `app/login.tsx` | Firebase email/phone passwordless sign-in |
+| `app/verification.tsx` | Firebase or legacy OTP verification |
+| `app/profile-setup.tsx` | Required basic profile setup for new Firebase users |
 | `app/(user)/home.tsx` | Authenticated home / library hub |
 | `app/(user)/discover.tsx` | Discover public content |
 | `app/(user)/profile.tsx` | Profile |
@@ -42,7 +44,8 @@ User stack options are defined in `app/(user)/_layout.tsx` (headers hidden; moda
 ## Navigation mental model (M1)
 
 ```text
-Onboard / OTP
+Welcome → Firebase login → Verification
+    → New user → Profile setup
     → Home (hub)
         → Shelf / Subject detail
             → Review (due cards) / Learn modes

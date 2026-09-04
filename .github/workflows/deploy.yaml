@@ -1,0 +1,163 @@
+# Copyright 2026 Hao Nguyen Tan
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software distributed
+# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+# CONDITIONS OF ANY KIND, either express or implied.
+
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag whose immutable artifacts will be deployed
+        required: true
+        type: string
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options: [stg, perf, prod]
+      platform:
+        description: Deployment platform
+        required: true
+        type: choice
+        options:
+          - web
+          - ios
+          - android
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9"
+
+jobs:
+  deploy-api:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    outputs:
+      url: ${{ steps.api.outputs.url }}
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - id: api
+        name: Deploy tagged backend image
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ vars.GCP_REGION }}
+        run: |
+          set -euo pipefail
+          [ -n "$RELEASE_TAG" ] && [ -n "$GCP_PROJECT_ID" ] && [ -n "$GCP_REGION" ]
+          SERVICE="oopsly-${{ inputs.environment }}"
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}/api:${RELEASE_TAG}"
+          gcloud run deploy "$SERVICE" --image "$IMAGE" --project "$GCP_PROJECT_ID" --region "$GCP_REGION" --quiet
+          URL=$(gcloud run services describe "$SERVICE" --project "$GCP_PROJECT_ID" --region "$GCP_REGION" --format='value(status.url)')
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+  deploy-ui:
+    needs: deploy-api
+    environment: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate input and deployment prerequisites
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+          EXPO_PUBLIC_BACKEND_API: ${{ needs.deploy-api.outputs.url }}
+          BACKEND_HEALTHCHECK_URL: ${{ needs.deploy-api.outputs.url }}/api/v1/oopsly/actuator/health
+        run: |
+          set -euo pipefail
+          case "$PLATFORM" in
+            web|ios|android) ;;
+            *) echo "Unsupported platform '$PLATFORM'"; exit 1 ;;
+          esac
+          [ -n "$RELEASE_TAG" ] || { echo "Missing release_tag"; exit 1; }
+
+          if [ "$PLATFORM" != "web" ] && [ -z "${EXPO_TOKEN}" ]; then
+            echo "Missing EXPO_TOKEN secret"
+            exit 1
+          fi
+
+          if [ "$PLATFORM" = "web" ]; then
+            [ -n "${FIREBASE_API_KEY}" ] || { echo "Missing FIREBASE_API_KEY secret"; exit 1; }
+            [ -n "${FIREBASE_SERVICE_ACCOUNT}" ] || { echo "Missing FIREBASE_SERVICE_ACCOUNT secret"; exit 1; }
+            [ -n "${FIREBASE_PROJECT_ID}" ] || { echo "Missing FIREBASE_PROJECT_ID variable"; exit 1; }
+          fi
+
+          HEALTHCHECK_URL="${BACKEND_HEALTHCHECK_URL}"
+          if [ -z "$HEALTHCHECK_URL" ] && [ -n "${EXPO_PUBLIC_BACKEND_API}" ]; then
+            HEALTHCHECK_URL="${EXPO_PUBLIC_BACKEND_API%/}/actuator/health"
+          fi
+
+          [ -n "$HEALTHCHECK_URL" ] || { echo "Missing BACKEND_HEALTHCHECK_URL or EXPO_PUBLIC_BACKEND_API"; exit 1; }
+          echo "Checking backend health at: $HEALTHCHECK_URL"
+          curl --fail --silent --show-error "$HEALTHCHECK_URL" > /tmp/backend-health.json
+          cat /tmp/backend-health.json
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          package_json_file: ui/package.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Install UI dependencies
+        working-directory: ui
+        run: pnpm install --frozen-lockfile
+
+      - name: Download tagged web artifact
+        if: ${{ inputs.platform == 'web' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "${{ inputs.release_tag }}" --pattern "oopsly-web-${{ inputs.release_tag }}.zip"
+          mkdir -p ui/dist
+          unzip "oopsly-web-${{ inputs.release_tag }}.zip" -d ui/dist
+
+      - name: Publish Web to Firebase Hosting
+        if: ${{ inputs.platform == 'web' }}
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          channelId: live
+          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
+
+      - name: Install EAS CLI
+        if: ${{ inputs.platform != 'web' }}
+        run: npm install -g eas-cli
+
+      - name: Deploy Mobile Build
+        if: ${{ inputs.platform != 'web' }}
+        working-directory: ui
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          eas whoami || eas login --token "$EXPO_TOKEN"
+          pnpm exec eas build --platform "${{ inputs.platform }}" --profile production --non-interactive

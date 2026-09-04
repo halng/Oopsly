@@ -6,14 +6,14 @@ on:
       - main
       - release/**
     paths:
-      - "api/**"
+      - "app/api/**"
       - ".github/workflows/ci-api.yaml"
   pull_request:
     branches:
       - main
       - release/**
     paths:
-      - "api/**"
+      - "app/api/**"
       - ".github/workflows/ci-api.yaml"
   workflow_dispatch:
 
@@ -27,11 +27,11 @@ permissions:
 
 jobs:
   api:
-    name: Analyze API
+    name: Analyze
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: api
+        working-directory: app/api
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_API }}
     steps:
@@ -90,8 +90,8 @@ jobs:
         with:
           name: api-jacoco-report
           path: |
-            api/build/reports/jacoco/
-            api/build/reports/tests/
-            api/build/reports/jacocoHtml/
+            app/api/build/reports/jacoco/
+            app/api/build/reports/tests/
+            app/api/build/reports/jacocoHtml/
           if-no-files-found: warn
           retention-days: 7

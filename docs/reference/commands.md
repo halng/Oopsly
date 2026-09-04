@@ -35,15 +35,24 @@
 | `./gradlew composeUp` | Start Postgres + Redis |
 | `./gradlew composeDown` | Stop and remove volumes |
 | `./gradlew bootRun -Pprofile=test` | Run API loading `.env.test` |
+| `./gradlew bootRun -Pprofile=perf` | Run API with the perf security profile and SQL/stat logging enabled |
 
-## CI
+## Performance (`repository root`)
+
+Provide `BASE_URL` (must include `/api/v1/oopsly`) and select a k6 scenario:
 
 ```bash
-./.github/workflows/ci.sh [--skip-security] [--with-e2e]  # unified local script (legacy)
+k6 run -e BASE_URL="https://example/api/v1/oopsly" -e TEST_PROFILE=smoke api/src/test/perf/k6/backend.js
+k6 run -e BASE_URL="https://example/api/v1/oopsly" -e TEST_PROFILE=flaky api/src/test/perf/k6/backend.js
+k6 run -e BASE_URL="https://example/api/v1/oopsly" -e TEST_PROFILE=stress api/src/test/perf/k6/backend.js
+k6 run -e BASE_URL="https://example/api/v1/oopsly" -e TEST_PROFILE=spike api/src/test/perf/k6/backend.js
 ```
 
 GitHub Actions (native steps, path-filtered):
 
 - [`.github/workflows/ci-api.yaml`](../../.github/workflows/ci-api.yaml) — API
 - [`.github/workflows/ci-ui.yaml`](../../.github/workflows/ci-ui.yaml) — UI lint/Jest + headless Cypress
-- [`.github/workflows/ci.yaml`](../../.github/workflows/ci.yaml) — unified script (legacy)
+- [`.github/workflows/codeql-snyk.yaml`](../../.github/workflows/codeql-snyk.yaml) — security analysis
+- [`.github/workflows/cd.yaml`](../../.github/workflows/cd.yaml) — API image, EAS artifacts, and Firebase Hosting
+- [`.github/workflows/deploy.yaml`](../../.github/workflows/deploy.yaml) — tagged release deployment by environment and platform, with prerequisite and health checks
+- [`.github/workflows/perf-test.yaml`](../../.github/workflows/perf-test.yaml) — release/manual GCP deploy, k6 run, report upload, cleanup

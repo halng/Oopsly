@@ -1,67 +1,86 @@
 # Authentication
 
-Oopsly uses **passwordless email OTP** as the primary Milestone 1 auth path, then issues JWTs for API access.
+Oopsly uses **Firebase Authentication** for passwordless sign-in. The client obtains a
+Firebase ID token and the API verifies that token with the Firebase Admin SDK on every
+protected request. Legacy OTP endpoints remain public, but protected APIs accept Firebase
+bearer tokens only.
 
 ---
 
-## Flow
+## User flow
 
 ```text
-1. Client  POST /otp?email=user@example.com
-2. API generates OTP, stores it, sends email (SMTP or no-op sender in some envs)
-3. Client  POST /otp/validate  { email, otp }
-4. API returns access + refresh tokens (and user context in data)
-5. Client stores tokens (Secure Store / auth store)
-6. Client sends  Authorization: Bearer <access_token>  on protected routes
-7. On 401 / expiry  POST /users/refresh-token  with refresh token
-8. Logout  POST /users/logout
+Welcome
+  → Firebase login (email or phone)
+  → Firebase verification
+  → new Firebase user? → Profile setup → Home
+  → existing user? --------------------→ Home
 ```
 
----
+### Email
 
-## Public vs protected
+1. The user enters an email address on `/login`.
+2. The UI calls Firebase Identity Toolkit `sendOobCode` with `EMAIL_SIGNIN`.
+3. Firebase sends a sign-in link whose continue URL points back to `/verification`.
+4. The verification screen exchanges the link's `oobCode` for an ID token and refresh token.
 
-From `SecurityConfig`:
+The continue URL must be in Firebase Authentication's **Authorized domains** list and
+must match `EXPO_PUBLIC_FIREBASE_EMAIL_LINK`.
 
-**Permit all**
+### Phone
 
-- `/otp/**`
-- `**/refresh-token`
-- `/actuator/health`
-- `/swagger-ui/**`, `/api-docs/**`
-- `OPTIONS /**`
+Firebase phone sign-in requires an app-verification session (reCAPTCHA on web or the
+native Firebase app-verification mechanism). After the platform obtains `sessionInfo`,
+the verification screen exchanges `sessionInfo` plus the SMS code through
+`signInWithPhoneNumber`. Configure the phone provider in Firebase Console before exposing
+this option to users.
 
-**Authenticated**
+> The REST service does not bypass Firebase app verification. Production clients must
+> supply the platform-generated phone session; Firebase test phone numbers are suitable
+> for automated tests.
 
-- All other requests (JWT filter)
+### First-login profile
 
-The UI mirrors public paths in `ui/services/index.ts` (`otp`, `otp/validate`, `users/refresh-token`).
-
----
-
-## Tokens
-
-Configured in `application.yaml`:
-
-| Token | Property | Default |
-| ----- | -------- | ------- |
-| Access | `app.jwt.expiration-in-ms` | 24 hours |
-| Refresh | `app.jwt.refresh-expiration-in-ms` | 7 days |
-
-Signing secret: `JWT_SECRET` / `app.jwt.secret`. **Always override in non-local environments.**
-
-Refresh-token state is backed by **Redis**.
+Firebase returns `isNewUser` after verification. New users go to `/profile-setup` and
+provide a display name plus optional bio, hobbies, and the contact method not used for
+login. Saving the profile sets `onboardingComplete=true`. These fields are editable and
+visible later on `/profile`.
 
 ---
 
-## Google Sign-In
+## Token lifecycle
 
-`app.features.authWithGoogle` defaults to **false**. `GOOGLE_CLIENT_ID` is present for a future / optional path; do not assume Google login works unless the flag is enabled and the client implements it.
+1. Firebase returns an ID token and refresh token after verification.
+2. Before a protected API request, the Axios interceptor asks `FirebaseAuthService` for
+   the current ID token. The service refreshes it through Firebase Secure Token.
+3. The client sends `Authorization: Bearer <firebase-id-token>`.
+4. `FirebaseAuthenticationFilter` uses the Firebase Admin SDK to validate signature, expiry,
+   revocation status, issuer, and audience.
+5. The API finds the local user by `firebase_uid`. On first request it links an existing
+   record with the same email or provisions a new record.
+6. The local UUID becomes the Spring Security principal, preserving ownership checks in
+   existing services.
+
+Firebase Admin uses Application Default Credentials. Set
+`GOOGLE_APPLICATION_CREDENTIALS` to a service-account JSON file locally, or use the
+runtime's attached service account in Google-managed environments. Never ship Admin
+credentials in the UI bundle.
 
 ---
 
-## Client storage
+## Public and protected routes
 
-- Zustand auth store holds session state
-- Sensitive tokens use Expo Secure Store where applicable
-- Axios interceptor attaches the bearer token except on public paths
+`SecurityConfig` permits the health endpoint, Swagger/OpenAPI, CORS preflight, and legacy
+OTP/refresh-token endpoints. Every other endpoint requires authentication unless the
+`perf` profile is active.
+
+The UI treats only legacy `otp`, `otp/validate`, and `users/refresh-token` paths as public.
+All other requests receive a Firebase ID token when a Firebase session exists.
+
+---
+
+## Profiles
+
+`integration` tests mock `FirebaseTokenVerifier` so backend tests do not require cloud
+credentials. The `perf` profile enables a dedicated permissive `SecurityFilterChain` via
+`@Profile("perf")` instead of runtime auth flags.

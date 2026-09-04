@@ -6,14 +6,14 @@ on:
       - main
       - release/**
     paths:
-      - "ui/**"
+      - "app/ui/**"
       - ".github/workflows/ci-ui.yaml"
   pull_request:
     branches:
       - main
       - release/**
     paths:
-      - "ui/**"
+      - "app/ui/**"
       - ".github/workflows/ci-ui.yaml"
   workflow_dispatch:
 
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ui
+        working-directory: app/ui
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,24 +47,24 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
-          package_json_file: ui/package.json
+          package_json_file: app/ui/package.json
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-          cache-dependency-path: ui/pnpm-lock.yaml
+          cache-dependency-path: app/ui/pnpm-lock.yaml
 
       - name: Cache Expo / Metro
         uses: actions/cache@v4
         with:
           path: |
-            ui/.expo
-            ui/node_modules/.cache
-          key: ${{ runner.os }}-expo-${{ hashFiles('ui/pnpm-lock.yaml') }}-${{ hashFiles('ui/app.json', 'ui/babel.config.js', 'ui/metro.config.js') }}
+            app/ui/.expo
+            app/ui/node_modules/.cache
+          key: ${{ runner.os }}-expo-${{ hashFiles('app/ui/pnpm-lock.yaml') }}-${{ hashFiles('app/ui/app.json', 'app/ui/babel.config.js', 'app/ui/metro.config.js') }}
           restore-keys: |
-            ${{ runner.os }}-expo-${{ hashFiles('ui/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-expo-${{ hashFiles('app/ui/pnpm-lock.yaml') }}-
             ${{ runner.os }}-expo-
 
       - name: Install dependencies
@@ -87,7 +87,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ui-jest-coverage
-          path: ui/coverage
+          path: app/ui/coverage
           if-no-files-found: warn
           retention-days: 7
 
@@ -104,33 +104,33 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
-          package_json_file: ui/package.json
+          package_json_file: app/ui/package.json
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-          cache-dependency-path: ui/pnpm-lock.yaml
+          cache-dependency-path: app/ui/pnpm-lock.yaml
 
       - name: Cache Expo / Metro
         uses: actions/cache@v4
         with:
           path: |
-            ui/.expo
-            ui/node_modules/.cache
-          key: ${{ runner.os }}-expo-${{ hashFiles('ui/pnpm-lock.yaml') }}-${{ hashFiles('ui/app.json', 'ui/babel.config.js', 'ui/metro.config.js') }}
+            app/ui/.expo
+            app/ui/node_modules/.cache
+          key: ${{ runner.os }}-expo-${{ hashFiles('app/ui/pnpm-lock.yaml') }}-${{ hashFiles('app/ui/app.json', 'app/ui/babel.config.js', 'app/ui/metro.config.js') }}
           restore-keys: |
-            ${{ runner.os }}-expo-${{ hashFiles('ui/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-expo-${{ hashFiles('app/ui/pnpm-lock.yaml') }}-
             ${{ runner.os }}-expo-
 
       - name: Cypress e2e (headless electron)
         uses: cypress-io/github-action@v6
         with:
-          working-directory: ui
+          working-directory: app/ui
           install-command: pnpm install --frozen-lockfile
           # Caches Cypress binary + pnpm store via the action.
-          cache-key: ${{ runner.os }}-cypress-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          cache-key: ${{ runner.os }}-cypress-${{ hashFiles('app/ui/pnpm-lock.yaml') }}
           start: pnpm web:coverage
           wait-on: http://127.0.0.1:8081
           wait-on-timeout: 360
@@ -145,7 +145,7 @@ jobs:
           EXPO_NO_TELEMETRY: "1"
 
       - name: Check e2e coverage gates
-        working-directory: ui
+        working-directory: app/ui
         run: pnpm coverage:check:e2e
 
       - name: Stage Cypress coverage for artifact
