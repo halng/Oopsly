@@ -119,7 +119,9 @@ public class OTPServiceImpl implements OTPService {
         claims.put("role", "USER");
         if (user.isEmpty()) {
             log.warn("User not found for email {}", StringUtils.masked(email));
-            User createdUser = this.userRepository.save(User.builder().email(email).name(name).displayName(name).build());
+            User createdUser =
+                    this.userRepository.save(
+                            User.builder().email(email).name(name).displayName(name).build());
             claims.put("id", createdUser.getId().toString());
         } else {
             claims.put("id", user.get().getId().toString());

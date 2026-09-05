@@ -83,9 +83,9 @@ class RemainingBranchCoverageTest {
         @Test
         @DisplayName("equals should treat requests with identical fields as equal")
         void equals_shouldTreatRequestsAsEqual_whenAllFieldsMatch() {
-            OTPReq first = new OTPReq("learner@test.dev", "123456");
-            OTPReq same = new OTPReq("learner@test.dev", "123456");
-            OTPReq other = new OTPReq("learner@test.dev", "654321");
+            OTPReq first = new OTPReq("learner@test.dev", "123456", "unnamed");
+            OTPReq same = new OTPReq("learner@test.dev", "123456", "unnamed");
+            OTPReq other = new OTPReq("learner@test.dev", "654321", "unnamed");
 
             assertEquals(first, same);
             assertEquals(first.hashCode(), same.hashCode());
@@ -100,11 +100,12 @@ class RemainingBranchCoverageTest {
         @Test
         @DisplayName("accessors should return null without failing when fields are not provided")
         void accessors_shouldReturnNull_whenFieldsAreNotProvided() {
-            OTPReq empty = new OTPReq(null, null);
+            OTPReq empty = new OTPReq(null, null, null);
 
             assertNull(empty.email());
             assertNull(empty.otp());
-            assertEquals(new OTPReq(null, null), empty);
+            assertNull(empty.name());
+            assertEquals(new OTPReq(null, null, null), empty);
         }
     }
 

@@ -91,14 +91,22 @@ function isOfflineOrNetworkFailure(res: ApiResponse<any>): boolean {
 }
 
 export const ApiService = {
+  // health check
+  healthCheck: async () => {
+    const res = await apiClient.request<{status: string }>({
+      url: "actuator/health",
+      method: 'GET'
+    });
+    return res.data;
+  },
   // Auth
   sendOtp: (email: string) =>
-    fetchJson<null>(`/otp?email=${email}`, {
+    fetchJson<null>(`/v1/otp?email=${email}`, {
       method: 'POST',
     }),
 
   verifyOtp: (email: string, otp: string, name: string) =>
-    fetchJson<{ access_token: string; refresh_token: string; type: string }>('/otp/validate', {
+    fetchJson<{ access_token: string; refresh_token: string; type: string }>('/v1/otp/validate', {
       method: 'POST',
       body: JSON.stringify({ email, otp, name }),
     }),

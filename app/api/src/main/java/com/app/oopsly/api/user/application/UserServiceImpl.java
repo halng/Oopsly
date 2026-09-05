@@ -45,6 +45,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.JsonPatchException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -55,9 +57,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -66,7 +65,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 
 @Slf4j
 @Service
@@ -89,9 +87,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getCurrentUser() {
         String currentUserId = getCurrentUserId();
-    return userRepository
-        .findById(UUID.fromString(currentUserId))
-        .orElseThrow(() -> new NotFoundException("User not found"));
+        return userRepository
+                .findById(UUID.fromString(currentUserId))
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
     @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "refreshTokenFallback")
@@ -196,7 +194,7 @@ public class UserServiceImpl implements UserService {
             setting = createDefaultSettings(user);
         }
 
-        return  getProfile();
+        return getProfile();
     }
 
     // Fallback method for updateProfile Circuit Breaker
@@ -449,7 +447,8 @@ public class UserServiceImpl implements UserService {
         if (!violations.isEmpty()) {
             StringBuilder errorMessage = new StringBuilder();
             for (ConstraintViolation<User> violation : violations) {
-                errorMessage.append(violation.getPropertyPath())
+                errorMessage
+                        .append(violation.getPropertyPath())
                         .append(": ")
                         .append(violation.getMessage())
                         .append("; ");

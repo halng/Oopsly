@@ -1,3 +1,4 @@
+import { ApiService } from './api';
 import { offlineDb, SyncAction } from './offlineDb';
 
 export interface SyncStatus {
@@ -108,14 +109,10 @@ class SyncManager {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch('/api/health', {
-        method: 'GET',
-        cache: 'no-store',
-        signal: controller.signal,
-      });
+      const res = await ApiService.healthCheck();
       clearTimeout(timeoutId);
 
-      const isHealthy = res.ok;
+      const isHealthy = res.status === "UP";
       this.status.isOnline = isHealthy;
       this.notify();
       return isHealthy;
