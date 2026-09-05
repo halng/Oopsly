@@ -99,10 +99,10 @@ public class OTPServiceImpl implements OTPService {
             log.info(
                     "Test email and OTP detected. Skipping OTP verification for {}",
                     StringUtils.masked(otpReq.email()));
-            return handleAuthSuccess(otpReq.email());
+            return handleAuthSuccess(otpReq.email(), otpReq.name());
         }
         return switch (check(otpReq.email().split("@")[0], otpReq.otp())) {
-            case VALID -> handleAuthSuccess(otpReq.email());
+            case VALID -> handleAuthSuccess(otpReq.email(), otpReq.name());
             case INVALID -> ApiRes.badRequest("OTP is invalid. Please try again.");
             case EXPIRED -> ApiRes.notFound("OTP has expired. Please request a new one.");
             case INVALIDATED -> ApiRes.rateLimitExceeded(
@@ -111,7 +111,7 @@ public class OTPServiceImpl implements OTPService {
         };
     }
 
-    private ApiRes handleAuthSuccess(String email) {
+    private ApiRes handleAuthSuccess(String email, String name) {
         log.info("Authentication successful for {}. Generating token..", StringUtils.masked(email));
         Optional<User> user = userRepository.findByEmail(email);
 
@@ -119,7 +119,7 @@ public class OTPServiceImpl implements OTPService {
         claims.put("role", "USER");
         if (user.isEmpty()) {
             log.warn("User not found for email {}", StringUtils.masked(email));
-            User createdUser = this.userRepository.save(User.builder().email(email).build());
+            User createdUser = this.userRepository.save(User.builder().email(email).name(name).displayName(name).build());
             claims.put("id", createdUser.getId().toString());
         } else {
             claims.put("id", user.get().getId().toString());

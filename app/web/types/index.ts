@@ -245,6 +245,7 @@ export interface UserSettings {
 export interface UserProfile {
   id: string;
   email: string;
+  name: string;
   displayName: string;
   avatarUrl?: string;
   bio?: string;

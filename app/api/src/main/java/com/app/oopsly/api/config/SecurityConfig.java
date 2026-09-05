@@ -78,7 +78,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         req ->
                                 req.requestMatchers(
-                                                "/otp/**",
+                                                "/v1/otp/**",
                                                 "/actuator/health",
                                                 "**/refresh-token",
                                                 "/swagger-ui/**",

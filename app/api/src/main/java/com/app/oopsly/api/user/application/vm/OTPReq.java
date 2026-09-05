@@ -19,4 +19,4 @@ package com.app.oopsly.api.user.application.vm;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
-public record OTPReq(@Email String email, @Size(min = 6) String otp) {}
+public record OTPReq(@Email String email, @Size(min = 6) String otp, String name) {}

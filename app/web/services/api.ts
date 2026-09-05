@@ -1,4 +1,5 @@
-import { useUserProfileStore } from '@/store';
+import axios, { AxiosError } from 'axios';
+import { useAuthStore, useUserProfileStore } from '@/store';
 import {
   ApiResponse,
   Shelf,
@@ -18,17 +19,59 @@ import { offlineDb, OfflineCard } from './offlineDb';
 import { syncManager } from './syncManager';
 import { INITIAL_USER } from '@/mock/initialData';
 
+/**
+ * Shared axios instance.
+ *
+ * Base URL is read from NEXT_PUBLIC_API_URL. When the variable is not set,
+ * requests fall back to same-origin relative paths (e.g. the Next.js dev
+ * server or an integrated backend).
+ */
+export const apiClient = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || undefined,
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Attach the access token (when authenticated) to every outgoing request.
+apiClient.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const { accessToken } = useAuthStore.getState();
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+  }
+  return config;
+});
+
+// Normalize failures so callers always receive a consistent, readable error.
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<ApiResponse<unknown>>) => {
+    if (error.response) {
+      // The server answered with a non-2xx status — prefer the API's own message.
+      const message =
+        error.response.data?.message || `Request failed with status ${error.response.status}`;
+      return Promise.reject(new Error(message));
+    }
+    if (error.request) {
+      // The request was sent but no response arrived (offline / network failure).
+      return Promise.reject(new Error('Network error occurred'));
+    }
+    return Promise.reject(new Error(error.message || 'Request failed'));
+  }
+);
+
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
-    const res = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+    const res = await apiClient.request<ApiResponse<T>>({
+      url,
+      method: (options?.method ?? 'GET') as 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
+      data: typeof options?.body === 'string' ? JSON.parse(options.body) : undefined,
+      headers: options?.headers as Record<string, string> | undefined,
     });
-    const data = await res.json();
-    return data;
+    return res.data;
   } catch (error: any) {
     return {
       isSuccess: false,
@@ -50,20 +93,15 @@ function isOfflineOrNetworkFailure(res: ApiResponse<any>): boolean {
 export const ApiService = {
   // Auth
   sendOtp: (email: string) =>
-    fetchJson<{ sent: boolean; demoCode?: string }>('/api/auth/otp/send', {
+    fetchJson<null>(`/otp?email=${email}`, {
       method: 'POST',
-      body: JSON.stringify({ email }),
     }),
 
-  verifyOtp: (email: string, otp: string) =>
-    fetchJson<{ user: UserProfile; token: string }>('/api/auth/otp/verify', {
+  verifyOtp: (email: string, otp: string, name: string) =>
+    fetchJson<{ access_token: string; refresh_token: string; type: string }>('/otp/validate', {
       method: 'POST',
-      body: JSON.stringify({ email, otp }),
+      body: JSON.stringify({ email, otp, name }),
     }),
-
-  demoLogin: () => {
-    useUserProfileStore.getState().setProfile(INITIAL_USER);
-  },
 
   // User Profile
   getProfile: async (): Promise<ApiResponse<UserProfile>> => {

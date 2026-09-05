@@ -1,9 +1,7 @@
 server:
   port: 9009
-  active:
-    version: v1
   servlet:
-    context-path: /api/${server.active.version}/oopsly
+    context-path: /api/oopsly
 
 app:
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:8081}
@@ -13,14 +11,12 @@ app:
     refresh-expiration-in-ms: 604800000
   google:
     client-id: ${GOOGLE_CLIENT_ID:changeme}
-  features:
-    authWithGoogle: false
-    authWithJwt: true
   ai:
     enabled: ${AI_ENABLED:false}
     api-key: ${GEMINI_API_KEY:}
     model: ${AI_MODEL:gemini-2.5-flash}
-
+  mailtrap:
+    api-key: ${MAILTRAP_API_KEY:changeme}
 springdoc:
   api-docs:
     path: /api-docs

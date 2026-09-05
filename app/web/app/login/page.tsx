@@ -1,29 +1,29 @@
 'use client';
 import React, { useState } from 'react';
-import { Mail, ArrowRight, Layers, Sparkles, Zap, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Mail, ArrowRight, Layers, Sparkles, KeyRound, CheckCircle2 } from 'lucide-react';
 import { ApiService } from '@/services/api';
-import { UserProfile } from '@/types';
 import { useRouter } from 'next/navigation';
 
-interface AuthPageProps {
-    onSuccess: (user: UserProfile) => void;
-}
+import {useAuthStore} from '@/store';
 
-const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
+
+const AuthPage = () => {
     const router = useRouter();
     const [mode, setMode] = useState<'login' | 'signup'>('login');
     const [step, setStep] = useState<'email' | 'otp'>('email');
     const [email, setEmail] = useState('');
     const [otp, setOtp] = useState('');
     const [name, setName] = useState('');
-    const [demoCode, setDemoCode] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
-    const prodEnv = process.env.NEXT_PUBLIC_ACTIVE_ENV === 'prod';
 
     const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!email.trim()) return;
+        if (!isValidEmail()) {
+            setErrorMessage('Please enter a valid email address.');
+            return;
+        }
+
         if (mode === 'signup' && !name.trim()) {
             setErrorMessage('Please enter your name.');
             return;
@@ -34,8 +34,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
         try {
             const res = await ApiService.sendOtp(email.trim());
             if (res.isSuccess) {
-                setDemoCode(res.data?.demoCode || '123456');
-                setOtp(res.data?.demoCode || '123456');
                 setStep('otp');
             } else {
                 setErrorMessage(res.message || 'Failed to send verification code.');
@@ -47,16 +45,17 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
 
     const handleVerifyOtp = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!otp.trim()) return;
+        if (!isValidOtp()) {
+            setErrorMessage('OTP must be a 6-digit number.');
+            return;
+        }
         setIsLoading(true);
         setErrorMessage('');
         try {
-            const res = await ApiService.verifyOtp(email.trim(), otp.trim());
+            const res = await ApiService.verifyOtp(email.trim(), otp.trim(), name.trim());
             if (res.isSuccess && res.data) {
-                // If it was a signup, we might want to update the profile name here
-                // For now, the mock API just returns a default user. In a real app,
-                // you'd pass the name to the backend during signup.
-                onSuccess(res.data.user);
+                useAuthStore.getState().setCredentials(email.trim(), res.data.access_token, res.data.refresh_token);
+                router.push('/home');
             } else {
                 setErrorMessage(res.message || 'Invalid or expired OTP code.');
             }
@@ -65,17 +64,30 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
         }
     };
 
-    const handleInstantDemoLogin = async () => {
-        if (prodEnv) return;
-        setIsLoading(true);
-        setErrorMessage('');
-        try {
-            await ApiService.demoLogin();
-        } finally {
-            setIsLoading(false);
-            router.push("/home")
+    const isValidEmail = () => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email.trim());
+    }
+
+    const isValidOtp = () => {
+        const otpRegex = /^\d{6}$/;
+        return otpRegex.test(otp.trim());
+    }
+
+    const onTextChange = (setter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+        setter(e.target.value);
+        setErrorMessage(''); 
+    }
+
+    const onOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        if (/^\d*$/.test(value) && value.length <= 6) {
+            setOtp(value);
+            setErrorMessage(''); 
+        } else {
+            setErrorMessage('OTP must be a 6-digit number.');
         }
-    };
+    }
 
     return (
         <div className="min-h-screen bg-[#FDFBF7] flex flex-col md:flex-row font-sans">
@@ -96,7 +108,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
                         </h2>
                         <p className="text-stone-500 text-sm">
                             {step === 'otp'
-                                ? `We sent a code to ${email}`
+                                ? `Hello ${name}! We sent a code to ${email}`
                                 : mode === 'login'
                                     ? 'Sign in to access your spaced repetition decks.'
                                     : 'Start learning faster and remembering longer.'}
@@ -121,7 +133,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
                                         required
                                         placeholder="Jane Doe"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={onTextChange(setName)}
                                         className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-900 focus:ring-2 focus:ring-[var(--theme-accent)] focus:outline-none transition-all"
                                     />
                                 </div>
@@ -138,7 +150,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
                                         required
                                         placeholder="name@example.com"
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        onChange={onTextChange(setEmail)}
                                         className="w-full pl-12 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-900 focus:ring-2 focus:ring-[var(--theme-accent)] focus:outline-none transition-all"
                                     />
                                 </div>
@@ -146,7 +158,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
 
                             <button
                                 type="submit"
-                                disabled={isLoading || !email.trim() || (mode === 'signup' && !name.trim())}
+                                disabled={isLoading || !isValidEmail() || (mode === 'signup' && !name.trim())}
                                 className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white font-bold shadow-md shadow-stone-500/20 transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                             >
                                 <span>{isLoading ? 'Processing...' : 'Continue with Email'}</span>
@@ -167,23 +179,18 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
                                         required
                                         placeholder="123456"
                                         value={otp}
-                                        onChange={(e) => setOtp(e.target.value)}
+                                        onChange={onOtpChange}
                                         className="w-full pl-12 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-center tracking-widest text-lg font-bold text-stone-900 focus:ring-2 focus:ring-[var(--theme-accent)] focus:outline-none transition-all"
                                     />
                                 </div>
-                                {demoCode && (
-                                    <p className="text-xs text-[var(--theme-secondary)] mt-2 text-center font-medium bg-[color-mix(in_srgb,var(--theme-accent)_10%,transparent)] p-2 rounded-lg">
-                                        Demo code auto-filled: <span className="font-mono font-bold tracking-wider">{demoCode}</span>
-                                    </p>
-                                )}
                             </div>
 
                             <button
                                 type="submit"
-                                disabled={isLoading || !otp.trim()}
+                                disabled={isLoading || !isValidOtp()}
                                 className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white font-bold shadow-md shadow-stone-500/20 transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                             >
-                                <span>{isLoading ? 'Verifying...' : 'Verify & Sign In'}</span>
+                                <span>{isLoading ? 'Verifying...' : 'Verify'}</span>
                                 {!isLoading && <ArrowRight className="w-4 h-4" />}
                             </button>
 
@@ -209,17 +216,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
                                     {mode === 'login' ? 'Sign up' : 'Log in'}
                                 </button>
                             </p>
-
-                            {!prodEnv && (
-                                <button
-                                    type="button"
-                                    onClick={handleInstantDemoLogin}
-                                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-sm font-bold shadow-md transition-all cursor-pointer"
-                                >
-                                    <Zap className="w-4 h-4 fill-amber-400 text-amber-400" />
-                                    <span>Quick Demo Login</span>
-                                </button>
-                            )}
                         </div>
                     )}
                 </div>
