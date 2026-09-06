@@ -1,4 +1,4 @@
-name: CI API
+name: CI
 
 on:
   push:
@@ -6,19 +6,19 @@ on:
       - main
       - release/**
     paths:
-      - "app/api/**"
-      - ".github/workflows/ci-api.yaml"
+      - "app/**"
+      - ".github/workflows/ci.yaml"
   pull_request:
     branches:
       - main
       - release/**
     paths:
-      - "app/api/**"
-      - ".github/workflows/ci-api.yaml"
+      - "app/**"
+      - ".github/workflows/ci.yaml"
   workflow_dispatch:
 
 concurrency:
-  group: ci-api-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   api:
-    name: Analyze
+    name: CI API
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -67,7 +67,6 @@ jobs:
 
       - name: Unit tests
         run: ./gradlew test --no-daemon
-
       - name: Integration tests
         run: ./gradlew integrationTest --rerun --no-daemon
 
@@ -75,14 +74,9 @@ jobs:
         run: ./gradlew jacocoTestCoverageVerification --no-daemon
 
       - name: SonarQube analysis
-        if: env.SONAR_TOKEN != ''
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_API }}
         run: ./gradlew sonar --no-daemon
-
-      - name: Skip Sonar — token not configured
-        if: env.SONAR_TOKEN == ''
-        run: echo "SONAR_TOKEN_API not set; skipping SonarQube upload."
 
       - name: Upload Jacoco / test reports
         if: always()
@@ -94,4 +88,66 @@ jobs:
             app/api/build/reports/tests/
             app/api/build/reports/jacocoHtml/
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 3
+
+  ui:
+    name: CI WEB
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/web
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required by SonarQube for accurate blame information
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Set up Node.js v26
+        uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint
+        run: pnpm run lint
+
+      - name: Run Prettier check
+        run: pnpm run format:check
+
+      - name: Run TypeScript check
+        run: pnpm exec tsc --noEmit
+
+      - name: Run Unit Tests with Coverage
+        run: pnpm run test:coverage
+      
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps
+    
+      - name: Run E2E tests (Playwright)
+        run: pnpm exec playwright test
+      - name: Upload Testing report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            app/web/test-results/
+            app/web/coverage/
+            app/web/playwright-report/
+          retention-days: 3
+
+      - name: Run SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Provided automatically by GitHub
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_WEB }}
+        with:
+          projectBaseDir: app/web
+          args: >
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info

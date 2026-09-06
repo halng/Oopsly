@@ -39,12 +39,12 @@ class UserProfileControllerTest extends AbstractControllerTest {
 
     @Test
     void unauthenticated_returnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/user/profile")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/v1/user-profiles")).andExpect(status().isUnauthorized());
     }
 
     @Test
     void getProfile_returnsOk() throws Exception {
-        mockMvc.perform(get("/user/profile").with(bearer(session)))
+        mockMvc.perform(get("/v1/user-profiles").with(bearer(session)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true));
     }
@@ -52,7 +52,7 @@ class UserProfileControllerTest extends AbstractControllerTest {
     @Test
     void updateProfile_valid_returnsOk() throws Exception {
         mockMvc.perform(
-                        patch("/user/profile")
+                        patch("/v1/user-profiles")
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
@@ -71,7 +71,7 @@ class UserProfileControllerTest extends AbstractControllerTest {
     @Test
     void updateProfile_blankDisplayName_returnsBadRequest() throws Exception {
         mockMvc.perform(
-                        patch("/user/profile")
+                        patch("/v1/user/profile")
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
@@ -84,7 +84,7 @@ class UserProfileControllerTest extends AbstractControllerTest {
     @Test
     void updateSettings_valid_returnsOk() throws Exception {
         mockMvc.perform(
-                        patch("/user/settings")
+                        patch("/v1/user-profiles/settings")
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
@@ -112,7 +112,7 @@ class UserProfileControllerTest extends AbstractControllerTest {
     @Test
     void updateSettings_invalidTheme_returnsBadRequest() throws Exception {
         mockMvc.perform(
-                        patch("/user/settings")
+                        patch("/v1/user/settings")
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(

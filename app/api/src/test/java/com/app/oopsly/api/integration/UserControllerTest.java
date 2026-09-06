@@ -31,32 +31,32 @@ import org.springframework.http.MediaType;
 class UserControllerTest extends AbstractControllerTest {
 
     @Nested
-    @DisplayName("GET /users/validate")
+    @DisplayName("GET /v1/users/validate")
     class Validate {
 
         @Test
         void validate_withValidToken_returnsOk() throws Exception {
             AuthSession session = authenticate(EMAIL);
-            mockMvc.perform(get("/users/validate").with(bearer(session)))
+            mockMvc.perform(get("/v1/users/validate").with(bearer(session)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.isSuccess").value(true));
         }
 
         @Test
         void validate_withoutToken_returnsUnauthorized() throws Exception {
-            mockMvc.perform(get("/users/validate")).andExpect(status().isUnauthorized());
+            mockMvc.perform(get("/v1/users/validate")).andExpect(status().isUnauthorized());
         }
     }
 
     @Nested
-    @DisplayName("POST /users/refresh-token")
+    @DisplayName("POST /v1/users/refresh-token")
     class Refresh {
 
         @Test
         void refresh_withValidRefreshToken_returnsNewPair() throws Exception {
             AuthSession session = authenticate(EMAIL);
             mockMvc.perform(
-                            post("/users/refresh-token")
+                            post("/v1/users/refresh-token")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(
                                             """
@@ -77,7 +77,7 @@ class UserControllerTest extends AbstractControllerTest {
         @Test
         void refresh_withInvalidToken_returnsUnauthorizedOrBadRequest() throws Exception {
             mockMvc.perform(
-                            post("/users/refresh-token")
+                            post("/v1/users/refresh-token")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(
                                             """
@@ -106,7 +106,7 @@ class UserControllerTest extends AbstractControllerTest {
         @Test
         void refresh_missingFields_returnsBadRequest() throws Exception {
             mockMvc.perform(
-                            post("/users/refresh-token")
+                            post("/v1/users/refresh-token")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content("{}"))
                     .andExpect(status().isBadRequest());
@@ -114,20 +114,20 @@ class UserControllerTest extends AbstractControllerTest {
     }
 
     @Nested
-    @DisplayName("POST /users/logout")
+    @DisplayName("POST /v1/users/logout")
     class Logout {
 
         @Test
         void logout_authenticated_returnsOk() throws Exception {
             AuthSession session = authenticate(EMAIL);
-            mockMvc.perform(post("/users/logout").with(bearer(session)))
+            mockMvc.perform(post("/v1/users/logout").with(bearer(session)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.isSuccess").value(true));
         }
 
         @Test
         void logout_unauthenticated_returnsUnauthorized() throws Exception {
-            mockMvc.perform(post("/users/logout")).andExpect(status().isUnauthorized());
+            mockMvc.perform(post("/v1/users/logout")).andExpect(status().isUnauthorized());
         }
     }
 }

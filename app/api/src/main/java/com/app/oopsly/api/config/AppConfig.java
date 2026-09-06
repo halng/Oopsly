@@ -43,6 +43,13 @@ public class AppConfig {
     private Jwt jwt = new Jwt();
     private Google google = new Google();
     private Features features = new Features();
+    private Mailtrap mailtrap = new Mailtrap();
+
+    @Getter
+    @Setter
+    public static class Mailtrap {
+        private String apiKey;
+    }
 
     @Getter
     @Setter

@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.library.application.vm.StudyScheduleReq;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
@@ -38,13 +39,21 @@ import com.app.oopsly.api.user.domain.Theme;
 import com.app.oopsly.api.user.domain.User;
 import com.app.oopsly.api.user.infrastructure.SettingRepository;
 import com.app.oopsly.api.user.infrastructure.UserRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Path;
+import jakarta.validation.Validator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -76,6 +85,12 @@ class UserServiceImplTest {
 
     @Mock private ValueOperations<String, String> valueOps;
 
+    @Mock private ObjectMapper objectMapper;
+
+    @Mock private Validator validator;
+
+    private JsonNode mockJsonNode;
+
     @InjectMocks private UserServiceImpl userService;
 
     private UUID userId;
@@ -106,6 +121,7 @@ class UserServiceImplTest {
         setting.setStudySchedule(com.app.oopsly.api.library.domain.StudySchedule.defaults());
         setting.setUser(user);
 
+        mockJsonNode = mock(JsonNode.class);
         SecurityContextHolder.setContext(securityContext);
     }
 
@@ -114,8 +130,11 @@ class UserServiceImplTest {
         SecurityContextHolder.clearContext();
     }
 
+    @DisplayName(
+            "getCurrentUserId should return user ID from SecurityContext when user is"
+                    + " authenticated")
     @Test
-    void getCurrentUserId_returnsUserIdFromSecurityContext() {
+    void getCurrentUserId_shouldReturnUserIdFromSecurityContext_whenUserIsAuthenticated() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
 
@@ -127,7 +146,8 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getCurrentUser_returnsUserFromDatabase() {
+    @DisplayName("getCurrentUser should return user from database when user exists")
+    void getCurrentUser_shouldReturnUserFromDatabase_whenUserExists() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -139,19 +159,21 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getCurrentUser_throwsException_whenUserNotFound() {
+    @DisplayName("getCurrentUser should throw NotFoundException when user is not found")
+    void getCurrentUser_shouldThrowNotFoundException_whenUserNotFound() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        UnauthenticatedException exception =
-                assertThrows(UnauthenticatedException.class, () -> userService.getCurrentUser());
+        NotFoundException exception =
+                assertThrows(NotFoundException.class, () -> userService.getCurrentUser());
         assertTrue(exception.getMessage().contains("User not found"));
         verify(userRepository, times(1)).findById(userId);
     }
 
     @Test
-    void getCurrentUser_withRealAuthentication_works() {
+    @DisplayName("getCurrentUser should return user from database when using real Authentication")
+    void getCurrentUser_withRealAuthentication_shouldReturnUserFromDatabase() {
         Authentication realAuth =
                 new UsernamePasswordAuthenticationToken(userId.toString(), null, null);
         SecurityContext realContext = SecurityContextHolder.createEmptyContext();
@@ -166,7 +188,10 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getCurrentUserId_withInvalidUUID_stillReturnsString() {
+    @DisplayName(
+            "getCurrentUserId should return user ID from SecurityContext when user ID is invalid"
+                    + " UUID")
+    void getCurrentUserId_withInvalidUUID_shouldReturnUserIdFromSecurityContext() {
         String invalidId = "not-a-uuid";
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(invalidId);
@@ -177,6 +202,8 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName(
+            "getCurrentUser should throw IllegalArgumentException when user ID is invalid UUID")
     void getCurrentUser_withInvalidUUID_throwsIllegalArgumentException() {
         String invalidId = "not-a-uuid";
         when(securityContext.getAuthentication()).thenReturn(authentication);
@@ -186,6 +213,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("getCurrentUser should throw NullPointerException when principal is null")
     void getCurrentUser_withNullPrincipal_throwsNullPointerException() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(null);
@@ -194,7 +222,8 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getCurrentUser_calledMultipleTimes_queriesDatabaseEachTime() {
+    @DisplayName("getCurrentUser should query the database each time it is called")
+    void getCurrentUser_calledMultipleTimes_shouldQueryDatabaseEachTime() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -207,7 +236,8 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getCurrentUserFallback_throwsUnauthenticatedException() {
+    @DisplayName("getCurrentUserFallback should throw UnauthenticatedException")
+    void getCurrentUserFallback_shouldThrowUnauthenticatedException() {
         RuntimeException cause = new RuntimeException("Database connection failed");
 
         UnauthenticatedException exception =
@@ -221,7 +251,10 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getCurrentUserFallback_withDatabaseException_preservesCauseChain() {
+    @DisplayName(
+            "getCurrentUserFallback should preserve the cause chain when a database exception"
+                    + " occurs")
+    void getCurrentUserFallback_withDatabaseException_shouldPreserveCauseChain() {
         Exception originalCause = new java.sql.SQLException("Connection timeout");
         RuntimeException wrappedCause = new RuntimeException("Database error", originalCause);
 
@@ -236,7 +269,8 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getCurrentUserFallback_withNullThrowable_handlesGracefully() {
+    @DisplayName("getCurrentUserFallback should handle null throwable gracefully")
+    void getCurrentUserFallback_withNullThrowable_shouldHandleGracefully() {
         UnauthenticatedException exception =
                 assertThrows(
                         UnauthenticatedException.class,
@@ -248,7 +282,8 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getCurrentUserFallback_providesUserFriendlyMessage() {
+    @DisplayName("getCurrentUserFallback should provide a user-friendly message")
+    void getCurrentUserFallback_shouldProvideUserFriendlyMessage() {
         Throwable cause = new Throwable("Internal circuit breaker error");
 
         UnauthenticatedException exception =
@@ -262,7 +297,8 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getProfileFallback_providesUserFriendlyMessage() {
+    @DisplayName("getProfileFallback should provide a user-friendly message")
+    void getProfileFallback_shouldProvideUserFriendlyMessage() {
         Throwable cause = new Throwable("Internal circuit breaker error");
 
         RetryLaterException exception =
@@ -276,7 +312,8 @@ class UserServiceImplTest {
     }
 
     @Test
-    void updateProfileFallback_providesUserFriendlyMessage() {
+    @DisplayName("updateProfileFallback should provide a user-friendly message")
+    void updateProfileFallback_shouldProvideUserFriendlyMessage() {
         UpdateProfileReq request = new UpdateProfileReq("Test User", "Test Bio", 25);
         Throwable cause = new Throwable("Internal circuit breaker error");
 
@@ -292,7 +329,8 @@ class UserServiceImplTest {
     }
 
     @Test
-    void updateSettingsFallback_providesUserFriendlyMessage() {
+    @DisplayName("updateSettingsFallback should provide a user-friendly message")
+    void updateSettingsFallback_shouldProvideUserFriendlyMessage() {
         SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 1, 5, 10);
         UpdateSettingsReq request =
                 new UpdateSettingsReq(
@@ -315,6 +353,7 @@ class UserServiceImplTest {
 
     // Profile Management Tests
     @Test
+    @DisplayName("getProfile should return user profile when profile exists")
     void getProfile_returnsUserProfile_whenProfileExists() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -337,6 +376,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("getProfile should create settings when not found")
     void getProfile_createsSettings_whenNotFound() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -362,6 +402,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateProfile should create settings if not exist")
     void updateProfile_createsSettingsIfNotExist() {
         UpdateProfileReq request = new UpdateProfileReq("New User", "New Bio", 30);
 
@@ -383,6 +424,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateProfile should update existing profile")
     void updateProfile_updatesExistingProfile() {
         UpdateProfileReq request = new UpdateProfileReq("Updated User", "Updated Bio", 35);
 
@@ -405,6 +447,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateSettings should update existing settings")
     void updateSettings_updatesExistingSettings() {
         SpaceConfigReq spaceConfigReq = new SpaceConfigReq(2, 3, 7, 14);
         UpdateSettingsReq request =
@@ -438,6 +481,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateSettings should throw ValidationException when theme is invalid")
     void updateSettings_throwsException_whenInvalidTheme() {
         SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 1, 5, 10);
         UpdateSettingsReq request =
@@ -458,6 +502,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateSettings should throw ValidationException when language is invalid")
     void updateSettings_throwsException_whenInvalidLanguage() {
         SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 1, 5, 10);
         UpdateSettingsReq request =
@@ -478,6 +523,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateSettings should create new settings when settings do not exist")
     void updateSettings_createsNewSettings_whenSettingsDoNotExist() {
         SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 2, 5, 10);
         UpdateSettingsReq request =
@@ -502,14 +548,99 @@ class UserServiceImplTest {
         verify(settingRepository, times(1)).save(any(SettingEntity.class));
     }
 
+    @Test
+    @DisplayName("patchUserProfileUpdates should return OK when patch is valid")
+    void patchUserProfileUpdates_returnsOk_whenPatchIsValid() throws Exception {
+        JsonPatch jsonPatch = mock(JsonPatch.class);
+        User patchedUser = new User();
+        patchedUser.setId(userId);
+        patchedUser.setEmail("patched@example.com");
+        patchedUser.setDisplayName("Patched User");
+        patchedUser.setBio("Patched Bio");
+        patchedUser.setAge(31);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(objectMapper.convertValue(user, JsonNode.class)).thenReturn(mockJsonNode);
+        when(jsonPatch.apply(any(JsonNode.class))).thenReturn(mockJsonNode);
+        when(objectMapper.treeToValue(any(JsonNode.class), eq(User.class))).thenReturn(patchedUser);
+        when(validator.validate(patchedUser)).thenReturn(Set.of());
+        when(userRepository.save(patchedUser)).thenReturn(patchedUser);
+
+        ApiRes result = userService.patchUserProfileUpdates(jsonPatch);
+
+        assertNotNull(result);
+        assertTrue(result.getBody().isSuccess());
+        assertEquals("User profile updated successfully", result.getBody().message());
+        assertSame(patchedUser, result.getBody().data());
+        verify(userRepository).save(patchedUser);
+    }
+
+    @Test
+    @DisplayName("patchUserProfileUpdates should return BadRequest when patch fails")
+    void patchUserProfileUpdates_returnsBadRequest_whenPatchFails() throws Exception {
+        JsonPatch jsonPatch = mock(JsonPatch.class);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(objectMapper.convertValue(user, JsonNode.class)).thenReturn(mockJsonNode);
+        when(jsonPatch.apply(any(JsonNode.class)))
+                .thenThrow(new com.github.fge.jsonpatch.JsonPatchException("bad patch"));
+
+        ApiRes result = userService.patchUserProfileUpdates(jsonPatch);
+
+        assertNotNull(result);
+        assertFalse(result.getBody().isSuccess());
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertEquals("Failed to apply JSON patch", result.getBody().message());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName(
+            "patchUserProfileUpdates should propagate ValidationException when updated user is"
+                    + " invalid")
+    void patchUserProfileUpdates_propagatesValidationException_whenUpdatedUserIsInvalid()
+            throws Exception {
+        JsonPatch jsonPatch = mock(JsonPatch.class);
+        User patchedUser = new User();
+        patchedUser.setId(userId);
+
+        ConstraintViolation<User> violation = mock(ConstraintViolation.class);
+        Path mockPath = mock(Path.class);
+        when(mockPath.toString()).thenReturn("displayName");
+        when(violation.getPropertyPath()).thenReturn(mockPath);
+        when(violation.getMessage()).thenReturn("must not be blank");
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userId.toString());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(objectMapper.convertValue(user, JsonNode.class)).thenReturn(mockJsonNode);
+        when(jsonPatch.apply(any(JsonNode.class))).thenReturn(mockJsonNode);
+        when(objectMapper.treeToValue(any(JsonNode.class), eq(User.class))).thenReturn(patchedUser);
+        when(validator.validate(patchedUser)).thenReturn(Set.of(violation));
+
+        ValidationException exception =
+                assertThrows(
+                        ValidationException.class,
+                        () -> userService.patchUserProfileUpdates(jsonPatch));
+
+        assertTrue(exception.getMessage().contains("Validation failed"));
+        assertTrue(exception.getMessage().contains("displayName"));
+        assertTrue(exception.getMessage().contains("must not be blank"));
+        verify(userRepository, never()).save(any());
+    }
+
     // Refresh Token Tests
     @Test
+    @DisplayName("refreshToken should return new tokens when refresh token is valid")
     void refreshToken_success_returnsNewTokens() {
         String email = "test@example.com";
         String refreshToken = "valid-refresh-token";
         String storedRefreshToken = "valid-refresh-token";
         String newAccessToken = "new-access-token";
-        String newRefreshToken = "new-refresh-token";
 
         RefreshTokenReq req = new RefreshTokenReq(refreshToken, email);
 
@@ -533,6 +664,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("refreshToken should return UNAUTHORIZED when refresh token is invalid")
     void refreshToken_invalidToken_returnsUnauthorized() {
         String email = "test@example.com";
         String refreshToken = "invalid-token";
@@ -550,6 +682,9 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName(
+            "refreshToken should return UNAUTHORIZED when stored token does not match provided"
+                    + " token")
     void refreshToken_tokenMismatch_returnsUnauthorized() {
         String email = "test@example.com";
         String refreshToken = "token1";
@@ -569,6 +704,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("refreshToken should return UNAUTHORIZED when no stored token is found")
     void refreshToken_noStoredToken_returnsUnauthorized() {
         String email = "test@example.com";
         String refreshToken = "valid-token";
@@ -587,6 +723,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("refreshToken should throw UnauthenticatedException when user is not found")
     void refreshToken_userNotFound_throwsException() {
         String email = "test@example.com";
         String refreshToken = "valid-token";
@@ -600,27 +737,7 @@ class UserServiceImplTest {
     }
 
     @Test
-    void refreshToken_emailMismatch_returnsUnauthorized() {
-        String email = "test@example.com";
-        String refreshToken = "valid-token";
-        User differentUser = new User();
-        differentUser.setId(userId);
-        differentUser.setEmail("different@example.com");
-
-        RefreshTokenReq req = new RefreshTokenReq(refreshToken, email);
-
-        when(jwtUtils.isTokenValid(refreshToken, email)).thenReturn(true);
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.get(Constant.REFRESH_TOKEN_REDIS_KEY + userId)).thenReturn(refreshToken);
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(differentUser));
-
-        ApiRes response = userService.refreshToken(req);
-
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    @Test
+    @DisplayName("refreshToken should return UNAUTHORIZED when email is null")
     void refreshToken_withNullEmail_handlesGracefully() {
         String refreshToken = "valid-token";
 
@@ -726,6 +843,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("validateToken should return valid flag when token is valid")
     void validateToken_returnsValidFlag() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -740,6 +858,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateUserProgress should set streak to one on first review")
     void updateUserProgress_firstReview_setsStreakToOne() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -757,6 +876,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateUserProgress should increment streak when last review was yesterday")
     void updateUserProgress_yesterdayReview_incrementsStreak() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -777,6 +897,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateUserProgress should keep streak when last review was today")
     void updateUserProgress_sameDay_keepsStreak() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -793,6 +914,8 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName(
+            "updateUserProgress should reset streak when last review was more than one day ago")
     void updateUserProgress_staleReview_resetsStreak() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -813,6 +936,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateUserProgress should throw UnauthenticatedException when user is not found")
     void updateUserProgress_userNotFound_throws() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
@@ -822,6 +946,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateSettings should reject null study days")
     void updateSettings_rejectsNullStudyDays() {
         SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 1, 5, 10);
         UpdateSettingsReq request =
@@ -837,6 +962,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateSettings should reject invalid study day")
     void updateSettings_rejectsInvalidStudyDay() {
         SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 1, 5, 10);
         UpdateSettingsReq request =
@@ -855,6 +981,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("getProfile should default study schedule when null")
     void getProfile_defaultsStudySchedule_whenNull() {
         setting.setStudySchedule(null);
         when(securityContext.getAuthentication()).thenReturn(authentication);
@@ -870,6 +997,8 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName(
+            "getProfileFallback should rethrow ValidationException and UnauthenticatedException")
     void getProfileFallback_rethrowsValidationAndUnauthenticated() {
         ValidationException ve = new ValidationException("bad");
         assertSame(
@@ -883,6 +1012,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateProfileFallback should rethrow known exceptions")
     void updateProfileFallback_rethrowsKnownExceptions() {
         UpdateProfileReq req = new UpdateProfileReq("n", "b", 20);
         ValidationException ve = new ValidationException("bad");
@@ -893,6 +1023,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateSettingsFallback should rethrow known exceptions")
     void updateSettingsFallback_rethrowsKnownExceptions() {
         UpdateSettingsReq req =
                 new UpdateSettingsReq(
@@ -909,6 +1040,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("updateSettings should reject null day in study days")
     void updateSettings_rejectsNullDayInStudyDays() {
         UpdateSettingsReq request =
                 new UpdateSettingsReq(

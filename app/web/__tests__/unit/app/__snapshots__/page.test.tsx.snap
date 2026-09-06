@@ -1,0 +1,419 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LandingPage > renders correctly (Snapshot) 1`] = `
+<div>
+  <div
+    class="min-h-screen bg-[#FDFBF7] font-sans selection:bg-[color-mix(in_srgb,var(--theme-accent)_20%,transparent)] selection:text-[var(--theme-secondary)] flex flex-col"
+  >
+    <header
+      class="px-6 py-4 flex items-center justify-between border-b border-stone-200/50 bg-white/50 backdrop-blur-md sticky top-0 z-50"
+    >
+      <div
+        class="flex items-center gap-2"
+      >
+        <div
+          class="w-8 h-8 rounded-lg bg-[var(--theme-accent)] text-white flex items-center justify-center shadow-sm"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-layers w-4 h-4"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"
+            />
+            <path
+              d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"
+            />
+            <path
+              d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"
+            />
+          </svg>
+        </div>
+        <span
+          class="font-black text-stone-900 tracking-tight text-xl"
+          data-testid="brand-logo"
+        >
+          Oopsly
+        </span>
+      </div>
+      <div
+        class="flex items-center gap-4"
+      >
+        <button
+          class="hidden sm:flex items-center gap-2 px-5 py-2 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-sm font-bold shadow-md shadow-stone-500/20 transition-all cursor-pointer hover:scale-105 active:scale-95"
+          data-testid="get-started-button"
+        >
+          Get Started
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-right w-4 h-4"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="m12 5 7 7-7 7"
+            />
+          </svg>
+        </button>
+      </div>
+    </header>
+    <main
+      class="flex-1"
+    >
+      <section
+        class="relative px-6 py-24 sm:py-32 overflow-hidden flex flex-col items-center text-center"
+      >
+        <div
+          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[color-mix(in_srgb,var(--theme-accent)_10%,transparent)] rounded-full blur-3xl -z-10"
+        />
+        <div
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-100 border border-stone-200 text-stone-600 text-xs font-bold uppercase tracking-widest mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-sparkles w-3.5 h-3.5 text-amber-500"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"
+            />
+            <path
+              d="M20 2v4"
+            />
+            <path
+              d="M22 4h-4"
+            />
+            <circle
+              cx="4"
+              cy="20"
+              r="2"
+            />
+          </svg>
+          Learn Faster, Remember Longer
+        </div>
+        <h1
+          class="text-5xl sm:text-7xl font-black text-stone-900 tracking-tight max-w-4xl leading-[1.1] mb-8 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100"
+        >
+          Master any subject with
+           
+          <br
+            class="hidden sm:block"
+          />
+          <span
+            class="text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-accent)] to-[var(--theme-secondary)]"
+          >
+            spaced repetition.
+          </span>
+        </h1>
+        <p
+          class="text-lg sm:text-xl text-stone-600 max-w-2xl leading-relaxed mb-10 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200"
+        >
+          Oopsly combines the scientifically-proven FSRS algorithm with a beautiful, relaxing gamified sanctuary to make studying your favorite part of the day.
+        </p>
+        <button
+          class="flex items-center gap-2 px-8 py-4 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white text-lg font-bold shadow-xl shadow-stone-900/20 transition-all cursor-pointer hover:-translate-y-1 active:translate-y-0 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300"
+          data-testid="start-learning-button"
+        >
+          Start Learning for Free
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-right w-5 h-5"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="m12 5 7 7-7 7"
+            />
+          </svg>
+        </button>
+      </section>
+      <section
+        class="py-24 bg-white px-6"
+      >
+        <div
+          class="max-w-7xl mx-auto"
+        >
+          <div
+            class="text-center mb-16"
+          >
+            <h2
+              class="text-3xl sm:text-4xl font-black text-stone-900"
+            >
+              Why choose Oopsly?
+            </h2>
+            <p
+              class="text-stone-500 mt-4 text-lg"
+            >
+              Designed for focus. Built on cognitive science.
+            </p>
+          </div>
+          <div
+            class="grid grid-cols-1 md:grid-cols-3 gap-8"
+          >
+            <div
+              class="p-8 rounded-3xl bg-stone-50 border border-stone-100 flex flex-col items-start hover:shadow-lg transition-shadow"
+            >
+              <div
+                class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mb-6"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-brain-circuit w-6 h-6"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"
+                  />
+                  <path
+                    d="M9 13a4.5 4.5 0 0 0 3-4"
+                  />
+                  <path
+                    d="M6.003 5.125A3 3 0 0 0 6.401 6.5"
+                  />
+                  <path
+                    d="M3.477 10.896a4 4 0 0 1 .585-.396"
+                  />
+                  <path
+                    d="M6 18a4 4 0 0 1-1.967-.516"
+                  />
+                  <path
+                    d="M12 13h4"
+                  />
+                  <path
+                    d="M12 18h6a2 2 0 0 1 2 2v1"
+                  />
+                  <path
+                    d="M12 8h8"
+                  />
+                  <path
+                    d="M16 8V5a2 2 0 0 1 2-2"
+                  />
+                  <circle
+                    cx="16"
+                    cy="13"
+                    r=".5"
+                  />
+                  <circle
+                    cx="18"
+                    cy="3"
+                    r=".5"
+                  />
+                  <circle
+                    cx="20"
+                    cy="21"
+                    r=".5"
+                  />
+                  <circle
+                    cx="20"
+                    cy="8"
+                    r=".5"
+                  />
+                </svg>
+              </div>
+              <h3
+                class="text-xl font-bold text-stone-900 mb-3"
+              >
+                FSRS Algorithm
+              </h3>
+              <p
+                class="text-stone-600 leading-relaxed"
+              >
+                Powered by the Free Spaced Repetition Scheduler, optimizing your reviews so you only study what you're about to forget.
+              </p>
+            </div>
+            <div
+              class="p-8 rounded-3xl bg-stone-50 border border-stone-100 flex flex-col items-start hover:shadow-lg transition-shadow"
+            >
+              <div
+                class="w-12 h-12 rounded-xl bg-[color-mix(in_srgb,var(--theme-accent)_20%,transparent)] text-[var(--theme-secondary)] flex items-center justify-center mb-6"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-sprout w-6 h-6"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M14 9.536V7a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V5a4 4 0 0 1-4 4 4 4 0 0 0-4 4c0 2 1 3 1 5a5 5 0 0 1-1 3"
+                  />
+                  <path
+                    d="M4 9a5 5 0 0 1 8 4 5 5 0 0 1-8-4"
+                  />
+                  <path
+                    d="M5 21h14"
+                  />
+                </svg>
+              </div>
+              <h3
+                class="text-xl font-bold text-stone-900 mb-3"
+              >
+                Gamified Garden
+              </h3>
+              <p
+                class="text-stone-600 leading-relaxed"
+              >
+                Earn drops and plant seeds in your personal Ghibli-inspired forest sanctuary as you complete focus sessions and review cards.
+              </p>
+            </div>
+            <div
+              class="p-8 rounded-3xl bg-stone-50 border border-stone-100 flex flex-col items-start hover:shadow-lg transition-shadow"
+            >
+              <div
+                class="w-12 h-12 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center mb-6"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-globe w-6 h-6"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                  <path
+                    d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"
+                  />
+                  <path
+                    d="M2 12h20"
+                  />
+                </svg>
+              </div>
+              <h3
+                class="text-xl font-bold text-stone-900 mb-3"
+              >
+                Learn Anywhere
+              </h3>
+              <p
+                class="text-stone-600 leading-relaxed"
+              >
+                Fully functional offline support. Syncs automatically when you're back online. Take your study decks wherever you go.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer
+      class="bg-stone-50 py-12 px-6 border-t border-stone-200 text-center"
+    >
+      <div
+        class="flex items-center justify-center gap-2 mb-4"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-layers w-6 h-6 text-[var(--theme-accent)]"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"
+          />
+          <path
+            d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"
+          />
+          <path
+            d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"
+          />
+        </svg>
+        <span
+          class="font-black text-stone-900 text-lg"
+        >
+          Oopsly
+        </span>
+      </div>
+      <p
+        class="text-stone-500 flex items-center justify-center gap-1"
+      >
+        Made with
+         
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-heart-handshake w-4 h-4 text-rose-500"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M19.414 14.414C21 12.828 22 11.5 22 9.5a5.5 5.5 0 0 0-9.591-3.676.6.6 0 0 1-.818.001A5.5 5.5 0 0 0 2 9.5c0 2.3 1.5 4 3 5.5l5.535 5.362a2 2 0 0 0 2.879.052 2.12 2.12 0 0 0-.004-3 2.124 2.124 0 1 0 3-3 2.124 2.124 0 0 0 3.004 0 2 2 0 0 0 0-2.828l-1.881-1.882a2.41 2.41 0 0 0-3.409 0l-1.71 1.71a2 2 0 0 1-2.828 0 2 2 0 0 1 0-2.828l2.823-2.762"
+          />
+        </svg>
+         for lifelong learners.
+      </p>
+    </footer>
+  </div>
+</div>
+`;

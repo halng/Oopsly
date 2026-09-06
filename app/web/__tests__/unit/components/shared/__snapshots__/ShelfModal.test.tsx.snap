@@ -1,0 +1,214 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ShelfModal > renders create mode and matches its snapshot 1`] = `
+<div>
+  <div
+    class="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+    id="shelf-modal"
+  >
+    <div
+      class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-stone-100 flex flex-col"
+    >
+      <div
+        class="flex items-center justify-between pb-4 border-b border-stone-100"
+      >
+        <div
+          class="flex items-center gap-3"
+        >
+          <div
+            class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
+            style="background-color: var(--theme-accent);"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-folder w-5 h-5"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2
+              class="text-base font-bold text-stone-900"
+            >
+              Create New Shelf
+            </h2>
+            <p
+              class="text-xs text-stone-500"
+            >
+              Group related decks and subjects
+            </p>
+          </div>
+        </div>
+        <button
+          class="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-x w-5 h-5"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M18 6 6 18"
+            />
+            <path
+              d="m6 6 12 12"
+            />
+          </svg>
+        </button>
+      </div>
+      <form
+        class="py-5 space-y-4 text-xs"
+      >
+        <div>
+          <label
+            class="font-bold text-stone-700 block mb-1"
+          >
+            Shelf Name
+          </label>
+          <input
+            class="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:ring-2 focus:ring-[var(--theme-accent)] focus:outline-none"
+            placeholder="e.g. Computer Science, Medical School, Languages"
+            required=""
+            type="text"
+            value=""
+          />
+        </div>
+        <div>
+          <label
+            class="font-bold text-stone-700 block mb-1"
+          >
+            Description
+          </label>
+          <textarea
+            class="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:ring-2 focus:ring-[var(--theme-accent)] focus:outline-none"
+            placeholder="Optional overview of subjects stored in this shelf..."
+            rows="2"
+          />
+        </div>
+        <div>
+          <label
+            class="font-bold text-stone-700 block mb-2"
+          >
+            Shelf Color
+          </label>
+          <div
+            class="flex items-center gap-2 flex-wrap"
+          >
+            <button
+              class="w-7 h-7 rounded-full transition-transform cursor-pointer hover:scale-105"
+              style="background-color: rgb(139, 195, 74);"
+              type="button"
+            />
+            <button
+              class="w-7 h-7 rounded-full transition-transform cursor-pointer hover:scale-105"
+              style="background-color: rgb(76, 175, 80);"
+              type="button"
+            />
+            <button
+              class="w-7 h-7 rounded-full transition-transform cursor-pointer hover:scale-105"
+              style="background-color: rgb(0, 150, 136);"
+              type="button"
+            />
+            <button
+              class="w-7 h-7 rounded-full transition-transform cursor-pointer hover:scale-105"
+              style="background-color: rgb(3, 169, 244);"
+              type="button"
+            />
+            <button
+              class="w-7 h-7 rounded-full transition-transform cursor-pointer hover:scale-105"
+              style="background-color: rgb(63, 81, 181);"
+              type="button"
+            />
+            <button
+              class="w-7 h-7 rounded-full transition-transform cursor-pointer hover:scale-105"
+              style="background-color: rgb(156, 39, 176);"
+              type="button"
+            />
+            <button
+              class="w-7 h-7 rounded-full transition-transform cursor-pointer hover:scale-105"
+              style="background-color: rgb(233, 30, 99);"
+              type="button"
+            />
+            <button
+              class="w-7 h-7 rounded-full transition-transform cursor-pointer hover:scale-105"
+              style="background-color: rgb(255, 152, 0);"
+              type="button"
+            />
+            <button
+              class="w-7 h-7 rounded-full transition-transform cursor-pointer hover:scale-105"
+              style="background-color: rgb(121, 85, 72);"
+              type="button"
+            />
+            <button
+              class="w-7 h-7 rounded-full transition-transform cursor-pointer hover:scale-105"
+              style="background-color: rgb(96, 125, 139);"
+              type="button"
+            />
+          </div>
+        </div>
+        <div
+          class="flex justify-end gap-2 pt-3 border-t border-stone-100"
+        >
+          <button
+            class="px-4 py-2 border border-stone-200 rounded-xl text-stone-600 font-bold text-xs hover:bg-stone-50"
+            type="button"
+          >
+            Cancel
+          </button>
+          <button
+            class="flex items-center gap-1.5 px-5 py-2 bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer disabled:opacity-50"
+            disabled=""
+            type="submit"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-save w-3.5 h-3.5"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"
+              />
+              <path
+                d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"
+              />
+              <path
+                d="M7 3v4a1 1 0 0 0 1 1h7"
+              />
+            </svg>
+            <span>
+              Save Shelf
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+`;

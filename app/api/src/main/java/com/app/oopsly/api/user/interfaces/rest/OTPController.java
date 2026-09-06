@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/otp")
+@RequestMapping("/v1/otp")
 @Tag(
         name = "OTP",
         description = "OTP management APIs for generating and validating one-time passwords")

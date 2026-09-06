@@ -20,6 +20,7 @@ import com.app.oopsly.api.library.application.vm.StudyScheduleReq;
 import com.app.oopsly.api.library.application.vm.StudyScheduleRes;
 import com.app.oopsly.api.library.domain.StudySchedule;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
@@ -38,7 +39,14 @@ import com.app.oopsly.api.user.domain.Theme;
 import com.app.oopsly.api.user.domain.User;
 import com.app.oopsly.api.user.infrastructure.SettingRepository;
 import com.app.oopsly.api.user.infrastructure.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -67,20 +75,21 @@ public class UserServiceImpl implements UserService {
     private final SettingRepository settingRepository;
     private final JwtUtils jwtUtils;
     private final StringRedisTemplate stringRedisTemplate;
+    private final ObjectMapper objectMapper;
+    private final Validator validator;
 
     @Override
     public String getCurrentUserId() {
         return SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
     }
 
-    @Cacheable(value = "users", key = "#root.methodName + ':' + #root.target.getCurrentUserId()")
     @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "getCurrentUserFallback")
     @Override
     public User getCurrentUser() {
         String currentUserId = getCurrentUserId();
         return userRepository
                 .findById(UUID.fromString(currentUserId))
-                .orElseThrow(() -> new UnauthenticatedException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
     @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "refreshTokenFallback")
@@ -411,6 +420,41 @@ public class UserServiceImpl implements UserService {
         user.setLastReviewedAt(now);
         userRepository.save(user);
         log.info("Updated user progress: xp={}, streak={}", currentXp + xpGained, currentStreak);
+    }
+
+    @Override
+    public ApiRes patchUserProfileUpdates(JsonPatch jsonPatch) {
+        User user = getCurrentUser();
+        log.info("Applying JSON patch to user profile for user ID: {}", user.getId());
+        try {
+            JsonNode targetNode = objectMapper.convertValue(user, JsonNode.class);
+            JsonNode patchedNode = jsonPatch.apply(targetNode);
+
+            User updatedUser = objectMapper.treeToValue(patchedNode, User.class);
+
+            validateUser(updatedUser);
+
+            userRepository.save(updatedUser);
+            return ApiRes.ok("User profile updated successfully", updatedUser);
+        } catch (JsonPatchException | JsonProcessingException e) {
+            log.error("Failed to apply JSON patch: {}", e.getMessage());
+            return ApiRes.badRequest("Failed to apply JSON patch");
+        }
+    }
+
+    private void validateUser(User user) {
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
+        if (!violations.isEmpty()) {
+            StringBuilder errorMessage = new StringBuilder();
+            for (ConstraintViolation<User> violation : violations) {
+                errorMessage
+                        .append(violation.getPropertyPath())
+                        .append(": ")
+                        .append(violation.getMessage())
+                        .append("; ");
+            }
+            throw new ValidationException("Validation failed: " + errorMessage);
+        }
     }
 
     private SettingEntity ensureSettings(User user) {

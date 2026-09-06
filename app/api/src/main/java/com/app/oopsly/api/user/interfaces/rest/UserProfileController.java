@@ -20,6 +20,7 @@ import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.user.application.UserService;
 import com.app.oopsly.api.user.application.vm.UpdateProfileReq;
 import com.app.oopsly.api.user.application.vm.UpdateSettingsReq;
+import com.github.fge.jsonpatch.JsonPatch;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/v1/user-profiles")
 @RequiredArgsConstructor
 @Tag(name = "User Profile", description = "User profile and settings management APIs")
 public class UserProfileController {
@@ -52,7 +53,7 @@ public class UserProfileController {
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
-    @GetMapping("/profile")
+    @GetMapping("")
     public ApiRes getProfile() {
         return userService.getProfile();
     }
@@ -70,7 +71,7 @@ public class UserProfileController {
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
-    @PatchMapping("/profile")
+    @PatchMapping("")
     public ApiRes updateProfile(
             @Parameter(description = "Profile update request", required = true) @Valid @RequestBody
                     UpdateProfileReq request) {
@@ -112,5 +113,10 @@ public class UserProfileController {
             })
     public ApiRes updateIsNewComerStatus() {
         return userService.updateIsNewComerStatus();
+    }
+
+    @PatchMapping(path = "/profile/updates", consumes = "application/json-patch+json")
+    public ApiRes updateProfileUpdates(@RequestBody JsonPatch changeRequest) {
+        return userService.patchUserProfileUpdates(changeRequest);
     }
 }

@@ -18,6 +18,7 @@ package com.app.oopsly.api.user.domain;
 
 import com.app.oopsly.api.library.domain.ShelfEntity;
 import com.app.oopsly.api.shared.domain.Audit;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.List;
@@ -35,6 +36,7 @@ public class User extends Audit {
     private String name;
 
     @Column(unique = true)
+    @JsonIgnore
     private String hashedPassword;
 
     @Column(unique = true, nullable = false)
@@ -63,9 +65,11 @@ public class User extends Audit {
 
     private Instant lastReviewedAt;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ShelfEntity> shelves;
 
+    @JsonIgnore
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private SettingEntity setting;
 }

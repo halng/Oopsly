@@ -51,6 +51,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	implementation("com.github.java-json-tools:json-patch:1.13")
 //	implementation 'org.springframework.ai:spring-ai-pdf-document-reader'
 //	implementation 'org.springframework.ai:spring-ai-starter-model-vertex-ai-embedding'
 //	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
@@ -191,7 +192,7 @@ jacoco {
 }
 
 jacocoTestCoverageVerification {
-	dependsOn test, integrationTest
+	dependsOn test
 
 	classDirectories.setFrom(
 			files(

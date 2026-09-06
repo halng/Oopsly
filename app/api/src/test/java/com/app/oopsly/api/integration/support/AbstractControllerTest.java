@@ -60,11 +60,11 @@ public abstract class AbstractControllerTest {
     }
 
     protected AuthSession authenticate(String email) throws Exception {
-        mockMvc.perform(post("/otp").param("email", email)).andExpect(status().isOk());
+        mockMvc.perform(post("/v1/otp").param("email", email)).andExpect(status().isOk());
 
         MvcResult result =
                 mockMvc.perform(
-                                post("/otp/validate")
+                                post("/v1/otp/validate")
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(
                                                 """

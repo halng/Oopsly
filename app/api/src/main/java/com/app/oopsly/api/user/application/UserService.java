@@ -21,6 +21,7 @@ import com.app.oopsly.api.user.application.vm.RefreshTokenReq;
 import com.app.oopsly.api.user.application.vm.UpdateProfileReq;
 import com.app.oopsly.api.user.application.vm.UpdateSettingsReq;
 import com.app.oopsly.api.user.domain.User;
+import com.github.fge.jsonpatch.JsonPatch;
 
 public interface UserService {
     String getCurrentUserId();
@@ -42,4 +43,6 @@ public interface UserService {
     ApiRes validateToken();
 
     void updateUserProgress(int xpGained);
+
+    ApiRes patchUserProfileUpdates(JsonPatch jsonPatch);
 }

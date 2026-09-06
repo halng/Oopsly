@@ -30,33 +30,33 @@ import org.springframework.http.MediaType;
 class OTPControllerTest extends AbstractControllerTest {
 
     @Nested
-    @DisplayName("POST /otp")
+    @DisplayName("POST /v1/otp")
     class CreateOtp {
 
         @Test
         void sendOtp_testEmail_returnsOk() throws Exception {
-            mockMvc.perform(post("/otp").param("email", EMAIL))
+            mockMvc.perform(post("/v1/otp").param("email", EMAIL))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.isSuccess").value(true));
         }
 
         @Test
         void sendOtp_invalidEmail_returnsBadRequest() throws Exception {
-            mockMvc.perform(post("/otp").param("email", "not-an-email"))
+            mockMvc.perform(post("/v1/otp").param("email", "not-an-email"))
                     .andExpect(status().isBadRequest());
         }
     }
 
     @Nested
-    @DisplayName("POST /otp/validate")
+    @DisplayName("POST /v1/otp/validate")
     class ValidateOtp {
 
         @Test
         void validate_testEmailAndOtp_returnsTokens() throws Exception {
-            mockMvc.perform(post("/otp").param("email", EMAIL)).andExpect(status().isOk());
+            mockMvc.perform(post("/v1/otp").param("email", EMAIL)).andExpect(status().isOk());
 
             mockMvc.perform(
-                            post("/otp/validate")
+                            post("/v1/otp/validate")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(
                                             """
@@ -74,7 +74,7 @@ class OTPControllerTest extends AbstractControllerTest {
         void validate_wrongOtpForNonTestPath_returnsClientError() throws Exception {
             // Non-test email requires Redis OTP; without a prior send this is expired/not found
             mockMvc.perform(
-                            post("/otp/validate")
+                            post("/v1/otp/validate")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(
                                             """
@@ -87,7 +87,7 @@ class OTPControllerTest extends AbstractControllerTest {
         @Test
         void validate_shortOtp_returnsBadRequest() throws Exception {
             mockMvc.perform(
-                            post("/otp/validate")
+                            post("/v1/otp/validate")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(
                                             """

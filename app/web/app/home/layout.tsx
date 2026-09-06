@@ -1,13 +1,13 @@
-import { Navbar } from "@/components";
+import { Navbar } from '@/components';
 export default function HomeLayout({
-  children,
+    children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
-  return (
-    <>
-      <Navbar />
-      {children}
-    </>
-  );
+    return (
+        <>
+            <Navbar />
+            {children}
+        </>
+    );
 }
