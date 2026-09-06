@@ -89,6 +89,8 @@ class UserServiceImplTest {
 
     @Mock private Validator validator;
 
+    private JsonNode mockJsonNode;
+
     @InjectMocks private UserServiceImpl userService;
 
     private UUID userId;
@@ -119,6 +121,7 @@ class UserServiceImplTest {
         setting.setStudySchedule(com.app.oopsly.api.library.domain.StudySchedule.defaults());
         setting.setUser(user);
 
+        mockJsonNode = mock(JsonNode.class);
         SecurityContextHolder.setContext(securityContext);
     }
 
@@ -559,8 +562,8 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(objectMapper.convertValue(user, JsonNode.class)).thenReturn(mock(JsonNode.class));
-        when(jsonPatch.apply(any(JsonNode.class))).thenReturn(mock(JsonNode.class));
+        when(objectMapper.convertValue(user, JsonNode.class)).thenReturn(mockJsonNode);
+        when(jsonPatch.apply(any(JsonNode.class))).thenReturn(mockJsonNode);
         when(objectMapper.treeToValue(any(JsonNode.class), eq(User.class))).thenReturn(patchedUser);
         when(validator.validate(patchedUser)).thenReturn(Set.of());
         when(userRepository.save(patchedUser)).thenReturn(patchedUser);
@@ -582,7 +585,7 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(objectMapper.convertValue(user, JsonNode.class)).thenReturn(mock(JsonNode.class));
+        when(objectMapper.convertValue(user, JsonNode.class)).thenReturn(mockJsonNode);
         when(jsonPatch.apply(any(JsonNode.class)))
                 .thenThrow(new com.github.fge.jsonpatch.JsonPatchException("bad patch"));
 
@@ -614,8 +617,8 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(objectMapper.convertValue(user, JsonNode.class)).thenReturn(mock(JsonNode.class));
-        when(jsonPatch.apply(any(JsonNode.class))).thenReturn(mock(JsonNode.class));
+        when(objectMapper.convertValue(user, JsonNode.class)).thenReturn(mockJsonNode);
+        when(jsonPatch.apply(any(JsonNode.class))).thenReturn(mockJsonNode);
         when(objectMapper.treeToValue(any(JsonNode.class), eq(User.class))).thenReturn(patchedUser);
         when(validator.validate(patchedUser)).thenReturn(Set.of(violation));
 
