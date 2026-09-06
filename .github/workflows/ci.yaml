@@ -93,11 +93,11 @@ jobs:
           retention-days: 7
 
   ui:
-    name: CI UI
+    name: CI WEB
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: app/ui
+        working-directory: app/web
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
