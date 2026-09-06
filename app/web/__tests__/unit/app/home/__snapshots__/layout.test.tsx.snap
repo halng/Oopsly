@@ -1,0 +1,14 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`HomeLayout > renders navigation before the protected page content 1`] = `
+<div>
+  <nav
+    data-testid="navbar"
+  >
+    Navigation
+  </nav>
+  <main>
+    Home content
+  </main>
+</div>
+`;

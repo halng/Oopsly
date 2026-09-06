@@ -1,182 +1,198 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
-  :root {
-    --theme-bg: #FAF8F0;
-    --theme-card: #FFFFFF;
-    --theme-text: #24271C;
-    --theme-accent: #5B8C32;
-    --theme-secondary: #3F6423;
-    --theme-border: #E3DCC8;
-    --theme-subtle: #F2ECE1;
-  }
+    :root {
+        --theme-bg: #faf8f0;
+        --theme-card: #ffffff;
+        --theme-text: #24271c;
+        --theme-accent: #5b8c32;
+        --theme-secondary: #3f6423;
+        --theme-border: #e3dcc8;
+        --theme-subtle: #f2ece1;
+    }
 
-  body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background-color: var(--theme-bg);
-    color: var(--theme-text);
-    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
-    min-height: 100vh;
-  }
+    body {
+        font-family:
+            'Plus Jakarta Sans',
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            'Segoe UI',
+            Roboto,
+            Oxygen,
+            Ubuntu,
+            Cantarell,
+            sans-serif;
+        background-color: var(--theme-bg);
+        color: var(--theme-text);
+        transition:
+            background-color 0.25s ease,
+            color 0.25s ease,
+            border-color 0.25s ease;
+        min-height: 100vh;
+    }
 
-  h1, h2, h3, .font-display {
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  }
+    h1,
+    h2,
+    h3,
+    .font-display {
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
 }
 
 /* Dynamic theme classes that bind directly to current theme CSS variables */
 .bg-theme-bg {
-  background-color: var(--theme-bg) !important;
+    background-color: var(--theme-bg) !important;
 }
 
 .bg-theme-card {
-  background-color: var(--theme-card) !important;
+    background-color: var(--theme-card) !important;
 }
 
 .text-theme-text {
-  color: var(--theme-text) !important;
+    color: var(--theme-text) !important;
 }
 
 .text-theme-accent {
-  color: var(--theme-accent) !important;
+    color: var(--theme-accent) !important;
 }
 
 .bg-theme-accent {
-  background-color: var(--theme-accent) !important;
+    background-color: var(--theme-accent) !important;
 }
 
 .bg-theme-accent-hover:hover {
-  background-color: var(--theme-secondary) !important;
+    background-color: var(--theme-secondary) !important;
 }
 
 .border-theme-accent {
-  border-color: var(--theme-accent) !important;
+    border-color: var(--theme-accent) !important;
 }
 
 .border-theme-border {
-  border-color: var(--theme-border) !important;
+    border-color: var(--theme-border) !important;
 }
 
 .bg-theme-subtle {
-  background-color: var(--theme-subtle) !important;
+    background-color: var(--theme-subtle) !important;
 }
 
 /* Theme-specific styles & overrides */
-[data-theme="ghibli-meadow"] {
-  --theme-bg: #FAF8F0;
-  --theme-card: #FFFFFF;
-  --theme-text: #24271C;
-  --theme-accent: #5B8C32;
-  --theme-secondary: #3F6423;
-  --theme-border: #E3DCC8;
-  --theme-subtle: #F2ECE1;
+[data-theme='ghibli-meadow'] {
+    --theme-bg: #faf8f0;
+    --theme-card: #ffffff;
+    --theme-text: #24271c;
+    --theme-accent: #5b8c32;
+    --theme-secondary: #3f6423;
+    --theme-border: #e3dcc8;
+    --theme-subtle: #f2ece1;
 }
 
-[data-theme="ghibli-laputa"] {
-  --theme-bg: #F0F7F7;
-  --theme-card: #FFFFFF;
-  --theme-text: #19262C;
-  --theme-accent: #307EA8;
-  --theme-secondary: #205876;
-  --theme-border: #CDE4E3;
-  --theme-subtle: #E1F0F0;
+[data-theme='ghibli-laputa'] {
+    --theme-bg: #f0f7f7;
+    --theme-card: #ffffff;
+    --theme-text: #19262c;
+    --theme-accent: #307ea8;
+    --theme-secondary: #205876;
+    --theme-border: #cde4e3;
+    --theme-subtle: #e1f0f0;
 }
 
-[data-theme="ghibli-howl"] {
-  --theme-bg: #FAF6F4;
-  --theme-card: #FFFFFF;
-  --theme-text: #2B2628;
-  --theme-accent: #845EC2;
-  --theme-secondary: #5C3893;
-  --theme-border: #E6DCD9;
-  --theme-subtle: #F4ECE8;
+[data-theme='ghibli-howl'] {
+    --theme-bg: #faf6f4;
+    --theme-card: #ffffff;
+    --theme-text: #2b2628;
+    --theme-accent: #845ec2;
+    --theme-secondary: #5c3893;
+    --theme-border: #e6dcd9;
+    --theme-subtle: #f4ece8;
 }
 
-[data-theme="ghibli-kiki"] {
-  --theme-bg: #FDF8F3;
-  --theme-card: #FFFFFF;
-  --theme-text: #2E221E;
-  --theme-accent: #E07A5F;
-  --theme-secondary: #B8583E;
-  --theme-border: #EBDCCE;
-  --theme-subtle: #F7ECE1;
+[data-theme='ghibli-kiki'] {
+    --theme-bg: #fdf8f3;
+    --theme-card: #ffffff;
+    --theme-text: #2e221e;
+    --theme-accent: #e07a5f;
+    --theme-secondary: #b8583e;
+    --theme-border: #ebdcce;
+    --theme-subtle: #f7ece1;
 }
 
-[data-theme="ghibli-night"] {
-  --theme-bg: #101726;
-  --theme-card: #172238;
-  --theme-text: #F8FAFC;
-  --theme-accent: #F4A261;
-  --theme-secondary: #E76F51;
-  --theme-border: #253555;
-  --theme-subtle: #131D30;
+[data-theme='ghibli-night'] {
+    --theme-bg: #101726;
+    --theme-card: #172238;
+    --theme-text: #f8fafc;
+    --theme-accent: #f4a261;
+    --theme-secondary: #e76f51;
+    --theme-border: #253555;
+    --theme-subtle: #131d30;
 }
 
-[data-theme="botanical"] {
-  --theme-bg: #FAF9F5;
-  --theme-card: #FFFFFF;
-  --theme-text: #1C1917;
-  --theme-accent: #6B9E3A;
-  --theme-secondary: #476E24;
-  --theme-border: #E7E5E4;
-  --theme-subtle: #F5F5F4;
+[data-theme='botanical'] {
+    --theme-bg: #faf9f5;
+    --theme-card: #ffffff;
+    --theme-text: #1c1917;
+    --theme-accent: #6b9e3a;
+    --theme-secondary: #476e24;
+    --theme-border: #e7e5e4;
+    --theme-subtle: #f5f5f4;
 }
 
-[data-theme="obsidian"] {
-  --theme-bg: #0B0F19;
-  --theme-card: #141D2E;
-  --theme-text: #F8FAFC;
-  --theme-accent: #4ADE80;
-  --theme-secondary: #22C55E;
-  --theme-border: #1E2B42;
-  --theme-subtle: #0E1524;
+[data-theme='obsidian'] {
+    --theme-bg: #0b0f19;
+    --theme-card: #141d2e;
+    --theme-text: #f8fafc;
+    --theme-accent: #4ade80;
+    --theme-secondary: #22c55e;
+    --theme-border: #1e2b42;
+    --theme-subtle: #0e1524;
 }
 
-[data-theme="sunset"] {
-  --theme-bg: #FFF9F2;
-  --theme-card: #FFFFFF;
-  --theme-text: #292524;
-  --theme-accent: #F59E0B;
-  --theme-secondary: #D97706;
-  --theme-border: #FED7AA;
-  --theme-subtle: #FFF1E6;
+[data-theme='sunset'] {
+    --theme-bg: #fff9f2;
+    --theme-card: #ffffff;
+    --theme-text: #292524;
+    --theme-accent: #f59e0b;
+    --theme-secondary: #d97706;
+    --theme-border: #fed7aa;
+    --theme-subtle: #fff1e6;
 }
 
 /* 3D Flashcard Flip utilities */
 .perspective-1000 {
-  perspective: 1000px;
+    perspective: 1000px;
 }
 
 .transform-style-preserve-3d {
-  transform-style: preserve-3d;
+    transform-style: preserve-3d;
 }
 
 .backface-hidden {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 .rotate-y-180 {
-  transform: rotateY(180deg);
+    transform: rotateY(180deg);
 }
 
 /* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+    width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--theme-accent);
-  opacity: 0.4;
-  border-radius: 9999px;
+    background: var(--theme-accent);
+    opacity: 0.4;
+    border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--theme-secondary);
+    background: var(--theme-secondary);
 }

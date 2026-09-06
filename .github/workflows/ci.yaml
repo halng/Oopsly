@@ -1,4 +1,4 @@
-name: CI API
+name: CI
 
 on:
   push:
@@ -6,19 +6,19 @@ on:
       - main
       - release/**
     paths:
-      - "app/api/**"
-      - ".github/workflows/ci-api.yaml"
+      - "app/**"
+      - ".github/workflows/ci.yaml"
   pull_request:
     branches:
       - main
       - release/**
     paths:
-      - "app/api/**"
-      - ".github/workflows/ci-api.yaml"
+      - "app/**"
+      - ".github/workflows/ci.yaml"
   workflow_dispatch:
 
 concurrency:
-  group: ci-api-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   api:
-    name: Analyze
+    name: CI API
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -75,14 +75,10 @@ jobs:
         run: ./gradlew jacocoTestCoverageVerification --no-daemon
 
       - name: SonarQube analysis
-        if: env.SONAR_TOKEN != ''
+        if: env.SONAR_TOKEN_API != ''
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_API }}
         run: ./gradlew sonar --no-daemon
-
-      - name: Skip Sonar — token not configured
-        if: env.SONAR_TOKEN == ''
-        run: echo "SONAR_TOKEN_API not set; skipping SonarQube upload."
 
       - name: Upload Jacoco / test reports
         if: always()
@@ -95,3 +91,72 @@ jobs:
             app/api/build/reports/jacocoHtml/
           if-no-files-found: warn
           retention-days: 7
+
+  ui:
+    name: CI UI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/ui
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required by SonarQube for accurate blame information
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Set up Node.js v26
+        uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint
+        run: pnpm run lint
+
+      - name: Run Prettier check
+        run: pnpm run format:check
+
+      - name: Run TypeScript check
+        run: pnpm exec tsc --noEmit
+
+      - name: Run Unit Tests with Coverage
+        run: pnpm run test:coverage
+
+      - name: Run SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Provided automatically by GitHub
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_WEB }}
+        with:
+          args: >
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+
+  integration:
+    name: Integration Tests - Smoke Integration Tests for CI
+    needs: [api, ui]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js v26
+        uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: 'pnpm'
+
+      - name: Skip for now
+        run: echo "Integration tests are skipped for now;

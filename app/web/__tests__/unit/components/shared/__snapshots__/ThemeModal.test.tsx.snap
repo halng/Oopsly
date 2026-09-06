@@ -1,0 +1,983 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ThemeModal > renders all themes, snapshots the open state, and selects a theme 1`] = `
+<div>
+  <div
+    class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in"
+    id="theme-modal-overlay"
+  >
+    <div
+      class="rounded-3xl max-w-xl w-full p-6 shadow-2xl border space-y-6"
+      data-testid="theme-modal"
+      id="theme-modal"
+      style="background-color: var(--theme-card); border-color: var(--theme-border);"
+    >
+      <div
+        class="flex items-center justify-between pb-3 border-b border-[var(--theme-border)]"
+      >
+        <div
+          class="flex items-center gap-2.5"
+        >
+          <div
+            class="w-10 h-10 rounded-2xl flex items-center justify-center"
+            style="background-color: var(--theme-subtle); color: var(--theme-accent);"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-palette w-5 h-5"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"
+              />
+              <circle
+                cx="13.5"
+                cy="6.5"
+                fill="currentColor"
+                r=".5"
+              />
+              <circle
+                cx="17.5"
+                cy="10.5"
+                fill="currentColor"
+                r=".5"
+              />
+              <circle
+                cx="6.5"
+                cy="12.5"
+                fill="currentColor"
+                r=".5"
+              />
+              <circle
+                cx="8.5"
+                cy="7.5"
+                fill="currentColor"
+                r=".5"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2
+              class="text-lg font-bold text-[var(--theme-text)]"
+            >
+              Visual Themes
+            </h2>
+            <p
+              class="text-xs text-stone-500 dark:text-stone-400"
+            >
+              Personalize your study atmosphere, colors, and active recall interfaces
+            </p>
+          </div>
+        </div>
+        <button
+          class="p-2 rounded-xl text-stone-400 hover:text-stone-600 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
+          id="close-theme-modal-btn"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-x w-5 h-5"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M18 6 6 18"
+            />
+            <path
+              d="m6 6 12 12"
+            />
+          </svg>
+        </button>
+      </div>
+      <div
+        class="grid grid-cols-1 sm:grid-cols-2 gap-3.5"
+      >
+        <button
+          class="relative p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 group ring-2 shadow-sm"
+          data-testid="theme-option-ghibli-meadow"
+          id="theme-option-ghibli-meadow"
+          style="background-color: rgb(242, 236, 225); border-color: rgb(91, 140, 50);"
+        >
+          <div
+            class="flex items-start justify-between gap-2"
+          >
+            <div
+              class="flex items-center gap-2"
+            >
+              <span
+                class="w-4 h-4 rounded-full shadow-2xs border border-white/40"
+                style="background-color: rgb(91, 140, 50);"
+              />
+              <h3
+                class="text-sm font-bold"
+                style="color: rgb(36, 39, 28);"
+              >
+                Totoro's Meadow (Ghibli)
+              </h3>
+            </div>
+            <div
+              class="flex items-center gap-1.5"
+            >
+              <span
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-sun w-2.5 h-2.5 text-amber-500"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="4"
+                  />
+                  <path
+                    d="M12 2v2"
+                  />
+                  <path
+                    d="M12 20v2"
+                  />
+                  <path
+                    d="m4.93 4.93 1.41 1.41"
+                  />
+                  <path
+                    d="m17.66 17.66 1.41 1.41"
+                  />
+                  <path
+                    d="M2 12h2"
+                  />
+                  <path
+                    d="M20 12h2"
+                  />
+                  <path
+                    d="m6.34 17.66-1.41 1.41"
+                  />
+                  <path
+                    d="m19.07 4.93-1.41 1.41"
+                  />
+                </svg>
+                Light
+              </span>
+              <div
+                class="w-5 h-5 rounded-full text-white flex items-center justify-center"
+                style="background-color: rgb(91, 140, 50);"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-check w-3 h-3 stroke-[3]"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 6 9 17l-5-5"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+          <p
+            class="text-xs line-clamp-2 leading-relaxed"
+            style="color: rgb(100, 116, 139);"
+          >
+            Lush sunlit moss, warm cedar, and painted watercolor meadow grass
+          </p>
+          <div
+            class="flex items-center gap-1.5 pt-1"
+          >
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(250, 248, 240);"
+              title="Background"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(255, 255, 255);"
+              title="Card surface"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(91, 140, 50);"
+              title="Primary Accent"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(63, 100, 35);"
+              title="Secondary Highlight"
+            />
+          </div>
+        </button>
+        <button
+          class="relative p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 group hover:opacity-90"
+          data-testid="theme-option-ghibli-laputa"
+          id="theme-option-ghibli-laputa"
+          style="background-color: rgb(255, 255, 255); border-color: rgb(205, 228, 227);"
+        >
+          <div
+            class="flex items-start justify-between gap-2"
+          >
+            <div
+              class="flex items-center gap-2"
+            >
+              <span
+                class="w-4 h-4 rounded-full shadow-2xs border border-white/40"
+                style="background-color: rgb(48, 126, 168);"
+              />
+              <h3
+                class="text-sm font-bold"
+                style="color: rgb(25, 38, 44);"
+              >
+                Laputa Sky Castle
+              </h3>
+            </div>
+            <div
+              class="flex items-center gap-1.5"
+            >
+              <span
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-sun w-2.5 h-2.5 text-amber-500"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="4"
+                  />
+                  <path
+                    d="M12 2v2"
+                  />
+                  <path
+                    d="M12 20v2"
+                  />
+                  <path
+                    d="m4.93 4.93 1.41 1.41"
+                  />
+                  <path
+                    d="m17.66 17.66 1.41 1.41"
+                  />
+                  <path
+                    d="M2 12h2"
+                  />
+                  <path
+                    d="M20 12h2"
+                  />
+                  <path
+                    d="m6.34 17.66-1.41 1.41"
+                  />
+                  <path
+                    d="m19.07 4.93-1.41 1.41"
+                  />
+                </svg>
+                Light
+              </span>
+            </div>
+          </div>
+          <p
+            class="text-xs line-clamp-2 leading-relaxed"
+            style="color: rgb(100, 116, 139);"
+          >
+            Ancient overgrown floating island with sky azure, ivy, and lapis crystals
+          </p>
+          <div
+            class="flex items-center gap-1.5 pt-1"
+          >
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(240, 247, 247);"
+              title="Background"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(255, 255, 255);"
+              title="Card surface"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(48, 126, 168);"
+              title="Primary Accent"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(32, 88, 118);"
+              title="Secondary Highlight"
+            />
+          </div>
+        </button>
+        <button
+          class="relative p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 group hover:opacity-90"
+          data-testid="theme-option-ghibli-howl"
+          id="theme-option-ghibli-howl"
+          style="background-color: rgb(255, 255, 255); border-color: rgb(230, 220, 217);"
+        >
+          <div
+            class="flex items-start justify-between gap-2"
+          >
+            <div
+              class="flex items-center gap-2"
+            >
+              <span
+                class="w-4 h-4 rounded-full shadow-2xs border border-white/40"
+                style="background-color: rgb(132, 94, 194);"
+              />
+              <h3
+                class="text-sm font-bold"
+                style="color: rgb(43, 38, 40);"
+              >
+                Howl's Secret Garden
+              </h3>
+            </div>
+            <div
+              class="flex items-center gap-1.5"
+            >
+              <span
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-sun w-2.5 h-2.5 text-amber-500"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="4"
+                  />
+                  <path
+                    d="M12 2v2"
+                  />
+                  <path
+                    d="M12 20v2"
+                  />
+                  <path
+                    d="m4.93 4.93 1.41 1.41"
+                  />
+                  <path
+                    d="m17.66 17.66 1.41 1.41"
+                  />
+                  <path
+                    d="M2 12h2"
+                  />
+                  <path
+                    d="M20 12h2"
+                  />
+                  <path
+                    d="m6.34 17.66-1.41 1.41"
+                  />
+                  <path
+                    d="m19.07 4.93-1.41 1.41"
+                  />
+                </svg>
+                Light
+              </span>
+            </div>
+          </div>
+          <p
+            class="text-xs line-clamp-2 leading-relaxed"
+            style="color: rgb(100, 116, 139);"
+          >
+            Alpine flower pasture with soft wildflower lilac, rose terracotta, and mountain breeze
+          </p>
+          <div
+            class="flex items-center gap-1.5 pt-1"
+          >
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(250, 246, 244);"
+              title="Background"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(255, 255, 255);"
+              title="Card surface"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(132, 94, 194);"
+              title="Primary Accent"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(92, 56, 147);"
+              title="Secondary Highlight"
+            />
+          </div>
+        </button>
+        <button
+          class="relative p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 group hover:opacity-90"
+          data-testid="theme-option-ghibli-kiki"
+          id="theme-option-ghibli-kiki"
+          style="background-color: rgb(255, 255, 255); border-color: rgb(235, 220, 206);"
+        >
+          <div
+            class="flex items-start justify-between gap-2"
+          >
+            <div
+              class="flex items-center gap-2"
+            >
+              <span
+                class="w-4 h-4 rounded-full shadow-2xs border border-white/40"
+                style="background-color: rgb(224, 122, 95);"
+              />
+              <h3
+                class="text-sm font-bold"
+                style="color: rgb(46, 34, 30);"
+              >
+                Kiki's Seaside Town
+              </h3>
+            </div>
+            <div
+              class="flex items-center gap-1.5"
+            >
+              <span
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-sun w-2.5 h-2.5 text-amber-500"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="4"
+                  />
+                  <path
+                    d="M12 2v2"
+                  />
+                  <path
+                    d="M12 20v2"
+                  />
+                  <path
+                    d="m4.93 4.93 1.41 1.41"
+                  />
+                  <path
+                    d="m17.66 17.66 1.41 1.41"
+                  />
+                  <path
+                    d="M2 12h2"
+                  />
+                  <path
+                    d="M20 12h2"
+                  />
+                  <path
+                    d="m6.34 17.66-1.41 1.41"
+                  />
+                  <path
+                    d="m19.07 4.93-1.41 1.41"
+                  />
+                </svg>
+                Light
+              </span>
+            </div>
+          </div>
+          <p
+            class="text-xs line-clamp-2 leading-relaxed"
+            style="color: rgb(100, 116, 139);"
+          >
+            Mediterranean terracotta roofs, seaside wind, and bakery warm amber
+          </p>
+          <div
+            class="flex items-center gap-1.5 pt-1"
+          >
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(253, 248, 243);"
+              title="Background"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(255, 255, 255);"
+              title="Card surface"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(224, 122, 95);"
+              title="Primary Accent"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(184, 88, 62);"
+              title="Secondary Highlight"
+            />
+          </div>
+        </button>
+        <button
+          class="relative p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 group hover:opacity-90"
+          data-testid="theme-option-ghibli-night"
+          id="theme-option-ghibli-night"
+          style="background-color: rgb(23, 34, 56); border-color: rgb(37, 53, 85);"
+        >
+          <div
+            class="flex items-start justify-between gap-2"
+          >
+            <div
+              class="flex items-center gap-2"
+            >
+              <span
+                class="w-4 h-4 rounded-full shadow-2xs border border-white/40"
+                style="background-color: rgb(244, 162, 97);"
+              />
+              <h3
+                class="text-sm font-bold"
+                style="color: rgb(248, 250, 252);"
+              >
+                Spirited Bathhouse Twilight
+              </h3>
+            </div>
+            <div
+              class="flex items-center gap-1.5"
+            >
+              <span
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 text-[10px] font-bold border border-stone-700"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-moon w-2.5 h-2.5"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"
+                  />
+                </svg>
+                Dark
+              </span>
+            </div>
+          </div>
+          <p
+            class="text-xs line-clamp-2 leading-relaxed"
+            style="color: rgb(148, 163, 184);"
+          >
+            Deep indigo night sky with warm glowing paper lanterns and spirit embers
+          </p>
+          <div
+            class="flex items-center gap-1.5 pt-1"
+          >
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(16, 23, 38);"
+              title="Background"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(23, 34, 56);"
+              title="Card surface"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(244, 162, 97);"
+              title="Primary Accent"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(231, 111, 81);"
+              title="Secondary Highlight"
+            />
+          </div>
+        </button>
+        <button
+          class="relative p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 group hover:opacity-90"
+          data-testid="theme-option-botanical"
+          id="theme-option-botanical"
+          style="background-color: rgb(255, 255, 255); border-color: rgb(231, 229, 228);"
+        >
+          <div
+            class="flex items-start justify-between gap-2"
+          >
+            <div
+              class="flex items-center gap-2"
+            >
+              <span
+                class="w-4 h-4 rounded-full shadow-2xs border border-white/40"
+                style="background-color: rgb(107, 158, 58);"
+              />
+              <h3
+                class="text-sm font-bold"
+                style="color: rgb(28, 25, 23);"
+              >
+                Botanical Sage
+              </h3>
+            </div>
+            <div
+              class="flex items-center gap-1.5"
+            >
+              <span
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-sun w-2.5 h-2.5 text-amber-500"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="4"
+                  />
+                  <path
+                    d="M12 2v2"
+                  />
+                  <path
+                    d="M12 20v2"
+                  />
+                  <path
+                    d="m4.93 4.93 1.41 1.41"
+                  />
+                  <path
+                    d="m17.66 17.66 1.41 1.41"
+                  />
+                  <path
+                    d="M2 12h2"
+                  />
+                  <path
+                    d="M20 12h2"
+                  />
+                  <path
+                    d="m6.34 17.66-1.41 1.41"
+                  />
+                  <path
+                    d="m19.07 4.93-1.41 1.41"
+                  />
+                </svg>
+                Light
+              </span>
+            </div>
+          </div>
+          <p
+            class="text-xs line-clamp-2 leading-relaxed"
+            style="color: rgb(100, 116, 139);"
+          >
+            Clean light warm aesthetic with soft leaf-green study accents
+          </p>
+          <div
+            class="flex items-center gap-1.5 pt-1"
+          >
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(250, 249, 245);"
+              title="Background"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(255, 255, 255);"
+              title="Card surface"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(107, 158, 58);"
+              title="Primary Accent"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(71, 110, 36);"
+              title="Secondary Highlight"
+            />
+          </div>
+        </button>
+        <button
+          class="relative p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 group hover:opacity-90"
+          data-testid="theme-option-obsidian"
+          id="theme-option-obsidian"
+          style="background-color: rgb(20, 29, 46); border-color: rgb(30, 43, 66);"
+        >
+          <div
+            class="flex items-start justify-between gap-2"
+          >
+            <div
+              class="flex items-center gap-2"
+            >
+              <span
+                class="w-4 h-4 rounded-full shadow-2xs border border-white/40"
+                style="background-color: rgb(74, 222, 128);"
+              />
+              <h3
+                class="text-sm font-bold"
+                style="color: rgb(248, 250, 252);"
+              >
+                Obsidian Midnight
+              </h3>
+            </div>
+            <div
+              class="flex items-center gap-1.5"
+            >
+              <span
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 text-[10px] font-bold border border-stone-700"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-moon w-2.5 h-2.5"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"
+                  />
+                </svg>
+                Dark
+              </span>
+            </div>
+          </div>
+          <p
+            class="text-xs line-clamp-2 leading-relaxed"
+            style="color: rgb(148, 163, 184);"
+          >
+            Charcoal dark mode with soothing neon emerald highlights
+          </p>
+          <div
+            class="flex items-center gap-1.5 pt-1"
+          >
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(11, 15, 25);"
+              title="Background"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(20, 29, 46);"
+              title="Card surface"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(74, 222, 128);"
+              title="Primary Accent"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(34, 197, 94);"
+              title="Secondary Highlight"
+            />
+          </div>
+        </button>
+        <button
+          class="relative p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 group hover:opacity-90"
+          data-testid="theme-option-sunset"
+          id="theme-option-sunset"
+          style="background-color: rgb(255, 255, 255); border-color: rgb(254, 215, 170);"
+        >
+          <div
+            class="flex items-start justify-between gap-2"
+          >
+            <div
+              class="flex items-center gap-2"
+            >
+              <span
+                class="w-4 h-4 rounded-full shadow-2xs border border-white/40"
+                style="background-color: rgb(245, 158, 11);"
+              />
+              <h3
+                class="text-sm font-bold"
+                style="color: rgb(41, 37, 36);"
+              >
+                Sunset Amber
+              </h3>
+            </div>
+            <div
+              class="flex items-center gap-1.5"
+            >
+              <span
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-sun w-2.5 h-2.5 text-amber-500"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="4"
+                  />
+                  <path
+                    d="M12 2v2"
+                  />
+                  <path
+                    d="M12 20v2"
+                  />
+                  <path
+                    d="m4.93 4.93 1.41 1.41"
+                  />
+                  <path
+                    d="m17.66 17.66 1.41 1.41"
+                  />
+                  <path
+                    d="M2 12h2"
+                  />
+                  <path
+                    d="M20 12h2"
+                  />
+                  <path
+                    d="m6.34 17.66-1.41 1.41"
+                  />
+                  <path
+                    d="m19.07 4.93-1.41 1.41"
+                  />
+                </svg>
+                Light
+              </span>
+            </div>
+          </div>
+          <p
+            class="text-xs line-clamp-2 leading-relaxed"
+            style="color: rgb(100, 116, 139);"
+          >
+            Cozy terracotta and golden amber tones for evening reading
+          </p>
+          <div
+            class="flex items-center gap-1.5 pt-1"
+          >
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(255, 249, 242);"
+              title="Background"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs border border-stone-300/40"
+              style="background-color: rgb(255, 255, 255);"
+              title="Card surface"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(245, 158, 11);"
+              title="Primary Accent"
+            />
+            <div
+              class="h-2.5 flex-1 rounded-full shadow-2xs"
+              style="background-color: rgb(217, 119, 6);"
+              title="Secondary Highlight"
+            />
+          </div>
+        </button>
+      </div>
+      <div
+        class="flex items-center justify-between pt-2 border-t border-[var(--theme-border)]"
+      >
+        <span
+          class="text-xs text-stone-400 dark:text-stone-500 flex items-center gap-1"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-sparkles w-3.5 h-3.5"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            style="color: var(--theme-accent);"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"
+            />
+            <path
+              d="M20 2v4"
+            />
+            <path
+              d="M22 4h-4"
+            />
+            <circle
+              cx="4"
+              cy="20"
+              r="2"
+            />
+          </svg>
+          Themes apply instantly and sync across all sessions
+        </span>
+        <button
+          class="px-5 py-2 rounded-xl text-white text-xs font-bold transition-opacity hover:opacity-90 cursor-pointer shadow-2xs"
+          style="background-color: var(--theme-accent);"
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;

@@ -1,0 +1,11 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`RootLayout > renders correctly with required attributes and children (Snapshot) 1`] = `
+<div>
+  <div
+    data-testid="child-element"
+  >
+    Oopsly Content
+  </div>
+</div>
+`;
