@@ -99,7 +99,7 @@ const LandingPage = () => {
                                 <p className="text-stone-600 leading-relaxed">
                                     Powered by the Free Spaced Repetition
                                     Scheduler, optimizing your reviews so you
-                                    only study what you're about to forget.
+                                    only study what you&apos;re about to forget.
                                 </p>
                             </div>
 
@@ -126,7 +126,7 @@ const LandingPage = () => {
                                 </h3>
                                 <p className="text-stone-600 leading-relaxed">
                                     Fully functional offline support. Syncs
-                                    automatically when you're back online. Take
+                                    automatically when you&apos;re back online. Take
                                     your study decks wherever you go.
                                 </p>
                             </div>

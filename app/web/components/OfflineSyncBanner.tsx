@@ -58,6 +58,7 @@ export default function OfflineSyncBanner({
     // Reset dismissal if offline state changes
     useEffect(() => {
         if (!isOnline || pendingCount > 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsDismissed(false);
         }
     }, [isOnline, pendingCount]);

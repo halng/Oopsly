@@ -8,26 +8,18 @@ import {
     Brain,
     Gamepad2,
     FileCheck2,
-    Sparkles,
     Search,
-    Tag,
     Clock,
     ChevronRight,
     MoreVertical,
     Edit2,
-    Trash2,
-    BookOpen,
     CheckCircle2,
-    ArrowLeft,
-    Calendar,
     Zap,
-    FileSpreadsheet,
-    Copy,
     Target,
 } from 'lucide-react';
 import { Shelf, Subject, Card, UserProfile } from '@/types';
 import { ApiService } from '@/services/api';
-import { syncManager } from '@/services/syncManager';
+// import { syncManager } from '@/services/syncManager';
 import { ShelfModal } from '@/components/shared';
 import { OfflineSyncBanner, WelcomeTourModal } from '@/components';
 import { useRouter } from 'next/navigation';
@@ -94,7 +86,7 @@ export const HomePage: React.FC = ({}) => {
         // syncManager.init();
         loadUserData();
         loadShelvesAndSubjects();
-    }, [loadUserData, loadShelvesAndSubjects]);
+    }, []);
 
     useEffect(() => {
         ApiService.getStats().then((res) => {

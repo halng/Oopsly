@@ -2,7 +2,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AuthPage from '@/app/login/page';
 import { ApiService } from '@/services/api';
-import { useAuthStore } from '@/store';
 
 const { push, setCredentials } = vi.hoisted(() => ({
     push: vi.fn(),

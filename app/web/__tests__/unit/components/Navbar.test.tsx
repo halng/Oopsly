@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import Navbar from '@/components/Navbar';
-import { ApiService } from '@/services/api';
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 const syncState = {

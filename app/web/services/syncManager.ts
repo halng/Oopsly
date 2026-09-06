@@ -139,9 +139,9 @@ class SyncManager {
         ) {
             try {
                 const registration = await navigator.serviceWorker.ready;
-                // @ts-ignore
+                // @ts-expect-error FIXME(halng): TypeScript doesn't recognize SyncManager on ServiceWorkerRegistration
                 if (registration.sync) {
-                    // @ts-ignore
+                    // @ts-expect-error FIXME(halng): TypeScript doesn't recognize SyncManager on ServiceWorkerRegistration
                     await registration.sync.register('sync-oopsly-reviews');
                 }
             } catch (err) {

@@ -83,8 +83,8 @@ const CalendarModal: React.FC<CalendarModalProps> = ({ onClose }) => {
                                 No Scheduled Studies
                             </h3>
                             <p className="text-stone-500 text-sm max-w-xs mx-auto">
-                                You haven't scheduled any subjects yet. Open a
-                                subject and click "Schedule" to set reminders.
+                                You haven&apos;t scheduled any subjects yet. Open a
+                                subject and click &quot;Schedule&quot; to set reminders.
                             </p>
                         </div>
                     ) : (
