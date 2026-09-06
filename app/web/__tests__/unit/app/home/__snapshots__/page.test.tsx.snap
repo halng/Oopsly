@@ -1079,7 +1079,8 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
                     class="text-xs font-semibold text-stone-500 dark:text-stone-400"
                   >
                     20
-                     cards
+                     
+                    cards
                   </span>
                 </div>
               </div>

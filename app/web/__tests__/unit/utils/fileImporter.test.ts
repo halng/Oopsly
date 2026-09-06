@@ -93,7 +93,7 @@ describe('file importer utilities', () => {
             ],
         ]).toBuffer();
 
-        const file = new File([buffer], 'cards.xlsx', {
+        const file = new File([new Uint8Array(buffer)], 'cards.xlsx', {
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         });
 
