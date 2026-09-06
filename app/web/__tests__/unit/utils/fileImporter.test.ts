@@ -79,6 +79,30 @@ describe('file importer utilities', () => {
         ]);
     });
 
+    it('parses xlsx files using read-excel-file', async () => {
+        const writeXlsxFileNode = (await import('write-excel-file/node'))
+            .default;
+        const buffer = await writeXlsxFileNode([
+            [
+                { value: 'Front', type: String },
+                { value: 'Back', type: String },
+            ],
+            [
+                { value: 'Q1', type: String },
+                { value: 'A1', type: String },
+            ],
+        ]).toBuffer();
+
+        const file = new File([buffer], 'cards.xlsx', {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+
+        const parsed = await parseFileToTable(file);
+        expect(parsed.hasDetectedHeader).toBe(true);
+        expect(parsed.headers).toEqual(['Front', 'Back']);
+        expect(parsed.rows).toEqual([['Q1', 'A1']]);
+    });
+
     it('downloads a CSV template through a temporary anchor', () => {
         const click = vi
             .spyOn(HTMLAnchorElement.prototype, 'click')

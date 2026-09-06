@@ -1,5 +1,6 @@
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+import { readSheet } from 'read-excel-file/browser';
+import writeXlsxFile from 'write-excel-file/browser';
 import { ImportCardItem } from '../types';
 
 export interface ColumnMapping {
@@ -173,21 +174,10 @@ export async function parseFileToTable(file: File): Promise<ParsedTableData> {
     if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
         // Parse Excel
         try {
-            const buffer = await file.arrayBuffer();
-            const workbook = XLSX.read(buffer, { type: 'array' });
-            const firstSheetName = workbook.SheetNames[0];
-            if (!firstSheetName) {
-                throw new Error('Excel workbook contains no sheets');
-            }
-            const worksheet = workbook.Sheets[firstSheetName];
-            const sheetData: any[][] = XLSX.utils.sheet_to_json(worksheet, {
-                header: 1,
-                defval: '',
-                blankrows: false,
-            });
+            const sheetData = await readSheet(file);
 
-            rawRows = sheetData.map((row: any[]) =>
-                (Array.isArray(row) ? row : []).map((cell: any) =>
+            rawRows = sheetData.map((row) =>
+                (Array.isArray(row) ? row : []).map((cell) =>
                     cell === null || cell === undefined
                         ? ''
                         : String(cell).trim()
@@ -349,9 +339,9 @@ export function downloadCsvTemplate(type: 'minimal' | 'full' = 'full') {
 /**
  * Downloads a sample Excel (.xlsx) template for users to fill in
  */
-export function downloadExcelTemplate(type: 'minimal' | 'full' = 'full') {
+export async function downloadExcelTemplate(type: 'minimal' | 'full' = 'full') {
     const filename = 'oopsly_flashcards_template.xlsx';
-    let data: any[][] = [];
+    let data: string[][] = [];
 
     if (type === 'minimal') {
         data = [
@@ -399,8 +389,9 @@ export function downloadExcelTemplate(type: 'minimal' | 'full' = 'full') {
         ];
     }
 
-    const worksheet = XLSX.utils.aoa_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Flashcards');
-    XLSX.writeFile(workbook, filename);
+    const sheetData = data.map((row) =>
+        row.map((cell) => ({ value: cell, type: String }))
+    );
+
+    await writeXlsxFile(sheetData, { sheet: 'Flashcards' }).toFile(filename);
 }
