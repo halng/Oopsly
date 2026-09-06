@@ -88,7 +88,7 @@ jobs:
             app/api/build/reports/tests/
             app/api/build/reports/jacocoHtml/
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 3
 
   ui:
     name: CI WEB
@@ -131,21 +131,15 @@ jobs:
     
       - name: Run E2E tests (Playwright)
         run: pnpm exec playwright test
-      - name: Upload Jest coverage
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-jest-coverage
-          path: coverage/
-          if-no-files-found: warn
-          retention-days: 7
-      
-      - name: Upload Playwright report
+      - name: Upload Testing report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: playwright-report/
+          path: |
+            app/web/test-results/
+            app/web/coverage/
+            app/web/playwright-report/
           retention-days: 3
 
       - name: Run SonarCloud Scan
