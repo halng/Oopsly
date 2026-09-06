@@ -299,8 +299,8 @@ const AuthPage = () => {
                                     Smart Scheduling
                                 </h3>
                                 <p className="text-stone-600 mt-1">
-                                    Review cards exactly when you&apos;re about to
-                                    forget them.
+                                    Review cards exactly when you&apos;re about
+                                    to forget them.
                                 </p>
                             </div>
                         </div>

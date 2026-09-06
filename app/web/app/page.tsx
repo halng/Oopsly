@@ -126,8 +126,8 @@ const LandingPage = () => {
                                 </h3>
                                 <p className="text-stone-600 leading-relaxed">
                                     Fully functional offline support. Syncs
-                                    automatically when you&apos;re back online. Take
-                                    your study decks wherever you go.
+                                    automatically when you&apos;re back online.
+                                    Take your study decks wherever you go.
                                 </p>
                             </div>
                         </div>

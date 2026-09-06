@@ -12,12 +12,10 @@ const syncState = {
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 vi.mock('@/services/api', () => ({
     ApiService: {
-        getStats: vi
-            .fn()
-            .mockResolvedValue({
-                isSuccess: true,
-                data: { reviewedToday: 20 },
-            }),
+        getStats: vi.fn().mockResolvedValue({
+            isSuccess: true,
+            data: { reviewedToday: 20 },
+        }),
     },
 }));
 vi.mock('@/hooks/useSyncStatus', () => ({ useSyncStatus: () => syncState }));
