@@ -20,7 +20,7 @@ server:
   active:
     version: v1
   servlet:
-    context-path: /api/${server.active.version}/oopsly
+    context-path: /api/oopsly
 
 spring:
   main:

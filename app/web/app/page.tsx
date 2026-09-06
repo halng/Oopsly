@@ -27,7 +27,10 @@ const LandingPage = () => {
                     <div className="w-8 h-8 rounded-lg bg-[var(--theme-accent)] text-white flex items-center justify-center shadow-sm">
                         <Layers className="w-4 h-4" />
                     </div>
-                    <span className="font-black text-stone-900 tracking-tight text-xl">
+                    <span
+                        className="font-black text-stone-900 tracking-tight text-xl"
+                        data-testid="brand-logo"
+                    >
                         Oopsly
                     </span>
                 </div>
@@ -35,6 +38,7 @@ const LandingPage = () => {
                     <button
                         onClick={onLoginClick}
                         className="hidden sm:flex items-center gap-2 px-5 py-2 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-sm font-bold shadow-md shadow-stone-500/20 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                        data-testid="get-started-button"
                     >
                         Get Started
                         <ArrowRight className="w-4 h-4" />

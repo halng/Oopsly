@@ -40,6 +40,7 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
         </div>
         <span
           class="font-black text-stone-900 tracking-tight text-xl"
+          data-testid="brand-logo"
         >
           Oopsly
         </span>
@@ -49,6 +50,7 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
       >
         <button
           class="hidden sm:flex items-center gap-2 px-5 py-2 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-sm font-bold shadow-md shadow-stone-500/20 transition-all cursor-pointer hover:scale-105 active:scale-95"
+          data-testid="get-started-button"
         >
           Get Started
           <svg

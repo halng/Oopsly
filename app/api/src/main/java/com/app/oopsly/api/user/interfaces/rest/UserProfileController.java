@@ -53,7 +53,7 @@ public class UserProfileController {
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
-    @GetMapping("/profile")
+    @GetMapping("")
     public ApiRes getProfile() {
         return userService.getProfile();
     }
@@ -71,7 +71,7 @@ public class UserProfileController {
                 @ApiResponse(responseCode = "401", description = "Unauthorized"),
                 @ApiResponse(responseCode = "500", description = "Internal server error")
             })
-    @PatchMapping("/profile")
+    @PatchMapping("")
     public ApiRes updateProfile(
             @Parameter(description = "Profile update request", required = true) @Valid @RequestBody
                     UpdateProfileReq request) {
