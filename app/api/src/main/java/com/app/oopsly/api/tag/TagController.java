@@ -16,8 +16,8 @@
 
 package com.app.oopsly.api.tag;
 
-import com.app.oopsly.api.tag.vm.TagReq;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.tag.vm.TagReq;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

@@ -23,9 +23,9 @@ import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
 import com.app.oopsly.api.shared.util.ApiMessages;
 import com.app.oopsly.api.shared.util.CircuitBreakerNames;
-import com.app.oopsly.api.user.UserService;
 import com.app.oopsly.api.user.User;
 import com.app.oopsly.api.user.UserRepository;
+import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,9 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                             user.getDisplayName() != null ? user.getDisplayName() : user.getName(),
                             user.getPictureUrl(),
                             xp,
-                            user.getSetting().getDailyStreak() == null ? 0 : user.getSetting().getDailyStreak(),
+                            user.getSetting().getDailyStreak() == null
+                                    ? 0
+                                    : user.getSetting().getDailyStreak(),
                             i + 1,
                             League.of(xp).name(),
                             user.getId().equals(currentUser.getId())));

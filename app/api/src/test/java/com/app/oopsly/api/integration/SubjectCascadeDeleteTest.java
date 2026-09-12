@@ -20,11 +20,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.subject.SubjectService;
 import com.app.oopsly.api.shelf.Shelf;
-import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.subject.SubjectService;
 import com.app.oopsly.api.user.User;
 import com.app.oopsly.api.user.UserRepository;
 import java.time.Instant;
@@ -108,8 +108,7 @@ class SubjectCascadeDeleteTest {
         assertTrue(subjectBeforeDelete.isPresent());
         assertFalse(subjectBeforeDelete.get().getDeleted());
 
-        Optional<Card> cardBeforeDelete =
-                cardRepository.findByIdAndSubject(cardId, testSubject);
+        Optional<Card> cardBeforeDelete = cardRepository.findByIdAndSubject(cardId, testSubject);
         assertTrue(cardBeforeDelete.isPresent());
         assertFalse(cardBeforeDelete.get().getDeleted());
 

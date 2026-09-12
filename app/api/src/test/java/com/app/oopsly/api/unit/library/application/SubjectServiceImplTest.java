@@ -22,22 +22,22 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.subject.SubjectServiceImpl;
-import com.app.oopsly.api.subject.vm.SubjectReq;
-import com.app.oopsly.api.subject.vm.SubjectSettingReq;
-import com.app.oopsly.api.shelf.Shelf;
-import com.app.oopsly.api.subject.Subject;
-import com.app.oopsly.api.shelf.ShelfRepository;
-import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.ValidationException;
-import com.app.oopsly.api.user.UserService;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.subject.SubjectServiceImpl;
+import com.app.oopsly.api.subject.vm.SubjectReq;
+import com.app.oopsly.api.subject.vm.SubjectSettingReq;
 import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -93,7 +93,14 @@ class SubjectServiceImplTest {
         subject.setDescription("Test Description");
         subject.setShelf(shelve);
 
-        subjectReq = new SubjectReq("Test Subject", "Test Description");
+        subjectReq =
+                new SubjectReq(
+                        "Test Subject",
+                        "Test Description",
+                        "tag1,tag2",
+                        "#FFFFF",
+                        true,
+                        "test-subject");
     }
 
     @Test
@@ -122,7 +129,14 @@ class SubjectServiceImplTest {
 
     @Test
     void update_updatesSubject() {
-        SubjectReq updateReq = new SubjectReq("Updated Name", "Updated Description");
+        SubjectReq updateReq =
+                new SubjectReq(
+                        "Updated Name",
+                        "Updated Description",
+                        "tag1,tag2",
+                        "#000000",
+                        false,
+                        "updated-subject");
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
@@ -130,8 +144,7 @@ class SubjectServiceImplTest {
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
         when(subjectRepository.save(any(Subject.class))).thenReturn(subject);
-        when(cardService.getShortPracticeStats(any(Subject.class)))
-                .thenReturn(Pair.of(1, 1.0));
+        when(cardService.getShortPracticeStats(any(Subject.class))).thenReturn(Pair.of(1, 1.0));
         ApiRes result = subjectService.update(shelveId, subjectId, updateReq);
 
         assertNotNull(result);
@@ -142,7 +155,8 @@ class SubjectServiceImplTest {
 
     @Test
     void update_throwsValidationException_whenNameIsEmpty() {
-        SubjectReq invalidReq = new SubjectReq("", "Description");
+        SubjectReq invalidReq =
+                new SubjectReq("", "Description", "tag1,tag2", "#000000", false, "updated-subject");
 
         assertThrows(
                 ValidationException.class,
@@ -152,7 +166,9 @@ class SubjectServiceImplTest {
 
     @Test
     void update_throwsValidationException_whenNameIsNull() {
-        SubjectReq invalidReq = new SubjectReq(null, "Description");
+        SubjectReq invalidReq =
+                new SubjectReq(
+                        null, "Description", "tag1,tag2", "#000000", false, "updated-subject");
 
         assertThrows(
                 ValidationException.class,
@@ -162,7 +178,14 @@ class SubjectServiceImplTest {
 
     @Test
     void update_throwsNotFoundException_whenDeckNotFound() {
-        SubjectReq updateReq = new SubjectReq("Updated Name", "Updated Description");
+        SubjectReq updateReq =
+                new SubjectReq(
+                        "Updated Name",
+                        "Updated Description",
+                        "tag1,tag2",
+                        "#000000",
+                        false,
+                        "updated-subject");
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
@@ -175,7 +198,14 @@ class SubjectServiceImplTest {
 
     @Test
     void update_throwsNotFoundException_whenCollectionNotFound() {
-        SubjectReq updateReq = new SubjectReq("Updated Name", "Updated Description");
+        SubjectReq updateReq =
+                new SubjectReq(
+                        "Updated Name",
+                        "Updated Description",
+                        "tag1,tag2",
+                        "#000000",
+                        false,
+                        "updated-subject");
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
@@ -288,10 +318,9 @@ class SubjectServiceImplTest {
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(shelve));
         when(subjectRepository.findAllByShelve(eq(shelve), any(Pageable.class))).thenReturn(page);
-        when(cardService.getShortPracticeStats(any(Subject.class)))
-                .thenReturn(Pair.of(1, 1.0));
+        when(cardService.getShortPracticeStats(any(Subject.class))).thenReturn(Pair.of(1, 1.0));
 
-        ApiRes result = subjectService.getAllByShelve(shelveId, 0, 10);
+        ApiRes result = subjectService.getAllByShelve(shelveId, 1, 10);
 
         assertNotNull(result);
         verify(shelfRepository, times(1)).findByIdAndUser(shelveId, currentUser);
@@ -303,14 +332,15 @@ class SubjectServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> subjectService.getAllByShelve(shelveId, 0, 10));
+        assertThrows(NotFoundException.class, () -> subjectService.getAllByShelve(shelveId, 1, 10));
         verify(subjectRepository, never()).findAllByShelve(any(), any());
     }
 
     // Fallback Function Tests
     @Test
     void createFallback_throwsRuntimeException() {
-        SubjectReq request = new SubjectReq("Test", "Description");
+        SubjectReq request =
+                new SubjectReq("Test", "Description", "tag1,tag2", "#FFFFFF", true, "test-subject");
         RuntimeException cause = new RuntimeException("Service unavailable");
 
         RetryLaterException exception =
@@ -324,7 +354,14 @@ class SubjectServiceImplTest {
 
     @Test
     void updateFallback_throwsRuntimeException() {
-        SubjectReq request = new SubjectReq("Updated", "New Description");
+        SubjectReq request =
+                new SubjectReq(
+                        "Updated",
+                        "New Description",
+                        "tag1,tag2",
+                        "#000000",
+                        false,
+                        "updated-subject");
         RuntimeException cause = new RuntimeException("Database error");
 
         RetryLaterException exception =
@@ -388,7 +425,15 @@ class SubjectServiceImplTest {
                         RetryLaterException.class,
                         () ->
                                 subjectService.createFallback(
-                                        shelveId, new SubjectReq("Test", "Desc"), cause));
+                                        shelveId,
+                                        new SubjectReq(
+                                                "Test",
+                                                "Desc",
+                                                "tag1,tag2",
+                                                "#FFFFFF",
+                                                true,
+                                                "test-subject"),
+                                        cause));
         assertTrue(createEx.getMessage().contains("try again later"));
     }
 
@@ -414,8 +459,7 @@ class SubjectServiceImplTest {
     void discoverPublicDecks_blankQuery_usesFindAllPublic() {
         Page<Subject> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
         when(subjectRepository.findAllPublic(any(Pageable.class))).thenReturn(page);
-        when(cardService.getShortPracticeStats(any(Subject.class)))
-                .thenReturn(Pair.of(0, 100.0));
+        when(cardService.getShortPracticeStats(any(Subject.class))).thenReturn(Pair.of(0, 100.0));
 
         ApiRes result = subjectService.discoverPublicDecks("  ", 0, 10);
 
@@ -428,8 +472,7 @@ class SubjectServiceImplTest {
     void discoverPublicDecks_withQuery_usesFindPublicByQuery() {
         Page<Subject> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
         when(subjectRepository.findPublicByQuery(eq("java"), any(Pageable.class))).thenReturn(page);
-        when(cardService.getShortPracticeStats(any(Subject.class)))
-                .thenReturn(Pair.of(1, 90.0));
+        when(cardService.getShortPracticeStats(any(Subject.class))).thenReturn(Pair.of(1, 90.0));
 
         ApiRes result = subjectService.discoverPublicDecks("java", 0, 10);
 
@@ -463,8 +506,7 @@ class SubjectServiceImplTest {
                             return s;
                         });
         when(cardRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
-        when(cardService.getShortPracticeStats(any(Subject.class)))
-                .thenReturn(Pair.of(0, 100.0));
+        when(cardService.getShortPracticeStats(any(Subject.class))).thenReturn(Pair.of(0, 100.0));
 
         ApiRes result = subjectService.cloneDeck(subjectId);
 
@@ -534,8 +576,7 @@ class SubjectServiceImplTest {
     void discoverPublicDecks_nullQuery_usesFindAllPublic() {
         Page<Subject> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
         when(subjectRepository.findAllPublic(any(Pageable.class))).thenReturn(page);
-        when(cardService.getShortPracticeStats(any(Subject.class)))
-                .thenReturn(Pair.of(0, 100.0));
+        when(cardService.getShortPracticeStats(any(Subject.class))).thenReturn(Pair.of(0, 100.0));
 
         subjectService.discoverPublicDecks(null, 0, 10);
         verify(subjectRepository).findAllPublic(any(Pageable.class));

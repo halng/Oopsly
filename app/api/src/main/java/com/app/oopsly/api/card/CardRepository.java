@@ -44,8 +44,7 @@ public interface CardRepository extends JpaRepository<Card, UUID> {
     long countOverdue(Subject subject);
 
     @Query("SELECT c FROM cards c WHERE c.subject IN :subjects AND c.deleted = false")
-    List<Card> findAllBySubjectInAndDeletedFalse(
-            @Param("subjects") List<Subject> subjects);
+    List<Card> findAllBySubjectInAndDeletedFalse(@Param("subjects") List<Subject> subjects);
 
     @Query(
             "SELECT c FROM cards c WHERE c.subject IN :subjects AND c.deleted = false AND "

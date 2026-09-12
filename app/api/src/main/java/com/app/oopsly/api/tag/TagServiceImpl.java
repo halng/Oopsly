@@ -74,5 +74,4 @@ public class TagServiceImpl implements TagService {
         log.info("Soft-deleted tag: {}", tagId);
         return ApiRes.success("Tag deleted successfully");
     }
-
 }

@@ -16,11 +16,9 @@
 
 package com.app.oopsly.api.subject;
 
-import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.shelf.Shelf;
-import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.application.vm.PagingRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
@@ -28,11 +26,13 @@ import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
 import com.app.oopsly.api.shared.util.StringUtils;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.subject.vm.SubjectReq;
 import com.app.oopsly.api.subject.vm.SubjectRes;
 import com.app.oopsly.api.subject.vm.SubjectSettingReq;
-import com.app.oopsly.api.user.UserService;
 import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
@@ -63,7 +63,7 @@ public class SubjectServiceImpl implements SubjectService {
         log.info("Creating subject for shelf: {}", shelfId);
         Shelf shelf = getShelfForCurrentUser(shelfId);
 
-//        TODO: Validate tags exist and belong to the user and add them to the subject
+        //        TODO: Validate tags exist and belong to the user and add them to the subject
         Subject subject =
                 Subject.builder()
                         .name(request.name())
@@ -71,7 +71,7 @@ public class SubjectServiceImpl implements SubjectService {
                         .color(request.color())
                         .shelf(shelf)
                         .isPublic(request.isPublic())
-//                        .tags(request.tags())
+                        //                        .tags(request.tags())
                         .slug(request.slug())
                         .build();
 

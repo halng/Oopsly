@@ -16,6 +16,16 @@
 
 package com.app.oopsly.api.user.vm;
 
-public record UserProfileRes(String name, String email, String displayName, String avatarUrl, String bio,
-                             SettingsRes settings, int xp, int streakDays, int totalCardsStudied, int totalReviews, double retentionRate, String league) {
-}
+public record UserProfileRes(
+        String name,
+        String email,
+        String displayName,
+        String avatarUrl,
+        String bio,
+        SettingsRes settings,
+        int xp,
+        int streakDays,
+        int totalCardsStudied,
+        int totalReviews,
+        double retentionRate,
+        String league) {}

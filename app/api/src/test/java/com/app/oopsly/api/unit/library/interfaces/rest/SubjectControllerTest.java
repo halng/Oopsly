@@ -19,11 +19,11 @@ package com.app.oopsly.api.unit.library.interfaces.rest;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.subject.SubjectController;
 import com.app.oopsly.api.subject.SubjectService;
 import com.app.oopsly.api.subject.vm.SubjectReq;
 import com.app.oopsly.api.subject.vm.SubjectSettingReq;
-import com.app.oopsly.api.subject.SubjectController;
-import com.app.oopsly.api.shared.application.vm.ApiRes;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,7 +46,14 @@ class SubjectControllerTest {
 
     @BeforeEach
     void setUp() {
-        subjectReq = new SubjectReq("Test Subject", "Test Description");
+        subjectReq =
+                new SubjectReq(
+                        "Test Subject",
+                        "Test Description",
+                        "tag1,tag2",
+                        "#FFFFFF",
+                        true,
+                        "test-subject");
         shelveId = UUID.randomUUID();
         subjectId = UUID.randomUUID();
         expectedResponse = ApiRes.success("Success");

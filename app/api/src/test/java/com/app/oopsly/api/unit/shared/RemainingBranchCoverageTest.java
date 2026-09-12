@@ -21,20 +21,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.card.CardRepository;
 import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.card.CardServiceImpl;
+import com.app.oopsly.api.card.DifficultyLevel;
 import com.app.oopsly.api.card.vm.CardItemReq;
 import com.app.oopsly.api.card.vm.ReviewResultRes;
 import com.app.oopsly.api.card.vm.UpdateDifficultyReq;
-import com.app.oopsly.api.card.Card;
-import com.app.oopsly.api.card.DifficultyLevel;
-import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.subject.SubjectServiceImpl;
-import com.app.oopsly.api.subject.vm.SubjectSettingReq;
-import com.app.oopsly.api.shelf.Shelf;
-import com.app.oopsly.api.subject.Subject;
-import com.app.oopsly.api.shelf.ShelfRepository;
-import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
@@ -42,7 +36,13 @@ import com.app.oopsly.api.shared.exception.SendEmailException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
 import com.app.oopsly.api.shared.messaging.IEmailSender;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.stats.infrastructure.ReviewLogRepository;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.subject.SubjectServiceImpl;
+import com.app.oopsly.api.subject.vm.SubjectSettingReq;
 import com.app.oopsly.api.testsuite.application.TestSuiteService;
 import com.app.oopsly.api.testsuite.application.vm.TestSubmissionReq;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
@@ -129,6 +129,11 @@ class RemainingBranchCoverageTest {
             User user = new User();
             user.setId(UUID.randomUUID());
 
+            Setting setting = new Setting();
+            setting.setTotalXp(15);
+            setting.setDailyStreak(3);
+            user.setSetting(setting);
+
             Shelf shelf = new Shelf();
             shelf.setId(shelfId);
             shelf.setUser(user);
@@ -168,9 +173,6 @@ class RemainingBranchCoverageTest {
             card.setFront("front");
             card.setBack("back");
             card.setNumberOfPractice(0);
-
-            User user = userService.getCurrentUser();
-            user.setTotalXp(null);
 
             when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.of(card));
 

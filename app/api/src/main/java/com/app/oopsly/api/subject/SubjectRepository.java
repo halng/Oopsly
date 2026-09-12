@@ -17,7 +17,6 @@
 package com.app.oopsly.api.subject;
 
 import com.app.oopsly.api.shelf.Shelf;
-
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -29,9 +28,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SubjectRepository extends JpaRepository<Subject, UUID> {
-    @Query(
-            "SELECT c FROM Subject c WHERE c.id = ?1 AND c.shelf = ?2 AND c.deleted ="
-                    + " false")
+    @Query("SELECT c FROM Subject c WHERE c.id = ?1 AND c.shelf = ?2 AND c.deleted =" + " false")
     Optional<Subject> findByIdAndShelve(UUID id, Shelf shelve);
 
     @Query("SELECT c FROM Subject c WHERE c.shelf = ?1 AND c.deleted = false")

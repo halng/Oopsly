@@ -16,9 +16,9 @@
 
 package com.app.oopsly.api.testsuite.domain;
 
+import com.app.oopsly.api.shared.domain.Audit;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.subject.Subject;
-import com.app.oopsly.api.shared.domain.Audit;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;

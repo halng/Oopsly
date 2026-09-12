@@ -19,6 +19,11 @@ package com.app.oopsly.api.shelf.vm;
 import java.util.Map;
 import java.util.UUID;
 
-public record ShelfRes(UUID id, String icon, String name, String description, String color, String slug,
-                       Map<String, Integer> stats) {
-}
+public record ShelfRes(
+        UUID id,
+        String icon,
+        String name,
+        String description,
+        String color,
+        String slug,
+        Map<String, Integer> stats) {}

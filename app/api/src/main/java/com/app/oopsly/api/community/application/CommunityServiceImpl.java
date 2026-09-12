@@ -33,9 +33,9 @@ import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
 import com.app.oopsly.api.shared.util.ApiMessages;
 import com.app.oopsly.api.shared.util.CircuitBreakerNames;
-import com.app.oopsly.api.user.UserService;
 import com.app.oopsly.api.user.User;
 import com.app.oopsly.api.user.UserRepository;
+import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -274,7 +274,8 @@ public class CommunityServiceImpl implements CommunityService {
         List<CommunityMemberEntity> members = memberRepository.findAllByCommunityId(communityId);
         members.sort(
                 Comparator.comparingInt(
-                                (CommunityMemberEntity m) -> safeInt(m.getUser().getSetting().getTotalXp()))
+                                (CommunityMemberEntity m) ->
+                                        safeInt(m.getUser().getSetting().getTotalXp()))
                         .reversed());
 
         List<CommunityMemberRes> ranked = new ArrayList<>();

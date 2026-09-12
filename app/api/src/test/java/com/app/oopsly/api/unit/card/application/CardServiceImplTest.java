@@ -23,25 +23,26 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.card.CardRepository;
 import com.app.oopsly.api.card.CardServiceImpl;
+import com.app.oopsly.api.card.DifficultyLevel;
 import com.app.oopsly.api.card.vm.CardItemReq;
 import com.app.oopsly.api.card.vm.CardReq;
 import com.app.oopsly.api.card.vm.UpdateDifficultyReq;
-import com.app.oopsly.api.card.Card;
-import com.app.oopsly.api.card.DifficultyLevel;
-import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.shelf.Shelf;
-import com.app.oopsly.api.subject.Subject;
-import com.app.oopsly.api.shelf.ShelfRepository;
-import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.UserService;
+import com.app.oopsly.api.user.Setting;
 import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -89,8 +90,11 @@ class CardServiceImplTest {
     void setUp() {
         List<CardItemReq> cardItems = List.of(new CardItemReq("Sample Topic", "Sample Answer"));
         cardReq = new CardReq(cardItems);
+        Setting setting = new Setting();
+        setting.setTotalXp(10);
         currentUser = new User();
         currentUser.setEmail("test@example.com");
+        currentUser.setSetting(setting);
         shelveId = UUID.randomUUID();
         subjectId = UUID.randomUUID();
         cardId = UUID.randomUUID();
@@ -361,7 +365,7 @@ class CardServiceImplTest {
             cards.add(card);
         }
 
-        Page<Card> page = new PageImpl<>(cards, PageRequest.of(0, 10), 3);
+        Page<Card> page = new PageImpl<>(cards, PageRequest.of(1, 10), 3);
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(shelve));
@@ -369,7 +373,7 @@ class CardServiceImplTest {
                 .thenReturn(Optional.of(subject));
         when(cardRepository.findAllBySubject(eq(subject), any(Pageable.class))).thenReturn(page);
 
-        ApiRes result = cardService.getAllCardsBySubject(shelveId, subjectId, 0, 10);
+        ApiRes result = cardService.getAllCardsBySubject(shelveId, subjectId, 1, 10);
 
         assertNotNull(result);
         verify(shelfRepository, times(1)).findByIdAndUser(shelveId, currentUser);

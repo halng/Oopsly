@@ -51,6 +51,7 @@ public class Subject extends Audit {
     @Column(nullable = false, length = 255)
     @Builder.Default
     private String slug = "";
+
     @Builder.Default private Integer dailyLimit = 20;
     @Builder.Default private Integer newCardsPerDay = 5;
     @Builder.Default private Double interval = 1.0;

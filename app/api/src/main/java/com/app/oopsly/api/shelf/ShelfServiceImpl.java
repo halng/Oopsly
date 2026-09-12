@@ -16,24 +16,24 @@
 
 package com.app.oopsly.api.shelf;
 
-import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.shelf.vm.ShelfReq;
-import com.app.oopsly.api.shelf.vm.ShelfRes;
-import com.app.oopsly.api.subject.vm.SubjectRes;
-import com.app.oopsly.api.subject.Subject;
-import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.application.vm.PagingRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shelf.vm.ShelfReq;
+import com.app.oopsly.api.shelf.vm.ShelfRes;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.subject.vm.SubjectRes;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.UserService;
 import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
 import java.util.Collections;
@@ -154,7 +154,7 @@ public class ShelfServiceImpl implements ShelfService {
                 size,
                 this.currentUser().getId());
         int querryPage = page - 1;
-        if  (querryPage < 0) {
+        if (querryPage < 0) {
             log.error("Invalid page number");
         }
         Pageable pageable = PageRequest.of(querryPage, size);
@@ -205,14 +205,23 @@ public class ShelfServiceImpl implements ShelfService {
         List<SubjectRes> subjects = getSubjects(from);
         Map<String, Integer> stats = new HashMap<>();
         int totalCards = from.getSubjects().stream().mapToInt((sub) -> sub.getCards().size()).sum();
-        int totalDueCards = from.getSubjects().stream().mapToInt((sub) -> cardService.getShortPracticeStats(sub).getLeft()).sum();
+        int totalDueCards =
+                from.getSubjects().stream()
+                        .mapToInt((sub) -> cardService.getShortPracticeStats(sub).getLeft())
+                        .sum();
 
         stats.put(TOTAL_SUBJECTS_COUNT, subjects.size());
         stats.put(TOTAL_DUE_CARDS_COUNT, totalDueCards);
         stats.put(TOTAL_CARDS_COUNT, totalCards);
 
         return new ShelfRes(
-                from.getId(), from.getIcon(), from.getName(), from.getDescription(), from.getColor(),from.getSlug(), stats);
+                from.getId(),
+                from.getIcon(),
+                from.getName(),
+                from.getDescription(),
+                from.getColor(),
+                from.getSlug(),
+                stats);
     }
 
     User currentUser() {

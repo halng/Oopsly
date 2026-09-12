@@ -18,22 +18,22 @@ package com.app.oopsly.api.stats.application;
 
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.shelf.Shelf;
-import com.app.oopsly.api.subject.Subject;
-import com.app.oopsly.api.shelf.ShelfRepository;
-import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
 import com.app.oopsly.api.shared.util.ApiMessages;
 import com.app.oopsly.api.shared.util.CircuitBreakerNames;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.stats.application.vm.DueForecast;
 import com.app.oopsly.api.stats.application.vm.StateDistribution;
 import com.app.oopsly.api.stats.application.vm.StatsRes;
 import com.app.oopsly.api.stats.application.vm.WeeklyActivity;
 import com.app.oopsly.api.stats.infrastructure.ReviewLogRepository;
-import com.app.oopsly.api.user.UserService;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -236,7 +236,9 @@ public class StatsServiceImpl implements StatsService {
     }
 
     private static double retentionOf(User user, long totalCards, long dueCards) {
-        if (user.getSetting() != null && user.getSetting().getRetentionRate() != null && user.getSetting().getRetentionRate() > 0) {
+        if (user.getSetting() != null
+                && user.getSetting().getRetentionRate() != null
+                && user.getSetting().getRetentionRate() > 0) {
             return user.getSetting().getRetentionRate();
         }
         return totalCards == 0 ? 0.0 : 100.0 - (dueCards * 100.0) / totalCards;

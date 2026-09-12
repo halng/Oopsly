@@ -16,7 +16,14 @@
 
 package com.app.oopsly.api.user.vm;
 
-public record SettingsRes(String theme, String language, int dailyGoal, boolean soundEffects, boolean hapticFeedback,
-                          boolean autoPlayAudio, double fsrsTargetRetention, double targetRetentionRate,
-                          boolean allowReminders, boolean isNewComer) {
-}
+public record SettingsRes(
+        String theme,
+        String language,
+        int dailyGoal,
+        boolean soundEffects,
+        boolean hapticFeedback,
+        boolean autoPlayAudio,
+        double fsrsTargetRetention,
+        double targetRetentionRate,
+        boolean allowReminders,
+        boolean isNewComer) {}

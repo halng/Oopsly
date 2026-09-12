@@ -18,6 +18,10 @@ package com.app.oopsly.api.subject.vm;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record SubjectReq(@NotBlank(message = "Name is required") String name, String description, String tags,
-                         String color, Boolean isPublic, String slug) {
-}
+public record SubjectReq(
+        @NotBlank(message = "Name is required") String name,
+        String description,
+        String tags,
+        String color,
+        Boolean isPublic,
+        String slug) {}

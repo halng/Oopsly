@@ -25,5 +25,4 @@ public interface TagService {
     ApiRes getAllTags();
 
     ApiRes deleteTag(UUID tagId);
-
 }

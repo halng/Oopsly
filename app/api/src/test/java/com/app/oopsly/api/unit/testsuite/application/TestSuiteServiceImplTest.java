@@ -23,22 +23,22 @@ import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.shelf.Shelf;
-import com.app.oopsly.api.subject.Subject;
-import com.app.oopsly.api.shelf.ShelfRepository;
-import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.testsuite.application.TestSuiteServiceImpl;
 import com.app.oopsly.api.testsuite.application.vm.TestSuiteReq;
 import com.app.oopsly.api.testsuite.domain.SelectionMode;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.domain.TestSuiteSelectionPayload;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.UserService;
 import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -466,8 +466,7 @@ class TestSuiteServiceImplTest {
 
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            Card card =
-                    Card.builder().front("Q" + i).back("A").numberOfPractice(0).build();
+            Card card = Card.builder().front("Q" + i).back("A").numberOfPractice(0).build();
             card.setId(UUID.randomUUID());
             card.setSubject(subject);
             cards.add(card);
@@ -581,8 +580,7 @@ class TestSuiteServiceImplTest {
 
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            Card card =
-                    Card.builder().front("Q" + i).back("A").numberOfPractice(0).build();
+            Card card = Card.builder().front("Q" + i).back("A").numberOfPractice(0).build();
             card.setId(UUID.randomUUID());
             card.setSubject(subject);
             cards.add(card);

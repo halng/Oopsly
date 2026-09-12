@@ -168,6 +168,36 @@ def jacocoExcludes = [
 		'**/SecurityConfig**',
 ]
 
+test {
+	useJUnitPlatform()
+
+	// Listen to the test execution results
+	afterSuite { desc, result ->
+		// Only trigger on the outermost suite (the final aggregate result)
+		if (desc.parent == null) {
+			def reportDir = file("${layout.buildDirectory.get()}/reports/tests")
+			reportDir.mkdirs()
+			def mdFile = new File(reportDir, "test-summary.md")
+
+			// Generate the Markdown syntax
+			mdFile.text = """## 🧪 Test Execution Summary
+
+| Metric | Count |
+| :--- | :--- |
+| **Total Tests** | `${result.testCount}` |
+| **Passed** ✅ | `${result.successfulTestCount}` |
+| **Failed** ❌ | `${result.failedTestCount}` |
+| **Skipped** ⏭️ | `${result.skippedTestCount}` |
+
+**Result:** ${result.resultType}
+**Total Time:** ${(result.endTime - result.startTime) / 1000.0} seconds
+"""
+			println "\n📄 Markdown report generated at: ${mdFile.absolutePath}"
+		}
+	}
+}
+
+
 jacocoTestReport {
 	dependsOn test
 

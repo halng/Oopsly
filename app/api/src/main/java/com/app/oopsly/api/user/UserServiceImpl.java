@@ -137,17 +137,28 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional()
-//    @Cacheable(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
+    //    @Cacheable(value = "users", key = "'profile:' + #root.target.getCurrentUserId()")
     @CircuitBreaker(name = "userServiceCircuitBreaker", fallbackMethod = "getProfileFallback")
     public ApiRes getProfile() {
         User user = getCurrentUser();
         Setting setting = ensureSettings(user);
         SettingsRes settingsRes = toSettingsRes(setting);
 
-//        TODO: query user progress from database or service, for now using dummy values
+        //        TODO: query user progress from database or service, for now using dummy values
         UserProfileRes profileRes =
-                new UserProfileRes( user.getName(), user.getEmail(),
-                        user.getDisplayName(), user.getPictureUrl(), user.getBio(), settingsRes, 100, 5, 200, 50, 0.85, "GOLD");
+                new UserProfileRes(
+                        user.getName(),
+                        user.getEmail(),
+                        user.getDisplayName(),
+                        user.getPictureUrl(),
+                        user.getBio(),
+                        settingsRes,
+                        100,
+                        5,
+                        200,
+                        50,
+                        0.85,
+                        "GOLD");
 
         return ApiRes.ok("Profile retrieved successfully", profileRes);
     }
@@ -223,12 +234,7 @@ public class UserServiceImpl implements UserService {
         }
 
         if (setting == null) {
-            setting =
-                    Setting.builder()
-                            .theme(theme)
-                            .language(language)
-                            .user(user)
-                            .build();
+            setting = Setting.builder().theme(theme).language(language).user(user).build();
         } else {
             setting.setTheme(theme);
             setting.setLanguage(language);
@@ -311,11 +317,7 @@ public class UserServiceImpl implements UserService {
 
     private Setting createDefaultSettings(User user) {
         Setting setting =
-                Setting.builder()
-                        .theme(Theme.SYSTEM)
-                        .language(Language.ENGLISH)
-                        .user(user)
-                        .build();
+                Setting.builder().theme(Theme.SYSTEM).language(Language.ENGLISH).user(user).build();
         return settingRepository.saveAndFlush(setting);
     }
 

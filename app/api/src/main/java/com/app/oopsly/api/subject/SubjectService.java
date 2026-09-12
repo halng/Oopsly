@@ -19,7 +19,6 @@ package com.app.oopsly.api.subject;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.subject.vm.SubjectReq;
 import com.app.oopsly.api.subject.vm.SubjectSettingReq;
-
 import java.util.UUID;
 
 public interface SubjectService {

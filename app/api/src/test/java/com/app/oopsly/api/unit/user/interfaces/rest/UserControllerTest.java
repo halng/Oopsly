@@ -20,9 +20,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.user.UserController;
 import com.app.oopsly.api.user.UserService;
 import com.app.oopsly.api.user.vm.RefreshTokenReq;
-import com.app.oopsly.api.user.UserController;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

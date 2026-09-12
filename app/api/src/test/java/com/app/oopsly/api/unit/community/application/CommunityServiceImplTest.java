@@ -29,9 +29,10 @@ import com.app.oopsly.api.community.infrastructure.CommunityRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
-import com.app.oopsly.api.user.UserService;
+import com.app.oopsly.api.user.Setting;
 import com.app.oopsly.api.user.User;
 import com.app.oopsly.api.user.UserRepository;
+import com.app.oopsly.api.user.UserService;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -73,9 +74,10 @@ class CommunityServiceImplTest {
         user.setEmail(email);
         user.setName(name);
         user.setDisplayName(displayName);
-        user.setTotalXp(xp);
-        user.setDailyStreak(3);
         user.setPictureUrl("https://cdn/pic.png");
+        Setting setting = new Setting();
+        setting.setTotalXp(xp);
+        user.setSetting(setting);
         return user;
     }
 

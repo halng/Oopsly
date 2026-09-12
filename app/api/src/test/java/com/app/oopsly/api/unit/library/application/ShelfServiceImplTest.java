@@ -22,22 +22,22 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.shelf.ShelfServiceImpl;
-import com.app.oopsly.api.shelf.vm.ShelfReq;
-import com.app.oopsly.api.shelf.Shelf;
-import com.app.oopsly.api.subject.Subject;
-import com.app.oopsly.api.shelf.ShelfRepository;
-import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.shelf.ShelfServiceImpl;
+import com.app.oopsly.api.shelf.vm.ShelfReq;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.UserService;
 import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -276,11 +276,11 @@ class ShelfServiceImplTest {
             shelves.add(shelve);
         }
 
-        Page<Shelf> page = new PageImpl<>(shelves, PageRequest.of(0, 10), 3);
+        Page<Shelf> page = new PageImpl<>(shelves, PageRequest.of(1, 10), 3);
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findAllByUser(eq(currentUser), any(Pageable.class))).thenReturn(page);
 
-        ApiRes result = shelveService.getAll(0, 10);
+        ApiRes result = shelveService.getAll(1, 10);
 
         assertNotNull(result);
         verify(shelfRepository, times(1)).findAllByUser(eq(currentUser), any(Pageable.class));
@@ -289,7 +289,7 @@ class ShelfServiceImplTest {
     // Fallback Function Tests
     @Test
     void createFallback_throwsRuntimeException() {
-        ShelfReq request = new ShelfReq("","test", "test","color", "Test Description");
+        ShelfReq request = new ShelfReq("", "test", "test", "color", "Test Description");
         RuntimeException cause = new RuntimeException("Service unavailable");
 
         RetryLaterException exception =
@@ -304,7 +304,7 @@ class ShelfServiceImplTest {
 
     @Test
     void updateFallback_throwsRuntimeException() {
-        ShelfReq request = new ShelfReq("", "test", "test","", "Updated Description");
+        ShelfReq request = new ShelfReq("", "test", "test", "", "Updated Description");
         RuntimeException cause = new RuntimeException("Database connection failed");
 
         RetryLaterException exception =
@@ -366,7 +366,8 @@ class ShelfServiceImplTest {
                         RetryLaterException.class,
                         () ->
                                 shelveService.createFallback(
-                                        new ShelfReq("code", "Test","test","color", "Desc"), null));
+                                        new ShelfReq("code", "Test", "test", "color", "Desc"),
+                                        null));
 
         assertNotNull(createEx);
         assertTrue(createEx.getMessage().contains("currently unavailable"));
@@ -382,13 +383,16 @@ class ShelfServiceImplTest {
                         RetryLaterException.class,
                         () ->
                                 shelveService.createFallback(
-                                        new ShelfReq("icon", "Test","test", "color", "Desc"), cause));
+                                        new ShelfReq("icon", "Test", "test", "color", "Desc"),
+                                        cause));
         RetryLaterException updateEx =
                 assertThrows(
                         RetryLaterException.class,
                         () ->
                                 shelveService.updateFallback(
-                                        new ShelfReq("icon", "Test","test", "color", "Desc"), shelveId, cause));
+                                        new ShelfReq("icon", "Test", "test", "color", "Desc"),
+                                        shelveId,
+                                        cause));
         RetryLaterException deleteEx =
                 assertThrows(
                         RetryLaterException.class,
@@ -410,7 +414,8 @@ class ShelfServiceImplTest {
                         RetryLaterException.class,
                         () ->
                                 shelveService.createFallback(
-                                        new ShelfReq("icon", "Test","test", "color", "Desc"), wrappedException));
+                                        new ShelfReq("icon", "Test", "test", "color", "Desc"),
+                                        wrappedException));
 
         assertEquals(wrappedException, exception.getCause());
         assertEquals(originalException, exception.getCause().getCause());
@@ -461,6 +466,7 @@ class ShelfServiceImplTest {
         subject.setDailyLimit(20);
         subject.setNewCardsPerDay(10);
         subject.setInterval(1.0);
+        subject.setCards(List.of(new Card()));
 
         Shelf existingShelve = new Shelf();
         existingShelve.setId(shelveId);
@@ -478,6 +484,6 @@ class ShelfServiceImplTest {
         ApiRes result = shelveService.getById(shelveId);
 
         assertTrue(result.getBody().isSuccess());
-        verify(cardService).getShortPracticeStats(subject);
+        verify(cardService, times(2)).getShortPracticeStats(subject);
     }
 }

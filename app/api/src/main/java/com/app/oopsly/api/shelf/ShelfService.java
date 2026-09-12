@@ -16,8 +16,8 @@
 
 package com.app.oopsly.api.shelf;
 
-import com.app.oopsly.api.shelf.vm.ShelfReq;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shelf.vm.ShelfReq;
 import java.util.UUID;
 
 public interface ShelfService {

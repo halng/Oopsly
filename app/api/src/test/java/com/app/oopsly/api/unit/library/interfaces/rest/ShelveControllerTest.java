@@ -19,10 +19,10 @@ package com.app.oopsly.api.unit.library.interfaces.rest;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shelf.ShelfController;
 import com.app.oopsly.api.shelf.ShelfService;
 import com.app.oopsly.api.shelf.vm.ShelfReq;
-import com.app.oopsly.api.shelf.ShelfController;
-import com.app.oopsly.api.shared.application.vm.ApiRes;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +48,8 @@ class ShelveControllerTest {
                 new ShelfReq(
                         "code",
                         "Test Shelve",
+                        "test-shelve",
+                        "#FFFFFF",
                         "Test description with sufficient length to meet validation requirements");
         shelveId = UUID.randomUUID();
         expectedResponse = ApiRes.success("Success");

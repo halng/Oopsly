@@ -22,16 +22,16 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.card.Card;
-import com.app.oopsly.api.card.DifficultyLevel;
 import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.shelf.Shelf;
-import com.app.oopsly.api.subject.Subject;
-import com.app.oopsly.api.shelf.ShelfRepository;
-import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.card.DifficultyLevel;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.util.GamificationRules;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.testsuite.application.TestSuiteServiceImpl;
 import com.app.oopsly.api.testsuite.application.vm.QuestionBreakdown;
 import com.app.oopsly.api.testsuite.application.vm.TestRunCardRes;
@@ -44,8 +44,9 @@ import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.domain.TestSuiteSelectionPayload;
 import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.UserService;
+import com.app.oopsly.api.user.Setting;
 import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -94,10 +95,13 @@ class TestSuiteServiceRunAndSubmitTest {
                         new ObjectMapper(),
                         userService);
 
+        Setting setting = new Setting();
+        setting.setTotalXp(120);
+        setting.setDailyStreak(3);
         currentUser = new User();
         currentUser.setId(UUID.randomUUID());
         currentUser.setEmail("learner@test.dev");
-        currentUser.setTotalXp(240);
+        currentUser.setSetting(setting);
 
         shelveId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
@@ -234,8 +238,7 @@ class TestSuiteServiceRunAndSubmitTest {
 
     @Test
     void run_explicitLimitCapsTheSelection() {
-        List<Card> pool =
-                IntStream.range(0, 10).mapToObj(i -> card("q" + i, "a" + i)).toList();
+        List<Card> pool = IntStream.range(0, 10).mapToObj(i -> card("q" + i, "a" + i)).toList();
         suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.ALL, 3, Boolean.TRUE));
         currentUserOwnsShelve();
         when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
@@ -248,8 +251,7 @@ class TestSuiteServiceRunAndSubmitTest {
 
     @Test
     void run_negativeLimitIsClampedToOneCard() {
-        List<Card> pool =
-                IntStream.range(0, 4).mapToObj(i -> card("q" + i, "a" + i)).toList();
+        List<Card> pool = IntStream.range(0, 4).mapToObj(i -> card("q" + i, "a" + i)).toList();
         suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.RANDOM, -5, Boolean.FALSE));
         currentUserOwnsShelve();
         when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
@@ -323,7 +325,7 @@ class TestSuiteServiceRunAndSubmitTest {
                 GamificationRules.XP_PER_CORRECT_ANSWER
                         + GamificationRules.XP_TEST_COMPLETION_BONUS,
                 result.xpGained());
-        assertEquals(240, result.totalXp());
+        assertEquals(120, result.totalXp());
 
         List<QuestionBreakdown> breakdown = result.breakdown();
         assertEquals(2, breakdown.size());
@@ -367,20 +369,6 @@ class TestSuiteServiceRunAndSubmitTest {
 
         assertEquals(100, suite.getHighestScore());
         verify(testSuiteRepository, never()).save(any());
-    }
-
-    @Test
-    void submit_withNullTotalXpFallsBackToTheGainedXp() {
-        currentUser.setTotalXp(null);
-        currentUserOwnsShelve();
-        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(questionRepository.findAllByTestSuite(suite)).thenReturn(List.of());
-
-        TestSubmissionRes result =
-                dataOf(service.submit(shelveId, testSuiteId, new TestSubmissionReq(null, 0)));
-
-        assertEquals(GamificationRules.XP_TEST_COMPLETION_BONUS, result.totalXp());
     }
 
     @Test

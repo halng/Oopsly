@@ -21,10 +21,6 @@ import com.app.oopsly.api.card.vm.CardReq;
 import com.app.oopsly.api.card.vm.CardRes;
 import com.app.oopsly.api.card.vm.ReviewResultRes;
 import com.app.oopsly.api.card.vm.UpdateDifficultyReq;
-import com.app.oopsly.api.shelf.Shelf;
-import com.app.oopsly.api.subject.Subject;
-import com.app.oopsly.api.shelf.ShelfRepository;
-import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.application.vm.PagingRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
@@ -37,12 +33,16 @@ import com.app.oopsly.api.shared.util.FsrsAlgorithm;
 import com.app.oopsly.api.shared.util.GamificationRules;
 import com.app.oopsly.api.shared.util.ScheduleResult;
 import com.app.oopsly.api.shared.util.StringUtils;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.stats.domain.ReviewLogEntity;
 import com.app.oopsly.api.stats.infrastructure.ReviewLogRepository;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.UserService;
 import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -313,8 +313,7 @@ public class CardServiceImpl implements CardService {
         return totalXp;
     }
 
-    private Card updateSingleCardDifficulty(
-            Subject subject, UUID cardId, String difficultyLevel) {
+    private Card updateSingleCardDifficulty(Subject subject, UUID cardId, String difficultyLevel) {
         Card existingCard =
                 cardRepository
                         .findByIdAndSubject(cardId, subject)

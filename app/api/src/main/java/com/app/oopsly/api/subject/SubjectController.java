@@ -16,9 +16,9 @@
 
 package com.app.oopsly.api.subject;
 
+import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.subject.vm.SubjectReq;
 import com.app.oopsly.api.subject.vm.SubjectSettingReq;
-import com.app.oopsly.api.shared.application.vm.ApiRes;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
