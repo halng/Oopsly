@@ -116,6 +116,7 @@ tasks.register('integrationTest', Test) {
 	description = 'Runs controller-layer integration tests (H2 + embedded Redis, profile=integration)'
 	group = 'verification'
 	useJUnitPlatform()
+	systemProperty 'spring.profiles.active', System.getProperty('spring.profiles.active', 'integration')
 	testClassesDirs = sourceSets.test.output.classesDirs
 	classpath = sourceSets.test.runtimeClasspath
 	// Keep results/exec separate from unit :test so up-to-date checks and JaCoCo don't collide.
@@ -129,7 +130,8 @@ tasks.register('integrationTest', Test) {
 		excludeTestsMatching 'com.app.oopsly.api.integration.support.*'
 		setFailOnNoMatchingTests(true)
 	}
-	shouldRunAfter test
+//	shouldRunAfter test
+
 	testLogging {
 		events 'passed', 'skipped', 'failed'
 		exceptionFormat 'full'

@@ -42,48 +42,75 @@ jobs:
 
       - name: Run E2E & Perf Tests
         run: |
+          npm ci # Make sure dependencies are installed
           npm run test:e2e
           npm run test:perf
-
-  pre-release-check:
-    needs: test-staging
-    runs-on: ubuntu-latest
-    name: Pre-Release Checks for ${{ github.ref_name }}
-    defaults:
-      run:
-        working-directory: app/qa
-    steps:
-      - name: Run QA Suite
-        if: ${{ github.event.inputs.precheck == 'true' }}
-        uses: ./.github/workflows/pre-release-check.yaml
+          
+      # FIX: Upload results so the next job can download them
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
         with:
-          ref_name: ${{ github.ref_name }}
+          name: test-results
+          path: |
+            e2e-results/*.png
+            perf-results/*.html
+          retention-days: 1
+
+  # FIX: Reusable workflows must be their own job
+  run-qa-suite:
+    name: Run QA Suite
+    needs: test-staging
+    # FIX: Ensure it runs on a tag push, or if precheck is true on manual dispatch
+    if: ${{ github.event_name == 'push' || inputs.precheck == true }}
+    uses: ./.github/workflows/pre-release-check.yaml
+    with:
+      ref_name: ${{ github.ref_name }}
+
+  # FIX: Group remaining steps into a new job
+  upload-release-assets:
+    needs: run-qa-suite
+    runs-on: ubuntu-latest
+    name: Finalize Pre-Release for ${{ github.ref_name }}
+    steps:
+      # FIX: Checkout is required to establish GH CLI repository context
+      - uses: actions/checkout@v4
+      
+      # FIX: Download the artifacts generated in 'test-staging'
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-results
+          path: results
+
       - name: Upload document and link to release
-        if: ${{ github.event.inputs.precheck == 'true' }}
         run: |
-          # Use GitHub CLI to upload artifacts to the release page
-          gh release upload ${{ github.ref_name }} ./e2e-results/*.png ./perf-results/*.html
+          # Use results folder defined in the download step above
+          gh release upload ${{ github.ref_name }} ./results/*.png ./results/*.html
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Send Slack Notification
+        # FIX: Pass Bearer token header and move channel into JSON payload
         run: |
-          curl -X POST -H 'Content-type: application/json' --data '{
-            "text": "Pre-release checks completed for '${{ github.ref_name }}'. Please review the results and approve the release."
-          }' https://slack.com/api/chat.postMessage?channel=${{ secrets.SLACK_CHANNEL_ID }}
+          curl -X POST -H 'Content-type: application/json' \
+          -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
+          --data '{
+            "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+            "text": "Pre-release checks completed for ${{ github.ref_name }}. Please review the results and approve the release."
+          }' https://slack.com/api/chat.postMessage
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
+  # FIX: Removed `environment: production` (it must be defined inside deploy-api.yaml)
   deploy-backend-production:
     name: Deploy backend service to production for ${{ github.ref_name }}
-    needs: pre-release-check
-    environment: production
+    needs: upload-release-assets
     uses: ./.github/workflows/deploy-api.yaml
     with:
       git_hash: ${{ github.sha }}
       env: prod
     secrets: inherit
 
-
+  # FIX: Removed `environment: production`
   deploy-frontend-production:
     name: Deploy frontend service to production for ${{ github.ref_name }}
     needs: deploy-backend-production
@@ -92,4 +119,3 @@ jobs:
       git_hash: ${{ github.sha }}
       env: prod
     secrets: inherit
-    environment: production

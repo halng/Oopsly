@@ -48,7 +48,7 @@ class CardControllerTest extends AbstractControllerTest {
 
     @Test
     void unauthenticated_returnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/shelves/{s}/subjects/{sub}/cards", shelfId, subjectId))
+        mockMvc.perform(get("/v1/shelves/{s}/subjects/{sub}/cards", shelfId, subjectId))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -56,7 +56,7 @@ class CardControllerTest extends AbstractControllerTest {
     void create_list_get_update_due_difficulty_delete() throws Exception {
         var create =
                 mockMvc.perform(
-                                post("/shelves/{s}/subjects/{sub}/cards", shelfId, subjectId)
+                                post("/v1/shelves/{s}/subjects/{sub}/cards", shelfId, subjectId)
                                         .with(bearer(session))
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(
@@ -87,7 +87,7 @@ class CardControllerTest extends AbstractControllerTest {
                                 .asText());
 
         mockMvc.perform(
-                        get("/shelves/{s}/subjects/{sub}/cards", shelfId, subjectId)
+                        get("/v1/shelves/{s}/subjects/{sub}/cards", shelfId, subjectId)
                                 .param("page", "0")
                                 .param("size", "20")
                                 .with(bearer(session)))
@@ -95,14 +95,14 @@ class CardControllerTest extends AbstractControllerTest {
                 .andExpect(jsonPath("$.isSuccess").value(true));
 
         mockMvc.perform(
-                        get("/shelves/{s}/subjects/{sub}/cards/{id}", shelfId, subjectId, cardId)
+                        get("/v1/shelves/{s}/subjects/{sub}/cards/{id}", shelfId, subjectId, cardId)
                                 .with(bearer(session)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(cardId.toString()));
 
         mockMvc.perform(
                         get(
-                                        "/shelves/{s}/subjects/{sub}/cards/{id}",
+                                        "/v1/shelves/{s}/subjects/{sub}/cards/{id}",
                                         shelfId,
                                         subjectId,
                                         UUID.randomUUID())
@@ -110,7 +110,7 @@ class CardControllerTest extends AbstractControllerTest {
                 .andExpect(status().isNotFound());
 
         mockMvc.perform(
-                        put("/shelves/{s}/subjects/{sub}/cards/{id}", shelfId, subjectId, cardId)
+                        put("/v1/shelves/{s}/subjects/{sub}/cards/{id}", shelfId, subjectId, cardId)
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
@@ -121,14 +121,14 @@ class CardControllerTest extends AbstractControllerTest {
                 .andExpect(jsonPath("$.isSuccess").value(true));
 
         mockMvc.perform(
-                        get("/shelves/{s}/subjects/{sub}/cards/due", shelfId, subjectId)
+                        get("/v1/shelves/{s}/subjects/{sub}/cards/due", shelfId, subjectId)
                                 .param("limit", "10")
                                 .with(bearer(session)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true));
 
         mockMvc.perform(
-                        put("/shelves/{s}/subjects/{sub}/cards/difficulty", shelfId, subjectId)
+                        put("/v1/shelves/{s}/subjects/{sub}/cards/difficulty", shelfId, subjectId)
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
@@ -140,7 +140,7 @@ class CardControllerTest extends AbstractControllerTest {
                 .andExpect(jsonPath("$.isSuccess").value(true));
 
         mockMvc.perform(
-                        put("/shelves/{s}/subjects/{sub}/cards/difficulty", shelfId, subjectId)
+                        put("/v1/shelves/{s}/subjects/{sub}/cards/difficulty", shelfId, subjectId)
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
@@ -161,12 +161,16 @@ class CardControllerTest extends AbstractControllerTest {
                         });
 
         mockMvc.perform(
-                        patch("/shelves/{s}/subjects/{sub}/cards/{id}", shelfId, subjectId, cardId)
+                        patch(
+                                        "/v1/shelves/{s}/subjects/{sub}/cards/{id}",
+                                        shelfId,
+                                        subjectId,
+                                        cardId)
                                 .with(bearer(session)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(
-                        get("/shelves/{s}/subjects/{sub}/cards/{id}", shelfId, subjectId, cardId)
+                        get("/v1/shelves/{s}/subjects/{sub}/cards/{id}", shelfId, subjectId, cardId)
                                 .with(bearer(session)))
                 .andExpect(status().isNotFound());
     }
@@ -174,7 +178,7 @@ class CardControllerTest extends AbstractControllerTest {
     @Test
     void create_emptyCards_returnsBadRequest() throws Exception {
         mockMvc.perform(
-                        post("/shelves/{s}/subjects/{sub}/cards", shelfId, subjectId)
+                        post("/v1/shelves/{s}/subjects/{sub}/cards", shelfId, subjectId)
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(

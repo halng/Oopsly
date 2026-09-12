@@ -43,7 +43,7 @@ class MediaControllerTest extends AbstractControllerTest {
     void unauthenticated_returnsUnauthorized() throws Exception {
         mockMvc.perform(
                         post(
-                                "/shelves/{s}/subjects/{sub}/cards/{c}/media",
+                                "/v1/shelves/{s}/subjects/{sub}/cards/{c}/media",
                                 library.shelfId(),
                                 library.subjectId(),
                                 library.cardId()))
@@ -55,7 +55,7 @@ class MediaControllerTest extends AbstractControllerTest {
         // MEDIA_BUCKET unset → stub / not-configured path from MediaServiceImpl
         mockMvc.perform(
                         post(
-                                        "/shelves/{s}/subjects/{sub}/cards/{c}/media",
+                                        "/v1/shelves/{s}/subjects/{sub}/cards/{c}/media",
                                         library.shelfId(),
                                         library.subjectId(),
                                         library.cardId())
@@ -81,7 +81,7 @@ class MediaControllerTest extends AbstractControllerTest {
     void upload_blankFileName_returnsBadRequest() throws Exception {
         mockMvc.perform(
                         post(
-                                        "/shelves/{s}/subjects/{sub}/cards/{c}/media",
+                                        "/v1/shelves//{s}/subjects/{sub}/cards/{c}/media",
                                         library.shelfId(),
                                         library.subjectId(),
                                         library.cardId())

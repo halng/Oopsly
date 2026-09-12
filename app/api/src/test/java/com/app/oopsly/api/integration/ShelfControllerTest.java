@@ -44,7 +44,7 @@ class ShelfControllerTest extends AbstractControllerTest {
 
     @Test
     void unauthenticated_returnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/shelves")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/v1/shelves")).andExpect(status().isUnauthorized());
     }
 
     @Nested
@@ -53,15 +53,17 @@ class ShelfControllerTest extends AbstractControllerTest {
         @Test
         void create_valid_returnsCreated() throws Exception {
             mockMvc.perform(
-                            post("/shelves")
+                            post("/v1/shelves")
                                     .with(bearer(session))
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(
                                             """
                                             {
-                                              "icon": "📚",
+                                              "icon": "folder",
                                               "name": "My Shelf",
-                                              "description": "A valid shelf description here"
+                                              "description": "A valid shelf description here",
+                                              "slug": "my-shelf",
+                                              "color": "#FFFFFF"
                                             }
                                             """))
                     .andExpect(status().isCreated())
@@ -73,12 +75,12 @@ class ShelfControllerTest extends AbstractControllerTest {
         @Test
         void create_shortDescription_returnsBadRequest() throws Exception {
             mockMvc.perform(
-                            post("/shelves")
+                            post("/v1/shelves")
                                     .with(bearer(session))
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(
                                             """
-                                            {"icon":"x","name":"n","description":"short"}
+                                            {"icon":"folder","name":"n","description":"short","slug":"s","color":"#FFFFFF"}
                                             """))
                     .andExpect(status().isBadRequest());
         }
@@ -87,8 +89,8 @@ class ShelfControllerTest extends AbstractControllerTest {
         void getAll_returnsPage() throws Exception {
             LibraryFixture.createShelf(mockMvc, objectMapper, session.accessToken());
             mockMvc.perform(
-                            get("/shelves")
-                                    .param("page", "0")
+                            get("/v1/shelves")
+                                    .param("page", "1")
                                     .param("size", "10")
                                     .with(bearer(session)))
                     .andExpect(status().isOk())
@@ -98,14 +100,14 @@ class ShelfControllerTest extends AbstractControllerTest {
         @Test
         void getById_found_returnsOk() throws Exception {
             UUID id = LibraryFixture.createShelf(mockMvc, objectMapper, session.accessToken());
-            mockMvc.perform(get("/shelves/{id}", id).with(bearer(session)))
+            mockMvc.perform(get("/v1/shelves/{id}", id).with(bearer(session)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.id").value(id.toString()));
         }
 
         @Test
         void getById_missing_returnsNotFound() throws Exception {
-            mockMvc.perform(get("/shelves/{id}", UUID.randomUUID()).with(bearer(session)))
+            mockMvc.perform(get("/v1/shelves/{id}", UUID.randomUUID()).with(bearer(session)))
                     .andExpect(status().isNotFound());
         }
 
@@ -113,14 +115,16 @@ class ShelfControllerTest extends AbstractControllerTest {
         void update_valid_returnsOk() throws Exception {
             UUID id = LibraryFixture.createShelf(mockMvc, objectMapper, session.accessToken());
             mockMvc.perform(
-                            put("/shelves/{id}", id)
+                            put("/v1/shelves/{id}", id)
                                     .with(bearer(session))
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(
                                             """
                                             {
-                                              "icon": "⭐",
+                                              "icon": "star",
                                               "name": "Updated Shelf",
+                                                                                          "slug": "updated-shelf",
+                                                                                                                                      "color": "#000000",
                                               "description": "Updated shelf description text"
                                             }
                                             """))
@@ -131,10 +135,10 @@ class ShelfControllerTest extends AbstractControllerTest {
         @Test
         void softDelete_returnsOk_thenGetReturnsNotFound() throws Exception {
             UUID id = LibraryFixture.createShelf(mockMvc, objectMapper, session.accessToken());
-            mockMvc.perform(patch("/shelves/{id}", id).with(bearer(session)))
+            mockMvc.perform(patch("/v1/shelves/{id}", id).with(bearer(session)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.isSuccess").value(true));
-            mockMvc.perform(get("/shelves/{id}", id).with(bearer(session)))
+            mockMvc.perform(get("/v1/shelves/{id}", id).with(bearer(session)))
                     .andExpect(status().isNotFound());
         }
     }
