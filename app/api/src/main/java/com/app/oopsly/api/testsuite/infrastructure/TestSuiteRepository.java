@@ -16,7 +16,7 @@
 
 package com.app.oopsly.api.testsuite.infrastructure;
 
-import com.app.oopsly.api.library.domain.ShelfEntity;
+import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import java.util.List;
 import java.util.Optional;
@@ -31,14 +31,14 @@ public interface TestSuiteRepository extends JpaRepository<TestSuiteEntity, UUID
     @Query(
             "SELECT t FROM TestSuiteEntity t WHERE t.id = ?1 AND t.shelf = ?2 AND t.deleted ="
                     + " false")
-    Optional<TestSuiteEntity> findByIdAndShelve(UUID id, ShelfEntity shelve);
+    Optional<TestSuiteEntity> findByIdAndShelve(UUID id, Shelf shelve);
 
     @Query("SELECT t FROM TestSuiteEntity t WHERE t.shelf = ?1 AND t.deleted = false")
-    List<TestSuiteEntity> findAllByShelve(ShelfEntity shelve);
+    List<TestSuiteEntity> findAllByShelve(Shelf shelve);
 
     @Query(
             "SELECT DISTINCT t FROM TestSuiteEntity t LEFT JOIN FETCH t.subjects WHERE t.id = :id"
                     + " AND t.shelf = :shelf AND t.deleted = false")
     Optional<TestSuiteEntity> findByIdAndShelveWithSubjects(
-            @Param("id") UUID id, @Param("shelf") ShelfEntity shelf);
+            @Param("id") UUID id, @Param("shelf") Shelf shelf);
 }

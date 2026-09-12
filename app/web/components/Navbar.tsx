@@ -20,12 +20,13 @@ import {
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 import { CalendarModal } from '@/components/shared';
 import { ApiService } from '@/services/api';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUserProfileStore } from '@/store/UserProfile';
 
 const Navbar = () => {
     const router = useRouter();
+    const pathname = usePathname() || '';
     const { isOnline, isSyncing, pendingCount, syncNow } = useSyncStatus();
     const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
     const [reviewedToday, setReviewedToday] = React.useState(0);
@@ -37,20 +38,24 @@ const Navbar = () => {
                 setReviewedToday(res.data.reviewedToday);
             }
         });
-    }, []);
+    }, [userProfile?.totalReviews]);
 
-    const isActive = false;
-    const navLinkClass = `flex items-center gap-2 px-3 lg:px-3.5 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
-        isActive
-            ? 'shadow-2xs'
-            : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800'
-    }`;
-    const navLinkStyle = isActive
-        ? {
-              backgroundColor: 'var(--theme-subtle)',
-              color: 'var(--theme-accent)',
-          }
-        : undefined;
+    const isNavActive = (href: string) =>
+        pathname === href || pathname.startsWith(`${href}/`);
+
+    const navLinkClass = (href: string) =>
+        `flex items-center gap-2 px-3 lg:px-3.5 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+            isNavActive(href)
+                ? 'shadow-2xs'
+                : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800'
+        }`;
+    const navLinkStyle = (href: string) =>
+        isNavActive(href)
+            ? {
+                  backgroundColor: 'var(--theme-subtle)',
+                  color: 'var(--theme-accent)',
+              }
+            : undefined;
 
     const dailyGoal = userProfile?.settings?.dailyGoal || 20;
     const progressPercentage = Math.min((reviewedToday / dailyGoal) * 100, 100);
@@ -109,8 +114,8 @@ const Navbar = () => {
                             href="/study"
                             id="nav-tab-study"
                             data-testid="nav-study"
-                            style={navLinkStyle}
-                            className={`${navLinkClass} relative`}
+                            style={navLinkStyle('/study')}
+                            className={`${navLinkClass('/study')} relative`}
                         >
                             <Sprout
                                 className="w-4 h-4"
@@ -123,8 +128,8 @@ const Navbar = () => {
                             href="/discover"
                             id="nav-tab-discover"
                             data-testid="nav-discover"
-                            style={navLinkStyle}
-                            className={navLinkClass}
+                            style={navLinkStyle('/discover')}
+                            className={navLinkClass('/discover')}
                         >
                             <Compass className="w-4 h-4" />
                             <span>Discover</span>
@@ -134,8 +139,8 @@ const Navbar = () => {
                             href="/leaderboard"
                             id="nav-tab-leaderboard"
                             data-testid="nav-leaderboard"
-                            style={navLinkStyle}
-                            className={navLinkClass}
+                            style={navLinkStyle('/leaderboard')}
+                            className={navLinkClass('/leaderboard')}
                         >
                             <Trophy className="w-4 h-4" />
                             <span>Leaderboard</span>
@@ -145,8 +150,8 @@ const Navbar = () => {
                             href="/stats"
                             id="nav-tab-stats"
                             data-testid="nav-stats"
-                            style={navLinkStyle}
-                            className={navLinkClass}
+                            style={navLinkStyle('/stats')}
+                            className={navLinkClass('/stats')}
                         >
                             <BarChart3 className="w-4 h-4" />
                             <span>Stats</span>
@@ -280,7 +285,7 @@ const Navbar = () => {
                             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold shadow-2xs"
                         >
                             <Zap className="w-4 h-4 fill-current shrink-0" />
-                            <span>{userProfile?.xp.toLocaleString()} XP</span>
+                            <span>{userProfile?.xp} XP</span>
                         </div>
 
                         {/* Calendar Button */}

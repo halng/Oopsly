@@ -20,20 +20,20 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.application.TagServiceImpl;
-import com.app.oopsly.api.card.application.vm.CardRes;
-import com.app.oopsly.api.card.domain.CardEntity;
-import com.app.oopsly.api.card.domain.TagEntity;
-import com.app.oopsly.api.card.infrastructure.CardRepository;
-import com.app.oopsly.api.card.infrastructure.TagRepository;
-import com.app.oopsly.api.library.domain.ShelfEntity;
-import com.app.oopsly.api.library.domain.SubjectEntity;
-import com.app.oopsly.api.library.infrastructure.ShelfRepository;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
+import com.app.oopsly.api.tag.TagServiceImpl;
+import com.app.oopsly.api.card.vm.CardRes;
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.tag.Tag;
+import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.tag.TagRepository;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
-import com.app.oopsly.api.user.application.UserService;
-import com.app.oopsly.api.user.domain.User;
+import com.app.oopsly.api.user.UserService;
+import com.app.oopsly.api.user.User;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -61,10 +61,10 @@ class TagServiceCardLinkTest {
     @InjectMocks private TagServiceImpl tagService;
 
     private User currentUser;
-    private ShelfEntity shelf;
-    private SubjectEntity subject;
-    private CardEntity card;
-    private TagEntity tag;
+    private Shelf shelf;
+    private Subject subject;
+    private Card card;
+    private Tag tag;
 
     private UUID shelfId;
     private UUID subjectId;
@@ -81,21 +81,21 @@ class TagServiceCardLinkTest {
         cardId = UUID.randomUUID();
         tagId = UUID.randomUUID();
 
-        shelf = new ShelfEntity();
+        shelf = new Shelf();
         shelf.setId(shelfId);
         shelf.setUser(currentUser);
 
-        subject = new SubjectEntity();
+        subject = new Subject();
         subject.setId(subjectId);
         subject.setShelf(shelf);
 
-        card = new CardEntity();
+        card = new Card();
         card.setId(cardId);
         card.setSubject(subject);
         card.setFront("front");
         card.setBack("back");
 
-        tag = TagEntity.builder().name("kanji").user(currentUser).build();
+        tag = Tag.builder().name("kanji").user(currentUser).build();
         tag.setId(tagId);
     }
 
@@ -210,22 +210,22 @@ class TagServiceCardLinkTest {
 
     @Test
     void getCardsByTag_returnsOnlyTaggedCards() {
-        CardEntity tagged = card;
+        Card tagged = card;
         tagged.setTags(new ArrayList<>(List.of(tag)));
 
-        CardEntity untagged = new CardEntity();
+        Card untagged = new Card();
         untagged.setId(UUID.randomUUID());
         untagged.setSubject(subject);
         untagged.setTags(new ArrayList<>());
 
-        CardEntity nullTags = new CardEntity();
+        Card nullTags = new Card();
         nullTags.setId(UUID.randomUUID());
         nullTags.setSubject(subject);
         nullTags.setTags(null);
 
         resolveOwnership();
         when(tagRepository.findByIdAndUser(tagId, currentUser)).thenReturn(Optional.of(tag));
-        Page<CardEntity> page = new PageImpl<>(List.of(tagged, untagged, nullTags));
+        Page<Card> page = new PageImpl<>(List.of(tagged, untagged, nullTags));
         when(cardRepository.findAllBySubject(eqSubject(), any(Pageable.class))).thenReturn(page);
 
         ApiRes response = tagService.getCardsByTag(shelfId, subjectId, tagId);
@@ -264,7 +264,7 @@ class TagServiceCardLinkTest {
                 NotFoundException.class, () -> tagService.getCardsByTag(shelfId, subjectId, tagId));
     }
 
-    private SubjectEntity eqSubject() {
+    private Subject eqSubject() {
         return org.mockito.ArgumentMatchers.eq(subject);
     }
 }

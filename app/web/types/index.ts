@@ -177,7 +177,8 @@ export interface SubjectSchedule {
 export interface Subject {
     id: string;
     shelfId: string;
-    title: string;
+    name: string;
+    slug: string;
     description: string;
     icon?: string;
     color?: string;
@@ -185,26 +186,36 @@ export interface Subject {
     isDeleted: boolean;
     cardCount: number;
     dueCount: number;
-    tags: string[];
+    tags: string;
     schedule?: SubjectSchedule;
     createdAt: string;
     updatedAt: string;
     authorName?: string;
     authorEmail?: string;
+    cards?: Card[];
+    testSuites?: TestSuite[];
 }
 
 export interface Shelf {
     id: string;
     name: string;
-    description?: string;
-    icon?: string;
-    color?: string;
-    isDeleted: boolean;
-    subjectCount: number;
-    totalCards: number;
-    dueCards?: number;
-    createdAt: string;
-    updatedAt: string;
+    slug: string;
+    description: string;
+    icon: string;
+    color: string;
+    stats: {
+        totalCards: number;
+        totalSubjects: number;
+        totalDue: number;
+    };
+}
+
+export interface PaginatedResponse<T> {
+    entities: T[];
+    currentPage: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
 }
 
 export interface Question {
@@ -243,7 +254,6 @@ export interface UserSettings {
 }
 
 export interface UserProfile {
-    id: string;
     email: string;
     name: string;
     displayName: string;
@@ -256,7 +266,6 @@ export interface UserProfile {
     xp: number;
     league: string; // e.g. "Emerald", "Diamond"
     settings: UserSettings;
-    createdAt: string;
 }
 
 export interface StatsData {
@@ -300,9 +309,7 @@ export interface LeaderboardUser {
 export interface ImportCardItem {
     front: string;
     back: string;
-    hint?: string;
-    tags?: string[];
-    mediaUrl?: string;
+    hint: string;
     isValid?: boolean;
     validationError?: string;
 }
@@ -318,6 +325,7 @@ export interface ParsedImportResult {
 
 export interface ApiResponse<T> {
     isSuccess: boolean;
+    statusCode: number;
     message: string;
     data: T | null;
     timestamp: string;

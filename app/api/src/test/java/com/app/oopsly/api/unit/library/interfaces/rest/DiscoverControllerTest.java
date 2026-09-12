@@ -19,8 +19,8 @@ package com.app.oopsly.api.unit.library.interfaces.rest;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.library.application.SubjectService;
-import com.app.oopsly.api.library.interfaces.rest.DiscoverController;
+import com.app.oopsly.api.subject.SubjectService;
+import com.app.oopsly.api.shelf.DiscoverController;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;

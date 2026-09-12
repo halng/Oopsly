@@ -18,9 +18,9 @@ package com.app.oopsly.api.unit.shared.resilience;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.app.oopsly.api.card.application.CardServiceImpl;
-import com.app.oopsly.api.library.application.ShelfServiceImpl;
-import com.app.oopsly.api.library.application.SubjectServiceImpl;
+import com.app.oopsly.api.card.CardServiceImpl;
+import com.app.oopsly.api.shelf.ShelfServiceImpl;
+import com.app.oopsly.api.subject.SubjectServiceImpl;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;

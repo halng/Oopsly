@@ -18,15 +18,15 @@ package com.app.oopsly.api.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.app.oopsly.api.card.domain.CardEntity;
-import com.app.oopsly.api.card.infrastructure.CardRepository;
-import com.app.oopsly.api.library.application.SubjectService;
-import com.app.oopsly.api.library.domain.ShelfEntity;
-import com.app.oopsly.api.library.domain.SubjectEntity;
-import com.app.oopsly.api.library.infrastructure.ShelfRepository;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
-import com.app.oopsly.api.user.domain.User;
-import com.app.oopsly.api.user.infrastructure.UserRepository;
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.subject.SubjectService;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserRepository;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,9 +57,9 @@ class SubjectCascadeDeleteTest {
     @Autowired private UserRepository userRepository;
 
     private User testUser;
-    private ShelfEntity testShelve;
-    private SubjectEntity testSubject;
-    private CardEntity testCard;
+    private Shelf testShelve;
+    private Subject testSubject;
+    private Card testCard;
 
     @BeforeEach
     void setUp() {
@@ -74,21 +74,21 @@ class SubjectCascadeDeleteTest {
                 .setAuthentication(new UsernamePasswordAuthenticationToken(testUser, null, null));
 
         // Create and save test shelve
-        testShelve = new ShelfEntity();
+        testShelve = new Shelf();
         testShelve.setName("Test Shelve");
         testShelve.setDescription("Test Shelve Description");
         testShelve.setUser(testUser);
         testShelve = shelfRepository.save(testShelve);
 
         // Create and save test subject
-        testSubject = new SubjectEntity();
+        testSubject = new Subject();
         testSubject.setName("Test Subject");
         testSubject.setDescription("Test Subject Description");
         testSubject.setShelf(testShelve);
         testSubject = subjectRepository.save(testSubject);
 
         // Create and save test card
-        testCard = new CardEntity();
+        testCard = new Card();
         testCard.setFront("Test Front");
         testCard.setBack("Test Back");
         testCard.setSubject(testSubject);
@@ -103,12 +103,12 @@ class SubjectCascadeDeleteTest {
         UUID shelveId = testShelve.getId();
 
         // Verify subject and card exist
-        Optional<SubjectEntity> subjectBeforeDelete =
+        Optional<Subject> subjectBeforeDelete =
                 subjectRepository.findByIdAndShelve(subjectId, testShelve);
         assertTrue(subjectBeforeDelete.isPresent());
         assertFalse(subjectBeforeDelete.get().getDeleted());
 
-        Optional<CardEntity> cardBeforeDelete =
+        Optional<Card> cardBeforeDelete =
                 cardRepository.findByIdAndSubject(cardId, testSubject);
         assertTrue(cardBeforeDelete.isPresent());
         assertFalse(cardBeforeDelete.get().getDeleted());
@@ -117,22 +117,22 @@ class SubjectCascadeDeleteTest {
         subjectService.delete(shelveId, subjectId);
 
         // Verify subject is soft deleted
-        Optional<SubjectEntity> subjectAfterDelete = subjectRepository.findById(subjectId);
+        Optional<Subject> subjectAfterDelete = subjectRepository.findById(subjectId);
         assertTrue(subjectAfterDelete.isPresent());
         assertTrue(subjectAfterDelete.get().getDeleted());
 
         // Verify card is also soft deleted
-        Optional<CardEntity> cardAfterDelete = cardRepository.findById(cardId);
+        Optional<Card> cardAfterDelete = cardRepository.findById(cardId);
         assertTrue(cardAfterDelete.isPresent());
         assertTrue(cardAfterDelete.get().getDeleted());
 
         // Verify findByIdAndShelve no longer returns the deleted subject
-        Optional<SubjectEntity> queryAfterDelete =
+        Optional<Subject> queryAfterDelete =
                 subjectRepository.findByIdAndShelve(subjectId, testShelve);
         assertFalse(queryAfterDelete.isPresent());
 
         // Verify findByIdAndSubject no longer returns the deleted card
-        Optional<CardEntity> cardQueryAfterDelete =
+        Optional<Card> cardQueryAfterDelete =
                 cardRepository.findByIdAndSubject(cardId, testSubject);
         assertFalse(cardQueryAfterDelete.isPresent());
     }
@@ -140,14 +140,14 @@ class SubjectCascadeDeleteTest {
     @Test
     void deleteSubject_withMultipleCards_deletesAllCards() {
         // Create additional cards
-        CardEntity card2 = new CardEntity();
+        Card card2 = new Card();
         card2.setFront("Test Front 2");
         card2.setBack("Test Back 2");
         card2.setSubject(testSubject);
         card2.setNextPracticeTime(Instant.now());
         card2 = cardRepository.save(card2);
 
-        CardEntity card3 = new CardEntity();
+        Card card3 = new Card();
         card3.setFront("Test Front 3");
         card3.setBack("Test Back 3");
         card3.setSubject(testSubject);
@@ -164,15 +164,15 @@ class SubjectCascadeDeleteTest {
         subjectService.delete(shelveId, subjectId);
 
         // Verify all cards are soft deleted
-        Optional<CardEntity> card1AfterDelete = cardRepository.findById(cardId1);
+        Optional<Card> card1AfterDelete = cardRepository.findById(cardId1);
         assertTrue(card1AfterDelete.isPresent());
         assertTrue(card1AfterDelete.get().getDeleted());
 
-        Optional<CardEntity> card2AfterDelete = cardRepository.findById(cardId2);
+        Optional<Card> card2AfterDelete = cardRepository.findById(cardId2);
         assertTrue(card2AfterDelete.isPresent());
         assertTrue(card2AfterDelete.get().getDeleted());
 
-        Optional<CardEntity> card3AfterDelete = cardRepository.findById(cardId3);
+        Optional<Card> card3AfterDelete = cardRepository.findById(cardId3);
         assertTrue(card3AfterDelete.isPresent());
         assertTrue(card3AfterDelete.get().getDeleted());
     }

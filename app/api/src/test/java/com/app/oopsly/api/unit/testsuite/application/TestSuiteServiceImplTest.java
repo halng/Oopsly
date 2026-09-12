@@ -21,12 +21,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.domain.CardEntity;
-import com.app.oopsly.api.card.infrastructure.CardRepository;
-import com.app.oopsly.api.library.domain.ShelfEntity;
-import com.app.oopsly.api.library.domain.SubjectEntity;
-import com.app.oopsly.api.library.infrastructure.ShelfRepository;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
@@ -37,8 +37,8 @@ import com.app.oopsly.api.testsuite.domain.SelectionMode;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.domain.TestSuiteSelectionPayload;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.application.UserService;
-import com.app.oopsly.api.user.domain.User;
+import com.app.oopsly.api.user.UserService;
+import com.app.oopsly.api.user.User;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -67,7 +67,7 @@ class TestSuiteServiceImplTest {
 
     private TestSuiteReq testSuiteReq;
     private User currentUser;
-    private ShelfEntity shelve;
+    private Shelf shelve;
     private UUID shelveId;
     private UUID testSuiteId;
 
@@ -79,7 +79,7 @@ class TestSuiteServiceImplTest {
         shelveId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
 
-        shelve = new ShelfEntity();
+        shelve = new Shelf();
         shelve.setId(shelveId);
         shelve.setName("Test Shelve");
         shelve.setDescription("Test shelve description for testing purposes");
@@ -365,7 +365,7 @@ class TestSuiteServiceImplTest {
     @Test
     void run_loadsCards_forAllMode() {
         UUID subjectId = UUID.randomUUID();
-        SubjectEntity subject = new SubjectEntity();
+        Subject subject = new Subject();
         subject.setId(subjectId);
 
         TestSuiteEntity suite = new TestSuiteEntity();
@@ -373,7 +373,7 @@ class TestSuiteServiceImplTest {
         suite.setSubjects(List.of(subject));
         suite.setSelection(null);
 
-        CardEntity card = CardEntity.builder().front("Q").back("A").numberOfPractice(0).build();
+        Card card = Card.builder().front("Q").back("A").numberOfPractice(0).build();
         card.setId(UUID.randomUUID());
         card.setSubject(subject);
 
@@ -408,14 +408,14 @@ class TestSuiteServiceImplTest {
 
     @Test
     void run_dueOnlyMode_usesDueQuery() {
-        SubjectEntity subject = new SubjectEntity();
+        Subject subject = new Subject();
         subject.setId(UUID.randomUUID());
         TestSuiteEntity suite = new TestSuiteEntity();
         suite.setId(testSuiteId);
         suite.setSubjects(List.of(subject));
         suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.DUE_ONLY, 2, true));
 
-        CardEntity card = CardEntity.builder().front("Q").back("A").numberOfPractice(0).build();
+        Card card = Card.builder().front("Q").back("A").numberOfPractice(0).build();
         card.setId(UUID.randomUUID());
         card.setSubject(subject);
 
@@ -435,7 +435,7 @@ class TestSuiteServiceImplTest {
 
     @Test
     void run_randomMode_emptyPool_returnsEmptyMessage() {
-        SubjectEntity subject = new SubjectEntity();
+        Subject subject = new Subject();
         subject.setId(UUID.randomUUID());
         TestSuiteEntity suite = new TestSuiteEntity();
         suite.setId(testSuiteId);
@@ -457,17 +457,17 @@ class TestSuiteServiceImplTest {
 
     @Test
     void run_randomMode_capsResults() {
-        SubjectEntity subject = new SubjectEntity();
+        Subject subject = new Subject();
         subject.setId(UUID.randomUUID());
         TestSuiteEntity suite = new TestSuiteEntity();
         suite.setId(testSuiteId);
         suite.setSubjects(List.of(subject));
         suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.RANDOM, 1, null));
 
-        List<CardEntity> cards = new ArrayList<>();
+        List<Card> cards = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            CardEntity card =
-                    CardEntity.builder().front("Q" + i).back("A").numberOfPractice(0).build();
+            Card card =
+                    Card.builder().front("Q" + i).back("A").numberOfPractice(0).build();
             card.setId(UUID.randomUUID());
             card.setSubject(subject);
             cards.add(card);
@@ -488,7 +488,7 @@ class TestSuiteServiceImplTest {
     @Test
     void autoGenerate_createsSuiteForSubject() {
         UUID subjectId = UUID.randomUUID();
-        SubjectEntity subject = new SubjectEntity();
+        Subject subject = new Subject();
         subject.setId(subjectId);
         subject.setName("Biology");
 
@@ -535,7 +535,7 @@ class TestSuiteServiceImplTest {
     @Test
     void create_withSubjectIds_linksSubjects() {
         UUID subjectId = UUID.randomUUID();
-        SubjectEntity subject = new SubjectEntity();
+        Subject subject = new Subject();
         subject.setId(subjectId);
         TestSuiteReq req = new TestSuiteReq("t", true, List.of(subjectId), null);
 
@@ -572,17 +572,17 @@ class TestSuiteServiceImplTest {
 
     @Test
     void run_withExplicitLimitOnAllMode_caps() {
-        SubjectEntity subject = new SubjectEntity();
+        Subject subject = new Subject();
         subject.setId(UUID.randomUUID());
         TestSuiteEntity suite = new TestSuiteEntity();
         suite.setId(testSuiteId);
         suite.setSubjects(List.of(subject));
         suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.ALL, 1, false));
 
-        List<CardEntity> cards = new ArrayList<>();
+        List<Card> cards = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            CardEntity card =
-                    CardEntity.builder().front("Q" + i).back("A").numberOfPractice(0).build();
+            Card card =
+                    Card.builder().front("Q" + i).back("A").numberOfPractice(0).build();
             card.setId(UUID.randomUUID());
             card.setSubject(subject);
             cards.add(card);
@@ -600,7 +600,7 @@ class TestSuiteServiceImplTest {
 
     @Test
     void run_withPartialSelectionDefaults() {
-        SubjectEntity subject = new SubjectEntity();
+        Subject subject = new Subject();
         subject.setId(UUID.randomUUID());
         TestSuiteEntity suite = new TestSuiteEntity();
         suite.setId(testSuiteId);
@@ -608,7 +608,7 @@ class TestSuiteServiceImplTest {
         TestSuiteSelectionPayload partial = new TestSuiteSelectionPayload(null, null, null);
         suite.setSelection(partial);
 
-        CardEntity card = CardEntity.builder().front("Q").back("A").numberOfPractice(0).build();
+        Card card = Card.builder().front("Q").back("A").numberOfPractice(0).build();
         card.setId(UUID.randomUUID());
         card.setSubject(subject);
         when(userService.getCurrentUser()).thenReturn(currentUser);

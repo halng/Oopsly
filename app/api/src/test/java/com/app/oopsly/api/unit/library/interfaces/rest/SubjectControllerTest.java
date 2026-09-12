@@ -19,10 +19,10 @@ package com.app.oopsly.api.unit.library.interfaces.rest;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.library.application.SubjectService;
-import com.app.oopsly.api.library.application.vm.SubjectReq;
-import com.app.oopsly.api.library.application.vm.SubjectSettingReq;
-import com.app.oopsly.api.library.interfaces.rest.SubjectController;
+import com.app.oopsly.api.subject.SubjectService;
+import com.app.oopsly.api.subject.vm.SubjectReq;
+import com.app.oopsly.api.subject.vm.SubjectSettingReq;
+import com.app.oopsly.api.subject.SubjectController;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;

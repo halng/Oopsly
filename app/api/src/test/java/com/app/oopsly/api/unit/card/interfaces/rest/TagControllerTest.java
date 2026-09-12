@@ -19,9 +19,9 @@ package com.app.oopsly.api.unit.card.interfaces.rest;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.application.TagService;
-import com.app.oopsly.api.card.application.vm.TagReq;
-import com.app.oopsly.api.card.interfaces.rest.TagController;
+import com.app.oopsly.api.tag.TagService;
+import com.app.oopsly.api.tag.vm.TagReq;
+import com.app.oopsly.api.tag.TagController;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      precheck:
+        description: "Run pre-release checks"
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  # 1. Deploy to Staging & Run Tests
+  deploy-staging:
+    runs-on: ubuntu-latest
+    name: Deploy to stg env for ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      - name: Deploy backend service
+        uses: ./.github/workflows/deploy-api.yaml
+        with:
+          git_tag: ${{ github.ref_name }}
+          env: stg
+        secrets: inherit
+
+      - name: Deploy frontend service
+        uses: ./.github/workflows/deploy-web.yaml
+        with:
+          git_tag: ${{ github.ref_name }}
+          env: stg
+        secrets: inherit
+
+      - name: Run E2E & Perf Tests
+        run: |
+          npm run test:e2e
+          npm run test:perf
+
+  pre-release-check:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    name: Pre-Release Checks for ${{ github.ref_name }}
+    defaults:
+      run:
+        working-directory: app/qa
+    steps:
+      - name: Run QA Suite
+        if: ${{ github.event.inputs.precheck == 'true' }}
+        uses: ./.github/workflows/pre-release-check.yaml
+        with:
+          ref_name: ${{ github.ref_name }}
+      - name: Upload document and link to release
+        if: ${{ github.event.inputs.precheck == 'true' }}
+        run: |
+          # Use GitHub CLI to upload artifacts to the release page
+          gh release upload ${{ github.ref_name }} ./e2e-results/*.png ./perf-results/*.html
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Send Slack Notification
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "Pre-release checks completed for '${{ github.ref_name }}'. Please review the results and approve the release."
+          }' https://slack.com/api/chat.postMessage?channel=${{ secrets.SLACK_CHANNEL_ID }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+  go-live:
+    needs: pre-release-check
+    runs-on: ubuntu-latest
+    name: Let's Go Live for ${{ github.ref_name }}
+    environment: production # <--- Manual Approval Gate here
+    steps:
+      - name: Deploy backend service to production
+        uses: ./.github/workflows/deploy-api.yaml
+        with:
+          git_hash: ${{ github.sha }}
+          env: prod
+        secrets: inherit
+
+      - name: Deploy frontend service to production
+        uses: ./.github/workflows/deploy-web.yaml
+        with:
+          git_hash: ${{ github.sha }}
+          env: prod
+        secrets: inherit

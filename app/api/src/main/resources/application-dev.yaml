@@ -8,6 +8,9 @@ spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+  flyway:
+    baseline-version: -1
+    locations: classpath:db/migration, classpath:db/dev
 management:
   health:
     mail:

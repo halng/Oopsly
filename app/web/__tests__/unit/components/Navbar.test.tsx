@@ -2,14 +2,20 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import Navbar from '@/components/Navbar';
 
-const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+const { push, pathname } = vi.hoisted(() => ({
+    push: vi.fn(),
+    pathname: { current: '/home' },
+}));
 const syncState = {
     isOnline: true,
     isSyncing: false,
     pendingCount: 0,
     syncNow: vi.fn(),
 };
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
+vi.mock('next/navigation', () => ({
+    useRouter: () => ({ push }),
+    usePathname: () => pathname.current,
+}));
 vi.mock('@/services/api', () => ({
     ApiService: {
         getStats: vi.fn().mockResolvedValue({
@@ -60,5 +66,14 @@ describe('Navbar', () => {
         fireEvent.click(screen.getByTestId('btn-sync-status'));
         expect(syncState.syncNow).toHaveBeenCalledOnce();
         syncState.pendingCount = 0;
+    });
+
+    it('marks the current navbar destination as active', () => {
+        pathname.current = '/stats';
+        render(<Navbar />);
+        expect(screen.getByTestId('nav-stats')).toHaveStyle({
+            color: 'var(--theme-accent)',
+        });
+        pathname.current = '/home';
     });
 });

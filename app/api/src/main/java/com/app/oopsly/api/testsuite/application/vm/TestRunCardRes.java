@@ -16,7 +16,7 @@
 
 package com.app.oopsly.api.testsuite.application.vm;
 
-import com.app.oopsly.api.card.domain.DifficultyLevel;
+import com.app.oopsly.api.card.DifficultyLevel;
 import java.time.Instant;
 import java.util.UUID;
 

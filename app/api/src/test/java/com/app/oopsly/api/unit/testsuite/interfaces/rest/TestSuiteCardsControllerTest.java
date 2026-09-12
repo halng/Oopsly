@@ -19,7 +19,7 @@ package com.app.oopsly.api.unit.testsuite.interfaces.rest;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.application.CardService;
+import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.testsuite.interfaces.rest.TestSuiteCardsController;
 import java.util.UUID;

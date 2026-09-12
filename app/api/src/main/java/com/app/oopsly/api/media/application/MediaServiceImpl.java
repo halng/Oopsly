@@ -16,11 +16,11 @@
 
 package com.app.oopsly.api.media.application;
 
-import com.app.oopsly.api.card.infrastructure.CardRepository;
-import com.app.oopsly.api.library.infrastructure.ShelfRepository;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
+import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
-import com.app.oopsly.api.user.application.UserService;
+import com.app.oopsly.api.user.UserService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

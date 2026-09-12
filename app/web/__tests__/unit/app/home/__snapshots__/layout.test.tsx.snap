@@ -1,14 +1,39 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`HomeLayout > renders navigation before the protected page content 1`] = `
+exports[`AppLayout > renders navigation before the protected page content 1`] = `
 <div>
-  <nav
-    data-testid="navbar"
+  <div
+    aria-hidden="false"
   >
-    Navigation
-  </nav>
-  <main>
-    Home content
-  </main>
+    <div
+      class="min-h-screen bg-[var(--theme-bg)] text-[var(--theme-text)] flex flex-col font-sans selection:bg-[color-mix(in_srgb,var(--theme-accent)_30%,transparent)] transition-colors"
+      id="app-root-container"
+      style="background-color: var(--theme-bg); color: var(--theme-text);"
+    >
+      <header
+        class="border-b border-stone-200/60 dark:border-stone-800/60 bg-[var(--theme-bg)]/80 backdrop-blur-md sticky top-0 z-40"
+      >
+        <nav
+          data-testid="navbar"
+        >
+          Navigation
+        </nav>
+      </header>
+      <main
+        class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-24 md:pb-8"
+      >
+        <div>
+          Home content
+        </div>
+      </main>
+      <footer
+        class="py-6 border-t border-stone-200/60 dark:border-stone-800/60 text-center text-xs text-stone-400"
+      >
+        <p>
+          © 2026 Oopsly · Spaced Repetition Flashcards with FSRS Algorithm & Collaborative Communities
+        </p>
+      </footer>
+    </div>
+  </div>
 </div>
 `;
