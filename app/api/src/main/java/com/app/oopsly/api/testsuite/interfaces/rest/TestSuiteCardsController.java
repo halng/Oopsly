@@ -16,7 +16,7 @@
 
 package com.app.oopsly.api.testsuite.interfaces.rest;
 
-import com.app.oopsly.api.card.application.CardService;
+import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

@@ -21,7 +21,16 @@ describe('useUserProfileStore', () => {
         const mockProfile: UserProfile = {
             id: 'user_123',
             name: 'Forest Learner',
+            displayName: 'Forest Learner',
+            streakDays: 5,
+            totalCardsStudied: 150,
+            totalReviewed: 75,
             email: 'hello@oopsly.app',
+            totalReviews: 75,
+            retentionRate: 0.85,
+            xp: 1200,
+            league: "",
+            settings: {},
             avatarUrl: 'https://example.com/avatar.png',
         } as UserProfile;
 
@@ -31,5 +40,15 @@ describe('useUserProfileStore', () => {
         // Verify the state updated correctly
         const state = useUserProfileStore.getState();
         expect(state.profile).toEqual(mockProfile);
+    });
+
+    it('clears the profile via clearProfile', () => {
+        useUserProfileStore.getState().setProfile({
+            id: 'user_123',
+            name: 'Forest Learner',
+            email: 'hello@oopsly.app',
+        } as UserProfile);
+        useUserProfileStore.getState().clearProfile();
+        expect(useUserProfileStore.getState().profile).toBeNull();
     });
 });

@@ -19,9 +19,9 @@ package com.app.oopsly.api.unit.library.interfaces.rest;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.library.application.ShelfService;
-import com.app.oopsly.api.library.application.vm.ShelfReq;
-import com.app.oopsly.api.library.interfaces.rest.ShelfController;
+import com.app.oopsly.api.shelf.ShelfService;
+import com.app.oopsly.api.shelf.vm.ShelfReq;
+import com.app.oopsly.api.shelf.ShelfController;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;

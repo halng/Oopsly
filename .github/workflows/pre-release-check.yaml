@@ -1,0 +1,66 @@
+name: QA Release Checks
+
+on:
+  workflow_call:
+    inputs:
+      ref_name:
+        required: true
+        type: string
+        description: "The branch or tag to checkout"
+
+jobs:
+  qa-suite:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./app/qa
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.ref_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3644D507727F5144583151D8
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Execute Load Testing
+        run: k6 run scripts/load-test.js
+        env:
+          TARGET_URL: ${{ secrets.STAGING_URL }}
+
+      - name: Execute Volume Testing
+        run: k6 run scripts/volume-test.js
+        env:
+          TARGET_URL: ${{ secrets.STAGING_URL }}
+
+      - name: Execute Playwright Automation
+        run: npx playwright test
+        env:
+          BASE_URL: ${{ secrets.STAGING_URL }}
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-reports
+          path: |
+            app/qa/playwright-report/
+            app/qa/k6-results/

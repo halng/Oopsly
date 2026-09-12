@@ -19,7 +19,7 @@ package com.app.oopsly.api.unit.user.application;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.library.application.vm.StudyScheduleReq;
+import com.app.oopsly.api.shelf.vm.StudyScheduleReq;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
@@ -27,25 +27,24 @@ import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
 import com.app.oopsly.api.shared.util.Constant;
 import com.app.oopsly.api.shared.util.JwtUtils;
-import com.app.oopsly.api.user.application.UserServiceImpl;
-import com.app.oopsly.api.user.application.vm.RefreshTokenReq;
-import com.app.oopsly.api.user.application.vm.SpaceConfigReq;
-import com.app.oopsly.api.user.application.vm.UpdateProfileReq;
-import com.app.oopsly.api.user.application.vm.UpdateSettingsReq;
-import com.app.oopsly.api.user.application.vm.UserProfileRes;
-import com.app.oopsly.api.user.domain.Language;
-import com.app.oopsly.api.user.domain.SettingEntity;
-import com.app.oopsly.api.user.domain.Theme;
-import com.app.oopsly.api.user.domain.User;
-import com.app.oopsly.api.user.infrastructure.SettingRepository;
-import com.app.oopsly.api.user.infrastructure.UserRepository;
+import com.app.oopsly.api.user.UserServiceImpl;
+import com.app.oopsly.api.user.vm.RefreshTokenReq;
+import com.app.oopsly.api.user.vm.SpaceConfigReq;
+import com.app.oopsly.api.user.vm.UpdateProfileReq;
+import com.app.oopsly.api.user.vm.UpdateSettingsReq;
+import com.app.oopsly.api.user.vm.UserProfileRes;
+import com.app.oopsly.api.user.Language;
+import com.app.oopsly.api.user.Setting;
+import com.app.oopsly.api.user.Theme;
+import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.SettingRepository;
+import com.app.oopsly.api.user.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatch;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Path;
 import jakarta.validation.Validator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -95,7 +94,7 @@ class UserServiceImplTest {
 
     private UUID userId;
     private User user;
-    private SettingEntity setting;
+    private Setting setting;
 
     @BeforeEach
     void setUp() {
@@ -107,18 +106,10 @@ class UserServiceImplTest {
         user.setBio("Test Bio");
         user.setAge(25);
 
-        Map<String, Integer> spaceConfig = new HashMap<>();
-        spaceConfig.put("AGAIN", 1);
-        spaceConfig.put("HARD", 1);
-        spaceConfig.put("GOOD", 5);
-        spaceConfig.put("EASY", 10);
-
-        setting = new SettingEntity();
+        setting = new Setting();
         setting.setId(UUID.randomUUID());
         setting.setTheme(Theme.SYSTEM);
         setting.setLanguage(Language.ENGLISH);
-        setting.setSpaceConfig(spaceConfig);
-        setting.setStudySchedule(com.app.oopsly.api.library.domain.StudySchedule.defaults());
         setting.setUser(user);
 
         mockJsonNode = mock(JsonNode.class);
@@ -358,7 +349,7 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
+        when(settingRepository.findByUser(user)).thenReturn(Optional.of(setting));
 
         ApiRes result = userService.getProfile();
 
@@ -368,11 +359,10 @@ class UserServiceImplTest {
         UserProfileRes profile = (UserProfileRes) result.getBody().data();
         assertEquals("Test User", profile.displayName());
         assertEquals("Test Bio", profile.bio());
-        assertEquals(25, profile.age());
         assertNotNull(profile.settings());
         assertEquals("SYSTEM", profile.settings().theme());
         assertEquals("en", profile.settings().language());
-        verify(settingRepository).findByUserId(userId);
+        verify(settingRepository).findByUser(user);
     }
 
     @Test
@@ -381,24 +371,18 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(settingRepository.findByUserId(userId))
-                .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(setting));
-        when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
+        when(settingRepository.findByUser(user)).thenReturn(Optional.empty());
+        when(settingRepository.saveAndFlush(any(Setting.class))).thenReturn(setting);
 
         ApiRes result = userService.getProfile();
 
         assertNotNull(result);
         assertTrue(result.getBody().isSuccess());
-        ArgumentCaptor<SettingEntity> captor = ArgumentCaptor.forClass(SettingEntity.class);
-        verify(settingRepository).save(captor.capture());
-        SettingEntity created = captor.getValue();
+        ArgumentCaptor<Setting> captor = ArgumentCaptor.forClass(Setting.class);
+        verify(settingRepository).saveAndFlush(captor.capture());
+        Setting created = captor.getValue();
         assertEquals(Theme.SYSTEM, created.getTheme());
         assertEquals(Language.ENGLISH, created.getLanguage());
-        assertEquals(1, created.getSpaceConfig().get("AGAIN"));
-        assertEquals(1, created.getSpaceConfig().get("HARD"));
-        assertEquals(5, created.getSpaceConfig().get("GOOD"));
-        assertEquals(10, created.getSpaceConfig().get("EASY"));
     }
 
     @Test
@@ -410,17 +394,17 @@ class UserServiceImplTest {
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
-        when(settingRepository.findByUserId(userId))
+        when(settingRepository.findByUser(user))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(setting));
-        when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
+        when(settingRepository.saveAndFlush(any(Setting.class))).thenReturn(setting);
 
         ApiRes result = userService.updateProfile(request);
 
         assertNotNull(result);
         assertTrue(result.getBody().isSuccess());
         verify(userRepository, times(1)).save(any(User.class));
-        verify(settingRepository, times(1)).save(any(SettingEntity.class));
+        verify(settingRepository, times(1)).saveAndFlush(any(Setting.class));
     }
 
     @Test
@@ -432,7 +416,7 @@ class UserServiceImplTest {
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
-        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
+        when(settingRepository.findByUser(user)).thenReturn(Optional.of(setting));
 
         ApiRes result = userService.updateProfile(request);
 
@@ -460,24 +444,20 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(settingRepository.findByUserId(userId))
+        when(settingRepository.findByUser(user))
                 .thenReturn(Optional.of(setting))
                 .thenReturn(Optional.of(setting));
-        when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
+        when(settingRepository.save(any(Setting.class))).thenReturn(setting);
 
         ApiRes result = userService.updateSettings(request);
 
         assertNotNull(result);
         assertTrue(result.getBody().isSuccess());
-        ArgumentCaptor<SettingEntity> captor = ArgumentCaptor.forClass(SettingEntity.class);
+        ArgumentCaptor<Setting> captor = ArgumentCaptor.forClass(Setting.class);
         verify(settingRepository).save(captor.capture());
-        SettingEntity savedSetting = captor.getValue();
+        Setting savedSetting = captor.getValue();
         assertEquals(Theme.DARK, savedSetting.getTheme());
         assertEquals(Language.VIETNAMESE, savedSetting.getLanguage());
-        assertEquals(2, savedSetting.getSpaceConfig().get("AGAIN"));
-        assertEquals(3, savedSetting.getSpaceConfig().get("HARD"));
-        assertEquals(7, savedSetting.getSpaceConfig().get("GOOD"));
-        assertEquals(14, savedSetting.getSpaceConfig().get("EASY"));
     }
 
     @Test
@@ -494,7 +474,7 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
+        when(settingRepository.findByUser(user)).thenReturn(Optional.of(setting));
 
         ValidationException exception =
                 assertThrows(ValidationException.class, () -> userService.updateSettings(request));
@@ -515,7 +495,7 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
+        when(settingRepository.findByUser(user)).thenReturn(Optional.of(setting));
 
         ValidationException exception =
                 assertThrows(ValidationException.class, () -> userService.updateSettings(request));
@@ -536,16 +516,16 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(settingRepository.findByUserId(userId))
+        when(settingRepository.findByUser(user))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(setting));
-        when(settingRepository.save(any(SettingEntity.class))).thenReturn(setting);
+        when(settingRepository.save(any(Setting.class))).thenReturn(setting);
 
         ApiRes result = userService.updateSettings(request);
 
         assertNotNull(result);
         assertTrue(result.getBody().isSuccess());
-        verify(settingRepository, times(1)).save(any(SettingEntity.class));
+        verify(settingRepository, times(1)).save(any(Setting.class));
     }
 
     @Test
@@ -862,17 +842,18 @@ class UserServiceImplTest {
     void updateUserProgress_firstReview_setsStreakToOne() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
-        user.setDailyStreak(null);
-        user.setTotalXp(null);
-        user.setLastReviewedAt(null);
+        setting.setDailyStreak(null);
+        setting.setTotalXp(null);
+        setting.setLastReviewedAt(null);
         when(userRepository.findByIdWithLock(userId)).thenReturn(Optional.of(user));
-        when(userRepository.save(user)).thenReturn(user);
+        when(settingRepository.findByUser(user)).thenReturn(Optional.of(setting));
+        when(settingRepository.save(setting)).thenReturn(setting);
 
         userService.updateUserProgress(10);
 
-        assertEquals(10, user.getTotalXp());
-        assertEquals(1, user.getDailyStreak());
-        assertNotNull(user.getLastReviewedAt());
+        assertEquals(10, setting.getTotalXp());
+        assertEquals(1, setting.getDailyStreak());
+        assertNotNull(setting.getLastReviewedAt());
     }
 
     @Test
@@ -880,20 +861,21 @@ class UserServiceImplTest {
     void updateUserProgress_yesterdayReview_incrementsStreak() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
-        user.setDailyStreak(2);
-        user.setTotalXp(5);
-        user.setLastReviewedAt(
+        setting.setDailyStreak(2);
+        setting.setTotalXp(5);
+        setting.setLastReviewedAt(
                 java.time.LocalDate.now(java.time.ZoneOffset.UTC)
                         .minusDays(1)
                         .atStartOfDay(java.time.ZoneOffset.UTC)
                         .toInstant());
         when(userRepository.findByIdWithLock(userId)).thenReturn(Optional.of(user));
-        when(userRepository.save(user)).thenReturn(user);
+        when(settingRepository.findByUser(user)).thenReturn(Optional.of(setting));
+        when(settingRepository.save(setting)).thenReturn(setting);
 
         userService.updateUserProgress(3);
 
-        assertEquals(8, user.getTotalXp());
-        assertEquals(3, user.getDailyStreak());
+        assertEquals(8, setting.getTotalXp());
+        assertEquals(3, setting.getDailyStreak());
     }
 
     @Test
@@ -901,16 +883,17 @@ class UserServiceImplTest {
     void updateUserProgress_sameDay_keepsStreak() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
-        user.setDailyStreak(4);
-        user.setTotalXp(20);
-        user.setLastReviewedAt(java.time.Instant.now());
+        setting.setDailyStreak(4);
+        setting.setTotalXp(20);
+        setting.setLastReviewedAt(java.time.Instant.now());
         when(userRepository.findByIdWithLock(userId)).thenReturn(Optional.of(user));
-        when(userRepository.save(user)).thenReturn(user);
+        when(settingRepository.findByUser(user)).thenReturn(Optional.of(setting));
+        when(settingRepository.save(setting)).thenReturn(setting);
 
         userService.updateUserProgress(1);
 
-        assertEquals(21, user.getTotalXp());
-        assertEquals(4, user.getDailyStreak());
+        assertEquals(21, setting.getTotalXp());
+        assertEquals(4, setting.getDailyStreak());
     }
 
     @Test
@@ -919,20 +902,21 @@ class UserServiceImplTest {
     void updateUserProgress_staleReview_resetsStreak() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
-        user.setDailyStreak(9);
-        user.setTotalXp(1);
-        user.setLastReviewedAt(
+        setting.setDailyStreak(9);
+        setting.setTotalXp(1);
+        setting.setLastReviewedAt(
                 java.time.LocalDate.now(java.time.ZoneOffset.UTC)
                         .minusDays(3)
                         .atStartOfDay(java.time.ZoneOffset.UTC)
                         .toInstant());
         when(userRepository.findByIdWithLock(userId)).thenReturn(Optional.of(user));
-        when(userRepository.save(user)).thenReturn(user);
+        when(settingRepository.findByUser(user)).thenReturn(Optional.of(setting));
+        when(settingRepository.save(setting)).thenReturn(setting);
 
         userService.updateUserProgress(2);
 
-        assertEquals(1, user.getDailyStreak());
-        assertEquals(3, user.getTotalXp());
+        assertEquals(1, setting.getDailyStreak());
+        assertEquals(3, setting.getTotalXp());
     }
 
     @Test
@@ -956,14 +940,19 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
+        when(settingRepository.findByUser(user))
+                .thenReturn(Optional.of(setting))
+                .thenReturn(Optional.of(setting));
+        when(settingRepository.save(any(Setting.class))).thenReturn(setting);
 
-        assertThrows(ValidationException.class, () -> userService.updateSettings(request));
+        ApiRes result = userService.updateSettings(request);
+
+        assertTrue(result.getBody().isSuccess());
     }
 
     @Test
-    @DisplayName("updateSettings should reject invalid study day")
-    void updateSettings_rejectsInvalidStudyDay() {
+    @DisplayName("updateSettings should ignore invalid study day because it is not persisted")
+    void updateSettings_ignoresInvalidStudyDay() {
         SpaceConfigReq spaceConfigReq = new SpaceConfigReq(1, 1, 5, 10);
         UpdateSettingsReq request =
                 new UpdateSettingsReq(
@@ -975,25 +964,27 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
+        when(settingRepository.findByUser(user))
+                .thenReturn(Optional.of(setting))
+                .thenReturn(Optional.of(setting));
+        when(settingRepository.save(any(Setting.class))).thenReturn(setting);
 
-        assertThrows(ValidationException.class, () -> userService.updateSettings(request));
+        ApiRes result = userService.updateSettings(request);
+
+        assertTrue(result.getBody().isSuccess());
     }
 
     @Test
-    @DisplayName("getProfile should default study schedule when null")
-    void getProfile_defaultsStudySchedule_whenNull() {
-        setting.setStudySchedule(null);
+    @DisplayName("getProfile should succeed when settings have no extra JSON fields")
+    void getProfile_succeedsWithoutJsonSettings() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
+        when(settingRepository.findByUser(user)).thenReturn(Optional.of(setting));
 
         ApiRes result = userService.getProfile();
 
         assertTrue(result.getBody().isSuccess());
-        UserProfileRes profile = (UserProfileRes) result.getBody().data();
-        assertNotNull(profile.settings().studySchedule());
     }
 
     @Test
@@ -1051,7 +1042,13 @@ class UserServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userId.toString());
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(settingRepository.findByUserId(userId)).thenReturn(Optional.of(setting));
-        assertThrows(ValidationException.class, () -> userService.updateSettings(request));
+        when(settingRepository.findByUser(user))
+                .thenReturn(Optional.of(setting))
+                .thenReturn(Optional.of(setting));
+        when(settingRepository.save(any(Setting.class))).thenReturn(setting);
+
+        ApiRes result = userService.updateSettings(request);
+
+        assertTrue(result.getBody().isSuccess());
     }
 }

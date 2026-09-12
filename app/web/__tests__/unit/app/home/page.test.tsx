@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import HomePage from '@/app/home/page';
+import HomePage from '@/app/(app)/home/page';
 import { ApiService } from '@/services/api';
+import { useUserProfileStore } from '@/store';
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
@@ -13,8 +14,15 @@ vi.mock('@/services/api', () => ({
         getStats: vi.fn(),
         createShelf: vi.fn(),
         updateShelf: vi.fn(),
+        deleteShelf: vi.fn(),
+        createSubject: vi.fn(),
+        updateSubject: vi.fn(),
+        deleteSubject: vi.fn(),
         updateSettings: vi.fn(),
     },
+}));
+vi.mock('@/services/syncManager', () => ({
+    syncManager: { init: vi.fn() },
 }));
 vi.mock('@/components', () => ({
     OfflineSyncBanner: () => <div data-testid="offline-banner" />,
@@ -25,6 +33,15 @@ vi.mock('@/components', () => ({
 vi.mock('@/components/shared', () => ({
     ShelfModal: ({ onClose }: { onClose: () => void }) => (
         <button onClick={onClose}>Close shelf modal</button>
+    ),
+    SubjectModal: ({ onClose }: { onClose: () => void }) => (
+        <button onClick={onClose}>Close subject modal</button>
+    ),
+    ImportCardsModal: () => <div data-testid="import-cards-modal" />,
+    CloneSubjectModal: ({ isOpen }: { isOpen: boolean }) =>
+        isOpen ? <div data-testid="clone-subject-modal" /> : null,
+    JoinGameModal: ({ onClose }: { onClose: () => void }) => (
+        <button onClick={onClose}>Close join game</button>
     ),
 }));
 
@@ -57,8 +74,11 @@ const subject = {
 };
 
 describe('HomePage', () => {
+    const initialProfileState = useUserProfileStore.getState();
+
     beforeEach(() => {
         vi.clearAllMocks();
+        useUserProfileStore.setState(initialProfileState, true);
         vi.mocked(ApiService.getProfile).mockResolvedValue({
             isSuccess: true,
             data: profile,
@@ -193,5 +213,24 @@ describe('HomePage', () => {
                 dailyGoal: 1,
             })
         );
+    });
+
+    it('opens a shelf by routing to /home/[shelfId]', async () => {
+        render(<HomePage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('shelf-card-s1')).toBeInTheDocument()
+        );
+        fireEvent.click(screen.getByTestId('shelf-card-s1'));
+        expect(push).toHaveBeenCalledWith('/home/s1');
+        expect(screen.getByTestId('btn-view-shelf-s1')).toBeInTheDocument();
+    });
+
+    it('opens the join-game placeholder from the library view', async () => {
+        render(<HomePage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('btn-join-game')).toBeInTheDocument()
+        );
+        fireEvent.click(screen.getByTestId('btn-join-game'));
+        expect(screen.getByText('Close join game')).toBeInTheDocument();
     });
 });

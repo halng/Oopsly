@@ -21,6 +21,7 @@ java {
 sonar {
   properties {
     property "sonar.projectKey", "Oopsly::API"
+	property "sonar.projectName", "Oopsly::API"
     property "sonar.organization", "tanhao111"
 	property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
   }

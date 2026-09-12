@@ -23,8 +23,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.app.oopsly.api.integration.support.AbstractControllerTest;
 import com.app.oopsly.api.integration.support.LibraryFixture;
-import com.app.oopsly.api.library.domain.SubjectEntity;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,7 +50,7 @@ class DiscoverControllerTest extends AbstractControllerTest {
         publicSubjectId = library.subjectId();
 
         // mark subject public via settings path if available; otherwise mutate entity
-        SubjectEntity subject = subjectRepository.findById(publicSubjectId).orElseThrow();
+        Subject subject = subjectRepository.findById(publicSubjectId).orElseThrow();
         subject.setIsPublic(true);
         subjectRepository.saveAndFlush(subject);
 

@@ -21,13 +21,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.domain.CardEntity;
-import com.app.oopsly.api.card.domain.DifficultyLevel;
-import com.app.oopsly.api.card.infrastructure.CardRepository;
-import com.app.oopsly.api.library.domain.ShelfEntity;
-import com.app.oopsly.api.library.domain.SubjectEntity;
-import com.app.oopsly.api.library.infrastructure.ShelfRepository;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.card.DifficultyLevel;
+import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
@@ -44,8 +44,8 @@ import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.domain.TestSuiteSelectionPayload;
 import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.application.UserService;
-import com.app.oopsly.api.user.domain.User;
+import com.app.oopsly.api.user.UserService;
+import com.app.oopsly.api.user.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -76,8 +76,8 @@ class TestSuiteServiceRunAndSubmitTest {
     private TestSuiteServiceImpl service;
 
     private User currentUser;
-    private ShelfEntity shelve;
-    private SubjectEntity subject;
+    private Shelf shelve;
+    private Subject subject;
     private TestSuiteEntity suite;
     private UUID shelveId;
     private UUID testSuiteId;
@@ -102,11 +102,11 @@ class TestSuiteServiceRunAndSubmitTest {
         shelveId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
 
-        shelve = new ShelfEntity();
+        shelve = new Shelf();
         shelve.setId(shelveId);
         shelve.setUser(currentUser);
 
-        subject = new SubjectEntity();
+        subject = new Subject();
         subject.setId(UUID.randomUUID());
         subject.setName("Algebra");
         subject.setShelf(shelve);
@@ -122,8 +122,8 @@ class TestSuiteServiceRunAndSubmitTest {
                 .thenReturn(Optional.of(shelve));
     }
 
-    private CardEntity card(String front, String back) {
-        CardEntity card = new CardEntity();
+    private Card card(String front, String back) {
+        Card card = new Card();
         card.setId(UUID.randomUUID());
         card.setSubject(subject);
         card.setFront(front);
@@ -185,7 +185,7 @@ class TestSuiteServiceRunAndSubmitTest {
 
     @Test
     void run_defaultSelectionReturnsEveryCard() {
-        CardEntity card = card("2+2", "4");
+        Card card = card("2+2", "4");
         currentUserOwnsShelve();
         when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
                 .thenReturn(Optional.of(suite));
@@ -217,7 +217,7 @@ class TestSuiteServiceRunAndSubmitTest {
 
     @Test
     void run_randomSelectionAppliesTheDefaultSampleSize() {
-        List<CardEntity> pool =
+        List<Card> pool =
                 IntStream.range(0, TestSuiteSelectionPayload.RANDOM_DEFAULT_LIMIT + 5)
                         .mapToObj(i -> card("q" + i, "a" + i))
                         .toList();
@@ -234,7 +234,7 @@ class TestSuiteServiceRunAndSubmitTest {
 
     @Test
     void run_explicitLimitCapsTheSelection() {
-        List<CardEntity> pool =
+        List<Card> pool =
                 IntStream.range(0, 10).mapToObj(i -> card("q" + i, "a" + i)).toList();
         suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.ALL, 3, Boolean.TRUE));
         currentUserOwnsShelve();
@@ -248,7 +248,7 @@ class TestSuiteServiceRunAndSubmitTest {
 
     @Test
     void run_negativeLimitIsClampedToOneCard() {
-        List<CardEntity> pool =
+        List<Card> pool =
                 IntStream.range(0, 4).mapToObj(i -> card("q" + i, "a" + i)).toList();
         suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.RANDOM, -5, Boolean.FALSE));
         currentUserOwnsShelve();

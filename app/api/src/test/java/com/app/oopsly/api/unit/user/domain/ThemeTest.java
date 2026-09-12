@@ -18,7 +18,7 @@ package com.app.oopsly.api.unit.user.domain;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.app.oopsly.api.user.domain.Theme;
+import com.app.oopsly.api.user.Theme;
 import org.junit.jupiter.api.Test;
 
 class ThemeTest {

@@ -135,4 +135,46 @@ describe('AuthPage', () => {
         );
         expect(push).toHaveBeenCalledWith('/home');
     });
+
+    it('returns from OTP to the email step in login and signup modes', async () => {
+        render(<AuthPage />);
+        fireEvent.change(screen.getByPlaceholderText('name@example.com'), {
+            target: { value: 'learner@example.com' },
+        });
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Continue with Email' })
+        );
+        await waitFor(() =>
+            expect(screen.getByPlaceholderText('123456')).toBeInTheDocument()
+        );
+        fireEvent.click(screen.getByTestId('btn-use-different-email'));
+        expect(
+            screen.getByRole('heading', { name: 'Welcome back' })
+        ).toBeInTheDocument();
+        expect(
+            screen.getByPlaceholderText('name@example.com')
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByPlaceholderText('123456')
+        ).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Sign up' }));
+        fireEvent.change(screen.getByPlaceholderText('Jane Doe'), {
+            target: { value: 'Learner' },
+        });
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Continue with Email' })
+        );
+        await waitFor(() =>
+            expect(screen.getByPlaceholderText('123456')).toBeInTheDocument()
+        );
+        fireEvent.click(screen.getByTestId('btn-use-different-email'));
+        expect(
+            screen.getByRole('heading', { name: 'Create an account' })
+        ).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Jane Doe')).toHaveValue('Learner');
+        expect(
+            screen.queryByPlaceholderText('123456')
+        ).not.toBeInTheDocument();
+    });
 });

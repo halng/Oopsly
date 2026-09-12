@@ -17,7 +17,7 @@
 package com.app.oopsly.api.quiz.domain;
 
 import com.app.oopsly.api.shared.domain.Audit;
-import com.app.oopsly.api.user.domain.User;
+import com.app.oopsly.api.user.User;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.ArrayList;

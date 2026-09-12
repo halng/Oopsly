@@ -22,22 +22,22 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.application.CardService;
-import com.app.oopsly.api.card.domain.CardEntity;
-import com.app.oopsly.api.card.infrastructure.CardRepository;
-import com.app.oopsly.api.library.application.ShelfServiceImpl;
-import com.app.oopsly.api.library.application.vm.ShelfReq;
-import com.app.oopsly.api.library.domain.ShelfEntity;
-import com.app.oopsly.api.library.domain.SubjectEntity;
-import com.app.oopsly.api.library.infrastructure.ShelfRepository;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
+import com.app.oopsly.api.card.CardService;
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.shelf.ShelfServiceImpl;
+import com.app.oopsly.api.shelf.vm.ShelfReq;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.application.UserService;
-import com.app.oopsly.api.user.domain.User;
+import com.app.oopsly.api.user.UserService;
+import com.app.oopsly.api.user.User;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -82,6 +82,8 @@ class ShelfServiceImplTest {
                 new ShelfReq(
                         "code",
                         "Sample Shelve",
+                        "sample-shelve",
+                        "color",
                         "A shelve for testing purposes with sufficient description length to meet"
                                 + " validation");
         currentUser = new User();
@@ -91,24 +93,24 @@ class ShelfServiceImplTest {
 
     @Test
     void create_savesNewShelve() {
-        ShelfEntity savedShelve = new ShelfEntity();
+        Shelf savedShelve = new Shelf();
         savedShelve.setId(shelveId);
         savedShelve.setName(shelfReq.name());
         savedShelve.setDescription(shelfReq.description());
         savedShelve.setUser(currentUser);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.save(any(ShelfEntity.class))).thenReturn(savedShelve);
+        when(shelfRepository.save(any(Shelf.class))).thenReturn(savedShelve);
 
         ApiRes result = shelveService.create(shelfReq);
 
         assertNotNull(result);
-        verify(shelfRepository, times(1)).save(any(ShelfEntity.class));
+        verify(shelfRepository, times(1)).save(any(Shelf.class));
     }
 
     @Test
     void update_updatesExistingShelve() {
-        ShelfEntity existingShelve = new ShelfEntity();
+        Shelf existingShelve = new Shelf();
         existingShelve.setId(shelveId);
         existingShelve.setName("Old Name");
         existingShelve.setDescription("Old Description with sufficient length");
@@ -117,13 +119,13 @@ class ShelfServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(existingShelve));
-        when(shelfRepository.save(any(ShelfEntity.class))).thenReturn(existingShelve);
+        when(shelfRepository.save(any(Shelf.class))).thenReturn(existingShelve);
 
         ApiRes result = shelveService.update(shelfReq, shelveId);
 
         assertNotNull(result);
         verify(shelfRepository, times(1)).findByIdAndUser(shelveId, currentUser);
-        verify(shelfRepository, times(1)).save(any(ShelfEntity.class));
+        verify(shelfRepository, times(1)).save(any(Shelf.class));
     }
 
     @Test
@@ -132,12 +134,12 @@ class ShelfServiceImplTest {
         when(shelfRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> shelveService.update(shelfReq, shelveId));
-        verify(shelfRepository, never()).save(any(ShelfEntity.class));
+        verify(shelfRepository, never()).save(any(Shelf.class));
     }
 
     @Test
     void delete_softDeletesShelve() {
-        ShelfEntity existingShelve = new ShelfEntity();
+        Shelf existingShelve = new Shelf();
         existingShelve.setId(shelveId);
         existingShelve.setDeleted(false);
         existingShelve.setUser(currentUser);
@@ -147,13 +149,13 @@ class ShelfServiceImplTest {
                 .thenReturn(Optional.of(existingShelve));
 
         // Mock cascade delete operations
-        Page<SubjectEntity> emptyPage = new PageImpl<>(Collections.emptyList());
+        Page<Subject> emptyPage = new PageImpl<>(Collections.emptyList());
         when(subjectRepository.findAllByShelve(eq(existingShelve), any(Pageable.class)))
                 .thenReturn(emptyPage);
         when(testSuiteRepository.findAllByShelve(existingShelve))
                 .thenReturn(Collections.emptyList());
 
-        when(shelfRepository.save(any(ShelfEntity.class))).thenReturn(existingShelve);
+        when(shelfRepository.save(any(Shelf.class))).thenReturn(existingShelve);
 
         ApiRes result = shelveService.delete(shelveId);
 
@@ -172,7 +174,7 @@ class ShelfServiceImplTest {
 
     @Test
     void getById_returnsShelve() {
-        ShelfEntity existingShelve = new ShelfEntity();
+        Shelf existingShelve = new Shelf();
         existingShelve.setId(shelveId);
         existingShelve.setUser(currentUser);
         existingShelve.setName(shelfReq.name());
@@ -198,14 +200,14 @@ class ShelfServiceImplTest {
 
     @Test
     void create_withMultipleShelves_createsAll() {
-        ShelfEntity savedShelve = new ShelfEntity();
+        Shelf savedShelve = new Shelf();
         savedShelve.setId(UUID.randomUUID());
         savedShelve.setName(shelfReq.name());
         savedShelve.setDescription(shelfReq.description());
         savedShelve.setUser(currentUser);
 
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.save(any(ShelfEntity.class))).thenReturn(savedShelve);
+        when(shelfRepository.save(any(Shelf.class))).thenReturn(savedShelve);
 
         // Create multiple shelves
         ApiRes result1 = shelveService.create(shelfReq);
@@ -213,12 +215,12 @@ class ShelfServiceImplTest {
 
         assertNotNull(result1);
         assertNotNull(result2);
-        verify(shelfRepository, times(2)).save(any(ShelfEntity.class));
+        verify(shelfRepository, times(2)).save(any(Shelf.class));
     }
 
     @Test
     void update_withSameData_stillSaves() {
-        ShelfEntity existingShelve = new ShelfEntity();
+        Shelf existingShelve = new Shelf();
         existingShelve.setId(shelveId);
         existingShelve.setName(shelfReq.name());
         existingShelve.setDescription(shelfReq.description());
@@ -227,17 +229,17 @@ class ShelfServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(existingShelve));
-        when(shelfRepository.save(any(ShelfEntity.class))).thenReturn(existingShelve);
+        when(shelfRepository.save(any(Shelf.class))).thenReturn(existingShelve);
 
         ApiRes result = shelveService.update(shelfReq, shelveId);
 
         assertNotNull(result);
-        verify(shelfRepository, times(1)).save(any(ShelfEntity.class));
+        verify(shelfRepository, times(1)).save(any(Shelf.class));
     }
 
     @Test
     void delete_alreadyDeleted_stillMarksAsDeleted() {
-        ShelfEntity existingShelve = new ShelfEntity();
+        Shelf existingShelve = new Shelf();
         existingShelve.setId(shelveId);
         existingShelve.setDeleted(true); // Already deleted
         existingShelve.setUser(currentUser);
@@ -247,13 +249,13 @@ class ShelfServiceImplTest {
                 .thenReturn(Optional.of(existingShelve));
 
         // Mock cascade delete operations
-        Page<SubjectEntity> emptyPage = new PageImpl<>(Collections.emptyList());
+        Page<Subject> emptyPage = new PageImpl<>(Collections.emptyList());
         when(subjectRepository.findAllByShelve(eq(existingShelve), any(Pageable.class)))
                 .thenReturn(emptyPage);
         when(testSuiteRepository.findAllByShelve(existingShelve))
                 .thenReturn(Collections.emptyList());
 
-        when(shelfRepository.save(any(ShelfEntity.class))).thenReturn(existingShelve);
+        when(shelfRepository.save(any(Shelf.class))).thenReturn(existingShelve);
 
         ApiRes result = shelveService.delete(shelveId);
 
@@ -264,9 +266,9 @@ class ShelfServiceImplTest {
 
     @Test
     void getAll_withPagination_delegatesToService() {
-        List<ShelfEntity> shelves = new ArrayList<>();
+        List<Shelf> shelves = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            ShelfEntity shelve = new ShelfEntity();
+            Shelf shelve = new Shelf();
             shelve.setId(UUID.randomUUID());
             shelve.setName("Shelve " + i);
             shelve.setDescription(
@@ -274,7 +276,7 @@ class ShelfServiceImplTest {
             shelves.add(shelve);
         }
 
-        Page<ShelfEntity> page = new PageImpl<>(shelves, PageRequest.of(0, 10), 3);
+        Page<Shelf> page = new PageImpl<>(shelves, PageRequest.of(0, 10), 3);
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findAllByUser(eq(currentUser), any(Pageable.class))).thenReturn(page);
 
@@ -287,7 +289,7 @@ class ShelfServiceImplTest {
     // Fallback Function Tests
     @Test
     void createFallback_throwsRuntimeException() {
-        ShelfReq request = new ShelfReq("test", "Test Shelve", "Test Description");
+        ShelfReq request = new ShelfReq("","test", "test","color", "Test Description");
         RuntimeException cause = new RuntimeException("Service unavailable");
 
         RetryLaterException exception =
@@ -302,7 +304,7 @@ class ShelfServiceImplTest {
 
     @Test
     void updateFallback_throwsRuntimeException() {
-        ShelfReq request = new ShelfReq("test", "Updated Shelve", "Updated Description");
+        ShelfReq request = new ShelfReq("", "test", "test","", "Updated Description");
         RuntimeException cause = new RuntimeException("Database connection failed");
 
         RetryLaterException exception =
@@ -364,7 +366,7 @@ class ShelfServiceImplTest {
                         RetryLaterException.class,
                         () ->
                                 shelveService.createFallback(
-                                        new ShelfReq("code", "Test", "Desc"), null));
+                                        new ShelfReq("code", "Test","test","color", "Desc"), null));
 
         assertNotNull(createEx);
         assertTrue(createEx.getMessage().contains("currently unavailable"));
@@ -380,13 +382,13 @@ class ShelfServiceImplTest {
                         RetryLaterException.class,
                         () ->
                                 shelveService.createFallback(
-                                        new ShelfReq("icon", "Test", "Desc"), cause));
+                                        new ShelfReq("icon", "Test","test", "color", "Desc"), cause));
         RetryLaterException updateEx =
                 assertThrows(
                         RetryLaterException.class,
                         () ->
                                 shelveService.updateFallback(
-                                        new ShelfReq("icon", "Test", "Desc"), shelveId, cause));
+                                        new ShelfReq("icon", "Test","test", "color", "Desc"), shelveId, cause));
         RetryLaterException deleteEx =
                 assertThrows(
                         RetryLaterException.class,
@@ -408,7 +410,7 @@ class ShelfServiceImplTest {
                         RetryLaterException.class,
                         () ->
                                 shelveService.createFallback(
-                                        new ShelfReq("icon", "Test", "Desc"), wrappedException));
+                                        new ShelfReq("icon", "Test","test", "color", "Desc"), wrappedException));
 
         assertEquals(wrappedException, exception.getCause());
         assertEquals(originalException, exception.getCause().getCause());
@@ -416,14 +418,14 @@ class ShelfServiceImplTest {
 
     @Test
     void delete_cascadesSubjectsCardsAndTestSuites() {
-        ShelfEntity existingShelve = new ShelfEntity();
+        Shelf existingShelve = new Shelf();
         existingShelve.setId(shelveId);
         existingShelve.setDeleted(false);
         existingShelve.setUser(currentUser);
 
-        SubjectEntity subject = new SubjectEntity();
+        Subject subject = new Subject();
         subject.setId(UUID.randomUUID());
-        CardEntity card = new CardEntity();
+        Card card = new Card();
         card.setId(UUID.randomUUID());
         card.setDeleted(false);
         TestSuiteEntity suite = new TestSuiteEntity();
@@ -452,7 +454,7 @@ class ShelfServiceImplTest {
 
     @Test
     void getById_withSubjects_mapsPracticeStats() {
-        SubjectEntity subject = new SubjectEntity();
+        Subject subject = new Subject();
         subject.setId(UUID.randomUUID());
         subject.setName("Math");
         subject.setDescription("desc");
@@ -460,7 +462,7 @@ class ShelfServiceImplTest {
         subject.setNewCardsPerDay(10);
         subject.setInterval(1.0);
 
-        ShelfEntity existingShelve = new ShelfEntity();
+        Shelf existingShelve = new Shelf();
         existingShelve.setId(shelveId);
         existingShelve.setUser(currentUser);
         existingShelve.setName(shelfReq.name());

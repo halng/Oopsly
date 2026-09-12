@@ -22,22 +22,22 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.application.CardService;
-import com.app.oopsly.api.card.domain.CardEntity;
-import com.app.oopsly.api.card.infrastructure.CardRepository;
-import com.app.oopsly.api.library.application.SubjectServiceImpl;
-import com.app.oopsly.api.library.application.vm.SubjectReq;
-import com.app.oopsly.api.library.application.vm.SubjectSettingReq;
-import com.app.oopsly.api.library.domain.ShelfEntity;
-import com.app.oopsly.api.library.domain.SubjectEntity;
-import com.app.oopsly.api.library.infrastructure.ShelfRepository;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
+import com.app.oopsly.api.card.CardService;
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.subject.SubjectServiceImpl;
+import com.app.oopsly.api.subject.vm.SubjectReq;
+import com.app.oopsly.api.subject.vm.SubjectSettingReq;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.ValidationException;
-import com.app.oopsly.api.user.application.UserService;
-import com.app.oopsly.api.user.domain.User;
+import com.app.oopsly.api.user.UserService;
+import com.app.oopsly.api.user.User;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -70,8 +70,8 @@ class SubjectServiceImplTest {
     @InjectMocks private SubjectServiceImpl subjectService;
 
     private User currentUser;
-    private ShelfEntity shelve;
-    private SubjectEntity subject;
+    private Shelf shelve;
+    private Subject subject;
     private UUID shelveId;
     private UUID subjectId;
     private SubjectReq subjectReq;
@@ -83,11 +83,11 @@ class SubjectServiceImplTest {
         shelveId = UUID.randomUUID();
         subjectId = UUID.randomUUID();
 
-        shelve = new ShelfEntity();
+        shelve = new Shelf();
         shelve.setId(shelveId);
         shelve.setUser(currentUser);
 
-        subject = new SubjectEntity();
+        subject = new Subject();
         subject.setId(subjectId);
         subject.setName("Test Subject");
         subject.setDescription("Test Description");
@@ -101,14 +101,14 @@ class SubjectServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(shelve));
-        when(subjectRepository.save(any(SubjectEntity.class))).thenReturn(subject);
+        when(subjectRepository.save(any(Subject.class))).thenReturn(subject);
         when(cardService.getShortPracticeStats(subject)).thenReturn(Pair.of(1, 1.0));
 
         ApiRes result = subjectService.create(shelveId, subjectReq);
 
         assertNotNull(result);
         verify(shelfRepository, times(1)).findByIdAndUser(shelveId, currentUser);
-        verify(subjectRepository, times(1)).save(any(SubjectEntity.class));
+        verify(subjectRepository, times(1)).save(any(Subject.class));
     }
 
     @Test
@@ -117,7 +117,7 @@ class SubjectServiceImplTest {
         when(shelfRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> subjectService.create(shelveId, subjectReq));
-        verify(subjectRepository, never()).save(any(SubjectEntity.class));
+        verify(subjectRepository, never()).save(any(Subject.class));
     }
 
     @Test
@@ -129,15 +129,15 @@ class SubjectServiceImplTest {
                 .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
-        when(subjectRepository.save(any(SubjectEntity.class))).thenReturn(subject);
-        when(cardService.getShortPracticeStats(any(SubjectEntity.class)))
+        when(subjectRepository.save(any(Subject.class))).thenReturn(subject);
+        when(cardService.getShortPracticeStats(any(Subject.class)))
                 .thenReturn(Pair.of(1, 1.0));
         ApiRes result = subjectService.update(shelveId, subjectId, updateReq);
 
         assertNotNull(result);
         verify(shelfRepository, times(1)).findByIdAndUser(shelveId, currentUser);
         verify(subjectRepository, times(1)).findByIdAndShelve(subjectId, shelve);
-        verify(subjectRepository, times(1)).save(any(SubjectEntity.class));
+        verify(subjectRepository, times(1)).save(any(Subject.class));
     }
 
     @Test
@@ -147,7 +147,7 @@ class SubjectServiceImplTest {
         assertThrows(
                 ValidationException.class,
                 () -> subjectService.update(shelveId, subjectId, invalidReq));
-        verify(subjectRepository, never()).save(any(SubjectEntity.class));
+        verify(subjectRepository, never()).save(any(Subject.class));
     }
 
     @Test
@@ -157,7 +157,7 @@ class SubjectServiceImplTest {
         assertThrows(
                 ValidationException.class,
                 () -> subjectService.update(shelveId, subjectId, invalidReq));
-        verify(subjectRepository, never()).save(any(SubjectEntity.class));
+        verify(subjectRepository, never()).save(any(Subject.class));
     }
 
     @Test
@@ -185,14 +185,14 @@ class SubjectServiceImplTest {
         assertThrows(
                 NotFoundException.class,
                 () -> subjectService.update(shelveId, subjectId, updateReq));
-        verify(subjectRepository, never()).save(any(SubjectEntity.class));
+        verify(subjectRepository, never()).save(any(Subject.class));
     }
 
     @Test
     void delete_softDeletesCollectionAndCards() {
-        List<CardEntity> cards = new ArrayList<>();
+        List<Card> cards = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            CardEntity card = new CardEntity();
+            Card card = new Card();
             card.setId(UUID.randomUUID());
             card.setDeleted(false);
             cards.add(card);
@@ -204,13 +204,13 @@ class SubjectServiceImplTest {
                 .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
-        when(subjectRepository.save(any(SubjectEntity.class))).thenReturn(subject);
+        when(subjectRepository.save(any(Subject.class))).thenReturn(subject);
 
         ApiRes result = subjectService.delete(shelveId, subjectId);
 
         assertNotNull(result);
         assertTrue(subject.getDeleted());
-        for (CardEntity card : cards) {
+        for (Card card : cards) {
             assertTrue(card.getDeleted());
         }
         verify(subjectRepository, times(1)).save(subject);
@@ -233,7 +233,7 @@ class SubjectServiceImplTest {
         when(subjectRepository.findByIdAndShelve(subjectId, shelve)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> subjectService.delete(shelveId, subjectId));
-        verify(subjectRepository, never()).save(any(SubjectEntity.class));
+        verify(subjectRepository, never()).save(any(Subject.class));
     }
 
     @Test
@@ -273,9 +273,9 @@ class SubjectServiceImplTest {
 
     @Test
     void getAllByShelve_withPagination_returnsSubjects() {
-        List<SubjectEntity> collections = new ArrayList<>();
+        List<Subject> collections = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            SubjectEntity col = new SubjectEntity();
+            Subject col = new Subject();
             col.setId(UUID.randomUUID());
             col.setName("Subject " + i);
             col.setDescription("Description " + i);
@@ -283,12 +283,12 @@ class SubjectServiceImplTest {
             collections.add(col);
         }
 
-        Page<SubjectEntity> page = new PageImpl<>(collections, PageRequest.of(0, 10), 3);
+        Page<Subject> page = new PageImpl<>(collections, PageRequest.of(0, 10), 3);
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(shelve));
         when(subjectRepository.findAllByShelve(eq(shelve), any(Pageable.class))).thenReturn(page);
-        when(cardService.getShortPracticeStats(any(SubjectEntity.class)))
+        when(cardService.getShortPracticeStats(any(Subject.class)))
                 .thenReturn(Pair.of(1, 1.0));
 
         ApiRes result = subjectService.getAllByShelve(shelveId, 0, 10);
@@ -412,9 +412,9 @@ class SubjectServiceImplTest {
 
     @Test
     void discoverPublicDecks_blankQuery_usesFindAllPublic() {
-        Page<SubjectEntity> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
+        Page<Subject> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
         when(subjectRepository.findAllPublic(any(Pageable.class))).thenReturn(page);
-        when(cardService.getShortPracticeStats(any(SubjectEntity.class)))
+        when(cardService.getShortPracticeStats(any(Subject.class)))
                 .thenReturn(Pair.of(0, 100.0));
 
         ApiRes result = subjectService.discoverPublicDecks("  ", 0, 10);
@@ -426,9 +426,9 @@ class SubjectServiceImplTest {
 
     @Test
     void discoverPublicDecks_withQuery_usesFindPublicByQuery() {
-        Page<SubjectEntity> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
+        Page<Subject> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
         when(subjectRepository.findPublicByQuery(eq("java"), any(Pageable.class))).thenReturn(page);
-        when(cardService.getShortPracticeStats(any(SubjectEntity.class)))
+        when(cardService.getShortPracticeStats(any(Subject.class)))
                 .thenReturn(Pair.of(1, 90.0));
 
         ApiRes result = subjectService.discoverPublicDecks("java", 0, 10);
@@ -441,12 +441,12 @@ class SubjectServiceImplTest {
     void cloneDeck_clonesPublicSubjectWithCards() {
         subject.setIsPublic(true);
         subject.setDeleted(false);
-        CardEntity live = new CardEntity();
+        Card live = new Card();
         live.setId(UUID.randomUUID());
         live.setFront("Q");
         live.setBack("A");
         live.setDeleted(false);
-        CardEntity deleted = new CardEntity();
+        Card deleted = new Card();
         deleted.setId(UUID.randomUUID());
         deleted.setDeleted(true);
         subject.setCards(List.of(live, deleted));
@@ -455,15 +455,15 @@ class SubjectServiceImplTest {
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(shelfRepository.findAllByUser(eq(currentUser), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(shelve)));
-        when(subjectRepository.save(any(SubjectEntity.class)))
+        when(subjectRepository.save(any(Subject.class)))
                 .thenAnswer(
                         inv -> {
-                            SubjectEntity s = inv.getArgument(0);
+                            Subject s = inv.getArgument(0);
                             s.setId(UUID.randomUUID());
                             return s;
                         });
         when(cardRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
-        when(cardService.getShortPracticeStats(any(SubjectEntity.class)))
+        when(cardService.getShortPracticeStats(any(Subject.class)))
                 .thenReturn(Pair.of(0, 100.0));
 
         ApiRes result = subjectService.cloneDeck(subjectId);
@@ -532,9 +532,9 @@ class SubjectServiceImplTest {
 
     @Test
     void discoverPublicDecks_nullQuery_usesFindAllPublic() {
-        Page<SubjectEntity> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
+        Page<Subject> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
         when(subjectRepository.findAllPublic(any(Pageable.class))).thenReturn(page);
-        when(cardService.getShortPracticeStats(any(SubjectEntity.class)))
+        when(cardService.getShortPracticeStats(any(Subject.class)))
                 .thenReturn(Pair.of(0, 100.0));
 
         subjectService.discoverPublicDecks(null, 0, 10);

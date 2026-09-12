@@ -20,9 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.shared.application.vm.ApiRes;
-import com.app.oopsly.api.user.application.OTPService;
-import com.app.oopsly.api.user.application.vm.OTPReq;
-import com.app.oopsly.api.user.interfaces.rest.OTPController;
+import com.app.oopsly.api.user.OTPService;
+import com.app.oopsly.api.user.vm.OTPReq;
+import com.app.oopsly.api.user.OTPController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -21,19 +21,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.application.CardServiceImpl;
-import com.app.oopsly.api.card.application.vm.CardItemReq;
-import com.app.oopsly.api.card.application.vm.ReviewResultRes;
-import com.app.oopsly.api.card.application.vm.UpdateDifficultyReq;
-import com.app.oopsly.api.card.domain.CardEntity;
-import com.app.oopsly.api.card.domain.DifficultyLevel;
-import com.app.oopsly.api.card.infrastructure.CardRepository;
-import com.app.oopsly.api.library.application.SubjectServiceImpl;
-import com.app.oopsly.api.library.application.vm.SubjectSettingReq;
-import com.app.oopsly.api.library.domain.ShelfEntity;
-import com.app.oopsly.api.library.domain.SubjectEntity;
-import com.app.oopsly.api.library.infrastructure.ShelfRepository;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
+import com.app.oopsly.api.card.CardService;
+import com.app.oopsly.api.card.CardServiceImpl;
+import com.app.oopsly.api.card.vm.CardItemReq;
+import com.app.oopsly.api.card.vm.ReviewResultRes;
+import com.app.oopsly.api.card.vm.UpdateDifficultyReq;
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.card.DifficultyLevel;
+import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.subject.SubjectServiceImpl;
+import com.app.oopsly.api.subject.vm.SubjectSettingReq;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
@@ -46,12 +47,9 @@ import com.app.oopsly.api.testsuite.application.TestSuiteService;
 import com.app.oopsly.api.testsuite.application.vm.TestSubmissionReq;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
 import com.app.oopsly.api.testsuite.interfaces.rest.TestSuiteController;
-import com.app.oopsly.api.user.application.OTPServiceImpl;
-import com.app.oopsly.api.user.application.UserService;
-import com.app.oopsly.api.user.application.UserServiceImpl;
-import com.app.oopsly.api.user.application.vm.OTPReq;
-import com.app.oopsly.api.user.application.vm.RefreshTokenReq;
-import com.app.oopsly.api.user.domain.User;
+import com.app.oopsly.api.user.*;
+import com.app.oopsly.api.user.vm.OTPReq;
+import com.app.oopsly.api.user.vm.RefreshTokenReq;
 import jakarta.mail.MessagingException;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -127,15 +125,15 @@ class RemainingBranchCoverageTest {
         private final UUID subjectId = UUID.randomUUID();
         private final UUID cardId = UUID.randomUUID();
 
-        private SubjectEntity resolveSubject() {
+        private Subject resolveSubject() {
             User user = new User();
             user.setId(UUID.randomUUID());
 
-            ShelfEntity shelf = new ShelfEntity();
+            Shelf shelf = new Shelf();
             shelf.setId(shelfId);
             shelf.setUser(user);
 
-            SubjectEntity subject = new SubjectEntity();
+            Subject subject = new Subject();
             subject.setId(subjectId);
             subject.setShelf(shelf);
 
@@ -149,7 +147,7 @@ class RemainingBranchCoverageTest {
         @Test
         @DisplayName("updateCard should throw NotFoundException when the card does not exist")
         void updateCard_shouldThrowNotFoundException_whenCardDoesNotExist() {
-            SubjectEntity subject = resolveSubject();
+            Subject subject = resolveSubject();
             when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.empty());
 
             CardItemReq item = new CardItemReq("front", "back");
@@ -162,9 +160,9 @@ class RemainingBranchCoverageTest {
         @Test
         @DisplayName("updateDifficulty should report the gained XP as total when the user has none")
         void updateDifficulty_shouldReportGainedXpAsTotal_whenUserTotalXpIsNull() {
-            SubjectEntity subject = resolveSubject();
+            Subject subject = resolveSubject();
 
-            CardEntity card = new CardEntity();
+            Card card = new Card();
             card.setId(cardId);
             card.setSubject(subject);
             card.setFront("front");
@@ -196,7 +194,7 @@ class RemainingBranchCoverageTest {
         @Mock private SubjectRepository subjectRepository;
         @Mock private ShelfRepository shelfRepository;
         @Mock private UserService userService;
-        @Mock private com.app.oopsly.api.card.application.CardService cardService;
+        @Mock private CardService cardService;
         @Mock private CardRepository cardRepository;
 
         @InjectMocks private SubjectServiceImpl subjectService;
@@ -209,7 +207,7 @@ class RemainingBranchCoverageTest {
 
             User user = new User();
             user.setId(UUID.randomUUID());
-            ShelfEntity shelf = new ShelfEntity();
+            Shelf shelf = new Shelf();
             shelf.setId(shelfId);
             shelf.setUser(user);
 
@@ -283,7 +281,7 @@ class RemainingBranchCoverageTest {
     class OtpAsyncEmailTest {
 
         @Mock private IEmailSender emailSender;
-        @Mock private com.app.oopsly.api.user.infrastructure.UserRepository userRepository;
+        @Mock private UserRepository userRepository;
 
         @Mock private org.springframework.data.redis.core.StringRedisTemplate stringRedisTemplate;
 
