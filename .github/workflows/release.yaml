@@ -13,28 +13,32 @@ on:
 
 jobs:
   # 1. Deploy to Staging & Run Tests
-  deploy-staging:
+  deploy-backend-staging:
+    name: Deploy backend to stg env for ${{ github.ref_name }}
+    uses: ./.github/workflows/deploy-api.yaml
+    with:
+      git_tag: ${{ github.ref_name }}
+      env: stg
+    secrets: inherit
+
+  deploy-frontend-staging:
+    name: Deploy frontend to stg env for ${{ github.ref_name }}
+    needs: deploy-backend-staging
+    uses: ./.github/workflows/deploy-web.yaml
+    with:
+      git_tag: ${{ github.ref_name }}
+      env: stg
+    secrets: inherit
+
+  test-staging:
+    needs: [deploy-backend-staging, deploy-frontend-staging]
     runs-on: ubuntu-latest
-    name: Deploy to stg env for ${{ github.ref_name }}
+    name: Run E2E & Perf Tests for ${{ github.ref_name }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.ref_name }}
-
-      - name: Deploy backend service
-        uses: ./.github/workflows/deploy-api.yaml
-        with:
-          git_tag: ${{ github.ref_name }}
-          env: stg
-        secrets: inherit
-
-      - name: Deploy frontend service
-        uses: ./.github/workflows/deploy-web.yaml
-        with:
-          git_tag: ${{ github.ref_name }}
-          env: stg
-        secrets: inherit
 
       - name: Run E2E & Perf Tests
         run: |
@@ -42,7 +46,7 @@ jobs:
           npm run test:perf
 
   pre-release-check:
-    needs: deploy-staging
+    needs: test-staging
     runs-on: ubuntu-latest
     name: Pre-Release Checks for ${{ github.ref_name }}
     defaults:
@@ -69,22 +73,23 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
-  go-live:
+  deploy-backend-production:
+    name: Deploy backend service to production for ${{ github.ref_name }}
     needs: pre-release-check
-    runs-on: ubuntu-latest
-    name: Let's Go Live for ${{ github.ref_name }}
-    environment: production # <--- Manual Approval Gate here
-    steps:
-      - name: Deploy backend service to production
-        uses: ./.github/workflows/deploy-api.yaml
-        with:
-          git_hash: ${{ github.sha }}
-          env: prod
-        secrets: inherit
+    environment: production
+    uses: ./.github/workflows/deploy-api.yaml
+    with:
+      git_hash: ${{ github.sha }}
+      env: prod
+    secrets: inherit
 
-      - name: Deploy frontend service to production
-        uses: ./.github/workflows/deploy-web.yaml
-        with:
-          git_hash: ${{ github.sha }}
-          env: prod
-        secrets: inherit
+
+  deploy-frontend-production:
+    name: Deploy frontend service to production for ${{ github.ref_name }}
+    needs: deploy-backend-production
+    uses: ./.github/workflows/deploy-web.yaml
+    with:
+      git_hash: ${{ github.sha }}
+      env: prod
+    secrets: inherit
+    environment: production

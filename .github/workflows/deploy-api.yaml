@@ -13,12 +13,8 @@ on:
         type: string
       env:
         required: true
-        type: choice
+        type: string
         description: The environment to deploy to.
-        default: "stg"
-        options:
-          - stg
-          - prod
     secrets:
       RAILWAY_TOKEN:
         required: true
@@ -73,8 +69,7 @@ jobs:
 
       - name: Build Native Docker Image
         run: ./gradlew bootBuildImage --imageName=ghcr.io/${{ github.repository }}/oopsly-api:${{ needs.validate-inputs.outputs.release-ref }}
-        with:
-          working-directory: app/api
+        working-directory: app/api
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -85,12 +80,11 @@ jobs:
 
       - name: Push Docker Image
         run: docker push ghcr.io/${{ github.repository }}/oopsly-api:${{ needs.validate-inputs.outputs.release-ref }}
-        with:
-          working-directory: app/api
+        working-directory: app/api
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [validate-inputs, build]
     steps:
       - name: Deploy to Railway
         run: |

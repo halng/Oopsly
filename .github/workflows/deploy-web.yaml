@@ -11,10 +11,7 @@ on:
         type: string
       env:
         required: true
-        type: choice
-        options:
-          - stg
-          - prod
+        type: string
     secrets:
       VERCEL_TOKEN:
         required: true
