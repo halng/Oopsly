@@ -16,9 +16,9 @@
 
 package com.app.oopsly.api.testsuite.domain;
 
-import com.app.oopsly.api.library.domain.ShelfEntity;
-import com.app.oopsly.api.library.domain.SubjectEntity;
 import com.app.oopsly.api.shared.domain.Audit;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.subject.Subject;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
@@ -47,7 +47,7 @@ public class TestSuiteEntity extends Audit {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shelf_id", nullable = false)
-    private ShelfEntity shelf;
+    private Shelf shelf;
 
     @OneToMany(mappedBy = "testSuite", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuestionEntity> questions;
@@ -57,5 +57,5 @@ public class TestSuiteEntity extends Audit {
             name = "test_suite_subjects",
             joinColumns = @JoinColumn(name = "test_suite_id"),
             inverseJoinColumns = @JoinColumn(name = "subject_id"))
-    private List<SubjectEntity> subjects;
+    private List<Subject> subjects;
 }

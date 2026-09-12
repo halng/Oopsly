@@ -23,7 +23,8 @@ class SyncManager {
         syncedCountInLastRun: 0,
     };
     private isInitialized = false;
-    private syncTimeout: any = null;
+    private syncTimeout: ReturnType<typeof setTimeout> | null = null;
+    private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
     constructor() {
         // Singleton
@@ -54,8 +55,14 @@ class SyncManager {
         // Initial check of pending queue count
         this.refreshPendingCount();
 
-        // Check online status with real heartbeat
+        // Check online status with a real backend ping, then poll
         this.checkConnection();
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+        }
+        this.heartbeatInterval = setInterval(() => {
+            this.checkConnection();
+        }, 30000);
     }
 
     public subscribe(listener: SyncListener): () => void {
@@ -87,20 +94,19 @@ class SyncManager {
         }
     }
 
-    private async handleNetworkChange(isOnline: boolean) {
-        this.status.isOnline = isOnline;
-        this.notify();
+    private async handleNetworkChange(browserOnline: boolean) {
+        if (!browserOnline) {
+            this.status.isOnline = false;
+            this.notify();
+            return;
+        }
 
-        if (isOnline) {
-            // Check actual server availability and then sync
-            const reachable = await this.checkConnection();
-            if (reachable) {
-                // Debounce slightly to let network stabilize
-                if (this.syncTimeout) clearTimeout(this.syncTimeout);
-                this.syncTimeout = setTimeout(() => {
-                    this.syncNow();
-                }, 800);
-            }
+        const reachable = await this.checkConnection();
+        if (reachable) {
+            if (this.syncTimeout) clearTimeout(this.syncTimeout);
+            this.syncTimeout = setTimeout(() => {
+                this.syncNow();
+            }, 800);
         }
     }
 
@@ -112,12 +118,8 @@ class SyncManager {
         }
 
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
             const res = await ApiService.healthCheck();
-            clearTimeout(timeoutId);
-
-            const isHealthy = res.status === 'UP';
+            const isHealthy = res.isSuccess === true;
             this.status.isOnline = isHealthy;
             this.notify();
             return isHealthy;

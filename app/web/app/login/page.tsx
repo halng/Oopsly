@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
     Mail,
     ArrowRight,
@@ -107,6 +107,16 @@ const AuthPage = () => {
         } else {
             setErrorMessage('OTP must be a 6-digit number.');
         }
+    };
+
+    const handleBackToEmail = (
+        e: React.MouseEvent<HTMLButtonElement>
+    ) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setOtp('');
+        setErrorMessage('');
+        setStep('email');
     };
 
     return (
@@ -232,15 +242,18 @@ const AuthPage = () => {
                                     <ArrowRight className="w-4 h-4" />
                                 )}
                             </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setStep('email')}
-                                className="w-full text-center text-sm text-stone-500 hover:text-stone-800 font-semibold cursor-pointer transition-colors"
-                            >
-                                ← Use a different email
-                            </button>
                         </form>
+                    )}
+
+                    {step === 'otp' && (
+                        <button
+                            type="button"
+                            data-testid="btn-use-different-email"
+                            onClick={handleBackToEmail}
+                            className="w-full text-center text-sm text-stone-500 hover:text-stone-800 font-semibold cursor-pointer transition-colors"
+                        >
+                            ← Use a different email
+                        </button>
                     )}
 
                     {step === 'email' && (

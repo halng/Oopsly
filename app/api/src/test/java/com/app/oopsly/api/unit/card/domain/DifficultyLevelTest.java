@@ -18,7 +18,7 @@ package com.app.oopsly.api.unit.card.domain;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.app.oopsly.api.card.domain.DifficultyLevel;
+import com.app.oopsly.api.card.DifficultyLevel;
 import org.junit.jupiter.api.Test;
 
 class DifficultyLevelTest {

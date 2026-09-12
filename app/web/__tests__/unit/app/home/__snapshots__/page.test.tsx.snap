@@ -144,7 +144,8 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
         class="flex items-center gap-2.5"
       >
         <button
-          class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold shadow-xs transition-colors cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold shadow-xs cursor-pointer"
+          data-testid="btn-join-game"
         >
           <svg
             aria-hidden="true"
@@ -192,9 +193,8 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
           </span>
         </button>
         <button
-          class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer hover:scale-[1.02]"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-xs font-bold shadow-xs cursor-pointer"
           data-testid="btn-create-shelf"
-          id="create-new-shelf-btn"
         >
           <svg
             aria-hidden="true"
@@ -331,6 +331,8 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
               >
                 <button
                   class="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
+                  data-testid="btn-subject-menu-sub1"
+                  type="button"
                 >
                   <svg
                     aria-hidden="true"
@@ -547,6 +549,7 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
             </div>
             <button
               class="w-full flex items-center justify-center gap-1 text-[11px] font-bold text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 pt-1 cursor-pointer"
+              type="button"
             >
               <span>
                 View Cards & Test Suites
@@ -647,6 +650,8 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
               >
                 <button
                   class="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
+                  data-testid="btn-subject-menu-sub1"
+                  type="button"
                 >
                   <svg
                     aria-hidden="true"
@@ -863,6 +868,7 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
             </div>
             <button
               class="w-full flex items-center justify-center gap-1 text-[11px] font-bold text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 pt-1 cursor-pointer"
+              type="button"
             >
               <span>
                 View Cards & Test Suites
@@ -890,54 +896,14 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
       </div>
     </div>
     <div
-      class="bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-[color-mix(in_srgb,var(--theme-accent)_15%,transparent)] border border-[color-mix(in_srgb,var(--theme-accent)_40%,transparent)] rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs"
-      id="global-due-cards-banner"
+      class="bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-[color-mix(in_srgb,var(--theme-accent)_15%,transparent)] border border-[color-mix(in_srgb,var(--theme-accent)_40%,transparent)] rounded-2xl p-4"
     >
-      <div
-        class="flex items-center gap-3.5 text-left w-full sm:w-auto"
+      <h3
+        class="text-sm font-bold text-stone-900 dark:text-stone-100"
       >
-        <div
-          class="w-10 h-10 rounded-xl bg-[var(--theme-accent)] flex items-center justify-center text-white shrink-0 shadow-xs"
-        >
-          <svg
-            aria-hidden="true"
-            class="lucide lucide-zap w-5 h-5"
-            fill="none"
-            height="24"
-            stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-            width="24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"
-            />
-          </svg>
-        </div>
-        <div>
-          <h3
-            class="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1.5"
-          >
-            <span>
-              4
-               Total Cards Due for Daily FSRS Review
-            </span>
-            <span
-              class="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200"
-            >
-              Spaced Repetition
-            </span>
-          </h3>
-          <p
-            class="text-xs text-stone-600 dark:text-stone-400 mt-0.5"
-          >
-            Select any shelf below to dive into its subject decks and start active recall.
-          </p>
-        </div>
-      </div>
+        4
+         Total Cards Due for Daily FSRS Review
+      </h3>
     </div>
     <div
       class="flex flex-col md:flex-row items-stretch md:items-center gap-3"
@@ -968,9 +934,8 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
           />
         </svg>
         <input
-          class="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl text-xs text-stone-800 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[var(--theme-accent)] focus:border-transparent transition-all"
+          class="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl text-xs text-stone-800 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[var(--theme-accent)]"
           data-testid="search-shelves-input"
-          id="search-shelves-input"
           placeholder="Search shelves..."
           type="text"
           value=""
@@ -1002,7 +967,7 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
           />
         </svg>
         <input
-          class="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl text-xs text-stone-800 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[var(--theme-accent)] focus:border-transparent transition-all"
+          class="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl text-xs text-stone-800 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[var(--theme-accent)]"
           placeholder="Search all subjects by title or tag..."
           type="text"
           value=""
@@ -1013,7 +978,7 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
     >
       <div
-        class="bg-white dark:bg-stone-900 rounded-3xl border border-stone-200/80 dark:border-stone-800 shadow-xs hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group hover:border-[color-mix(in_srgb,var(--theme-accent)_50%,transparent)] relative cursor-pointer"
+        class="bg-white dark:bg-stone-900 rounded-3xl border border-stone-200/80 dark:border-stone-800 shadow-xs hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group cursor-pointer"
         data-testid="shelf-card-s1"
         id="shelf-card-s1"
       >
@@ -1031,7 +996,7 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
               class="flex items-center gap-3.5 min-w-0 flex-1"
             >
               <div
-                class="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-2xs font-bold text-lg shrink-0 group-hover:scale-105 transition-transform"
+                class="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-2xs font-bold text-lg shrink-0"
                 style="background-color: var(--theme-accent);"
               >
                 <svg
@@ -1056,40 +1021,30 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
                 class="min-w-0"
               >
                 <h3
-                  class="text-lg font-bold text-stone-900 dark:text-stone-100 group-hover:text-[var(--theme-secondary)] dark:group-hover:text-[var(--theme-accent)] transition-colors line-clamp-1"
+                  class="text-lg font-bold text-stone-900 dark:text-stone-100 line-clamp-1"
                 >
                   Science
                 </h3>
-                <div
-                  class="flex items-center gap-2 mt-0.5"
+                <span
+                  class="text-xs font-semibold text-stone-500 dark:text-stone-400"
                 >
-                  <span
-                    class="text-xs font-semibold text-stone-500 dark:text-stone-400"
-                  >
-                    2
-                     
-                    subjects
-                  </span>
-                  <span
-                    class="text-stone-300 dark:text-stone-700"
-                  >
-                    •
-                  </span>
-                  <span
-                    class="text-xs font-semibold text-stone-500 dark:text-stone-400"
-                  >
-                    20
-                     
-                    cards
-                  </span>
-                </div>
+                  2
+                   
+                  subjects
+                   
+                  • 
+                  20
+                   
+                  cards
+                </span>
               </div>
             </div>
             <div
               class="relative"
             >
               <button
-                class="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
+                class="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 cursor-pointer"
+                data-testid="btn-shelf-menu-s1"
               >
                 <svg
                   aria-hidden="true"
@@ -1124,7 +1079,7 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
             </div>
           </div>
           <p
-            class="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 mt-4 leading-relaxed min-h-[32px]"
+            class="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 mt-4 min-h-[32px]"
           >
             Core science
           </p>
@@ -1132,28 +1087,21 @@ exports[`HomePage > renders loading then data, filters deleted records, and matc
             class="flex items-center gap-2 mt-4 pt-3 border-t border-stone-100 dark:border-stone-800/80"
           >
             <span
-              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-[11px] font-bold border border-amber-200 dark:border-amber-800"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 text-[11px] font-bold border border-amber-200"
             >
-              <span
-                class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"
-              />
               4
                cards due
             </span>
           </div>
         </div>
         <div
-          class="px-6 py-3.5 bg-stone-50/80 dark:bg-stone-800/50 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between"
+          class="px-6 py-3.5 bg-stone-50/80 dark:bg-stone-800/50 border-t border-stone-100 dark:border-stone-800"
         >
           <span
-            class="text-xs font-bold text-[var(--theme-secondary)] dark:text-[var(--theme-accent)] flex items-center gap-1 group-hover:translate-x-1 transition-transform"
+            class="text-xs font-bold text-[var(--theme-secondary)] flex items-center gap-1"
+            data-testid="btn-view-shelf-s1"
           >
-            <span>
-              Explore 
-              2
-               
-              Subjects
-            </span>
+            View shelf
             <svg
               aria-hidden="true"
               class="lucide lucide-chevron-right w-4 h-4"

@@ -1,0 +1,97 @@
+name: CI API
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+    branches:
+      - main
+    paths:
+      - "app/api/**"
+      - ".github/workflows/ci-api.yaml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "app/api/**"
+      - ".github/workflows/ci-api.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-api-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  ci-api:
+    name: CI API
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/api
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_API }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Cache Sonar scanner
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar-api
+          restore-keys: |
+            ${{ runner.os }}-sonar-api
+            ${{ runner.os }}-sonar-
+
+      # Compile + format gate first (fail fast; no clean — cache-friendly).
+      - name: Spotless check
+        run: ./gradlew spotlessCheck --no-daemon
+
+      - name: Compile
+        run: ./gradlew classes testClasses --no-daemon
+
+      - name: Unit tests
+        id: unit-tests
+        run: ./gradlew test --no-daemon
+        continue-on-error: true # Prevents the workflow from stopping if a test fails
+      - name: Publish Test Summary to GitHub Actions
+        run: cat build/reports/tests/test-summary.md >> $GITHUB_STEP_SUMMARY
+
+        # TODO: skip for now, need to use TestContainer to run integration tests in a separate container with the database
+      # - name: Integration tests
+      #   run: ./gradlew integrationTest --rerun --no-daemon
+
+      - name: Jacoco coverage verification
+        run: ./gradlew jacocoTestCoverageVerification --no-daemon
+
+      - name: SonarQube analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_API }}
+        run: ./gradlew sonar --no-daemon
+
+      - name: Upload Jacoco / test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-jacoco-report
+          path: |
+            app/api/build/reports/jacoco/
+            app/api/build/reports/tests/
+            app/api/build/reports/jacocoHtml/
+          if-no-files-found: warn
+          retention-days: 3

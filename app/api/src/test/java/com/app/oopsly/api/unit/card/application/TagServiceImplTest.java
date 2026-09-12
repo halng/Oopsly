@@ -18,38 +18,32 @@ package com.app.oopsly.api.unit.card.application;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.application.TagServiceImpl;
-import com.app.oopsly.api.card.application.vm.CardRes;
-import com.app.oopsly.api.card.application.vm.TagRes;
-import com.app.oopsly.api.card.domain.CardEntity;
-import com.app.oopsly.api.card.domain.TagEntity;
-import com.app.oopsly.api.card.infrastructure.CardRepository;
-import com.app.oopsly.api.card.infrastructure.TagRepository;
-import com.app.oopsly.api.library.domain.ShelfEntity;
-import com.app.oopsly.api.library.domain.SubjectEntity;
-import com.app.oopsly.api.library.infrastructure.ShelfRepository;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.card.CardRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
-import com.app.oopsly.api.user.application.UserService;
-import com.app.oopsly.api.user.domain.User;
-import java.util.ArrayList;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.tag.Tag;
+import com.app.oopsly.api.tag.TagRepository;
+import com.app.oopsly.api.tag.TagServiceImpl;
+import com.app.oopsly.api.tag.vm.TagRes;
+import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class TagServiceImplTest {
@@ -67,10 +61,10 @@ class TagServiceImplTest {
     private UUID subjectId;
     private UUID cardId;
     private UUID tagId;
-    private ShelfEntity shelf;
-    private SubjectEntity subject;
-    private CardEntity card;
-    private TagEntity tag;
+    private Shelf shelf;
+    private Subject subject;
+    private Card card;
+    private Tag tag;
 
     @BeforeEach
     void setUp() {
@@ -81,22 +75,21 @@ class TagServiceImplTest {
         cardId = UUID.randomUUID();
         tagId = UUID.randomUUID();
 
-        shelf = new ShelfEntity();
+        shelf = new Shelf();
         shelf.setId(shelfId);
         shelf.setUser(user);
 
-        subject = new SubjectEntity();
+        subject = new Subject();
         subject.setId(subjectId);
         subject.setShelf(shelf);
 
-        card = new CardEntity();
+        card = new Card();
         card.setId(cardId);
         card.setFront("Q");
         card.setBack("A");
         card.setSubject(subject);
-        card.setTags(new ArrayList<>());
 
-        tag = TagEntity.builder().name("vocab").user(user).build();
+        tag = Tag.builder().name("vocab").user(user).build();
         tag.setId(tagId);
         tag.setDeleted(false);
     }
@@ -105,10 +98,10 @@ class TagServiceImplTest {
     void createTag_success() {
         when(userService.getCurrentUser()).thenReturn(user);
         when(tagRepository.existsByNameAndUser("vocab", user)).thenReturn(false);
-        when(tagRepository.save(any(TagEntity.class)))
+        when(tagRepository.save(any(Tag.class)))
                 .thenAnswer(
                         inv -> {
-                            TagEntity t = inv.getArgument(0);
+                            Tag t = inv.getArgument(0);
                             t.setId(tagId);
                             return t;
                         });
@@ -128,7 +121,7 @@ class TagServiceImplTest {
 
     @Test
     void getAllTags_filtersDeleted() {
-        TagEntity deleted = TagEntity.builder().name("old").user(user).build();
+        Tag deleted = Tag.builder().name("old").user(user).build();
         deleted.setId(UUID.randomUUID());
         deleted.setDeleted(true);
         when(userService.getCurrentUser()).thenReturn(user);
@@ -157,110 +150,5 @@ class TagServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(user);
         when(tagRepository.findByIdAndUser(tagId, user)).thenReturn(Optional.empty());
         assertThrows(NotFoundException.class, () -> tagService.deleteTag(tagId));
-    }
-
-    @Test
-    void addTagToCard_linksWhenMissing() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
-        when(subjectRepository.findByIdAndShelve(subjectId, shelf))
-                .thenReturn(Optional.of(subject));
-        when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.of(card));
-        when(tagRepository.findByIdAndUser(tagId, user)).thenReturn(Optional.of(tag));
-
-        ApiRes result = tagService.addTagToCard(shelfId, subjectId, cardId, tagId);
-        assertTrue(result.getBody().isSuccess());
-        ArgumentCaptor<CardEntity> captor = ArgumentCaptor.forClass(CardEntity.class);
-        verify(cardRepository).save(captor.capture());
-        assertEquals(1, captor.getValue().getTags().size());
-    }
-
-    @Test
-    void addTagToCard_skipsWhenAlreadyLinked() {
-        card.setTags(new ArrayList<>(List.of(tag)));
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
-        when(subjectRepository.findByIdAndShelve(subjectId, shelf))
-                .thenReturn(Optional.of(subject));
-        when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.of(card));
-        when(tagRepository.findByIdAndUser(tagId, user)).thenReturn(Optional.of(tag));
-
-        tagService.addTagToCard(shelfId, subjectId, cardId, tagId);
-        verify(cardRepository, never()).save(any());
-    }
-
-    @Test
-    void addTagToCard_nullTagsList_initializes() {
-        card.setTags(null);
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
-        when(subjectRepository.findByIdAndShelve(subjectId, shelf))
-                .thenReturn(Optional.of(subject));
-        when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.of(card));
-        when(tagRepository.findByIdAndUser(tagId, user)).thenReturn(Optional.of(tag));
-
-        tagService.addTagToCard(shelfId, subjectId, cardId, tagId);
-        verify(cardRepository).save(any(CardEntity.class));
-    }
-
-    @Test
-    void removeTagFromCard_removesLink() {
-        card.setTags(new ArrayList<>(List.of(tag)));
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
-        when(subjectRepository.findByIdAndShelve(subjectId, shelf))
-                .thenReturn(Optional.of(subject));
-        when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.of(card));
-
-        tagService.removeTagFromCard(shelfId, subjectId, cardId, tagId);
-        ArgumentCaptor<CardEntity> captor = ArgumentCaptor.forClass(CardEntity.class);
-        verify(cardRepository).save(captor.capture());
-        assertTrue(captor.getValue().getTags().isEmpty());
-    }
-
-    @Test
-    void removeTagFromCard_nullTags_noSave() {
-        card.setTags(null);
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
-        when(subjectRepository.findByIdAndShelve(subjectId, shelf))
-                .thenReturn(Optional.of(subject));
-        when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.of(card));
-
-        tagService.removeTagFromCard(shelfId, subjectId, cardId, tagId);
-        verify(cardRepository, never()).save(any());
-    }
-
-    @Test
-    void getCardsByTag_filtersMatchingCards() {
-        CardEntity other = new CardEntity();
-        other.setId(UUID.randomUUID());
-        other.setFront("X");
-        other.setBack("Y");
-        other.setTags(List.of());
-        card.setTags(List.of(tag));
-
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
-        when(subjectRepository.findByIdAndShelve(subjectId, shelf))
-                .thenReturn(Optional.of(subject));
-        when(tagRepository.findByIdAndUser(tagId, user)).thenReturn(Optional.of(tag));
-        when(cardRepository.findAllBySubject(eq(subject), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(card, other)));
-
-        ApiRes result = tagService.getCardsByTag(shelfId, subjectId, tagId);
-        @SuppressWarnings("unchecked")
-        List<CardRes> cards = (List<CardRes>) result.getBody().data();
-        assertEquals(1, cards.size());
-        assertEquals(cardId, cards.get(0).id());
-    }
-
-    @Test
-    void findCard_shelfNotFound() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.empty());
-        assertThrows(
-                NotFoundException.class,
-                () -> tagService.addTagToCard(shelfId, subjectId, cardId, tagId));
     }
 }

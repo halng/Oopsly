@@ -18,15 +18,15 @@ package com.app.oopsly.api.unit.shared.resilience;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.app.oopsly.api.card.application.CardServiceImpl;
-import com.app.oopsly.api.library.application.ShelfServiceImpl;
-import com.app.oopsly.api.library.application.SubjectServiceImpl;
+import com.app.oopsly.api.card.CardServiceImpl;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shelf.ShelfServiceImpl;
 import com.app.oopsly.api.stats.application.StatsServiceImpl;
+import com.app.oopsly.api.subject.SubjectServiceImpl;
 import com.app.oopsly.api.testsuite.application.QuestionServiceImpl;
 import com.app.oopsly.api.testsuite.application.TestSuiteServiceImpl;
 import java.lang.reflect.InvocationTargetException;

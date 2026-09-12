@@ -16,24 +16,24 @@
 
 package com.app.oopsly.api.stats.application;
 
-import com.app.oopsly.api.card.domain.CardEntity;
-import com.app.oopsly.api.card.infrastructure.CardRepository;
-import com.app.oopsly.api.library.domain.ShelfEntity;
-import com.app.oopsly.api.library.domain.SubjectEntity;
-import com.app.oopsly.api.library.infrastructure.ShelfRepository;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.card.CardRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
 import com.app.oopsly.api.shared.util.ApiMessages;
 import com.app.oopsly.api.shared.util.CircuitBreakerNames;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.stats.application.vm.DueForecast;
 import com.app.oopsly.api.stats.application.vm.StateDistribution;
 import com.app.oopsly.api.stats.application.vm.StatsRes;
 import com.app.oopsly.api.stats.application.vm.WeeklyActivity;
 import com.app.oopsly.api.stats.infrastructure.ReviewLogRepository;
-import com.app.oopsly.api.user.application.UserService;
-import com.app.oopsly.api.user.domain.User;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -72,8 +72,8 @@ public class StatsServiceImpl implements StatsService {
         User currentUser = userService.getCurrentUser();
         log.info("Fetching stats for user: {}", currentUser.getId());
 
-        List<SubjectEntity> subjects = findSubjects(currentUser);
-        List<CardEntity> cards =
+        List<Subject> subjects = findSubjects(currentUser);
+        List<Card> cards =
                 subjects.isEmpty()
                         ? List.of()
                         : cardRepository.findAllBySubjectInAndDeletedFalse(subjects);
@@ -97,14 +97,14 @@ public class StatsServiceImpl implements StatsService {
 
         StatsRes stats =
                 new StatsRes(
-                        safeInt(currentUser.getDailyStreak()),
-                        safeInt(currentUser.getTotalXp()),
+                        safeInt(currentUser.getSetting().getDailyStreak()),
+                        safeInt(currentUser.getSetting().getTotalXp()),
                         (int) reviewedToday,
                         (int) reviewedToday,
                         dailyGoalOf(currentUser),
                         retention,
                         retention,
-                        safeInt(currentUser.getTotalReviews()),
+                        safeInt(currentUser.getSetting().getTotalReviews()),
                         totalCards,
                         dueCards,
                         stateDistribution(cards),
@@ -116,8 +116,8 @@ public class StatsServiceImpl implements StatsService {
 
     // ---------------------------------------------------------------- helpers
 
-    private List<SubjectEntity> findSubjects(User currentUser) {
-        List<ShelfEntity> shelves =
+    private List<Subject> findSubjects(User currentUser) {
+        List<Shelf> shelves =
                 shelfRepository
                         .findAllByUser(currentUser, PageRequest.of(0, Integer.MAX_VALUE))
                         .getContent();
@@ -133,7 +133,7 @@ public class StatsServiceImpl implements StatsService {
                 .collect(Collectors.toList());
     }
 
-    private StateDistribution stateDistribution(List<CardEntity> cards) {
+    private StateDistribution stateDistribution(List<Card> cards) {
         long newCards = cards.stream().filter(c -> safeInt(c.getFsrsRepetitions()) == 0).count();
         long learning =
                 cards.stream()
@@ -171,7 +171,7 @@ public class StatsServiceImpl implements StatsService {
         return new StateDistribution(newCards, learning, review, relearning, mastered);
     }
 
-    private List<DueForecast> dueForecast(List<CardEntity> cards) {
+    private List<DueForecast> dueForecast(List<Card> cards) {
         List<DueForecast> forecast = new ArrayList<>();
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
 
@@ -236,8 +236,10 @@ public class StatsServiceImpl implements StatsService {
     }
 
     private static double retentionOf(User user, long totalCards, long dueCards) {
-        if (user.getRetentionRate() != null && user.getRetentionRate() > 0) {
-            return user.getRetentionRate();
+        if (user.getSetting() != null
+                && user.getSetting().getRetentionRate() != null
+                && user.getSetting().getRetentionRate() > 0) {
+            return user.getSetting().getRetentionRate();
         }
         return totalCards == 0 ? 0.0 : 100.0 - (dueCards * 100.0) / totalCards;
     }

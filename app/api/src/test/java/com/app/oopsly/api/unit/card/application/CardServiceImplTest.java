@@ -23,25 +23,26 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.application.CardServiceImpl;
-import com.app.oopsly.api.card.application.vm.CardItemReq;
-import com.app.oopsly.api.card.application.vm.CardReq;
-import com.app.oopsly.api.card.application.vm.UpdateDifficultyReq;
-import com.app.oopsly.api.card.domain.CardEntity;
-import com.app.oopsly.api.card.domain.DifficultyLevel;
-import com.app.oopsly.api.card.infrastructure.CardRepository;
-import com.app.oopsly.api.library.domain.ShelfEntity;
-import com.app.oopsly.api.library.domain.SubjectEntity;
-import com.app.oopsly.api.library.infrastructure.ShelfRepository;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.card.CardServiceImpl;
+import com.app.oopsly.api.card.DifficultyLevel;
+import com.app.oopsly.api.card.vm.CardItemReq;
+import com.app.oopsly.api.card.vm.CardReq;
+import com.app.oopsly.api.card.vm.UpdateDifficultyReq;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.application.UserService;
-import com.app.oopsly.api.user.domain.User;
+import com.app.oopsly.api.user.Setting;
+import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -78,8 +79,8 @@ class CardServiceImplTest {
 
     private CardReq cardReq;
     private User currentUser;
-    private ShelfEntity shelve;
-    private SubjectEntity subject;
+    private Shelf shelve;
+    private Subject subject;
     private UUID shelveId;
     private UUID subjectId;
     private UUID cardId;
@@ -89,15 +90,18 @@ class CardServiceImplTest {
     void setUp() {
         List<CardItemReq> cardItems = List.of(new CardItemReq("Sample Topic", "Sample Answer"));
         cardReq = new CardReq(cardItems);
+        Setting setting = new Setting();
+        setting.setTotalXp(10);
         currentUser = new User();
         currentUser.setEmail("test@example.com");
+        currentUser.setSetting(setting);
         shelveId = UUID.randomUUID();
         subjectId = UUID.randomUUID();
         cardId = UUID.randomUUID();
-        shelve = new ShelfEntity();
+        shelve = new Shelf();
         shelve.setId(shelveId);
         shelve.setUser(currentUser);
-        subject = new SubjectEntity();
+        subject = new Subject();
         subject.setId(subjectId);
         subject.setShelf(shelve);
     }
@@ -110,9 +114,9 @@ class CardServiceImplTest {
                         new CardItemReq("Topic 2", "Answer 2"));
         CardReq request = new CardReq(cardItems);
 
-        List<CardEntity> savedCards = new ArrayList<>();
+        List<Card> savedCards = new ArrayList<>();
         for (int i = 0; i < 2; i++) {
-            CardEntity card = new CardEntity();
+            Card card = new Card();
             card.setId(UUID.randomUUID());
             card.setFront(cardItems.get(i).front());
             card.setBack(cardItems.get(i).back());
@@ -160,7 +164,7 @@ class CardServiceImplTest {
     @Test
     void updateDifficulty_updatesDifficultyLevelAndNextPracticeTime() {
         updateDifficultyReq = List.of(new UpdateDifficultyReq(cardId, DifficultyLevel.GOOD.name()));
-        CardEntity existingCard = new CardEntity();
+        Card existingCard = new Card();
         existingCard.setId(cardId);
         existingCard.setFront("Topic");
         existingCard.setBack("Answer");
@@ -198,7 +202,7 @@ class CardServiceImplTest {
                 NotFoundException.class,
                 () -> cardService.updateDifficulty(shelveId, subjectId, updateDifficultyReq));
         verify(cardRepository, never()).findByIdAndSubject(any(), any());
-        verify(cardRepository, never()).save(any(CardEntity.class));
+        verify(cardRepository, never()).save(any(Card.class));
     }
 
     @Test
@@ -214,7 +218,7 @@ class CardServiceImplTest {
                 NotFoundException.class,
                 () -> cardService.updateDifficulty(shelveId, subjectId, updateDifficultyReq));
         verify(cardRepository, never()).findByIdAndSubject(any(), any());
-        verify(cardRepository, never()).save(any(CardEntity.class));
+        verify(cardRepository, never()).save(any(Card.class));
     }
 
     @Test
@@ -231,12 +235,12 @@ class CardServiceImplTest {
         assertThrows(
                 NotFoundException.class,
                 () -> cardService.updateDifficulty(shelveId, subjectId, updateDifficultyReq));
-        verify(cardRepository, never()).save(any(CardEntity.class));
+        verify(cardRepository, never()).save(any(Card.class));
     }
 
     @Test
     void delete_softDeletesCard() {
-        CardEntity existingCard = new CardEntity();
+        Card existingCard = new Card();
         existingCard.setId(cardId);
         existingCard.setDeleted(false);
         existingCard.setSubject(subject);
@@ -248,7 +252,7 @@ class CardServiceImplTest {
                 .thenReturn(Optional.of(subject));
         when(cardRepository.findByIdAndSubject(cardId, subject))
                 .thenReturn(Optional.of(existingCard));
-        when(cardRepository.save(any(CardEntity.class))).thenReturn(existingCard);
+        when(cardRepository.save(any(Card.class))).thenReturn(existingCard);
 
         ApiRes result = cardService.delete(shelveId, subjectId, cardId);
 
@@ -294,7 +298,7 @@ class CardServiceImplTest {
 
     @Test
     void getById_returnsCard() {
-        CardEntity existingCard = new CardEntity();
+        Card existingCard = new Card();
         existingCard.setId(cardId);
         existingCard.setSubject(subject);
 
@@ -351,9 +355,9 @@ class CardServiceImplTest {
 
     @Test
     void getAll_CardsByCollection_withPagination_returnsCards() {
-        List<CardEntity> cards = new ArrayList<>();
+        List<Card> cards = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            CardEntity card = new CardEntity();
+            Card card = new Card();
             card.setId(UUID.randomUUID());
             card.setFront("Topic " + i);
             card.setBack("Answer " + i);
@@ -361,7 +365,7 @@ class CardServiceImplTest {
             cards.add(card);
         }
 
-        Page<CardEntity> page = new PageImpl<>(cards, PageRequest.of(0, 10), 3);
+        Page<Card> page = new PageImpl<>(cards, PageRequest.of(1, 10), 3);
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(shelve));
@@ -369,7 +373,7 @@ class CardServiceImplTest {
                 .thenReturn(Optional.of(subject));
         when(cardRepository.findAllBySubject(eq(subject), any(Pageable.class))).thenReturn(page);
 
-        ApiRes result = cardService.getAllCardsBySubject(shelveId, subjectId, 0, 10);
+        ApiRes result = cardService.getAllCardsBySubject(shelveId, subjectId, 1, 10);
 
         assertNotNull(result);
         verify(shelfRepository, times(1)).findByIdAndUser(shelveId, currentUser);
@@ -444,7 +448,7 @@ class CardServiceImplTest {
     @Test
     void updateDifficulty_withAllDifficultyLevels_calculatesCorrectNextPracticeTime() {
         for (DifficultyLevel level : DifficultyLevel.values()) {
-            CardEntity existingCard = new CardEntity();
+            Card existingCard = new Card();
             existingCard.setId(cardId);
             existingCard.setFront("Topic");
             existingCard.setBack("Answer");
@@ -533,7 +537,7 @@ class CardServiceImplTest {
 
     @Test
     void updateCard_updatesFrontAndBack() {
-        CardEntity card = new CardEntity();
+        Card card = new Card();
         card.setId(cardId);
         card.setFront("old");
         card.setBack("old");
@@ -557,7 +561,7 @@ class CardServiceImplTest {
 
     @Test
     void getDueCards_returnsDueList() {
-        CardEntity card = new CardEntity();
+        Card card = new Card();
         card.setId(cardId);
         card.setFront("Q");
         card.setBack("A");
@@ -608,7 +612,7 @@ class CardServiceImplTest {
         suite.setDeleted(false);
         suite.setShelf(shelve);
         suite.setSubjects(List.of(subject));
-        CardEntity card = new CardEntity();
+        Card card = new Card();
         card.setId(cardId);
         card.setFront("Q");
         card.setBack("A");
@@ -648,7 +652,7 @@ class CardServiceImplTest {
         currentUser.setId(UUID.randomUUID());
         User other = new User();
         other.setId(UUID.randomUUID());
-        ShelfEntity otherShelf = new ShelfEntity();
+        Shelf otherShelf = new Shelf();
         otherShelf.setUser(other);
         com.app.oopsly.api.testsuite.domain.TestSuiteEntity suite =
                 new com.app.oopsly.api.testsuite.domain.TestSuiteEntity();
@@ -665,7 +669,7 @@ class CardServiceImplTest {
         UUID suiteId = UUID.randomUUID();
         currentUser.setId(UUID.randomUUID());
         shelve.setUser(currentUser);
-        SubjectEntity deleted = new SubjectEntity();
+        Subject deleted = new Subject();
         deleted.setId(UUID.randomUUID());
         deleted.setDeleted(true);
         com.app.oopsly.api.testsuite.domain.TestSuiteEntity suite =

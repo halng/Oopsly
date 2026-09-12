@@ -16,18 +16,18 @@
 
 package com.app.oopsly.api.testsuite.application;
 
-import com.app.oopsly.api.card.domain.CardEntity;
-import com.app.oopsly.api.card.infrastructure.CardRepository;
-import com.app.oopsly.api.library.domain.ShelfEntity;
-import com.app.oopsly.api.library.domain.SubjectEntity;
-import com.app.oopsly.api.library.infrastructure.ShelfRepository;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.card.CardRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.util.ApiMessages;
 import com.app.oopsly.api.shared.util.GamificationRules;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.testsuite.application.vm.QuestionBreakdown;
 import com.app.oopsly.api.testsuite.application.vm.TestRunCardRes;
 import com.app.oopsly.api.testsuite.application.vm.TestSubmissionReq;
@@ -40,8 +40,8 @@ import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.domain.TestSuiteSelectionPayload;
 import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.application.UserService;
-import com.app.oopsly.api.user.domain.User;
+import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -79,7 +79,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID deckId, TestSuiteReq request) {
         log.info("Creating test suite for shelve {}", deckId);
-        ShelfEntity shelve = this.findShelveByIdAndUser(deckId);
+        Shelf shelve = this.findShelveByIdAndUser(deckId);
 
         TestSuiteEntity testSuite = this.toEntity(request, null);
         testSuite.setShelf(shelve);
@@ -98,7 +98,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(UUID deckId, UUID testSuiteId, TestSuiteReq request) {
         log.info("Updating test suite {} for shelve {}", testSuiteId, deckId);
-        ShelfEntity shelve = this.findShelveByIdAndUser(deckId);
+        Shelf shelve = this.findShelveByIdAndUser(deckId);
         TestSuiteEntity existingTestSuite =
                 testSuiteRepository
                         .findByIdAndShelve(testSuiteId, shelve)
@@ -124,7 +124,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID deckId, UUID testSuiteId) {
         log.info("Deleting test suite {} for shelve {}", testSuiteId, deckId);
-        ShelfEntity shelve = this.findShelveByIdAndUser(deckId);
+        Shelf shelve = this.findShelveByIdAndUser(deckId);
         TestSuiteEntity testSuite =
                 testSuiteRepository
                         .findByIdAndShelve(testSuiteId, shelve)
@@ -145,7 +145,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID deckId, UUID testSuiteId) {
         log.info("Fetching test suite {} for shelve {}", testSuiteId, deckId);
-        ShelfEntity shelve = this.findShelveByIdAndUser(deckId);
+        Shelf shelve = this.findShelveByIdAndUser(deckId);
         TestSuiteEntity testSuite =
                 testSuiteRepository
                         .findByIdAndShelve(testSuiteId, shelve)
@@ -165,7 +165,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
             fallbackMethod = "getAllByShelveFallback")
     public ApiRes getAllByShelve(UUID shelveId) {
         log.info("Fetching all test suites for shelve {}", shelveId);
-        ShelfEntity shelve = this.findShelveByIdAndUser(shelveId);
+        Shelf shelve = this.findShelveByIdAndUser(shelveId);
         List<TestSuiteEntity> testSuites = testSuiteRepository.findAllByShelve(shelve);
         List<TestSuiteRes> responses = testSuites.stream().map(this::toViewModel).toList();
 
@@ -177,7 +177,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     @Transactional
     public ApiRes run(UUID shelveId, UUID testSuiteId) {
         log.info("Running test preset {} under shelve {}", testSuiteId, shelveId);
-        ShelfEntity shelve = findShelveByIdAndUser(shelveId);
+        Shelf shelve = findShelveByIdAndUser(shelveId);
         TestSuiteEntity suite =
                 testSuiteRepository
                         .findByIdAndShelveWithSubjects(testSuiteId, shelve)
@@ -186,7 +186,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                                         new NotFoundException(
                                                 "Test suite not found with id: " + testSuiteId));
 
-        List<SubjectEntity> subjects = suite.getSubjects();
+        List<Subject> subjects = suite.getSubjects();
         if (subjects == null || subjects.isEmpty()) {
             return ApiRes.success(
                     "No subjects linked to this preset; add subjectIds when creating or updating.",
@@ -194,7 +194,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         }
 
         TestSuiteSelectionPayload effective = resolveSelection(suite);
-        List<CardEntity> pool =
+        List<Card> pool =
                 switch (effective.getMode()) {
                     case ALL -> cardRepository.findAllBySubjectInAndDeletedFalse(subjects);
                     case DUE_ONLY -> cardRepository.findDueBySubjects(subjects, Instant.now());
@@ -205,7 +205,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
             return ApiRes.success("No cards match this preset.", Collections.emptyList());
         }
 
-        ArrayList<CardEntity> mutable = new ArrayList<>(pool);
+        ArrayList<Card> mutable = new ArrayList<>(pool);
         if (Boolean.TRUE.equals(effective.getShuffle())
                 || effective.getMode() == SelectionMode.RANDOM) {
             Collections.shuffle(mutable, new Random());
@@ -238,7 +238,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     @Transactional
     public ApiRes submit(UUID shelveId, UUID testSuiteId, TestSubmissionReq request) {
         log.info("Submitting test run {} under shelve {}", testSuiteId, shelveId);
-        ShelfEntity shelve = findShelveByIdAndUser(shelveId);
+        Shelf shelve = findShelveByIdAndUser(shelveId);
         TestSuiteEntity suite =
                 testSuiteRepository
                         .findByIdAndShelve(testSuiteId, shelve)
@@ -286,9 +286,9 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         userService.updateUserProgress(xpGained);
 
         int totalXp =
-                userService.getCurrentUser().getTotalXp() == null
+                userService.getCurrentUser().getSetting().getTotalXp() == null
                         ? xpGained
-                        : userService.getCurrentUser().getTotalXp();
+                        : userService.getCurrentUser().getSetting().getTotalXp();
 
         log.info(
                 "Test suite {} submitted with score {}/{} ({}%)",
@@ -353,7 +353,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         return new TestSuiteSelectionPayload(mode, s.getLimit(), shuffle);
     }
 
-    void applySubjectLinks(ShelfEntity shelve, TestSuiteReq request, TestSuiteEntity entity) {
+    void applySubjectLinks(Shelf shelve, TestSuiteReq request, TestSuiteEntity entity) {
         if (request.subjectIds() == null) {
             return;
         }
@@ -361,7 +361,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
             entity.setSubjects(new ArrayList<>());
             return;
         }
-        List<SubjectEntity> subjects =
+        List<Subject> subjects =
                 request.subjectIds().stream()
                         .map(
                                 subjectId ->
@@ -399,12 +399,12 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         List<UUID> subjectIds =
                 from.getSubjects() == null
                         ? List.of()
-                        : from.getSubjects().stream().map(SubjectEntity::getId).toList();
+                        : from.getSubjects().stream().map(Subject::getId).toList();
         return new TestSuiteRes(
                 from.getId(), from.getTitle(), from.getIsActive(), subjectIds, from.getSelection());
     }
 
-    private ShelfEntity findShelveByIdAndUser(UUID deckId) {
+    private Shelf findShelveByIdAndUser(UUID deckId) {
         User currentUser = userService.getCurrentUser();
         return shelfRepository
                 .findByIdAndUser(deckId, currentUser)
@@ -418,8 +418,8 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                 subjectId,
                 shelveId,
                 numQuestions);
-        ShelfEntity shelve = findShelveByIdAndUser(shelveId);
-        SubjectEntity subject =
+        Shelf shelve = findShelveByIdAndUser(shelveId);
+        Subject subject =
                 subjectRepository
                         .findByIdAndShelve(subjectId, shelve)
                         .orElseThrow(

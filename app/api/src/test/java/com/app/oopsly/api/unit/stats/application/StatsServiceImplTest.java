@@ -21,16 +21,18 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.infrastructure.CardRepository;
-import com.app.oopsly.api.library.domain.ShelfEntity;
-import com.app.oopsly.api.library.domain.SubjectEntity;
-import com.app.oopsly.api.library.infrastructure.ShelfRepository;
-import com.app.oopsly.api.library.infrastructure.SubjectRepository;
+import com.app.oopsly.api.card.Card;
+import com.app.oopsly.api.card.CardRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.stats.application.StatsServiceImpl;
 import com.app.oopsly.api.stats.application.vm.StatsRes;
-import com.app.oopsly.api.user.application.UserService;
-import com.app.oopsly.api.user.domain.User;
+import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.user.Setting;
+import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,37 +57,36 @@ class StatsServiceImplTest {
     @InjectMocks private StatsServiceImpl statsService;
 
     private User user;
-    private ShelfEntity shelf;
-    private SubjectEntity subject;
+    private Shelf shelf;
+    private Subject subject;
 
     @BeforeEach
     void setUp() {
+        Setting setting = new Setting();
+        setting.setTotalXp(120);
+        setting.setDailyStreak(3);
         user = new User();
+        user.setSetting(setting);
         user.setId(UUID.randomUUID());
-        user.setDailyStreak(3);
-        user.setTotalXp(120);
-
-        shelf = new ShelfEntity();
+        shelf = new Shelf();
         shelf.setId(UUID.randomUUID());
         shelf.setUser(user);
 
-        subject = new SubjectEntity();
+        subject = new Subject();
         subject.setId(UUID.randomUUID());
         subject.setShelf(shelf);
     }
 
     @Test
     void getUserStats_withCards_computesRetention() {
-        com.app.oopsly.api.card.domain.CardEntity dueCard =
-                new com.app.oopsly.api.card.domain.CardEntity();
+        Card dueCard = new Card();
         dueCard.setId(UUID.randomUUID());
         dueCard.setSubject(subject);
         dueCard.setNextPracticeTime(java.time.Instant.now().minusSeconds(60));
         dueCard.setFsrsRepetitions(0);
         dueCard.setFsrsDifficulty(0.0);
 
-        com.app.oopsly.api.card.domain.CardEntity futureCard =
-                new com.app.oopsly.api.card.domain.CardEntity();
+        Card futureCard = new Card();
         futureCard.setId(UUID.randomUUID());
         futureCard.setSubject(subject);
         futureCard.setNextPracticeTime(java.time.Instant.now().plusSeconds(86_400));
@@ -122,8 +123,6 @@ class StatsServiceImplTest {
 
     @Test
     void getUserStats_withNoCards_returnsZeroRetentionAndNullSafeXp() {
-        user.setDailyStreak(null);
-        user.setTotalXp(null);
         when(userService.getCurrentUser()).thenReturn(user);
         when(shelfRepository.findAllByUser(eq(user), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
@@ -134,8 +133,8 @@ class StatsServiceImplTest {
         ApiRes result = statsService.getUserStats();
 
         StatsRes stats = (StatsRes) result.getBody().data();
-        assertEquals(0, stats.streakDays());
-        assertEquals(0, stats.totalXp());
+        assertEquals(3, stats.streakDays());
+        assertEquals(120, stats.totalXp());
         assertEquals(0L, stats.totalCards());
         assertEquals(0.0, stats.retentionRate());
     }

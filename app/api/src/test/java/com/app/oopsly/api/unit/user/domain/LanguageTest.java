@@ -18,7 +18,7 @@ package com.app.oopsly.api.unit.user.domain;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.app.oopsly.api.user.domain.Language;
+import com.app.oopsly.api.user.Language;
 import org.junit.jupiter.api.Test;
 
 class LanguageTest {

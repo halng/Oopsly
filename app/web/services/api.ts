@@ -14,10 +14,12 @@ import {
     CommunityMember,
     CommunityJoinRequest,
     Grade,
+    PaginatedResponse,
 } from '../types';
 import { offlineDb, OfflineCard } from './offlineDb';
 import { syncManager } from './syncManager';
 import { ulid } from 'ulid';
+import slugify from 'slugify';
 
 /**
  * Shared axios instance.
@@ -86,6 +88,7 @@ async function fetchJson<T>(
     } catch (error: any) {
         return {
             isSuccess: false,
+            statusCode: 200,
             message: error?.message || 'Network error occurred',
             data: null,
             timestamp: new Date().toISOString(),
@@ -102,13 +105,24 @@ function isOfflineOrNetworkFailure(res: ApiResponse<any>): boolean {
 }
 
 export const ApiService = {
-    // health check
-    healthCheck: async () => {
-        const res = await apiClient.request<{ status: string }>({
-            url: '/v1/ping',
-            method: 'GET',
-        });
-        return res.data;
+    // Backend heartbeat: GET /v1/ping → ApiRes.ok("pong")
+    healthCheck: async (): Promise<ApiResponse<null>> => {
+        try {
+            const res = await apiClient.request<ApiResponse<null>>({
+                url: '/v1/ping',
+                method: 'GET',
+                timeout: 3000,
+            });
+            return res.data;
+        } catch (error: any) {
+            return {
+                isSuccess: false,
+                statusCode: 200,    
+                message: error?.message || 'Network error occurred',
+                data: null,
+                timestamp: new Date().toISOString(),
+            };
+        }
     },
     // Auth
     sendOtp: (email: string) =>
@@ -128,7 +142,7 @@ export const ApiService = {
 
     // User Profile
     getProfile: async (): Promise<ApiResponse<UserProfile>> => {
-        const res = await fetchJson<UserProfile>('/api/user/profile');
+        const res = await fetchJson<UserProfile>('/v1/user-profiles');
         if (res.isSuccess && res.data) {
             await offlineDb.setMetadata('user_profile', res.data);
             return res;
@@ -139,6 +153,7 @@ export const ApiService = {
                 await offlineDb.getMetadata<UserProfile>('user_profile');
             if (cached) {
                 return {
+                    statusCode: 200,
                     isSuccess: true,
                     message: 'Loaded cached profile (offline)',
                     data: cached,
@@ -149,23 +164,29 @@ export const ApiService = {
         return res;
     },
 
+    updateNewComer: () => {
+        fetchJson<void>('/v1/user-profiles/settings/newcomer', {
+            method: 'PATCH',
+        });
+    },
+
     updateProfile: (profile: Partial<UserProfile>) =>
-        fetchJson<UserProfile>('/api/user/profile', {
+        fetchJson<UserProfile>('/v1/user-profiles', {
             method: 'PATCH',
             body: JSON.stringify(profile),
         }),
 
     updateSettings: (settings: Partial<UserSettings>) =>
-        fetchJson<UserSettings>('/api/user/settings', {
+        fetchJson<UserSettings>('/v1/user-settings', {
             method: 'PATCH',
             body: JSON.stringify(settings),
         }),
 
     // Shelves
-    getShelves: async (): Promise<ApiResponse<Shelf[]>> => {
-        const res = await fetchJson<Shelf[]>('/api/shelves');
+    getShelves: async (page: number, size: number): Promise<ApiResponse<PaginatedResponse<Shelf>>> => {
+        const res = await fetchJson<PaginatedResponse<Shelf>>(`/v1/shelves?page=${page}&size=${size}`);
         if (res.isSuccess && res.data) {
-            await offlineDb.cacheShelves(res.data);
+            await offlineDb.cacheShelves(res.data.entities);
             return res;
         }
 
@@ -175,7 +196,14 @@ export const ApiService = {
                 return {
                     isSuccess: true,
                     message: 'Loaded cached shelves (offline)',
-                    data: cached,
+                    statusCode: 200,
+                    data: {
+                        entities: cached,
+                        currentPage: page,
+                        totalItems: cached.length,
+                        totalPages: Math.ceil(cached.length / size),
+                        hasNextPage: cached.length / size > page,
+                    },
                     timestamp: new Date().toISOString(),
                 };
             }
@@ -185,35 +213,40 @@ export const ApiService = {
 
     createShelf: (data: {
         name: string;
-        description?: string;
-        icon?: string;
-        color?: string;
-    }) =>
-        fetchJson<Shelf>('/api/shelves', {
+        description: string;
+        icon: string;
+        color: string;
+    }) => {
+        const payload = {...data, slug: slugify(data.name, {lower: true, strict: true})};
+        return fetchJson<Shelf>('/v1/shelves', {
             method: 'POST',
-            body: JSON.stringify(data),
-        }),
+            body: JSON.stringify(payload),
+        });
+    },
+        
 
     updateShelf: (id: string, data: Partial<Shelf>) =>
-        fetchJson<Shelf>(`/api/shelves/${id}`, {
+        fetchJson<Shelf>(`/v1/shelves/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(data),
         }),
 
     deleteShelf: (id: string) =>
-        fetchJson<Shelf>(`/api/shelves/${id}/delete`, {
+        fetchJson<Shelf>(`/v1/shelves/${id}/delete`, {
             method: 'PATCH',
         }),
 
     // Subjects
     getShelfSubjects: async (
-        shelfId: string
-    ): Promise<ApiResponse<Subject[]>> => {
-        const res = await fetchJson<Subject[]>(
-            `/api/shelves/${shelfId}/subjects`
+        shelfId: string,
+        page: number = 1,
+        size: number = 10
+    ): Promise<ApiResponse<PaginatedResponse<Subject>>> => {
+        const res = await fetchJson<PaginatedResponse<Subject>>(
+            `/v1/shelves/${shelfId}/subjects?page=${page}&size=${size}`
         );
         if (res.isSuccess && res.data) {
-            await offlineDb.cacheSubjects(res.data);
+            await offlineDb.cacheSubjects(res.data.entities);
             return res;
         }
 
@@ -222,8 +255,15 @@ export const ApiService = {
             if (cached && cached.length > 0) {
                 return {
                     isSuccess: true,
+                    statusCode: 200,
                     message: 'Loaded cached subjects (offline)',
-                    data: cached,
+                    data: {
+                        entities: cached,
+                        currentPage: 1,
+                        totalItems: cached.length,
+                        totalPages: 1,
+                        hasNextPage: false,
+                    },
                     timestamp: new Date().toISOString(),
                 };
             }
@@ -258,6 +298,7 @@ export const ApiService = {
                 ).length;
                 return {
                     isSuccess: true,
+                    statusCode: 200,
                     message: 'Loaded cached subject details (offline)',
                     data: {
                         ...cachedSubject,
@@ -276,18 +317,19 @@ export const ApiService = {
     createSubject: (
         shelfId: string,
         data: {
-            title: string;
-            description?: string;
-            icon?: string;
-            color?: string;
-            tags?: string[];
-            isPublic?: boolean;
+            name: string;
+            description: string;
+            color: string;
+            tags: string;
+            isPublic: boolean;
         }
-    ) =>
-        fetchJson<Subject>(`/api/shelves/${shelfId}/subjects`, {
+    ) =>{
+        const payload = { ...data, slug: slugify(data.name, { lower: true, strict: true }) };
+        return fetchJson<Subject>(`/v1/shelves/${shelfId}/subjects`, {
             method: 'POST',
-            body: JSON.stringify(data),
-        }),
+            body: JSON.stringify(payload),
+        });
+    },
 
     updateSubject: (id: string, data: Partial<Subject>) =>
         fetchJson<Subject>(`/api/subjects/${id}`, {
@@ -302,11 +344,12 @@ export const ApiService = {
 
     // Cards
     getSubjectCards: async (
+        shelfId: string,
         subjectId: string
-    ): Promise<ApiResponse<Card[]>> => {
-        const res = await fetchJson<Card[]>(`/api/subjects/${subjectId}/cards`);
+    ): Promise<ApiResponse<PaginatedResponse<Card>>> => {
+        const res = await fetchJson<PaginatedResponse<Card>>(`/v1/shelves/${shelfId}/subjects/${subjectId}/cards?page=1&size=1000`);;
         if (res.isSuccess && res.data) {
-            await offlineDb.cacheCards(res.data);
+            await offlineDb.cacheCards(res.data.entities);
             return res;
         }
 
@@ -315,8 +358,15 @@ export const ApiService = {
             if (cached && cached.length > 0) {
                 return {
                     isSuccess: true,
+                    statusCode: 200,
                     message: 'Loaded cached cards (offline)',
-                    data: cached,
+                    data: {
+                        entities: cached,
+                        currentPage: 1,
+                        totalItems: cached.length,
+                        totalPages: 1,
+                        hasNextPage: false,
+                    },
                     timestamp: new Date().toISOString(),
                 };
             }
@@ -338,6 +388,7 @@ export const ApiService = {
                 await offlineDb.getCachedDueCardsBySubject(subjectId);
             return {
                 isSuccess: true,
+                statusCode: 200, 
                 message: 'Loaded cached due cards (offline)',
                 data: cachedDue,
                 timestamp: new Date().toISOString(),
@@ -346,65 +397,15 @@ export const ApiService = {
         return res;
     },
 
-    createCard: async (
-        subjectId: string,
-        data: {
-            front: string;
-            back: string;
-            hint?: string;
-            tags?: string[];
-            mediaUrl?: string;
-        }
-    ): Promise<ApiResponse<Card>> => {
-        // If browser is explicitly offline, save to IndexedDB immediately
-        if (typeof navigator !== 'undefined' && !navigator.onLine) {
-            const localCard = await offlineDb.saveOfflineCard(subjectId, data);
-            await syncManager.requestBackgroundSync();
-            await syncManager.refreshPendingCount();
-            return {
-                isSuccess: true,
-                message: 'Card created offline (will sync when online)',
-                data: localCard,
-                timestamp: new Date().toISOString(),
-            };
-        }
-
-        const res = await fetchJson<Card>(`/api/subjects/${subjectId}/cards`, {
-            method: 'POST',
-            body: JSON.stringify(data),
-        });
-
-        if (res.isSuccess && res.data) {
-            await offlineDb.cacheCards([res.data]);
-            return res;
-        }
-
-        // Network failure fallback
-        if (isOfflineOrNetworkFailure(res)) {
-            const localCard = await offlineDb.saveOfflineCard(subjectId, data);
-            await syncManager.requestBackgroundSync();
-            await syncManager.refreshPendingCount();
-            return {
-                isSuccess: true,
-                message: 'Card saved offline (will sync when online)',
-                data: localCard,
-                timestamp: new Date().toISOString(),
-            };
-        }
-
-        return res;
-    },
-
-    batchCreateCards: async (
+    createCards: async (
+        shelfId: string,
         subjectId: string,
         cards: Array<{
             front: string;
             back: string;
-            hint?: string;
-            tags?: string[];
-            mediaUrl?: string;
+            hint: string;
         }>
-    ): Promise<ApiResponse<{ importedCount: number; cards: Card[] }>> => {
+    ): Promise<ApiResponse<string>> => {
         if (typeof navigator !== 'undefined' && !navigator.onLine) {
             const result = await offlineDb.saveOfflineBatchCards(
                 subjectId,
@@ -414,26 +415,26 @@ export const ApiService = {
             await syncManager.refreshPendingCount();
             return {
                 isSuccess: true,
+                statusCode: 200,
                 message: `Imported ${result.importedCount} cards offline (will sync when online)`,
-                data: result,
+                data: "Successfully created cards offline",
                 timestamp: new Date().toISOString(),
             };
         }
 
-        const res = await fetchJson<{ importedCount: number; cards: Card[] }>(
-            `/api/subjects/${subjectId}/cards/batch`,
+        const res = await fetchJson<string>(
+            `/v1/shelves/${shelfId}/subjects/${subjectId}/cards`,
             {
                 method: 'POST',
                 body: JSON.stringify({ cards }),
             }
         );
 
-        if (res.isSuccess && res.data?.cards) {
-            await offlineDb.cacheCards(res.data.cards);
+        if (res.isSuccess && res.data) {
             return res;
         }
 
-        if (isOfflineOrNetworkFailure(res)) {
+        if (isOfflineOrNetworkFailure(res)) {  
             const result = await offlineDb.saveOfflineBatchCards(
                 subjectId,
                 cards
@@ -442,8 +443,9 @@ export const ApiService = {
             await syncManager.refreshPendingCount();
             return {
                 isSuccess: true,
+                statusCode: 200,
                 message: `Imported ${result.importedCount} cards offline (will sync when online)`,
-                data: result,
+                data: "Successfully created cards offline",
                 timestamp: new Date().toISOString(),
             };
         }
@@ -461,6 +463,7 @@ export const ApiService = {
             await syncManager.refreshPendingCount();
             return {
                 isSuccess: true,
+                statusCode: 200,
                 message: 'Card updated offline (will sync when online)',
                 data: updated as Card,
                 timestamp: new Date().toISOString(),
@@ -483,6 +486,7 @@ export const ApiService = {
             await syncManager.refreshPendingCount();
             return {
                 isSuccess: true,
+                statusCode: 200,
                 message: 'Card updated offline',
                 data: updated as Card,
                 timestamp: new Date().toISOString(),
@@ -513,6 +517,7 @@ export const ApiService = {
             await syncManager.refreshPendingCount();
             return {
                 isSuccess: true,
+                statusCode: 200,
                 message: 'Review saved offline (FSRS scheduled locally)',
                 data: localResult,
                 timestamp: new Date().toISOString(),
@@ -544,6 +549,7 @@ export const ApiService = {
             await syncManager.refreshPendingCount();
             return {
                 isSuccess: true,
+                statusCode: 200,
                 message: 'Review saved offline (will sync when online)',
                 data: localResult,
                 timestamp: new Date().toISOString(),
@@ -560,6 +566,7 @@ export const ApiService = {
             await syncManager.refreshPendingCount();
             return {
                 isSuccess: true,
+                statusCode: 200,
                 message: 'Card deleted offline (will sync when online)',
                 data: null,
                 timestamp: new Date().toISOString(),
@@ -581,6 +588,7 @@ export const ApiService = {
             await syncManager.refreshPendingCount();
             return {
                 isSuccess: true,
+                statusCode: 200,
                 message: 'Card deleted offline',
                 data: null,
                 timestamp: new Date().toISOString(),
@@ -708,7 +716,7 @@ export const ApiService = {
     // AI Flashcard Generation
     generateCardsWithAI: (topic: string, notes?: string, count = 5) =>
         fetchJson<
-            { front: string; back: string; hint?: string; tags?: string[] }[]
+            { front: string; back: string; hint: string; tags?: string[] }[]
         >('/api/generate-cards', {
             method: 'POST',
             body: JSON.stringify({ topic, notes, count }),

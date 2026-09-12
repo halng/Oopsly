@@ -21,12 +21,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.application.CardService;
-import com.app.oopsly.api.card.application.vm.CardItemReq;
-import com.app.oopsly.api.card.application.vm.CardReq;
-import com.app.oopsly.api.card.application.vm.UpdateDifficultyReq;
-import com.app.oopsly.api.card.domain.DifficultyLevel;
-import com.app.oopsly.api.card.interfaces.rest.CardController;
+import com.app.oopsly.api.card.CardController;
+import com.app.oopsly.api.card.CardService;
+import com.app.oopsly.api.card.DifficultyLevel;
+import com.app.oopsly.api.card.vm.CardItemReq;
+import com.app.oopsly.api.card.vm.CardReq;
+import com.app.oopsly.api.card.vm.UpdateDifficultyReq;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import java.util.List;
 import java.util.UUID;

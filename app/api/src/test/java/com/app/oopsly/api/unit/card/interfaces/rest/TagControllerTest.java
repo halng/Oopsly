@@ -19,10 +19,10 @@ package com.app.oopsly.api.unit.card.interfaces.rest;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.card.application.TagService;
-import com.app.oopsly.api.card.application.vm.TagReq;
-import com.app.oopsly.api.card.interfaces.rest.TagController;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.tag.TagController;
+import com.app.oopsly.api.tag.TagService;
+import com.app.oopsly.api.tag.vm.TagReq;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,23 +69,5 @@ class TagControllerTest {
     void deleteTag_delegates() {
         when(tagService.deleteTag(tagId)).thenReturn(expected);
         assertSame(expected, tagController.deleteTag(tagId));
-    }
-
-    @Test
-    void addTagToCard_delegates() {
-        when(tagService.addTagToCard(shelfId, subjectId, cardId, tagId)).thenReturn(expected);
-        assertSame(expected, tagController.addTagToCard(shelfId, subjectId, cardId, tagId));
-    }
-
-    @Test
-    void removeTagFromCard_delegates() {
-        when(tagService.removeTagFromCard(shelfId, subjectId, cardId, tagId)).thenReturn(expected);
-        assertSame(expected, tagController.removeTagFromCard(shelfId, subjectId, cardId, tagId));
-    }
-
-    @Test
-    void getCardsByTag_delegates() {
-        when(tagService.getCardsByTag(shelfId, subjectId, tagId)).thenReturn(expected);
-        assertSame(expected, tagController.getCardsByTag(shelfId, subjectId, tagId));
     }
 }

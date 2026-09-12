@@ -15,10 +15,10 @@ function audioParam() {
     };
 }
 
-function makeAudioContext() {
+function makeAudioContext(state: string) {
     const destination = {};
     const context = {
-        state: 'running',
+        state: state,
         currentTime: 0,
         sampleRate: 2,
         destination,
@@ -51,10 +51,11 @@ function makeAudioContext() {
     return context;
 }
 
-describe('soundscape utilities', () => {
+
+describe('soundscape utilities with "running" state ', () => {
     beforeEach(() => {
         vi.useFakeTimers();
-        const context = makeAudioContext();
+        const context = makeAudioContext('running');
         Object.defineProperty(window, 'AudioContext', {
             configurable: true,
             value: vi.fn(() => context),

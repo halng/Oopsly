@@ -4,11 +4,17 @@ on:
   pull_request:
     branches:
       - main
-      - release/**
+    paths:
+      - "app/**"
+      - ".github/workflows/codeql-snyk.yaml"
   push:
+    tags:
+      - 'v*.*.*'
     branches:
       - main
-      - release/**
+    paths:
+      - "app/**"
+      - ".github/workflows/codeql-snyk.yaml"
   schedule:
     - cron: "0 0 * * *" # daily 00:00 UTC
   workflow_dispatch:

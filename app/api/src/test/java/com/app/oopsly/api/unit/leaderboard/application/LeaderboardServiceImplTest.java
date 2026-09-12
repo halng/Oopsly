@@ -25,9 +25,10 @@ import com.app.oopsly.api.leaderboard.application.vm.LeaderboardUserRes;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
-import com.app.oopsly.api.user.application.UserService;
-import com.app.oopsly.api.user.domain.User;
-import com.app.oopsly.api.user.infrastructure.UserRepository;
+import com.app.oopsly.api.user.Setting;
+import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserRepository;
+import com.app.oopsly.api.user.UserService;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -62,9 +63,11 @@ class LeaderboardServiceImplTest {
         user.setId(UUID.randomUUID());
         user.setName(name);
         user.setDisplayName(displayName);
-        user.setTotalXp(xp);
-        user.setDailyStreak(streak);
         user.setPictureUrl("https://cdn/" + name + ".png");
+        Setting setting = new Setting();
+        setting.setTotalXp(xp);
+        setting.setDailyStreak(streak);
+        user.setSetting(setting);
         return user;
     }
 

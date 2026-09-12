@@ -35,14 +35,16 @@ public final class LibraryFixture {
             throws Exception {
         MvcResult result =
                 mockMvc.perform(
-                                post("/shelves")
+                                post("/v1/shelves")
                                         .header("Authorization", "Bearer " + token)
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(
                                                 """
                                                 {
-                                                  "icon": "📚",
+                                                  "icon": "folder",
                                                   "name": "Integration Shelf",
+                                                   "slug": "integration-shelf",
+                                                    "color": "#FF5733",
                                                   "description": "Shelf description for integration tests"
                                                 }
                                                 """))
@@ -60,14 +62,18 @@ public final class LibraryFixture {
             MockMvc mockMvc, ObjectMapper mapper, String token, UUID shelfId) throws Exception {
         MvcResult result =
                 mockMvc.perform(
-                                post("/shelves/{shelfId}/subjects", shelfId)
+                                post("/v1/shelves/{shelfId}/subjects", shelfId)
                                         .header("Authorization", "Bearer " + token)
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(
                                                 """
                                                 {
                                                   "name": "Integration Subject",
-                                                  "description": "Subject for integration tests"
+                                                  "description": "Subject for integration tests",
+                                                    "tags": "integration,testing",
+                                                    "isPublic": true,
+                                                    "color": "#33FF57",
+                                                                                                     "slug": "integration-subject"
                                                 }
                                                 """))
                         .andExpect(status().isCreated())
@@ -86,7 +92,7 @@ public final class LibraryFixture {
         MvcResult result =
                 mockMvc.perform(
                                 post(
-                                                "/shelves/{shelfId}/subjects/{subjectId}/cards",
+                                                "/v1/shelves/{shelfId}/subjects/{subjectId}/cards",
                                                 shelfId,
                                                 subjectId)
                                         .header("Authorization", "Bearer " + token)

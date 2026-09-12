@@ -20,17 +20,18 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.app.oopsly.api.library.application.vm.StudyScheduleReq;
-import com.app.oopsly.api.library.application.vm.StudyScheduleRes;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.ValidationException;
-import com.app.oopsly.api.user.application.UserService;
-import com.app.oopsly.api.user.application.vm.SettingsRes;
-import com.app.oopsly.api.user.application.vm.SpaceConfigReq;
-import com.app.oopsly.api.user.application.vm.UpdateProfileReq;
-import com.app.oopsly.api.user.application.vm.UpdateSettingsReq;
-import com.app.oopsly.api.user.application.vm.UserProfileRes;
-import com.app.oopsly.api.user.interfaces.rest.UserProfileController;
+import com.app.oopsly.api.shelf.vm.StudyScheduleReq;
+import com.app.oopsly.api.user.Language;
+import com.app.oopsly.api.user.Theme;
+import com.app.oopsly.api.user.UserProfileController;
+import com.app.oopsly.api.user.UserService;
+import com.app.oopsly.api.user.vm.SettingsRes;
+import com.app.oopsly.api.user.vm.SpaceConfigReq;
+import com.app.oopsly.api.user.vm.UpdateProfileReq;
+import com.app.oopsly.api.user.vm.UpdateSettingsReq;
+import com.app.oopsly.api.user.vm.UserProfileRes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,11 +62,30 @@ class UserProfileControllerTest {
 
         SettingsRes settings =
                 new SettingsRes(
-                        "SYSTEM",
-                        "en",
-                        spaceConfig,
-                        new StudyScheduleRes("09:00", List.of(1, 2, 3, 4, 5), false));
-        UserProfileRes mockProfile = new UserProfileRes("Test User", "Test Bio", 25, settings);
+                        Theme.DARK.name(),
+                        Language.ENGLISH.name(),
+                        10,
+                        true,
+                        true,
+                        true,
+                        0.1,
+                        0.2,
+                        true,
+                        false);
+        UserProfileRes mockProfile =
+                new UserProfileRes(
+                        "Test User",
+                        "test@oopsly.com",
+                        "Test Bio",
+                        "",
+                        "",
+                        settings,
+                        25,
+                        10,
+                        100,
+                        50,
+                        0.75,
+                        "GOLD");
         mockApiRes = ApiRes.ok("Profile retrieved successfully", mockProfile);
     }
 

@@ -170,7 +170,9 @@ class OfflineDatabase {
         return new Promise((resolve, reject) => {
             const tx = db.transaction('shelves', 'readwrite');
             const store = tx.objectStore('shelves');
-            shelves.forEach((s) => store.put(s));
+            if (shelves && shelves.length > 0) {
+                Object.values(shelves).forEach((s) => store.put(s));
+            }
             tx.oncomplete = () => resolve();
             tx.onerror = () => reject(tx.error);
         });
