@@ -8,18 +8,18 @@ on:
       - main
     paths:
       - "app/web/**"
-      - ".github/workflows/ci-ui.yaml"
+      - ".github/workflows/ci-web.yaml"
   pull_request:
     branches:
       - main
     paths:
       - "app/web/**"
-      - ".github/workflows/ci-ui.yaml"
+      - ".github/workflows/ci-web.yaml"
 
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-web-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
