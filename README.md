@@ -210,7 +210,7 @@ Animations: Reanimated 3 + Framer Motion (web)
 
 ### Backend
 ```
-Runtime:    Java 21 + Spring Boot 3.2
+Runtime:    Java 21 + Spring Boot 3.5.8
 Framework:  Spring Boot + Spring Security + Spring Data JPA
 Database:   PostgreSQL (user data) + Redis (session/cache)
 SRS Engine: FSRS algorithm (open-source implementation)
