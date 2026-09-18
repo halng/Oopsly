@@ -7,16 +7,16 @@ description: >
 ---
 
 ## Project structure snapshot
-!`find src/main/java -type f -name "*.java" | head -30`
+!`find app/api/src/main/java -type f -name "*.java" | head -30`
 
 ## Existing base classes
-!`find src/main/java -type f -name "BaseEntity.java" -o -name "BaseResponse.java" -o -name "ResourceNotFoundException.java" -o -name "GlobalExceptionHandler.java" 2>/dev/null | head -10`
+!`find app/api/src/main/java -type f \\( -name "BaseEntity.java" -o -name "BaseResponse.java" -o -name "ResourceNotFoundException.java" -o -name "GlobalExceptionHandler.java" \\) 2>/dev/null | head -10`
 
 ## Current migrations
-!`ls -1 src/main/resources/db/migration/ 2>/dev/null | tail -5`
+!`ls -1 app/api/src/main/resources/db/migration/ 2>/dev/null | tail -5`
 
 ## Build tool
-!`ls pom.xml build.gradle 2>/dev/null`
+!`ls app/api/build.gradle app/api/gradlew 2>/dev/null`
 
 ---
 
@@ -57,7 +57,7 @@ Before writing any code:
 
 ## Step 2 — Flyway Migration
 
-Create `src/main/resources/db/migration/V<n>__create_<table>_table.sql`:
+Create `app/api/src/main/resources/db/migration/V<n>__create_<table>_table.sql`:
 
 ```sql
 CREATE TABLE IF NOT EXISTS <table_name> (
@@ -90,7 +90,7 @@ Rules:
 
 Create all files under:
 ```
-src/main/java/<base_package>/<entity_lower>/
+app/api/src/main/java/<base_package>/<entity_lower>/
 ├── <Entity>.java                      ← JPA Entity
 ├── <Entity>Status.java                ← Enum (if entity has a status)
 ├── <Entity>Repository.java            ← Spring Data JPA Repository
@@ -445,7 +445,7 @@ public class <Entity>Controller {
 ## Step 12 — Tests
 
 ### Unit Test: `<Entity>ServiceImplTest.java`
-Location: `src/test/java/<base_package>/<entity_lower>/`
+Location: `app/api/src/test/java/<base_package>/<entity_lower>/`
 
 - Use `@ExtendWith(MockitoExtension.class)`
 - Mock `<Entity>Repository`
@@ -460,7 +460,7 @@ Location: `src/test/java/<base_package>/<entity_lower>/`
   - `delete_nonExistingId_throwsResourceNotFoundException()`
 
 ### Integration Test: `<Entity>ControllerTest.java`
-Location: `src/test/java/<base_package>/<entity_lower>/`
+Location: `app/api/src/test/java/<base_package>/<entity_lower>/`
 
 - Use `@SpringBootTest` + `@AutoConfigureMockMvc` + `@Testcontainers`
 - Spin up PostgreSQL via Testcontainers:
@@ -494,14 +494,16 @@ static void configure(DynamicPropertyRegistry registry) {
 Run in this exact order and fix any errors before proceeding to the next step:
 
 ```bash
+cd app/api
+
 # 1. Compile
-./gradlew compile -q
+./gradlew compileJava -q
 
 # 2. Unit tests only (fast)
 ./gradlew test -q --tests "<Entity>ServiceImplTest"
 
 # 3. Integration tests
-./gradlew test -q --tests "<Entity>ControllerTest"
+./gradlew integrationTest -q --tests "<Entity>ControllerTest"
 
 # 4. Full build
 ./gradlew build -q
