@@ -43,6 +43,11 @@ jobs:
           else
             echo "tag=${{ inputs.git_tag }}" >> $GITHUB_OUTPUT
           fi
+      - name: Create Image Name
+        run: |
+          REPO_LOWER="${GITHUB_REPOSITORY,,}"
+          echo "IMAGE_NAME=ghcr.io/${REPO_LOWER}/oopsly-api:${{ steps.check.outputs.tag }}" >> ${GITHUB_ENV}
+  
 
   build:
     runs-on: ubuntu-latest
@@ -66,9 +71,10 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v5
-
       - name: Build Native Docker Image
-        run: ./gradlew bootBuildImage --imageName=ghcr.io/${{ github.repository }}/oopsly-api:${{ needs.validate-inputs.outputs.release-ref }}
+        run: ./gradlew bootBuildImage --imageName=${{ env.IMAGE_NAME }}
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
         working-directory: app/api
 
       - name: Log in to GitHub Container Registry
@@ -79,7 +85,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push Docker Image
-        run: docker push ghcr.io/${{ github.repository }}/oopsly-api:${{ needs.validate-inputs.outputs.release-ref }}
+        run: docker push ${{ env.IMAGE_NAME }}
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
         working-directory: app/api
 
   deploy:
@@ -91,6 +99,6 @@ jobs:
       - name: Deploy to Railway
         run: |
           npm install -g @railway/cli
-          railway up --environment ${{ inputs.env }} --image ghcr.io/${{ github.repository }}/oopsly-api:${{ needs.validate-inputs.outputs.release-ref }} --tag ${{ needs.validate-inputs.outputs.release-ref }}
+          railway up --environment ${{ inputs.env }} --image ${{ env.IMAGE_NAME }} --tag ${{ needs.validate-inputs.outputs.release-ref }}
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
