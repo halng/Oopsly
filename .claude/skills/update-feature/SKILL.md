@@ -5,20 +5,20 @@ description: >
   Use when the user asks to change, update, rename, refactor, or fix something
   that already exists. Examples: "change Product price to support currency",
   "rename sku to productCode", "fix the update logic in OrderService",
-  "refactor ProductController to use a new DTO", "change soft delete logic".
+  "refactor ProductController to use a new request VM", "change soft delete logic".
 ---
 
 ## Current state of affected module
-!`find src/main/java -type f -name "*.java" | xargs grep -l "$ARGUMENTS" 2>/dev/null | head -10`
+!`find app/api/src/main/java -type f -name "*.java" | xargs grep -l "$ARGUMENTS" 2>/dev/null | head -10`
 
 ## Existing migrations
-!`ls -1 src/main/resources/db/migration/ | tail -5`
+!`ls -1 app/api/src/main/resources/db/migration/ | tail -5`
 
 ## Current git status
 !`git diff --stat HEAD`
 
 ## Existing tests related to change
-!`find src/test/java -type f -name "*.java" | xargs grep -l "$ARGUMENTS" 2>/dev/null | head -10`
+!`find app/api/src/test/java -type f -name "*.java" | xargs grep -l "$ARGUMENTS" 2>/dev/null | head -10`
 
 ---
 
@@ -37,13 +37,13 @@ Read and fully understand the current state:
 
 1. **Find all affected files** — search by class name, method name, field name, or annotation
 2. **Map the blast radius** — list every file that imports or depends on what will change
-3. **Read all affected files completely** — entity, DTOs, service interface, impl, controller, tests, Flyway migrations
+3. **Read all affected files completely** — entity, request/response VMs, service interface, impl, controller, tests, Flyway migrations
 4. **Identify the change type** — classify as one of:
-   - `FIELD_RENAME` — renaming a field in entity/DTO
+   - `FIELD_RENAME` — renaming a field in entity/request-response VM
    - `FIELD_TYPE_CHANGE` — changing a field's data type
    - `LOGIC_FIX` — fixing incorrect business logic
    - `LOGIC_REFACTOR` — restructuring without changing behavior
-   - `DTO_RESTRUCTURE` — changing request/response shape
+   - `DTO_RESTRUCTURE` — changing request/response VM shape
    - `ENDPOINT_CHANGE` — changing URL, method, or HTTP status
    - `DEPENDENCY_CHANGE` — swapping a library or injected dependency
    - `CONFIG_CHANGE` — changing application properties or Spring config
@@ -58,7 +58,7 @@ Read and fully understand the current state:
       Entity        : Product.java — rename field + @Column
       Repository    : ProductRepository.java — update method names + @Query
       ServiceImpl   : ProductServiceImpl.java — update field references
-      DTOs          : CreateProductRequest, UpdateProductRequest, ProductResponse
+      VMs           : ProductReq, ProductRes
       Tests         : ProductServiceImplTest, ProductControllerTest
       Migration     : YES — rename column in DB
       API Contract  : BREAKING — response field name changes
@@ -129,7 +129,7 @@ ALTER TABLE <table> ALTER COLUMN <col> SET NOT NULL;
 ## Step 4 — Apply Changes Systematically
 
 Work through the blast radius identified in Step 1 in this order:
-**Entity → Enum → Repository → DTOs → Service Interface → ServiceImpl → Controller → Tests**
+**Entity → Enum → Repository → VMs → Service Interface → ServiceImpl → Controller → Tests**
 
 Never skip ahead. Each layer depends on the one before it.
 
@@ -137,9 +137,9 @@ Never skip ahead. Each layer depends on the one before it.
 Apply these changes consistently across ALL affected files:
 - Entity: rename Java field + update `@Column(name = "...")` to match migration
 - Repository: rename method names that contain the old field name
-- DTOs: rename field in record definition
+- VMs: rename field in record definition
 - ServiceImpl: update all field references
-- Controller: nothing usually changes (DTO handles it)
+- Controller: nothing usually changes (request/response VM handles it)
 - Tests: update field names in assertions and request builders
 
 ### LOGIC_FIX pattern
@@ -150,11 +150,11 @@ Apply these changes consistently across ALL affected files:
 5. Run the full test suite to confirm no regressions
 
 ### DTO_RESTRUCTURE pattern
-1. Create the **new DTO** alongside the old one (don't delete yet)
-2. Update ServiceImpl to use the new DTO
-3. Update Controller to use the new DTO
-4. Update tests to use the new DTO
-5. Only delete the old DTO after confirming everything compiles and tests pass
+1. Create the **new request/response VM** alongside the old one (don't delete yet)
+2. Update ServiceImpl to use the new VM
+3. Update Controller to use the new VM
+4. Update tests to use the new VM
+5. Only delete the old VM after confirming everything compiles and tests pass
 
 ### LOGIC_REFACTOR pattern
 1. Confirm existing tests cover the behavior being refactored
@@ -178,14 +178,14 @@ If changing a URL path or HTTP method:
 
 **If logic changed** → update assertions to match new expected behavior
 **If field renamed** → update all `jsonPath("$.oldName")` → `jsonPath("$.newName")`
-**If DTO restructured** → update request builders in tests
-**If endpoint URL changed** → update `mockMvc.perform(get("/api/v1/..."))`
+**If request/response VM changed** → update request builders in tests
+**If endpoint URL changed** → update `mockMvc.perform(get("/v1/..."))`
 **If new exception added** → add test for the new error case
 
 ### Run affected tests after each file change (not just at the end):
 cd app/api
-./gradlew test --tests "<Entity>ServiceImplTest" -q
-./gradlew test --tests "<Entity>ControllerTest" -q
+./gradlew test --tests "com.app.oopsly.api.unit.<entity_lower>.*" -q
+./gradlew integrationTest --tests "*<Entity>ControllerTest" -q
 
 This catches errors early before they compound.
 
@@ -194,14 +194,19 @@ This catches errors early before they compound.
 ## Step 6 — Verify No Regressions
 
 ```bash
+cd app/api
+
 # 1. Compile — must be clean
-./mvnw compile -q
+./gradlew compileJava -q
 
 # 2. Run only the changed module's tests
-./mvnw test -Dtest="<Entity>ServiceImplTest,<Entity>ControllerTest" -q
+./gradlew test -q --tests "com.app.oopsly.api.unit.<entity_lower>.*"
 
-# 3. Run the FULL test suite — catch any cross-module regressions
-./mvnw verify -q
+# 3. Run the changed controller integration tests
+./gradlew integrationTest -q --tests "*<Entity>ControllerTest"
+
+# 4. Run the FULL build — catch any cross-module regressions
+./gradlew build -q
 ```
 
 If ANY test outside the changed module fails:
@@ -220,7 +225,7 @@ Before reporting done, verify manually:
 - [ ] No `TODO` or `FIXME` comments left from the change
 - [ ] Flyway migration version is correct and sequential
 - [ ] `@Column` names in entity match the migration column names exactly
-- [ ] API response shape is consistent (all endpoints use `ApiResponse<T>`)
+- [ ] API response shape is consistent (controllers return `ApiRes`)
 - [ ] Lombok annotations still valid after field changes
 - [ ] No hard-coded values introduced during the fix
 

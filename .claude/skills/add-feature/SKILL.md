@@ -48,7 +48,7 @@ Before writing any code:
      - `OTHER` — anything else
 
 2. **Read ALL existing files** in the target module:
-   - Entity, Repository, Service interface, ServiceImpl, Controller, all DTOs
+   - Entity, Repository, Service interface, ServiceImpl, Controller, all request/response VMs
    - Existing tests
 
 3. **Print an impact plan** before making any changes:
@@ -59,7 +59,7 @@ Before writing any code:
       - Repository  : add findByNameContainingAndStatus() query method
       - Service     : add filter params to getAll()
       - Controller  : add @RequestParam name, status to GET /
-      - DTOs        : add ProductFilterRequest record
+      - VMs         : add ProductFilterReq record
       - Migration   : needed? NO (no schema change)
       - Tests       : update ProductServiceImplTest + ProductControllerTest
    ⚠️  Risk         : LOW — only adding, not modifying existing logic
@@ -81,7 +81,7 @@ If needed, create `V<n>__<description>.sql`:
 ```sql
 -- Example: adding a category_id FK to products
 ALTER TABLE products
-    ADD COLUMN IF NOT EXISTS category_id BIGINT REFERENCES categories(id);
+    ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES categories(id);
 
 CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);
 ```
@@ -121,9 +121,9 @@ Page<Product> findWithFilters(
     Pageable pageable);
 ```
 
-**New DTO** — `ProductFilterRequest.java` (Java record):
+**New VM** — `ProductFilterReq.java` (Java record in `vm/`):
 ```java
-public record ProductFilterRequest(
+public record ProductFilterReq(
     String name,
     ProductStatus status,
     BigDecimal minPrice,
@@ -134,7 +134,7 @@ public record ProductFilterRequest(
     String sortDir
 ) {
     // Compact constructor with defaults
-    public ProductFilterRequest {
+    public ProductFilterReq {
         if (page < 0) page = 0;
         if (size <= 0) size = 10;
         if (sortBy == null) sortBy = "createdAt";
@@ -145,25 +145,31 @@ public record ProductFilterRequest(
 
 **Service interface** — update `getAll()` signature:
 ```java
-PageResponse<ProductResponse> getAll(ProductFilterRequest filter);
+ApiRes getAll(ProductFilterReq filter);
 ```
 
 **ServiceImpl** — update implementation:
 ```java
 @Override
 @Transactional(readOnly = true)
-public PageResponse<ProductResponse> getAll(ProductFilterRequest filter) {
+public ApiRes getAll(ProductFilterReq filter) {
     Sort sort = filter.sortDir().equalsIgnoreCase("asc")
         ? Sort.by(filter.sortBy()).ascending()
         : Sort.by(filter.sortBy()).descending();
     Pageable pageable = PageRequest.of(filter.page(), filter.size(), sort);
-    return PageResponse.from(
-        repository.findWithFilters(
-            filter.name(), filter.status(),
-            filter.minPrice(), filter.maxPrice(),
-            pageable
-        ).map(ProductResponse::from)
+    Page<Product> pageData = repository.findWithFilters(
+        filter.name(), filter.status(),
+        filter.minPrice(), filter.maxPrice(),
+        pageable
     );
+    PagingRes<ProductRes> pagingRes = new PagingRes<>(
+        pageData.map(ProductRes::from).getContent(),
+        pageData.getNumber(),
+        pageData.getTotalElements(),
+        pageData.getTotalPages(),
+        pageData.hasNext()
+    );
+    return ApiRes.success("Fetched successfully", pagingRes);
 }
 ```
 
@@ -171,54 +177,56 @@ public PageResponse<ProductResponse> getAll(ProductFilterRequest filter) {
 ```java
 @GetMapping
 @Operation(summary = "Get all products with filters and pagination")
-public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> getAll(
-        @ParameterObject @ModelAttribute ProductFilterRequest filter) {
-    return ResponseEntity.ok(ApiResponse.success(service.getAll(filter)));
+public ApiRes getAll(@ParameterObject @ModelAttribute ProductFilterReq filter) {
+    return service.getAll(filter);
 }
 ```
 
 ---
 
 ### BULK_OPERATION
-**New DTO** — `BulkDeleteRequest.java`:
+**New VM** — `BulkDeleteReq.java`:
 ```java
-public record BulkDeleteRequest(
-    @NotEmpty @Size(max = 100) List<@NotNull Long> ids
+public record BulkDeleteReq(
+    @NotEmpty @Size(max = 100) List<@NotNull UUID> ids
 ) {}
 ```
 
 **Service interface** — add method:
 ```java
-BulkOperationResponse bulkDelete(BulkDeleteRequest request);
+ApiRes bulkDelete(BulkDeleteReq request);
 ```
 
-**New response DTO** — `BulkOperationResponse.java`:
+**New response VM** — `BulkOperationRes.java`:
 ```java
-public record BulkOperationResponse(
+public record BulkOperationRes(
     int requested,
     int succeeded,
     int failed,
-    List<Long> failedIds
+    List<UUID> failedIds
 ) {}
 ```
 
 **ServiceImpl**:
 ```java
 @Override
-public BulkOperationResponse bulkDelete(BulkDeleteRequest request) {
-    List<Long> failedIds = new ArrayList<>();
-    for (Long id : request.ids()) {
+public ApiRes bulkDelete(BulkDeleteReq request) {
+    List<UUID> failedIds = new ArrayList<>();
+    for (UUID id : request.ids()) {
         try {
             delete(id); // reuse existing delete logic
-        } catch (ResourceNotFoundException e) {
+        } catch (NotFoundException e) {
             failedIds.add(id);
         }
     }
-    return new BulkOperationResponse(
-        request.ids().size(),
-        request.ids().size() - failedIds.size(),
-        failedIds.size(),
-        failedIds
+    return ApiRes.success(
+        "Bulk delete completed",
+        new BulkOperationRes(
+            request.ids().size(),
+            request.ids().size() - failedIds.size(),
+            failedIds.size(),
+            failedIds
+        )
     );
 }
 ```
@@ -227,37 +235,36 @@ public BulkOperationResponse bulkDelete(BulkDeleteRequest request) {
 ```java
 @DeleteMapping("/bulk")
 @Operation(summary = "Bulk delete products")
-public ResponseEntity<ApiResponse<BulkOperationResponse>> bulkDelete(
-        @Valid @RequestBody BulkDeleteRequest request) {
-    return ResponseEntity.ok(
-        ApiResponse.success("Bulk delete completed", service.bulkDelete(request)));
+public ApiRes bulkDelete(@Valid @RequestBody BulkDeleteReq request) {
+    return service.bulkDelete(request);
 }
 ```
 
 ---
 
 ### STATUS_TRANSITION
-**New DTO** — `ChangeStatusRequest.java`:
+**New VM** — `ChangeStatusReq.java`:
 ```java
-public record ChangeStatusRequest(
+public record ChangeStatusReq(
     @NotNull ProductStatus status
 ) {}
 ```
 
 **Service interface**:
 ```java
-ProductResponse changeStatus(Long id, ChangeStatusRequest request);
+ApiRes changeStatus(UUID id, ChangeStatusReq request);
 ```
 
 **ServiceImpl**:
 ```java
 @Override
-public ProductResponse changeStatus(Long id, ChangeStatusRequest request) {
+public ApiRes changeStatus(UUID id, ChangeStatusReq request) {
     Product product = findByIdOrThrow(id);
     validateStatusTransition(product.getStatus(), request.status()); // guard invalid transitions
     product.setStatus(request.status());
-    log.info("Product {} status changed: {} → {}", id, product.getStatus(), request.status());
-    return ProductResponse.from(repository.save(product));
+    Product saved = repository.save(product);
+    log.info("Product {} status changed to {}", id, request.status());
+    return ApiRes.success("Status updated", ProductRes.from(saved));
 }
 
 private void validateStatusTransition(ProductStatus from, ProductStatus to) {
@@ -278,11 +285,10 @@ private void validateStatusTransition(ProductStatus from, ProductStatus to) {
 ```java
 @PatchMapping("/{id}/status")
 @Operation(summary = "Change product status")
-public ResponseEntity<ApiResponse<ProductResponse>> changeStatus(
-        @PathVariable Long id,
-        @Valid @RequestBody ChangeStatusRequest request) {
-    return ResponseEntity.ok(
-        ApiResponse.success("Status updated", service.changeStatus(id, request)));
+public ApiRes changeStatus(
+        @PathVariable UUID id,
+        @Valid @RequestBody ChangeStatusReq request) {
+    return service.changeStatus(id, request);
 }
 ```
 
@@ -292,8 +298,8 @@ public ResponseEntity<ApiResponse<ProductResponse>> changeStatus(
 If adding a relationship (e.g., Product → Category):
 1. Create migration to add FK column
 2. Add `@ManyToOne @JoinColumn` to entity
-3. Add the related entity's ID and name to the Response DTO
-4. Update `Create` and `Update` request DTOs to accept the related ID
+3. Add the related entity's ID and name to the response VM
+4. Update request VMs to accept the related ID
 5. In ServiceImpl, fetch the related entity by ID before building/updating
 6. Add a repository query to filter by relationship if needed
 
@@ -322,9 +328,9 @@ public void exportCsv(Writer writer) throws IOException {
     Pageable pageable = PageRequest.of(0, 500, Sort.by("id").ascending());
     Page<Product> page;
     do {
-        page = repository.findAll(pageable);
+        page = repository.findAllByDeletedFalse(pageable);
         for (Product p : page.getContent()) {
-            writer.write(String.format("%d,%s,%s,%s,%s,%s\n",
+            writer.write(String.format("%s,%s,%s,%s,%s,%s\n",
                 p.getId(), p.getName(), p.getSku(),
                 p.getPrice(), p.getStatus(), p.getCreatedAt()));
         }
@@ -341,9 +347,8 @@ If the feature introduces a new exception type (e.g., `IllegalStateException` fo
 
 ```java
 @ExceptionHandler(IllegalStateException.class)
-public ResponseEntity<ApiResponse<Void>> handleIllegalState(IllegalStateException ex) {
-    return ResponseEntity.status(HttpStatus.CONFLICT)
-        .body(ApiResponse.error(ex.getMessage()));
+public ApiRes handleIllegalState(IllegalStateException ex) {
+    return ApiRes.conflict(ex.getMessage());
 }
 ```
 
@@ -369,11 +374,16 @@ Add MockMvc test methods for new endpoints:
 ## Step 6 — Final Verification
 
 ```bash
-# Compile
-./gradlew compile -q
+cd app/api
 
-# Run only tests for this module
-./gradlew test -q --tests "<Entity>ServiceImplTest" --tests "<Entity>ControllerTest"
+# Compile
+./gradlew compileJava -q
+
+# Run unit tests for this module
+./gradlew test -q --tests "com.app.oopsly.api.unit.<entity_lower>.*"
+
+# Run controller integration tests
+./gradlew integrationTest -q --tests "*<Entity>ControllerTest"
 
 # Full build
 ./gradlew build -q
@@ -396,7 +406,7 @@ Fix ALL failures before finishing.
    Added         : <list of new files>
 
 🌐 New Endpoints (if any):
-   <METHOD> /api/v1/<entities>/...
+   <METHOD> /v1/<entities>/...
 
 🗄️  Migration     : <filename or "None needed">
 🧪 Tests         : All passed ✅
