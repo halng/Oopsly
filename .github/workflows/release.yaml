@@ -11,6 +11,11 @@ on:
         default: true
         type: boolean
 
+permissions:
+  contents: read
+  actions: read
+  packages: write
+  
 jobs:
   # 1. Deploy to Staging & Run Tests
   deploy-backend-staging:
