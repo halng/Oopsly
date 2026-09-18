@@ -183,13 +183,9 @@ If changing a URL path or HTTP method:
 **If new exception added** → add test for the new error case
 
 ### Run affected tests after each file change (not just at the end):
-```bash
-# Run just the service test while working on ServiceImpl
-./mvnw test -Dtest="<Entity>ServiceImplTest" -q
-
-# Run just the controller test while working on Controller
-./mvnw test -Dtest="<Entity>ControllerTest" -q
-```
+cd app/api
+./gradlew test --tests "<Entity>ServiceImplTest" -q
+./gradlew test --tests "<Entity>ControllerTest" -q
 
 This catches errors early before they compound.
 
