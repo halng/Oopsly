@@ -321,7 +321,7 @@ cd app/api
 ```bash
 cd app/web
 pnpm install
-pnpm start
+pnpm dev
 ```
 
 ## Development checks
