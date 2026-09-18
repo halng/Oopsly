@@ -7,16 +7,16 @@ description: >
 ---
 
 ## Project structure snapshot
-!`find src/main/java -type f -name "*.java" | head -30`
+!`find app/api/src/main/java -type f -name "*.java" | head -30`
 
 ## Existing base classes
-!`find src/main/java -type f -name "BaseEntity.java" -o -name "BaseResponse.java" -o -name "ResourceNotFoundException.java" -o -name "GlobalExceptionHandler.java" 2>/dev/null | head -10`
+!`find app/api/src/main/java -type f \\( -name "Audit.java" -o -name "ApiRes.java" -o -name "PagingRes.java" -o -name "NotFoundException.java" -o -name "GlobalExceptionHandler.java" \\) 2>/dev/null | head -10`
 
 ## Current migrations
-!`ls -1 src/main/resources/db/migration/ 2>/dev/null | tail -5`
+!`ls -1 app/api/src/main/resources/db/migration/ 2>/dev/null | tail -5`
 
 ## Build tool
-!`ls pom.xml build.gradle 2>/dev/null`
+!`ls app/api/build.gradle app/api/gradlew 2>/dev/null`
 
 ---
 
@@ -39,29 +39,30 @@ Before writing any code:
 3. Determine the **base package** by reading the existing Java files above
 4. Determine the **next Flyway version number** from the migration list above
 5. Check if these base classes already exist. If not, create them first:
-   - `BaseEntity` — common JPA fields
-   - `ApiResponse<T>` — standard API wrapper
-   - `PageResponse<T>` — standard paging wrapper
-   - `ResourceNotFoundException` — 404 exception
+   - `Audit` — common JPA fields
+   - `ApiRes` — standard API wrapper
+   - `PagingRes<T>` — standard paging wrapper
+   - `NotFoundException` — 404 exception
    - `GlobalExceptionHandler` — `@ControllerAdvice`
 6. Print a short plan summary before proceeding:
    ```
    📦 Module     : Product
-   📁 Package    : com.example.app.product
+   📁 Package    : com.app.oopsly.api.product
    🗄️  Migration  : V<n>__create_product_table.sql
    📋 Fields     : id, name, description, price, sku, stock, status, createdAt, updatedAt
-   🔗 Endpoints  : POST /, GET /{id}, GET / (paged), PUT /{id}, DELETE /{id}
+   🔗 Endpoints  : POST /v1/<entities>, GET /v1/<entities>/{id}, GET /v1/<entities> (paged), PUT /v1/<entities>/{id}, PATCH /v1/<entities>/{id}
    ```
 
 ---
 
 ## Step 2 — Flyway Migration
 
-Create `src/main/resources/db/migration/V<n>__create_<table>_table.sql`:
+Create `app/api/src/main/resources/db/migration/V<n>__create_<table>_table.sql`:
 
 ```sql
 CREATE TABLE IF NOT EXISTS <table_name> (
-    id          BIGSERIAL PRIMARY KEY,
+    id          UUID PRIMARY KEY,
+    deleted     BOOLEAN DEFAULT FALSE,
     -- all domain fields with proper PostgreSQL types:
     --   String      → VARCHAR(255) NOT NULL
     --   Text        → TEXT
@@ -69,7 +70,7 @@ CREATE TABLE IF NOT EXISTS <table_name> (
     --   Integer     → INTEGER NOT NULL DEFAULT 0
     --   Boolean     → BOOLEAN NOT NULL DEFAULT TRUE
     --   Enum        → VARCHAR(50) NOT NULL
-    --   FK          → BIGINT NOT NULL REFERENCES other_table(id)
+    --   FK          → UUID NOT NULL REFERENCES other_table(id)
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -90,91 +91,92 @@ Rules:
 
 Create all files under:
 ```
-src/main/java/<base_package>/<entity_lower>/
+app/api/src/main/java/<base_package>/<entity_lower>/
 ├── <Entity>.java                      ← JPA Entity
 ├── <Entity>Status.java                ← Enum (if entity has a status)
 ├── <Entity>Repository.java            ← Spring Data JPA Repository
 ├── <Entity>Service.java               ← Service interface
 ├── <Entity>ServiceImpl.java           ← Service implementation
 ├── <Entity>Controller.java            ← REST Controller
-└── dto/
-    ├── Create<Entity>Request.java     ← Java record, input for POST
-    ├── Update<Entity>Request.java     ← Java record, input for PUT
-    └── <Entity>Response.java          ← Java record, output for all endpoints
+└── vm/
+    ├── <Entity>Req.java               ← Java record, input for POST/PUT
+    └── <Entity>Res.java               ← Java record, output for API responses
 ```
 
 ---
 
 ## Step 4 — Base Classes (create only if missing)
 
-### `BaseEntity.java`
+### `Audit.java`
 ```java
 @Getter
+@Setter
 @MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
-public abstract class BaseEntity {
+public abstract class Audit {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    @UuidGenerator(style = UuidGenerator.Style.TIME)
+    private UUID id;
 
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @JsonIgnore
+    @CreationTimestamp
     private Instant createdAt;
 
-    @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
+    @JsonIgnore
+    @UpdateTimestamp
     private Instant updatedAt;
+
+    @JsonIgnore
+    private Boolean deleted = false;
 }
 ```
 
-### `ApiResponse<T>.java`
+### `ApiRes.java`
 ```java
-public record ApiResponse<T>(
-    boolean success,
-    String message,
-    T data
-) {
-    public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(true, "Success", data);
+public class ApiRes extends ResponseEntity<Res> {
+    private static ApiRes build(HttpStatus status, boolean isSuccess, String message, Object data) {
+        return new ApiRes(new Res(isSuccess, Instant.now(), message, status.value(), data), status);
     }
-    public static <T> ApiResponse<T> success(String message, T data) {
-        return new ApiResponse<>(true, message, data);
+
+    public static ApiRes created(String message, Object data) {
+        return build(HttpStatus.CREATED, true, message, data);
     }
-    public static <T> ApiResponse<T> error(String message) {
-        return new ApiResponse<>(false, message, null);
+
+    public static ApiRes success(String message, Object data) {
+        return build(HttpStatus.OK, true, message, data);
+    }
+
+    public static ApiRes notFound(String message) {
+        return build(HttpStatus.NOT_FOUND, false, message, null);
+    }
+
+    public static ApiRes badRequest(String message) {
+        return build(HttpStatus.BAD_REQUEST, false, message, null);
+    }
+
+    public static ApiRes internalError(String message) {
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, false, message, null);
     }
 }
 ```
 
-### `PageResponse<T>.java`
+### `PagingRes.java`
 ```java
-public record PageResponse<T>(
-    List<T> content,
-    int page,
-    int size,
-    long totalElements,
+public record PagingRes<T>(
+    List<T> entities,
+    int currentPage,
+    long totalItems,
     int totalPages,
-    boolean last
-) {
-    public static <T> PageResponse<T> from(Page<T> page) {
-        return new PageResponse<>(
-            page.getContent(),
-            page.getNumber(),
-            page.getSize(),
-            page.getTotalElements(),
-            page.getTotalPages(),
-            page.isLast()
-        );
-    }
-}
+    boolean hasNextPage
+) {}
 ```
 
-### `ResourceNotFoundException.java`
+### `NotFoundException.java`
 ```java
-public class ResourceNotFoundException extends RuntimeException {
-    public ResourceNotFoundException(String resource, Long id) {
-        super(resource + " not found with id: " + id);
+public class NotFoundException extends RuntimeException {
+    public NotFoundException(String message) {
+        super(message);
     }
 }
 ```
@@ -184,28 +186,19 @@ public class ResourceNotFoundException extends RuntimeException {
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNotFound(ResourceNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(ApiResponse.error(ex.getMessage()));
+    @ExceptionHandler(NotFoundException.class)
+    public ApiRes handleNotFound(NotFoundException ex) {
+        return ApiRes.notFound(ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidation(
-            MethodArgumentNotValidException ex) {
-        Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()
-            .collect(Collectors.toMap(
-                FieldError::getField,
-                f -> Optional.ofNullable(f.getDefaultMessage()).orElse("Invalid value")
-            ));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-            .body(new ApiResponse<>(false, "Validation failed", errors));
+    public ApiRes handleValidation(MethodArgumentNotValidException ex) {
+        return ApiRes.badRequest("Bad request. Please check your input and try again.");
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ApiResponse.error("An unexpected error occurred"));
+    public ApiRes handleGeneral(Exception ex) {
+        return ApiRes.internalError("Internal server error occurred.");
     }
 }
 ```
@@ -222,7 +215,7 @@ public class GlobalExceptionHandler {
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class <Entity> extends BaseEntity {
+public class <Entity> extends Audit {
 
     // All domain fields with proper JPA annotations
     // String fields   → @Column(nullable = false, length = 255)
@@ -248,9 +241,9 @@ public enum <Entity>Status {
 
 ---
 
-## Step 7 — DTOs
+## Step 7 — Request/Response VMs
 
-### `Create<Entity>Request.java` (Java record)
+### `<Entity>Req.java` (Java record)
 - Include all user-provided fields (no id, no createdAt, no updatedAt)
 - Add validation annotations on each field:
   - `@NotBlank` for strings
@@ -260,11 +253,7 @@ public enum <Entity>Status {
   - `@Size(max = 255)` for strings
   - `@Pattern` for fields like SKU or codes
 
-### `Update<Entity>Request.java` (Java record)
-- Same fields as Create, all optional (use wrapper types or `@Nullable`)
-- Only non-null fields should be applied on update (patch-style)
-
-### `<Entity>Response.java` (Java record)
+### `<Entity>Res.java` (Java record)
 - All fields including `id`, `createdAt`, `updatedAt`
 - Include a static `from(<Entity> entity)` factory method for mapping
 
@@ -274,24 +263,19 @@ public enum <Entity>Status {
 
 ```java
 @Repository
-public interface <Entity>Repository extends JpaRepository<<Entity>, Long> {
+public interface <Entity>Repository extends JpaRepository<<Entity>, UUID> {
 
     // Paging with optional filter by status
-    Page<<Entity>> findByStatus(<Entity>Status status, Pageable pageable);
+    Page<<Entity>> findByStatusAndDeletedFalse(<Entity>Status status, Pageable pageable);
 
     // Paging all (no filter)
-    Page<<Entity>> findAll(Pageable pageable);
+    Page<<Entity>> findAllByDeletedFalse(Pageable pageable);
 
     // Find by unique field (e.g., sku) — add if entity has a unique field
-    Optional<<Entity>> findBySku(String sku);
+    Optional<<Entity>> findBySkuAndDeletedFalse(String sku);
 
     // Check existence by unique field before create/update
-    boolean existsBySku(String sku);
-
-    // Soft delete query (if using soft delete)
-    @Query("UPDATE <Entity> e SET e.status = 'DELETED' WHERE e.id = :id")
-    @Modifying
-    void softDeleteById(@Param("id") Long id);
+    boolean existsBySkuAndDeletedFalse(String sku);
 }
 ```
 
@@ -302,15 +286,15 @@ public interface <Entity>Repository extends JpaRepository<<Entity>, Long> {
 ```java
 public interface <Entity>Service {
 
-    <Entity>Response create(Create<Entity>Request request);
+    ApiRes create(<Entity>Req request);
 
-    <Entity>Response getById(Long id);
+    ApiRes getById(UUID id);
 
-    PageResponse<<Entity>Response> getAll(int page, int size, String sortBy, String sortDir);
+    ApiRes getAll(int page, int size);
 
-    <Entity>Response update(Long id, Update<Entity>Request request);
+    ApiRes update(UUID id, <Entity>Req request);
 
-    void delete(Long id);
+    ApiRes delete(UUID id);
 }
 ```
 
@@ -328,7 +312,7 @@ public class <Entity>ServiceImpl implements <Entity>Service {
     private final <Entity>Repository repository;
 
     @Override
-    public <Entity>Response create(Create<Entity>Request request) {
+    public ApiRes create(<Entity>Req request) {
         // 1. Validate uniqueness (e.g., sku must not already exist)
         // 2. Build entity using builder pattern
         // 3. Save and return mapped response
@@ -336,47 +320,53 @@ public class <Entity>ServiceImpl implements <Entity>Service {
         <Entity> entity = <Entity>.builder()
             // map all fields from request
             .build();
-        return <Entity>Response.from(repository.save(entity));
+        return ApiRes.created("Created successfully", <Entity>Res.from(repository.save(entity)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public <Entity>Response getById(Long id) {
-        return <Entity>Response.from(findByIdOrThrow(id));
+    public ApiRes getById(UUID id) {
+        return ApiRes.success("Fetched successfully", <Entity>Res.from(findByIdOrThrow(id)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<<Entity>Response> getAll(int page, int size, String sortBy, String sortDir) {
-        Sort sort = sortDir.equalsIgnoreCase("asc")
-            ? Sort.by(sortBy).ascending()
-            : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-        return PageResponse.from(repository.findAll(pageable).map(<Entity>Response::from));
+    public ApiRes getAll(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<<Entity>> pageData = repository.findAllByDeletedFalse(pageable);
+        PagingRes<<Entity>Res> pagingRes = new PagingRes<>(
+            pageData.map(<Entity>Res::from).getContent(),
+            pageable.getPageNumber(),
+            pageData.getTotalElements(),
+            pageData.getTotalPages(),
+            pageData.hasNext()
+        );
+        return ApiRes.success("Fetched successfully", pagingRes);
     }
 
     @Override
-    public <Entity>Response update(Long id, Update<Entity>Request request) {
+    public ApiRes update(UUID id, <Entity>Req request) {
         <Entity> entity = findByIdOrThrow(id);
-        // Apply only non-null fields from request (patch-style)
-        // e.g., if (request.name() != null) entity.setName(request.name());
-        return <Entity>Response.from(repository.save(entity));
+        // Apply fields from request
+        return ApiRes.success(
+            "Updated successfully",
+            <Entity>Res.from(repository.save(entity))
+        );
     }
 
     @Override
-    public void delete(Long id) {
+    public ApiRes delete(UUID id) {
         <Entity> entity = findByIdOrThrow(id);
-        // Use soft delete if entity has status field:
-        //   entity.setStatus(<Entity>Status.DELETED);
-        //   repository.save(entity);
-        // Otherwise hard delete:
-        //   repository.delete(entity);
+        entity.setDeleted(true);
+        repository.save(entity);
         log.info("Deleted <entity> with id: {}", id);
+        return ApiRes.success("Deleted successfully");
     }
 
-    private <Entity> findByIdOrThrow(Long id) {
+    private <Entity> findByIdOrThrow(UUID id) {
         return repository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("<Entity>", id));
+            .filter(entity -> !Boolean.TRUE.equals(entity.getDeleted()))
+            .orElseThrow(() -> new NotFoundException("<Entity> not found with id: " + id));
     }
 }
 ```
@@ -387,8 +377,9 @@ public class <Entity>ServiceImpl implements <Entity>Service {
 
 ```java
 @RestController
-@RequestMapping("/api/v1/<entities>")
+@RequestMapping("/v1/<entities>")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "<Entity> Management", description = "APIs for managing <entities>")
 public class <Entity>Controller {
 
@@ -396,46 +387,34 @@ public class <Entity>Controller {
 
     @PostMapping
     @Operation(summary = "Create a new <entity>")
-    public ResponseEntity<ApiResponse<<Entity>Response>> create(
-            @Valid @RequestBody Create<Entity>Request request) {
-        return ResponseEntity
-            .status(HttpStatus.CREATED)
-            .body(ApiResponse.success("Created successfully", service.create(request)));
+    public ApiRes create(@Valid @RequestBody <Entity>Req request) {
+        return service.create(request);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get <entity> by ID")
-    public ResponseEntity<ApiResponse<<Entity>Response>> getById(
-            @PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(service.getById(id)));
+    public ApiRes getById(@PathVariable UUID id) {
+        return service.getById(id);
     }
 
     @GetMapping
     @Operation(summary = "Get all <entities> with pagination")
-    public ResponseEntity<ApiResponse<PageResponse<<Entity>Response>>> getAll(
-            @RequestParam(defaultValue = "0")  int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir) {
-        return ResponseEntity.ok(
-            ApiResponse.success(service.getAll(page, size, sortBy, sortDir)));
+    public ApiRes getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return service.getAll(page, size);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update an existing <entity>")
-    public ResponseEntity<ApiResponse<<Entity>Response>> update(
-            @PathVariable Long id,
-            @Valid @RequestBody Update<Entity>Request request) {
-        return ResponseEntity.ok(
-            ApiResponse.success("Updated successfully", service.update(id, request)));
+    public ApiRes update(@PathVariable UUID id, @Valid @RequestBody <Entity>Req request) {
+        return service.update(id, request);
     }
 
-    @DeleteMapping("/{id}")
+    @PatchMapping("/{id}")
     @Operation(summary = "Delete a <entity>")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
-        return ResponseEntity.noContent().build();
+    public ApiRes delete(@PathVariable UUID id) {
+        return service.delete(id);
     }
 }
 ```
@@ -445,22 +424,22 @@ public class <Entity>Controller {
 ## Step 12 — Tests
 
 ### Unit Test: `<Entity>ServiceImplTest.java`
-Location: `src/test/java/<base_package>/<entity_lower>/`
+Location: `app/api/src/test/java/com/app/oopsly/api/unit/<entity_lower>/application/`
 
 - Use `@ExtendWith(MockitoExtension.class)`
 - Mock `<Entity>Repository`
 - Test cases:
-  - `create_validRequest_returnsResponse()`
+  - `create_validRequest_returnsApiRes()`
   - `create_duplicateSku_throwsException()` ← if unique field exists
-  - `getById_existingId_returnsResponse()`
-  - `getById_nonExistingId_throwsResourceNotFoundException()`
-  - `getAll_returnsPageResponse()`
+  - `getById_existingId_returnsApiRes()`
+  - `getById_nonExistingId_throwsNotFoundException()`
+  - `getAll_returnsPagingRes()`
   - `update_existingId_updatesFields()`
   - `delete_existingId_deletesEntity()`
-  - `delete_nonExistingId_throwsResourceNotFoundException()`
+  - `delete_nonExistingId_throwsNotFoundException()`
 
 ### Integration Test: `<Entity>ControllerTest.java`
-Location: `src/test/java/<base_package>/<entity_lower>/`
+Location: `app/api/src/test/java/com/app/oopsly/api/integration/`
 
 - Use `@SpringBootTest` + `@AutoConfigureMockMvc` + `@Testcontainers`
 - Spin up PostgreSQL via Testcontainers:
@@ -477,15 +456,15 @@ static void configure(DynamicPropertyRegistry registry) {
 }
 ```
 - Test cases with MockMvc:
-  - `POST /api/v1/<entities>` → 201 Created
-  - `POST /api/v1/<entities>` with invalid body → 400 Bad Request
-  - `GET /api/v1/<entities>/{id}` existing → 200 OK
-  - `GET /api/v1/<entities>/{id}` not found → 404 Not Found
-  - `GET /api/v1/<entities>` → 200 OK with pagination fields
-  - `PUT /api/v1/<entities>/{id}` → 200 OK
-  - `PUT /api/v1/<entities>/{id}` not found → 404 Not Found
-  - `DELETE /api/v1/<entities>/{id}` → 204 No Content
-  - `DELETE /api/v1/<entities>/{id}` not found → 404 Not Found
+  - `POST /v1/<entities>` → 201 Created
+  - `POST /v1/<entities>` with invalid body → 400 Bad Request
+  - `GET /v1/<entities>/{id}` existing → 200 OK
+  - `GET /v1/<entities>/{id}` not found → 404 Not Found
+  - `GET /v1/<entities>` → 200 OK with paging fields
+  - `PUT /v1/<entities>/{id}` → 200 OK
+  - `PUT /v1/<entities>/{id}` not found → 404 Not Found
+  - `PATCH /v1/<entities>/{id}` → 200 OK soft delete
+  - `PATCH /v1/<entities>/{id}` not found → 404 Not Found
 
 ---
 
@@ -494,14 +473,16 @@ static void configure(DynamicPropertyRegistry registry) {
 Run in this exact order and fix any errors before proceeding to the next step:
 
 ```bash
+cd app/api
+
 # 1. Compile
-./gradlew compile -q
+./gradlew compileJava -q
 
 # 2. Unit tests only (fast)
-./gradlew test -q --tests "<Entity>ServiceImplTest"
+./gradlew test -q --tests "com.app.oopsly.api.unit.<entity_lower>.*"
 
 # 3. Integration tests
-./gradlew test -q --tests "<Entity>ControllerTest"
+./gradlew integrationTest -q --tests "*<Entity>ControllerTest"
 
 # 4. Full build
 ./gradlew build -q
@@ -530,18 +511,17 @@ After all steps complete successfully, print this report:
    Repository   : <Entity>Repository.java
    Service      : <Entity>Service.java + <Entity>ServiceImpl.java
    Controller   : <Entity>Controller.java
-   DTOs         : Create<Entity>Request.java
-                  Update<Entity>Request.java
-                  <Entity>Response.java
+   VMs          : <Entity>Req.java
+                  <Entity>Res.java
    Tests        : <Entity>ServiceImplTest.java
                   <Entity>ControllerTest.java
 
 🌐 Endpoints:
-   POST    /api/v1/<entities>       → Create
-   GET     /api/v1/<entities>/{id}  → Get by ID
-   GET     /api/v1/<entities>       → Get all (paged)
-   PUT     /api/v1/<entities>/{id}  → Update
-   DELETE  /api/v1/<entities>/{id}  → Delete
+   POST    /v1/<entities>       → Create
+   GET     /v1/<entities>/{id}  → Get by ID
+   GET     /v1/<entities>       → Get all (paged)
+   PUT     /v1/<entities>/{id}  → Update
+   PATCH   /v1/<entities>/{id}  → Soft delete
 
 🧪 Tests: All passed ✅
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
