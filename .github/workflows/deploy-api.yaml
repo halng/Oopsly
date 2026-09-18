@@ -103,6 +103,8 @@ jobs:
       - name: Deploy to Railway
         run: |
           npm install -g @railway/cli
-          railway up --environment ${{ inputs.env }} --image ${{ needs.validate-inputs.outputs.docker-image-name }} --tag ${{ needs.validate-inputs.outputs.release-ref }}
+          railway service source connect \
+            --image ${{ needs.validate-inputs.outputs.docker-image-name }}:${{ needs.validate-inputs.outputs.release-ref }} \
+            --environment ${{ inputs.env }}
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
