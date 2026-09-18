@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release-ref: ${{ steps.check.outputs.tag }}
+      docker-image-name: ${{ steps.create-image-name.outputs.image_name }}
     steps:
       - name: Check deployment parameters
         id: check
@@ -44,9 +45,12 @@ jobs:
             echo "tag=${{ inputs.git_tag }}" >> $GITHUB_OUTPUT
           fi
       - name: Create Image Name
+        id: create-image-name
         run: |
           REPO_LOWER="${GITHUB_REPOSITORY,,}"
-          echo "IMAGE_NAME=ghcr.io/${REPO_LOWER}/oopsly-api:${{ steps.check.outputs.tag }}" >> ${GITHUB_ENV}
+          IMAGE_NAME="ghcr.io/${REPO_LOWER}/oopsly-api:${{ steps.check.outputs.tag }}"
+          echo "image_name=${IMAGE_NAME}" >> $GITHUB_OUTPUT
+          echo "Docker image name: ${IMAGE_NAME}" >> $GITHUB_STEP_SUMMARY
   
 
   build:
@@ -72,7 +76,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v5
       - name: Build Native Docker Image
-        run: ./gradlew bootBuildImage --imageName=${{ env.IMAGE_NAME }}
+        run: ./gradlew bootBuildImage --imageName=${{ needs.validate-inputs.outputs.docker-image-name }}
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
         working-directory: app/api
@@ -85,7 +89,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push Docker Image
-        run: docker push ${{ env.IMAGE_NAME }}
+        run: docker push ${{ needs.validate-inputs.outputs.docker-image-name }}
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
         working-directory: app/api
@@ -99,6 +103,6 @@ jobs:
       - name: Deploy to Railway
         run: |
           npm install -g @railway/cli
-          railway up --environment ${{ inputs.env }} --image ${{ env.IMAGE_NAME }} --tag ${{ needs.validate-inputs.outputs.release-ref }}
+          railway up --environment ${{ inputs.env }} --image ${{ needs.validate-inputs.outputs.docker-image-name }} --tag ${{ needs.validate-inputs.outputs.release-ref }}
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
