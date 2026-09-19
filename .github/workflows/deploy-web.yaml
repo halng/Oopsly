@@ -69,6 +69,6 @@ jobs:
           if [ "${{ inputs.env }}" == "prod" ]; then
             vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
           else
-            vercel --token ${{ secrets.VERCEL_TOKEN }}
+            vercel --yes --token ${{ secrets.VERCEL_TOKEN }}
           fi
           
