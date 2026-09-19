@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Subject, Shelf, Card } from '@/types';
 import { ApiService } from '@/services/api';
+import { useShelfStore } from '@/store';
 
 interface CloneSubjectModalProps {
     isOpen: boolean;
@@ -46,6 +47,7 @@ export default function CloneSubjectModal({
     const [isCreatingShelf, setIsCreatingShelf] = useState(false);
     const [newShelfName, setNewShelfName] = useState('');
     const [isSubmittingNewShelf, setIsSubmittingNewShelf] = useState(false);
+    const activeShelves = Object.freeze(useShelfStore((state) => state.shelves));
 
     useEffect(() => {
         if (subject) {
@@ -56,23 +58,20 @@ export default function CloneSubjectModal({
             setShowCardsPreview(false);
             setIsCreatingShelf(false);
 
-            const activeShelves = shelves.filter((s) => !s.isDeleted);
-            if (activeShelves.length > 0) {
-                setSelectedShelfId((prev) =>
-                    prev && activeShelves.some((s) => s.id === prev)
-                        ? prev
-                        : activeShelves[0].id
-                );
-            } else {
-                setSelectedShelfId('');
-            }
+            // if (activeShelves.length > 0) {
+            //     setSelectedShelfId((prev) =>
+            //         prev && activeShelves.some((s) => s.id === prev)
+            //             ? prev
+            //             : activeShelves[0].id
+            //     );
+            // } else {
+            //     setSelectedShelfId('');
+            // }
         }
     }, [subject, shelves, isOpen]);
 
     if (!isOpen || !subject) return null;
 
-    const activeShelves = shelves.filter((s) => !s.isDeleted);
-    const targetShelf = activeShelves.find((s) => s.id === selectedShelfId);
     const sampleCards = subject.cardsPreview || [];
 
     const handleCreateQuickShelf = async (e: React.FormEvent) => {
@@ -97,6 +96,7 @@ export default function CloneSubjectModal({
                     name: newShelfName.trim(),
                     color: '#8BC34A',
                     description: 'Created for cloned flashcard decks',
+                    icon: 'folder',
                 });
                 if (res.isSuccess && res.data) {
                     setSelectedShelfId(res.data.id);
@@ -134,14 +134,14 @@ export default function CloneSubjectModal({
             if (res.isSuccess && res.data) {
                 if (
                     customTitle.trim() &&
-                    customTitle.trim() !== subject.title
+                    customTitle.trim() !== subject.name
                 ) {
                     await ApiService.updateSubject(res.data.id, {
-                        title: customTitle.trim(),
+                        name: customTitle.trim(),
                         description: customDescription.trim() || undefined,
                         color: selectedColor,
                     });
-                    res.data.title = customTitle.trim();
+                    res.data.name = customTitle.trim();
                     res.data.color = selectedColor;
                 }
 
@@ -227,7 +227,7 @@ export default function CloneSubjectModal({
                                         Source Deck
                                     </span>
                                     <h3 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100">
-                                        {subject.title}
+                                        {subject.name }
                                     </h3>
                                 </div>
                             </div>
@@ -296,7 +296,7 @@ export default function CloneSubjectModal({
                             </form>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {activeShelves.map((shelf) => {
+                                {Object.values(activeShelves || []).map((shelf) => {
                                     const isSelected =
                                         selectedShelfId === shelf.id;
                                     return (
@@ -406,7 +406,7 @@ export default function CloneSubjectModal({
                         className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-xs font-bold shadow-md disabled:opacity-50 cursor-pointer"
                     >
                         <Download className="w-4 h-4" />
-                        <span>
+                        {/* <span>
                             {isCloning
                                 ? 'Cloning Deck...'
                                 : `Clone to ${
@@ -414,7 +414,7 @@ export default function CloneSubjectModal({
                                           ? `"${targetShelf.name}"`
                                           : 'Selected Shelf'
                                   }`}
-                        </span>
+                        </span> */}
                     </button>
                 </div>
             </div>

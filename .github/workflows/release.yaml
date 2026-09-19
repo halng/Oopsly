@@ -11,6 +11,11 @@ on:
         default: true
         type: boolean
 
+permissions:
+  contents: read
+  actions: read
+  packages: write
+
 jobs:
   # 1. Deploy to Staging & Run Tests
   deploy-backend-staging:
@@ -23,7 +28,6 @@ jobs:
 
   deploy-frontend-staging:
     name: Deploy frontend to stg env for ${{ github.ref_name }}
-    needs: deploy-backend-staging
     uses: ./.github/workflows/deploy-web.yaml
     with:
       git_tag: ${{ github.ref_name }}

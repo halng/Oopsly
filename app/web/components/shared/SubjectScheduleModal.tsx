@@ -85,7 +85,7 @@ export default function SubjectScheduleModal({
                                 Study Schedule
                             </h2>
                             <p className="text-xs font-medium text-stone-500 truncate max-w-[200px]">
-                                {subject.title}
+                                {subject.name}
                             </p>
                         </div>
                     </div>

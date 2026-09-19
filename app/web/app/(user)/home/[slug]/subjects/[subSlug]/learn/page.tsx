@@ -34,15 +34,15 @@ export default function LearnPage() {
         (async () => {
             const [subjectRes, cardsRes] = await Promise.all([
                 ApiService.getSubject(subjectId),
-                ApiService.getSubjectCards(subjectId),
+                ApiService.getSubjectCards(shelfId, subjectId),
             ]);
             if (!mounted) return;
             if (subjectRes.isSuccess && subjectRes.data) {
                 setSubject(subjectRes.data);
             }
-            setCards(
-                (cardsRes.data || []).filter((c) => !c.isDeleted)
-            );
+            // setCards(
+            //     // (cardsRes.data || []).filter((c) => !c.isDeleted)
+            // );
             setIsLoading(false);
         })();
         return () => {
@@ -99,7 +99,7 @@ export default function LearnPage() {
                     </div>
                     <div>
                         <h1 className="text-base font-bold">
-                            Learn Mode: {subject?.title}
+                            Learn Mode: {subject?.name}
                         </h1>
                         <p className="text-xs text-stone-500">
                             Question {currentIndex + 1} of {cards.length}

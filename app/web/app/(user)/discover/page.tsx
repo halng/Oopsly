@@ -20,13 +20,13 @@ export default function DiscoverPage() {
     useEffect(() => {
         Promise.all([
             ApiService.getDiscoverCatalog(),
-            ApiService.getShelves(),
+            ApiService.getShelves(0, 100),
         ]).then(([catalogRes, shelvesRes]) => {
             if (catalogRes.isSuccess && catalogRes.data) {
                 setCatalog(catalogRes.data);
             }
             if (shelvesRes.isSuccess && shelvesRes.data) {
-                setShelves(shelvesRes.data.filter((s) => !s.isDeleted));
+                // setShelves(shelvesRes.data.filter((s) => !s.isDeleted));
             }
             setIsLoading(false);
         });
@@ -36,15 +36,15 @@ export default function DiscoverPage() {
         new Set(catalog.flatMap((item) => item.tags || []))
     );
     const filteredCatalog = catalog.filter((item) => {
-        const q = searchQuery.toLowerCase();
-        const matchesSearch =
-            item.title.toLowerCase().includes(q) ||
-            (item.description || '').toLowerCase().includes(q) ||
-            (item.tags || []).some((t) => t.toLowerCase().includes(q));
-        const matchesTag = selectedTag
-            ? (item.tags || []).includes(selectedTag)
-            : true;
-        return matchesSearch && matchesTag;
+        // const q = searchQuery.toLowerCase();
+        // const matchesSearch =
+        //     item.title.toLowerCase().includes(q) ||
+        //     (item.description || '').toLowerCase().includes(q) ||
+        //     (item.tags || []).some((t) => t.toLowerCase().includes(q));
+        // const matchesTag = selectedTag
+        //     ? (item.tags || []).includes(selectedTag)
+        //     : true;
+        // return matchesSearch && matchesTag;
     });
 
     return (
@@ -137,9 +137,9 @@ export default function DiscoverPage() {
                                         item.color || 'var(--theme-accent)',
                                 }}
                             >
-                                {item.title.slice(0, 1)}
+                                {/* {item.title.slice(0, 1)} */}
                             </div>
-                            <h2 className="font-bold">{item.title}</h2>
+                            {/* <h2 className="font-bold">{item.title}</h2> */}
                             <p className="text-xs text-stone-500 line-clamp-2">
                                 {item.description}
                             </p>

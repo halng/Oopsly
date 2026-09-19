@@ -15,6 +15,17 @@ on:
     secrets:
       VERCEL_TOKEN:
         required: true
+  workflow_dispatch:
+    inputs:
+      git_hash:
+        required: false
+        type: string
+      git_tag:
+        required: false
+        type: string
+      env:
+        required: true
+        type: string
 
 jobs:
   validate:
@@ -58,5 +69,7 @@ jobs:
           if [ "${{ inputs.env }}" == "prod" ]; then
             vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
           else
-            vercel --token ${{ secrets.VERCEL_TOKEN }}
+            vercel --yes --token ${{ secrets.VERCEL_TOKEN }}
           fi
+        working-directory: ./app/web
+          

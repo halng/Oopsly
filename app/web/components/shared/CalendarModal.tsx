@@ -24,14 +24,14 @@ const CalendarModal: React.FC<CalendarModalProps> = ({ onClose }) => {
 
     useEffect(() => {
         const loadData = async () => {
-            const res = await ApiService.getShelves();
+            const res = await ApiService.getShelves(0, 100);
             if (res.isSuccess && res.data) {
                 // Fetch subjects for all shelves
                 const allSubjects: Subject[] = [];
-                for (const shelf of res.data) {
+                for (const shelf of res.data.entities) {
                     const subRes = await ApiService.getShelfSubjects(shelf.id);
                     if (subRes.isSuccess && subRes.data) {
-                        allSubjects.push(...subRes.data);
+                        allSubjects.push(...subRes.data.entities);
                     }
                 }
                 setSubjects(allSubjects.filter((s) => s.schedule?.enabled));
@@ -132,7 +132,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({ onClose }) => {
                                                         </div>
                                                         <div>
                                                             <p className="text-sm font-bold text-stone-900 dark:text-stone-100 line-clamp-1">
-                                                                {subject.title}
+                                                                {subject.name}
                                                             </p>
                                                             <p className="text-[10px] text-stone-500 font-medium">
                                                                 {
