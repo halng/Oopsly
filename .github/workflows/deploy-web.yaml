@@ -67,15 +67,8 @@ jobs:
           npm install -g vercel
           # If env is prod, use --prod flag
           if [ "${{ inputs.env }}" == "prod" ]; then
-            deploy_output=$(vercel --prod --token "${{ secrets.VERCEL_TOKEN }}" 2>&1)
+            vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
           else
-            deploy_output=$(vercel --token "${{ secrets.VERCEL_TOKEN }}" 2>&1)
+            vercel --token ${{ secrets.VERCEL_TOKEN }}
           fi
-          printf '%s\n' "$deploy_output"
-          {
-            echo '### Vercel deployment output'
-            echo '```'
-            printf '%s\n' "$deploy_output"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
           
