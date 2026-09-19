@@ -71,4 +71,5 @@ jobs:
           else
             vercel --yes --token ${{ secrets.VERCEL_TOKEN }}
           fi
+        working-directory: ./app/web
           
