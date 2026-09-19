@@ -64,12 +64,12 @@ export default function ReviewPage() {
             if (subjectRes.isSuccess && subjectRes.data) {
                 setSubject(subjectRes.data);
             }
-            let nextCards = dueRes.isSuccess ? dueRes.data || [] : [];
+            const nextCards = dueRes.isSuccess ? dueRes.data || [] : [];
             if (nextCards.length === 0) {
-                const allRes = await ApiService.getSubjectCards(subjectId);
-                nextCards = allRes.isSuccess
-                    ? (allRes.data || []).filter((c) => !c.isDeleted)
-                    : [];
+                const allRes = await ApiService.getSubjectCards(shelfId, subjectId);
+                // nextCards = allRes.isSuccess
+                //     ? allRes.data?.entities
+                //     : [];
             }
             setCards(nextCards);
             setIsLoading(false);
@@ -113,13 +113,13 @@ export default function ReviewPage() {
         }) => {
             setLastReview({
                 ...stats,
-                subjectTitle: subject?.title || 'Subject',
+                subjectTitle: subject?.name || 'Subject',
                 subjectId,
                 shelfId,
             });
             router.push(`${base}/review/complete`);
         },
-        [base, router, setLastReview, shelfId, subject?.title, subjectId]
+        [base, router, setLastReview, shelfId, subject?.name, subjectId]
     );
 
     const handleGrade = async (grade: Grade) => {
@@ -215,7 +215,7 @@ export default function ReviewPage() {
                     </button>
                     <div>
                         <h1 className="text-sm font-bold">
-                            {subject?.title || 'Review'}
+                            {subject?.name || 'Review'}
                         </h1>
                         <p className="text-xs text-stone-500">
                             Card {currentIndex + 1} of {cards.length}

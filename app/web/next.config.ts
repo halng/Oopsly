@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     experimental: {
         serverComponentsHmrCache: false,
     },
+    // pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js'].map((ext) => `(?<!\\.test\\.)${ext}`),
 };
 
 export default nextConfig;

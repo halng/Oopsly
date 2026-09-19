@@ -33,7 +33,7 @@ export default function LeaderboardPage() {
         if (myRes.isSuccess && myRes.data) {
             setMyCommunities(myRes.data);
             if (myRes.data.length > 0) {
-                setSelectedCommunityId((prev) => prev || myRes.data[0].id);
+                // setSelectedCommunityId((prev) => prev || myRes?.data[0]?.id);
             }
         }
         setIsLoading(false);

@@ -35,22 +35,22 @@ export default function MatchPage() {
     const [shuffleKey, setShuffleKey] = useState(0);
 
     useEffect(() => {
-        let mounted = true;
-        (async () => {
-            const [subjectRes, cardsRes] = await Promise.all([
-                ApiService.getSubject(subjectId),
-                ApiService.getSubjectCards(subjectId),
-            ]);
-            if (!mounted) return;
-            if (subjectRes.isSuccess && subjectRes.data) {
-                setSubject(subjectRes.data);
-            }
-            setCards((cardsRes.data || []).filter((c) => !c.isDeleted));
-            setIsLoading(false);
-        })();
-        return () => {
-            mounted = false;
-        };
+        // let mounted = true;
+        // (async () => {
+        //     const [subjectRes, cardsRes] = await Promise.all([
+        //         ApiService.getSubject(subjectId),
+        //         ApiService.getSubjectCards(shelfId, subjectId),
+        //     ]);
+        //     if (!mounted) return;
+        //     if (subjectRes.isSuccess && subjectRes.data) {
+        //         setSubject(subjectRes.data);
+        //     }
+        //     // setCards((cardsRes.data || []).filter((c) => !c.isDeleted));
+        //     setIsLoading(false);
+        // })();
+        // return () => {
+        //     mounted = false;
+        // };
     }, [subjectId]);
 
     const gameCards = useMemo(() => cards.slice(0, 6), [cards]);
@@ -154,7 +154,7 @@ export default function MatchPage() {
                     </div>
                     <div>
                         <h1 className="text-base font-bold">
-                            Matching Game: {subject?.title}
+                            Matching Game: {subject?.name}
                         </h1>
                         <p className="text-xs text-stone-500">
                             Match every prompt to its definition

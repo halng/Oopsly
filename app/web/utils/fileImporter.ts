@@ -295,7 +295,7 @@ export function extractCardsFromTable(
         return {
             front,
             back,
-            hint: hint || undefined,
+            hint: hint,
             tags,
             isValid,
             validationError: validationError || undefined,

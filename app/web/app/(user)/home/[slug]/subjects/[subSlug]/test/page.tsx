@@ -43,17 +43,15 @@ export default function TestPage() {
         (async () => {
             const [subjectRes, cardsRes] = await Promise.all([
                 ApiService.getSubject(subjectId),
-                ApiService.getSubjectCards(subjectId),
+                ApiService.getSubjectCards(shelfId, subjectId),
             ]);
             if (!mounted) return;
             if (subjectRes.isSuccess && subjectRes.data) {
                 setSubject(subjectRes.data);
             }
             const nestedCards = subjectRes.data?.cards || [];
-            const fetchedCards = cardsRes.isSuccess ? cardsRes.data || [] : [];
-            const cards = (fetchedCards.length ? fetchedCards : nestedCards).filter(
-                (c) => !c.isDeleted
-            );
+            const fetchedCards = cardsRes.isSuccess ? cardsRes.data?.entities || [] : [];
+            const cards = [...nestedCards, ...fetchedCards];
             const generated: Question[] = cards.slice(0, 5).map((card, idx) => {
                 const other = cards.filter((c) => c.id !== card.id);
                 const distractors = other.slice(0, 3).map((c) => c.back);
@@ -148,7 +146,7 @@ export default function TestPage() {
                     </div>
                     <div>
                         <h1 className="text-base font-bold">
-                            Practice Test: {subject?.title}
+                            Practice Test: {subject?.name}
                         </h1>
                         <p className="text-xs text-stone-500">
                             {results
