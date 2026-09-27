@@ -124,6 +124,17 @@ class SecurityConfigTest {
     }
 
     @Test
+    void givenMissingOrigins_whenAddingCorsMappings_thenThrowsIllegalState() {
+        when(appConfig.getAllowedOrigins()).thenReturn(null);
+        CorsRegistry corsRegistry = mock(CorsRegistry.class);
+
+        WebMvcConfigurer configurer = securityConfig.corsConfigurer();
+
+        assertThrows(IllegalStateException.class, () -> configurer.addCorsMappings(corsRegistry));
+        verifyNoInteractions(corsRegistry);
+    }
+
+    @Test
     void givenPasswordEncoder_whenEncodingMultipleTimes_thenProducesDifferentHashes() {
         PasswordEncoder encoder = securityConfig.passwordEncoder();
         String password = generateDummyString();

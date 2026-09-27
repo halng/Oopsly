@@ -110,6 +110,10 @@ public class SecurityConfig {
                                         .filter(origin -> !origin.isEmpty())
                                         .filter(origin -> !"*".equals(origin))
                                         .toArray(String[]::new);
+                if (allowedOrigins.length == 0) {
+                    throw new IllegalStateException(
+                            "app.allowed-origins must include at least one explicit origin");
+                }
                 corsRegistry
                         .addMapping("/**")
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "OPTIONS")
