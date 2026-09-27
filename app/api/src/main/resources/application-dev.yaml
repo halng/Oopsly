@@ -1,4 +1,5 @@
 app:
+  allowed-origins: "*"
   test-emails:
     - test@oopsly.com
     - user1@oopsly.com
