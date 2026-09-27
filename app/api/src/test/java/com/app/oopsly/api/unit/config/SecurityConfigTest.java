@@ -37,6 +37,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @ExtendWith(MockitoExtension.class)
@@ -106,6 +108,19 @@ class SecurityConfigTest {
         WebMvcConfigurer configurer = securityConfig.corsConfigurer();
 
         assertNotNull(configurer);
+    }
+
+    @Test
+    void givenConfiguredOrigins_whenAddingCorsMappings_thenUsesConfiguredOriginsOnly() {
+        when(appConfig.getAllowedOrigins()).thenReturn("*, https://oopsly.app, http://localhost:8081");
+        CorsRegistry corsRegistry = mock(CorsRegistry.class);
+        CorsRegistration corsRegistration = mock(CorsRegistration.class, RETURNS_SELF);
+        when(corsRegistry.addMapping("/**")).thenReturn(corsRegistration);
+
+        WebMvcConfigurer configurer = securityConfig.corsConfigurer();
+        configurer.addCorsMappings(corsRegistry);
+
+        verify(corsRegistration).allowedOrigins("https://oopsly.app", "http://localhost:8081");
     }
 
     @Test

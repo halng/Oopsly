@@ -20,6 +20,7 @@ import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -100,10 +101,19 @@ public class SecurityConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry corsRegistry) {
+                String configuredOrigins = appConfig.getAllowedOrigins();
+                String[] allowedOrigins =
+                        configuredOrigins == null
+                                ? new String[0]
+                                : Arrays.stream(configuredOrigins.split(","))
+                                        .map(String::trim)
+                                        .filter(origin -> !origin.isEmpty())
+                                        .filter(origin -> !"*".equals(origin))
+                                        .toArray(String[]::new);
                 corsRegistry
                         .addMapping("/**")
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "OPTIONS")
-                        .allowedOrigins("*")
+                        .allowedOrigins(allowedOrigins)
                         .allowedHeaders("*");
             }
         };
