@@ -25,6 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -44,12 +46,17 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AppConfig appConfig;
     private final ObjectMapper objectMapper;
+    private final Environment environment;
 
     public SecurityConfig(
-            JwtAuthenticationFilter jwtAuthFilter, AppConfig appConfig, ObjectMapper objectMapper) {
+            JwtAuthenticationFilter jwtAuthFilter,
+            AppConfig appConfig,
+            ObjectMapper objectMapper,
+            Environment environment) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.appConfig = appConfig;
         this.objectMapper = objectMapper;
+        this.environment = environment;
     }
 
     @Bean
@@ -102,14 +109,21 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry corsRegistry) {
                 String configuredOrigins = appConfig.getAllowedOrigins();
-                String[] allowedOrigins =
+                String[] requestedOrigins =
                         configuredOrigins == null
                                 ? new String[0]
                                 : Arrays.stream(configuredOrigins.split(","))
                                         .map(String::trim)
                                         .filter(origin -> !origin.isEmpty())
-                                        .filter(origin -> !"*".equals(origin))
                                         .toArray(String[]::new);
+                boolean hasWildcard = Arrays.stream(requestedOrigins).anyMatch("*"::equals);
+                boolean isTestOrDevProfile =
+                        environment.acceptsProfiles(Profiles.of("test", "dev", "integration"));
+                if (hasWildcard && !isTestOrDevProfile) {
+                    throw new IllegalStateException(
+                            "app.allowed-origins cannot include wildcard outside test/dev");
+                }
+                String[] allowedOrigins = hasWildcard ? new String[] {"*"} : requestedOrigins;
                 if (allowedOrigins.length == 0) {
                     throw new IllegalStateException(
                             "app.allowed-origins must include at least one explicit origin");

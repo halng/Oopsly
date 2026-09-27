@@ -31,6 +31,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -49,10 +51,11 @@ class SecurityConfigTest {
     private SecurityConfig securityConfig;
     @Mock private AppConfig appConfig;
     @Mock private ObjectMapper objectMapper;
+    @Mock private Environment environment;
 
     @BeforeEach
     void setUp() {
-        securityConfig = new SecurityConfig(jwtAuthFilter, appConfig, objectMapper);
+        securityConfig = new SecurityConfig(jwtAuthFilter, appConfig, objectMapper, environment);
     }
 
     @Test
@@ -112,7 +115,7 @@ class SecurityConfigTest {
 
     @Test
     void givenConfiguredOrigins_whenAddingCorsMappings_thenUsesConfiguredOriginsOnly() {
-        when(appConfig.getAllowedOrigins()).thenReturn("*, https://oopsly.app, http://localhost:8081");
+        when(appConfig.getAllowedOrigins()).thenReturn("https://oopsly.app, http://localhost:8081");
         CorsRegistry corsRegistry = mock(CorsRegistry.class);
         CorsRegistration corsRegistration = mock(CorsRegistration.class, RETURNS_SELF);
         when(corsRegistry.addMapping("/**")).thenReturn(corsRegistration);
@@ -121,6 +124,20 @@ class SecurityConfigTest {
         configurer.addCorsMappings(corsRegistry);
 
         verify(corsRegistration).allowedOrigins("https://oopsly.app", "http://localhost:8081");
+    }
+
+    @Test
+    void givenWildcardOriginsInDevProfile_whenAddingCorsMappings_thenAllowsWildcard() {
+        when(appConfig.getAllowedOrigins()).thenReturn("*, https://oopsly.app");
+        when(environment.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+        CorsRegistry corsRegistry = mock(CorsRegistry.class);
+        CorsRegistration corsRegistration = mock(CorsRegistration.class, RETURNS_SELF);
+        when(corsRegistry.addMapping("/**")).thenReturn(corsRegistration);
+
+        WebMvcConfigurer configurer = securityConfig.corsConfigurer();
+        configurer.addCorsMappings(corsRegistry);
+
+        verify(corsRegistration).allowedOrigins("*");
     }
 
     @Test
@@ -135,8 +152,9 @@ class SecurityConfigTest {
     }
 
     @Test
-    void givenWildcardAndBlankOrigins_whenAddingCorsMappings_thenThrowsIllegalState() {
-        when(appConfig.getAllowedOrigins()).thenReturn("*,   ");
+    void givenWildcardOriginsOutsideDevAndTest_whenAddingCorsMappings_thenThrowsIllegalState() {
+        when(appConfig.getAllowedOrigins()).thenReturn("*, https://oopsly.app");
+        when(environment.acceptsProfiles(any(Profiles.class))).thenReturn(false);
         CorsRegistry corsRegistry = mock(CorsRegistry.class);
 
         WebMvcConfigurer configurer = securityConfig.corsConfigurer();
