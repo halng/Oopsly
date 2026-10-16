@@ -31,12 +31,11 @@ export default function LeaderboardPage() {
         ]);
         if (allRes.isSuccess && allRes.data) setAllCommunities(allRes.data);
         if (myRes.isSuccess && myRes.data) {
+            const firstCommunityId = myRes.data[0]?.id ?? null;
             setMyCommunities(myRes.data);
-            // if ( myRes.data.length > 0) {
-            //     setSelectedCommunityId(
-            //         (prev) => prev || myRes.data[0]?.id || null
-            //     );
-            // }
+            if (firstCommunityId) {
+                setSelectedCommunityId((prev) => prev || firstCommunityId);
+            }
         }
         setIsLoading(false);
     };

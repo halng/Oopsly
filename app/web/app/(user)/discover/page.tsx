@@ -7,6 +7,19 @@ import { CloneSubjectModal } from '@/components/shared';
 
 type CatalogItem = Subject & { cardsPreview: Partial<Card>[] };
 
+function catalogTags(tags: unknown): string[] {
+    if (Array.isArray(tags)) {
+        return tags.filter((tag): tag is string => typeof tag === 'string');
+    }
+    if (typeof tags === 'string') {
+        return tags
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean);
+    }
+    return [];
+}
+
 export default function DiscoverPage() {
     const [catalog, setCatalog] = useState<CatalogItem[]>([]);
     const [shelves, setShelves] = useState<Shelf[]>([]);
@@ -32,11 +45,10 @@ export default function DiscoverPage() {
         });
     }, []);
 
-    const allTags = Array.from(
-        new Set(catalog.flatMap((item) => item.tags || []))
-    );
+    const allTags = Array.from(new Set(catalog.flatMap((item) => catalogTags(item.tags))));
     const filteredCatalog = catalog.filter((item) => {
         const q = searchQuery.toLowerCase();
+        const tags = catalogTags(item.tags);
         const title = (
             item.name ||
             (item as { title?: string }).title ||
@@ -45,8 +57,8 @@ export default function DiscoverPage() {
         const matchesSearch =
             title.includes(q) ||
             (item.description || '').toLowerCase().includes(q) ||
-            item.tags.toLowerCase().includes(q);
-        const matchesTag = selectedTag ? item.tags.includes(selectedTag) : true;
+            tags.join(' ').toLowerCase().includes(q);
+        const matchesTag = selectedTag ? tags.includes(selectedTag) : true;
         return matchesSearch && matchesTag;
     });
 
