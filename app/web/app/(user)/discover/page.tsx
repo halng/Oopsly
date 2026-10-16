@@ -45,10 +45,8 @@ export default function DiscoverPage() {
         const matchesSearch =
             title.includes(q) ||
             (item.description || '').toLowerCase().includes(q) ||
-            (item.tags || []).some((t) => t.toLowerCase().includes(q));
-        const matchesTag = selectedTag
-            ? (item.tags || []).includes(selectedTag)
-            : true;
+            item.tags.toLowerCase().includes(q);
+        const matchesTag = selectedTag ? item.tags.includes(selectedTag) : true;
         return matchesSearch && matchesTag;
     });
 

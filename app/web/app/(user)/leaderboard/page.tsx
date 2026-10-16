@@ -32,11 +32,11 @@ export default function LeaderboardPage() {
         if (allRes.isSuccess && allRes.data) setAllCommunities(allRes.data);
         if (myRes.isSuccess && myRes.data) {
             setMyCommunities(myRes.data);
-            if (myRes.data.length > 0) {
-                setSelectedCommunityId(
-                    (prev) => prev || myRes.data[0]?.id || null
-                );
-            }
+            // if ( myRes.data.length > 0) {
+            //     setSelectedCommunityId(
+            //         (prev) => prev || myRes.data[0]?.id || null
+            //     );
+            // }
         }
         setIsLoading(false);
     };
