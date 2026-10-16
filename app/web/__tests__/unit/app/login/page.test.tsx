@@ -154,9 +154,7 @@ describe('AuthPage', () => {
         expect(
             screen.getByPlaceholderText('name@example.com')
         ).toBeInTheDocument();
-        expect(
-            screen.queryByPlaceholderText('123456')
-        ).not.toBeInTheDocument();
+        expect(screen.queryByPlaceholderText('123456')).not.toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', { name: 'Sign up' }));
         fireEvent.change(screen.getByPlaceholderText('Jane Doe'), {
@@ -173,8 +171,6 @@ describe('AuthPage', () => {
             screen.getByRole('heading', { name: 'Create an account' })
         ).toBeInTheDocument();
         expect(screen.getByPlaceholderText('Jane Doe')).toHaveValue('Learner');
-        expect(
-            screen.queryByPlaceholderText('123456')
-        ).not.toBeInTheDocument();
+        expect(screen.queryByPlaceholderText('123456')).not.toBeInTheDocument();
     });
 });

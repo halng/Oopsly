@@ -35,19 +35,26 @@ function cap(list: Card[], limit?: number): Card[] {
  * `reviewLimit`, plus new cards capped at `newLimit`, spread evenly between
  * the reviews.
  */
-export function buildReviewQueue(cards: Card[], limits: QueueLimits = {}): QueueItem[] {
+export function buildReviewQueue(
+    cards: Card[],
+    limits: QueueLimits = {}
+): QueueItem[] {
     const fresh = cap(cards.filter(isNewCard), limits.newLimit);
     const reviews = cap(
         cards
             .filter((c) => !isNewCard(c))
             .sort(
                 (a, b) =>
-                    new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+                    new Date(a.dueDate).getTime() -
+                    new Date(b.dueDate).getTime()
             ),
         limits.reviewLimit
     );
 
-    const reviewItems: QueueItem[] = reviews.map((card) => ({ card, kind: 'review' }));
+    const reviewItems: QueueItem[] = reviews.map((card) => ({
+        card,
+        kind: 'review',
+    }));
     const newItems: QueueItem[] = fresh.map((card) => ({ card, kind: 'new' }));
     if (reviewItems.length === 0) return newItems;
     if (newItems.length === 0) return reviewItems;
@@ -58,7 +65,10 @@ export function buildReviewQueue(cards: Card[], limits: QueueLimits = {}): Queue
     let r = 0;
     let n = 0;
     for (let i = 0; i < reviewItems.length + newItems.length; i++) {
-        if (n < newItems.length && (i >= nextNewAt || r >= reviewItems.length)) {
+        if (
+            n < newItems.length &&
+            (i >= nextNewAt || r >= reviewItems.length)
+        ) {
             result.push(newItems[n++]);
             nextNewAt += step;
         } else {
@@ -81,7 +91,10 @@ export function applyGrade(
     const [head, ...rest] = queue;
     if (grade !== 1) return rest;
     const position = Math.min(AGAIN_REINSERT_OFFSET, rest.length);
-    const again: QueueItem = { card: updatedCard ?? head.card, kind: 'learning' };
+    const again: QueueItem = {
+        card: updatedCard ?? head.card,
+        kind: 'learning',
+    };
     return [...rest.slice(0, position), again, ...rest.slice(position)];
 }
 
@@ -96,7 +109,10 @@ export function countQueue(queue: QueueItem[]): QueueCounts {
 }
 
 /** Earliest future due date among already-reviewed cards, if any. */
-export function nextDueDate(cards: Card[], now: Date = new Date()): Date | null {
+export function nextDueDate(
+    cards: Card[],
+    now: Date = new Date()
+): Date | null {
     let next: number | null = null;
     for (const card of cards) {
         if (isNewCard(card)) continue;

@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ShelfPage from '@/app/(user)/home/[slug]/page';
 import { ApiService } from '@/services/api';
 import { useShelfStore } from '@/store';
-import { shelf, subject, testSuite } from '@/__tests__/unit/helpers/studyFixtures';
+import {
+    shelf,
+    subject,
+    testSuite,
+} from '@/__tests__/unit/helpers/studyFixtures';
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock('next/navigation', () => ({
@@ -90,9 +94,15 @@ describe('ShelfPage', () => {
         fireEvent.click(screen.getByTestId('btn-match-sub1'));
         fireEvent.click(screen.getByTestId('btn-take-test-suite-ts1'));
         fireEvent.click(screen.getByTestId('btn-back-to-shelves'));
-        expect(push).toHaveBeenCalledWith('/home/science/subjects/biology/review');
-        expect(push).toHaveBeenCalledWith('/home/science/subjects/biology/learn');
-        expect(push).toHaveBeenCalledWith('/home/science/subjects/biology/match');
+        expect(push).toHaveBeenCalledWith(
+            '/home/science/subjects/biology/review'
+        );
+        expect(push).toHaveBeenCalledWith(
+            '/home/science/subjects/biology/learn'
+        );
+        expect(push).toHaveBeenCalledWith(
+            '/home/science/subjects/biology/match'
+        );
         expect(push).toHaveBeenCalledWith('/home/science/tests/midterm/take');
         expect(push).toHaveBeenCalledWith('/home');
         expect(screen.queryByTestId('btn-test-sub1')).not.toBeInTheDocument();
@@ -123,7 +133,9 @@ describe('ShelfPage', () => {
         });
         render(<ShelfPage />);
         await waitFor(() =>
-            expect(screen.getByTestId('shelf-subjects-empty')).toBeInTheDocument()
+            expect(
+                screen.getByTestId('shelf-subjects-empty')
+            ).toBeInTheDocument()
         );
     });
 });

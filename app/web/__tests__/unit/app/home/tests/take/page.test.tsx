@@ -76,7 +76,9 @@ describe('TakeTestPage', () => {
     it('loads an attempt, answers, and submits', async () => {
         render(<TakeTestPage />);
         await waitFor(() =>
-            expect(screen.getByTestId('question-prompt')).toHaveTextContent('2+2?')
+            expect(screen.getByTestId('question-prompt')).toHaveTextContent(
+                '2+2?'
+            )
         );
         fireEvent.click(screen.getByTestId('answer-option-0'));
         fireEvent.click(screen.getByTestId('btn-submit-test'));

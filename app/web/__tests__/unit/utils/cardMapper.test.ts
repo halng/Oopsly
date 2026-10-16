@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { CardRes, isNewCard, mapCardList, mapCardRes } from '@/utils/cardMapper';
+import {
+    CardRes,
+    isNewCard,
+    mapCardList,
+    mapCardRes,
+} from '@/utils/cardMapper';
 import { card } from '@/__tests__/unit/helpers/studyFixtures';
 
 const res: CardRes = {
@@ -42,7 +47,13 @@ describe('cardMapper', () => {
     });
 
     it('maps a list and treats never-reviewed cards as new', () => {
-        const list = mapCardList([res, { ...res, id: 'c9', fsrsRepetitions: 0, lastReviewedAt: null }], 'sub1');
+        const list = mapCardList(
+            [
+                res,
+                { ...res, id: 'c9', fsrsRepetitions: 0, lastReviewedAt: null },
+            ],
+            'sub1'
+        );
         expect(list).toHaveLength(2);
         expect(isNewCard(list[0])).toBe(false);
         expect(isNewCard(list[1])).toBe(true);

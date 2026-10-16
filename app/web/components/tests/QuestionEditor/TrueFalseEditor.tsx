@@ -7,11 +7,17 @@ interface TrueFalseEditorProps {
     onChange: (draft: QuestionDraft) => void;
 }
 
-export default function TrueFalseEditor({ draft, onChange }: Readonly<TrueFalseEditorProps>) {
+export default function TrueFalseEditor({
+    draft,
+    onChange,
+}: Readonly<TrueFalseEditorProps>) {
     return (
         <div className="space-y-2" data-testid="true-false-editor">
             <p className="font-bold">Correct answer</p>
-            <div role="radiogroup" className="inline-flex rounded-xl border border-stone-200 dark:border-stone-700 overflow-hidden">
+            <div
+                role="radiogroup"
+                className="inline-flex rounded-xl border border-stone-200 dark:border-stone-700 overflow-hidden"
+            >
                 {TRUE_FALSE_OPTIONS.map((label, i) => {
                     const active = draft.correctOptionIndex === i;
                     return (
@@ -21,7 +27,9 @@ export default function TrueFalseEditor({ draft, onChange }: Readonly<TrueFalseE
                             role="radio"
                             aria-checked={active}
                             data-testid={`btn-true-false-${label.toLowerCase()}`}
-                            onClick={() => onChange({ ...draft, correctOptionIndex: i })}
+                            onClick={() =>
+                                onChange({ ...draft, correctOptionIndex: i })
+                            }
                             className={`px-5 py-2 text-xs font-bold cursor-pointer ${
                                 active
                                     ? i === 0

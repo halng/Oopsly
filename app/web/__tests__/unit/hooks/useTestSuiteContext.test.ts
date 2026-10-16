@@ -35,7 +35,13 @@ describe('useTestSuiteContext', () => {
     it('hydrates empty stores from the API', async () => {
         vi.mocked(ApiService.getShelves).mockResolvedValue({
             isSuccess: true,
-            data: { entities: [shelf], currentPage: 1, totalItems: 1, totalPages: 1, hasNextPage: false },
+            data: {
+                entities: [shelf],
+                currentPage: 1,
+                totalItems: 1,
+                totalPages: 1,
+                hasNextPage: false,
+            },
             message: '',
             statusCode: 200,
             timestamp: '',

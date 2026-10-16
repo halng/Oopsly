@@ -6,7 +6,9 @@ import { ApiService } from '@/services/api';
 import { useShelfStore, useTestSuiteStore } from '@/store';
 import { resolveShelfBySlug } from './useSubjectContext';
 
-export async function loadShelfTestSuites(shelfId: string): Promise<TestSuite[]> {
+export async function loadShelfTestSuites(
+    shelfId: string
+): Promise<TestSuite[]> {
     const res = await ApiService.getTestSuites(shelfId);
     const list = res.isSuccess && res.data ? res.data : [];
     useTestSuiteStore.getState().setTestSuites(shelfId, list);
@@ -17,7 +19,9 @@ export async function resolveTestSuiteBySlug(
     shelf: Shelf,
     testSlug: string
 ): Promise<TestSuite | null> {
-    const cached = useTestSuiteStore.getState().getCurrentTestSuite(shelf.id, testSlug);
+    const cached = useTestSuiteStore
+        .getState()
+        .getCurrentTestSuite(shelf.id, testSlug);
     if (cached) return cached;
     await loadShelfTestSuites(shelf.id);
     return useTestSuiteStore.getState().getCurrentTestSuite(shelf.id, testSlug);
@@ -44,10 +48,14 @@ export function useTestSuiteContext(): TestSuiteContext {
         testSuite: TestSuite | null;
         isLoading: boolean;
     }>(() => {
-        const shelf = slug ? useShelfStore.getState().getCurrentShelf(slug) : null;
+        const shelf = slug
+            ? useShelfStore.getState().getCurrentShelf(slug)
+            : null;
         const testSuite =
             shelf && testSlug
-                ? useTestSuiteStore.getState().getCurrentTestSuite(shelf.id, testSlug)
+                ? useTestSuiteStore
+                      .getState()
+                      .getCurrentTestSuite(shelf.id, testSlug)
                 : null;
         return { shelf, testSuite, isLoading: !(shelf && testSuite) };
     });
@@ -60,7 +68,9 @@ export function useTestSuiteContext(): TestSuiteContext {
                 return;
             }
             const shelf = await resolveShelfBySlug(slug);
-            const testSuite = shelf ? await resolveTestSuiteBySlug(shelf, testSlug) : null;
+            const testSuite = shelf
+                ? await resolveTestSuiteBySlug(shelf, testSlug)
+                : null;
             if (!cancelled) setState({ shelf, testSuite, isLoading: false });
         })();
         return () => {

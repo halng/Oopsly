@@ -32,7 +32,9 @@ export interface QuestionDraft {
     explanation: string;
 }
 
-export function emptyDraft(type: QuestionType = 'SINGLE_CHOICE'): QuestionDraft {
+export function emptyDraft(
+    type: QuestionType = 'SINGLE_CHOICE'
+): QuestionDraft {
     return changeDraftType(
         {
             text: '',
@@ -52,7 +54,10 @@ export function draftFromQuestion(q: Question): QuestionDraft {
     return {
         text: q.text,
         type: q.type,
-        options: q.type === 'TRUE_FALSE' ? [...TRUE_FALSE_OPTIONS] : [...(q.options ?? [])],
+        options:
+            q.type === 'TRUE_FALSE'
+                ? [...TRUE_FALSE_OPTIONS]
+                : [...(q.options ?? [])],
         correctOptionIndex: q.correctOptionIndex ?? null,
         correctOptionIndexes: [...(q.correctOptionIndexes ?? [])],
         acceptedAnswers: [...(q.acceptedAnswers ?? [])],
@@ -62,26 +67,40 @@ export function draftFromQuestion(q: Question): QuestionDraft {
 }
 
 /** Switches type while keeping whatever still makes sense (prompt, options, explanation). */
-export function changeDraftType(draft: QuestionDraft, type: QuestionType): QuestionDraft {
+export function changeDraftType(
+    draft: QuestionDraft,
+    type: QuestionType
+): QuestionDraft {
     if (draft.type === type) return draft;
-    const isChoice = (t: QuestionType) => t === 'SINGLE_CHOICE' || t === 'MULTIPLE_CHOICE';
+    const isChoice = (t: QuestionType) =>
+        t === 'SINGLE_CHOICE' || t === 'MULTIPLE_CHOICE';
     let options = draft.options;
     if (type === 'TRUE_FALSE') {
         options = [...TRUE_FALSE_OPTIONS];
-    } else if (isChoice(type) && (draft.type === 'TRUE_FALSE' || options.length < MIN_OPTIONS)) {
+    } else if (
+        isChoice(type) &&
+        (draft.type === 'TRUE_FALSE' || options.length < MIN_OPTIONS)
+    ) {
         options = ['', ''];
     }
     let correctOptionIndex = draft.correctOptionIndex;
     let correctOptionIndexes = draft.correctOptionIndexes;
     if (type === 'MULTIPLE_CHOICE' && draft.type === 'SINGLE_CHOICE') {
-        correctOptionIndexes = correctOptionIndex === null ? [] : [correctOptionIndex];
+        correctOptionIndexes =
+            correctOptionIndex === null ? [] : [correctOptionIndex];
     } else if (type === 'SINGLE_CHOICE' && draft.type === 'MULTIPLE_CHOICE') {
         correctOptionIndex = correctOptionIndexes[0] ?? null;
     } else if (type === 'TRUE_FALSE' || draft.type === 'TRUE_FALSE') {
         correctOptionIndex = null;
         correctOptionIndexes = [];
     }
-    return { ...draft, type, options, correctOptionIndex, correctOptionIndexes };
+    return {
+        ...draft,
+        type,
+        options,
+        correctOptionIndex,
+        correctOptionIndexes,
+    };
 }
 
 export function insertBlank(text: string, cursor?: number | null): string {
@@ -93,7 +112,8 @@ export function insertBlank(text: string, cursor?: number | null): string {
     return `${before}${padBefore}${BLANK_MARKER}${padAfter}${after}`;
 }
 
-export type DraftValidation = { input: QuestionInput; error: null } | { input: null; error: string };
+export type DraftValidation =
+    { input: QuestionInput; error: null } | { input: null; error: string };
 
 function fail(error: string): DraftValidation {
     return { input: null, error };
@@ -121,7 +141,13 @@ export function validateDraft(draft: QuestionDraft): DraftValidation {
                 return fail('Mark the correct option');
             }
             return {
-                input: { text, type: draft.type, options, correctOptionIndex: index, explanation },
+                input: {
+                    text,
+                    type: draft.type,
+                    options,
+                    correctOptionIndex: index,
+                    explanation,
+                },
                 error: null,
             };
         }
@@ -131,7 +157,8 @@ export function validateDraft(draft: QuestionDraft): DraftValidation {
             const indexes = Array.from(new Set(draft.correctOptionIndexes))
                 .filter((i) => i >= 0 && i < options.length)
                 .sort((a, b) => a - b);
-            if (indexes.length === 0) return fail('Mark at least one correct option');
+            if (indexes.length === 0)
+                return fail('Mark at least one correct option');
             return {
                 input: {
                     text,
@@ -162,9 +189,12 @@ export function validateDraft(draft: QuestionDraft): DraftValidation {
                 return fail(`Add a blank (${BLANK_MARKER}) to the question`);
             }
             const accepted = Array.from(
-                new Set(draft.acceptedAnswers.map((a) => a.trim()).filter(Boolean))
+                new Set(
+                    draft.acceptedAnswers.map((a) => a.trim()).filter(Boolean)
+                )
             );
-            if (accepted.length === 0) return fail('Add at least one accepted answer');
+            if (accepted.length === 0)
+                return fail('Add at least one accepted answer');
             return {
                 input: {
                     text,
@@ -187,9 +217,14 @@ export function describeAnswer(q: QuestionInput): string {
     switch (q.type) {
         case 'SINGLE_CHOICE':
         case 'TRUE_FALSE':
-            return q.correctOptionIndex == null ? '' : options[q.correctOptionIndex] ?? '';
+            return q.correctOptionIndex == null
+                ? ''
+                : (options[q.correctOptionIndex] ?? '');
         case 'MULTIPLE_CHOICE':
-            return (q.correctOptionIndexes ?? []).map((i) => options[i]).filter(Boolean).join(', ');
+            return (q.correctOptionIndexes ?? [])
+                .map((i) => options[i])
+                .filter(Boolean)
+                .join(', ');
         case 'FILL_IN_THE_BLANK':
             return (q.acceptedAnswers ?? []).join(' / ');
         default:

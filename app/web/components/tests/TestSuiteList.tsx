@@ -1,6 +1,14 @@
 'use client';
 import React from 'react';
-import { ClipboardList, Clock, Edit2, Play, Plus, Trash2, Trophy } from 'lucide-react';
+import {
+    ClipboardList,
+    Clock,
+    Edit2,
+    Play,
+    Plus,
+    Trash2,
+    Trophy,
+} from 'lucide-react';
 import { TestSuite } from '@/types';
 
 interface TestSuiteListProps {
@@ -113,7 +121,11 @@ export default function TestSuiteList({
                                 data-testid={`btn-take-test-suite-${suite.id}`}
                                 disabled={suite.questionCount === 0}
                                 onClick={() => onTake(suite)}
-                                title={suite.questionCount === 0 ? 'Add questions first' : undefined}
+                                title={
+                                    suite.questionCount === 0
+                                        ? 'Add questions first'
+                                        : undefined
+                                }
                                 className="mt-auto w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                                 <Play className="w-3.5 h-3.5 fill-white" />

@@ -109,9 +109,7 @@ const AuthPage = () => {
         }
     };
 
-    const handleBackToEmail = (
-        e: React.MouseEvent<HTMLButtonElement>
-    ) => {
+    const handleBackToEmail = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         e.stopPropagation();
         setOtp('');

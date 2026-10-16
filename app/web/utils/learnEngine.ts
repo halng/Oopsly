@@ -81,18 +81,26 @@ function buildRound(state: LearnState): LearnState {
     };
 }
 
-export function learnReducer(state: LearnState, action: LearnAction): LearnState {
+export function learnReducer(
+    state: LearnState,
+    action: LearnAction
+): LearnState {
     switch (action.type) {
         case 'start': {
             const unique = Array.from(new Set(action.cardIds));
-            const levels = Object.fromEntries(unique.map((id) => [id, 0 as LearnLevel]));
+            const levels = Object.fromEntries(
+                unique.map((id) => [id, 0 as LearnLevel])
+            );
             return buildRound({ ...initialLearnState, levels, order: unique });
         }
         case 'answer': {
-            if (state.phase !== 'question' || state.round.length === 0) return state;
+            if (state.phase !== 'question' || state.round.length === 0)
+                return state;
             const [cardId, ...rest] = state.round;
             const previousLevel = state.levels[cardId] ?? 0;
-            const nextLevel = clampLevel(previousLevel + (action.correct ? 1 : -1));
+            const nextLevel = clampLevel(
+                previousLevel + (action.correct ? 1 : -1)
+            );
             const answer: LearnAnswer = {
                 cardId,
                 correct: action.correct,
@@ -112,16 +120,27 @@ export function learnReducer(state: LearnState, action: LearnAction): LearnState
         }
         case 'override': {
             const last = state.lastAnswer;
-            if (state.phase !== 'feedback' || !last || last.correct) return state;
+            if (state.phase !== 'feedback' || !last || last.correct)
+                return state;
             const lastIndex = state.round.lastIndexOf(last.cardId);
             const round =
                 lastIndex === -1
                     ? state.round
-                    : [...state.round.slice(0, lastIndex), ...state.round.slice(lastIndex + 1)];
-            const fixed: LearnAnswer = { ...last, correct: true, overridden: true };
+                    : [
+                          ...state.round.slice(0, lastIndex),
+                          ...state.round.slice(lastIndex + 1),
+                      ];
+            const fixed: LearnAnswer = {
+                ...last,
+                correct: true,
+                overridden: true,
+            };
             return {
                 ...state,
-                levels: { ...state.levels, [last.cardId]: clampLevel(last.previousLevel + 1) },
+                levels: {
+                    ...state.levels,
+                    [last.cardId]: clampLevel(last.previousLevel + 1),
+                },
                 round,
                 roundResults: [...state.roundResults.slice(0, -1), fixed],
                 lastAnswer: fixed,
@@ -139,8 +158,14 @@ export function learnReducer(state: LearnState, action: LearnAction): LearnState
                     questionNumber: state.questionNumber + 1,
                 };
             }
-            const allMastered = state.order.every((id) => isMastered(state, id));
-            return { ...state, phase: allMastered ? 'done' : 'summary', lastAnswer: null };
+            const allMastered = state.order.every((id) =>
+                isMastered(state, id)
+            );
+            return {
+                ...state,
+                phase: allMastered ? 'done' : 'summary',
+                lastAnswer: null,
+            };
         }
         case 'nextRound': {
             if (state.phase !== 'summary') return state;
@@ -153,11 +178,14 @@ export function learnReducer(state: LearnState, action: LearnAction): LearnState
 
 export function currentCardId(state: LearnState): string | null {
     return state.phase === 'question' || state.phase === 'feedback'
-        ? state.lastAnswer?.cardId ?? state.round[0] ?? null
+        ? (state.lastAnswer?.cardId ?? state.round[0] ?? null)
         : null;
 }
 
-export function questionKind(state: LearnState, cardId: string): LearnQuestionKind {
+export function questionKind(
+    state: LearnState,
+    cardId: string
+): LearnQuestionKind {
     return (state.levels[cardId] ?? 0) === 0 ? 'mcq' : 'written';
 }
 
@@ -186,6 +214,7 @@ export function learnProgress(state: LearnState): LearnProgress {
         mastered,
         learning,
         fresh: total - mastered - learning,
-        percent: total === 0 ? 0 : Math.round((points / (total * MASTERED)) * 100),
+        percent:
+            total === 0 ? 0 : Math.round((points / (total * MASTERED)) * 100),
     };
 }

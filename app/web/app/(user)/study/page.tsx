@@ -168,18 +168,20 @@ export default function StudyPage() {
                                                 0,
                                                 garden.dewDrops - 1
                                             ),
-                                            plantedTrees: garden.plantedTrees.map(
-                                                (t) =>
+                                            plantedTrees:
+                                                garden.plantedTrees.map((t) =>
                                                     t.id === tree.id
                                                         ? {
                                                               ...t,
-                                                              waterLevel: Math.min(
-                                                                  100,
-                                                                  t.waterLevel + 10
-                                                              ),
+                                                              waterLevel:
+                                                                  Math.min(
+                                                                      100,
+                                                                      t.waterLevel +
+                                                                          10
+                                                                  ),
                                                           }
                                                         : t
-                                            ),
+                                                ),
                                         };
                                         setGarden(next);
                                         saveGardenState(next);
@@ -190,7 +192,11 @@ export default function StudyPage() {
                                             : 'bg-stone-100 opacity-50'
                                     }`}
                                 >
-                                    {info ? info.symbol : plot.isUnlocked ? '+' : '🔒'}
+                                    {info
+                                        ? info.symbol
+                                        : plot.isUnlocked
+                                          ? '+'
+                                          : '🔒'}
                                 </button>
                             );
                         })}

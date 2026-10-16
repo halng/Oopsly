@@ -12,6 +12,8 @@ export const useShelfStore = create<{
     clearShelves: () => set({ shelves: null }),
     getCurrentShelf: (slug: string) => {
         const shelves = get().shelves;
-        return shelves && shelves.length > 0 ? shelves.find(shelf => shelf.slug === slug) || null : null;
+        return shelves && shelves.length > 0
+            ? shelves.find((shelf) => shelf.slug === slug) || null
+            : null;
     },
 }));

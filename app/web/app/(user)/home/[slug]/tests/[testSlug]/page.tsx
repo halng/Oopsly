@@ -1,7 +1,15 @@
 'use client';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ClipboardList, Edit2, Play, Plus, Search, Trash2 } from 'lucide-react';
+import {
+    ArrowLeft,
+    ClipboardList,
+    Edit2,
+    Play,
+    Plus,
+    Search,
+    Trash2,
+} from 'lucide-react';
 import { Question, QuestionInput } from '@/types';
 import { ApiService } from '@/services/api';
 import { useTestSuiteContext } from '@/hooks/useTestSuiteContext';
@@ -14,16 +22,27 @@ import {
 } from '@/utils/questionForm';
 
 const TYPE_BADGE_STYLES: Record<Question['type'], string> = {
-    SINGLE_CHOICE: 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300',
-    MULTIPLE_CHOICE: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300',
-    TRUE_FALSE: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
-    FILL_IN_THE_BLANK: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
+    SINGLE_CHOICE:
+        'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300',
+    MULTIPLE_CHOICE:
+        'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300',
+    TRUE_FALSE:
+        'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
+    FILL_IN_THE_BLANK:
+        'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
 };
 
 export default function TestSuiteDetailsPage() {
     const router = useRouter();
-    const { shelf, testSuite, baseUrl, shelfUrl, isLoading, notFound, refresh } =
-        useTestSuiteContext();
+    const {
+        shelf,
+        testSuite,
+        baseUrl,
+        shelfUrl,
+        isLoading,
+        notFound,
+        refresh,
+    } = useTestSuiteContext();
     const [questions, setQuestions] = useState<Question[]>([]);
     const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
     const [search, setSearch] = useState('');
@@ -50,8 +69,12 @@ export default function TestSuiteDetailsPage() {
         return questions.filter(
             (question) =>
                 question.text.toLowerCase().includes(q) ||
-                (question.options ?? []).some((o) => o.toLowerCase().includes(q)) ||
-                (question.acceptedAnswers ?? []).some((a) => a.toLowerCase().includes(q))
+                (question.options ?? []).some((o) =>
+                    o.toLowerCase().includes(q)
+                ) ||
+                (question.acceptedAnswers ?? []).some((a) =>
+                    a.toLowerCase().includes(q)
+                )
         );
     }, [questions, search]);
 
@@ -63,15 +86,22 @@ export default function TestSuiteDetailsPage() {
     const handleCreate = async (input: QuestionInput) => {
         if (!shelfId || !suiteId) return;
         const res = await ApiService.createQuestion(shelfId, suiteId, input);
-        if (!res.isSuccess) throw new Error(res.message || 'Could not add the question');
+        if (!res.isSuccess)
+            throw new Error(res.message || 'Could not add the question');
         setIsAdding(false);
         await afterChange();
     };
 
     const handleUpdate = async (id: string, input: QuestionInput) => {
         if (!shelfId || !suiteId) return;
-        const res = await ApiService.updateQuestion(shelfId, suiteId, id, input);
-        if (!res.isSuccess) throw new Error(res.message || 'Could not update the question');
+        const res = await ApiService.updateQuestion(
+            shelfId,
+            suiteId,
+            id,
+            input
+        );
+        if (!res.isSuccess)
+            throw new Error(res.message || 'Could not update the question');
         setEditingId(null);
         await afterChange();
     };
@@ -79,13 +109,20 @@ export default function TestSuiteDetailsPage() {
     const handleDelete = async (question: Question) => {
         if (!shelfId || !suiteId) return;
         if (!window.confirm('Delete this question?')) return;
-        const res = await ApiService.deleteQuestion(shelfId, suiteId, question.id);
+        const res = await ApiService.deleteQuestion(
+            shelfId,
+            suiteId,
+            question.id
+        );
         if (res.isSuccess) await afterChange();
     };
 
     if (isLoading || (!notFound && isLoadingQuestions)) {
         return (
-            <div data-testid="test-suite-loading" className="py-24 text-center text-sm text-stone-500">
+            <div
+                data-testid="test-suite-loading"
+                className="py-24 text-center text-sm text-stone-500"
+            >
                 Loading test suite...
             </div>
         );
@@ -93,7 +130,10 @@ export default function TestSuiteDetailsPage() {
 
     if (notFound || !testSuite) {
         return (
-            <div data-testid="test-suite-not-found" className="py-16 text-center space-y-3">
+            <div
+                data-testid="test-suite-not-found"
+                className="py-16 text-center space-y-3"
+            >
                 <p className="text-sm text-stone-500">Test suite not found.</p>
                 <button
                     type="button"
@@ -125,16 +165,21 @@ export default function TestSuiteDetailsPage() {
                         <ClipboardList className="w-6 h-6" />
                     </div>
                     <div className="min-w-0">
-                        <h1 className="text-2xl font-bold truncate">{testSuite.title}</h1>
+                        <h1 className="text-2xl font-bold truncate">
+                            {testSuite.title}
+                        </h1>
                         {testSuite.description && (
-                            <p className="text-sm text-stone-500 mt-1">{testSuite.description}</p>
+                            <p className="text-sm text-stone-500 mt-1">
+                                {testSuite.description}
+                            </p>
                         )}
                         <p className="text-xs text-stone-500 mt-1">
                             {questions.length} questions
                             {testSuite.timeLimitMinutes
                                 ? ` · ${testSuite.timeLimitMinutes} min limit`
                                 : ' · no time limit'}
-                            {testSuite.highestScore != null && ` · best ${testSuite.highestScore}%`}
+                            {testSuite.highestScore != null &&
+                                ` · best ${testSuite.highestScore}%`}
                         </p>
                     </div>
                 </div>
@@ -193,7 +238,8 @@ export default function TestSuiteDetailsPage() {
                     data-testid="questions-empty"
                     className="bg-white dark:bg-stone-900 rounded-3xl border border-dashed p-12 text-center text-sm text-stone-500"
                 >
-                    No questions yet. Add the first one to make this test playable.
+                    No questions yet. Add the first one to make this test
+                    playable.
                 </div>
             ) : (
                 <ol className="space-y-2" data-testid="question-list">
@@ -203,7 +249,9 @@ export default function TestSuiteDetailsPage() {
                                 <QuestionEditor
                                     testId={`edit-question-editor-${question.id}`}
                                     initial={draftFromQuestion(question)}
-                                    onSubmit={(input) => handleUpdate(question.id, input)}
+                                    onSubmit={(input) =>
+                                        handleUpdate(question.id, input)
+                                    }
                                     onCancel={() => setEditingId(null)}
                                 />
                             </li>

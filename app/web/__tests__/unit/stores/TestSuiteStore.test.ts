@@ -11,11 +11,15 @@ describe('useTestSuiteStore', () => {
 
     it('stores suites per shelf and looks them up by slug', () => {
         useTestSuiteStore.getState().setTestSuites('s1', [testSuite]);
-        expect(useTestSuiteStore.getState().getCurrentTestSuite('s1', 'midterm')).toEqual(
-            testSuite
-        );
-        expect(useTestSuiteStore.getState().getCurrentTestSuite('s1', 'missing')).toBeNull();
+        expect(
+            useTestSuiteStore.getState().getCurrentTestSuite('s1', 'midterm')
+        ).toEqual(testSuite);
+        expect(
+            useTestSuiteStore.getState().getCurrentTestSuite('s1', 'missing')
+        ).toBeNull();
         useTestSuiteStore.getState().clearTestSuites('s1');
-        expect(useTestSuiteStore.getState().getCurrentTestSuite('s1', 'midterm')).toBeNull();
+        expect(
+            useTestSuiteStore.getState().getCurrentTestSuite('s1', 'midterm')
+        ).toBeNull();
     });
 });

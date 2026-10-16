@@ -36,17 +36,17 @@ import { resolveShelfBySlug } from '@/hooks/useSubjectContext';
 import { useSubjectStore, useUserProfileStore } from '@/store';
 
 const PRESET_ICONS = {
-        'folder': <Folder className="w-5 h-5" />,
-        'book': <Book className="w-5 h-5" />,
-        'star': <Star className="w-5 h-5" />,
-        'tag': <Tag className="w-5 h-5" />,
-        'heart': <Heart className="w-5 h-5" />,
-        'bookmark': <Bookmark className="w-5 h-5" />,
-        'camera': <Camera className="w-5 h-5" />,
-        'music': <Music className="w-5 h-5" />,
-        'film': <Film className="w-5 h-5" />,
-        'gift': <Gift className="w-5 h-5" />,
-};  
+    folder: <Folder className="w-5 h-5" />,
+    book: <Book className="w-5 h-5" />,
+    star: <Star className="w-5 h-5" />,
+    tag: <Tag className="w-5 h-5" />,
+    heart: <Heart className="w-5 h-5" />,
+    bookmark: <Bookmark className="w-5 h-5" />,
+    camera: <Camera className="w-5 h-5" />,
+    music: <Music className="w-5 h-5" />,
+    film: <Film className="w-5 h-5" />,
+    gift: <Gift className="w-5 h-5" />,
+};
 
 export default function ShelfPage() {
     const params = useParams<{ slug: string }>();
@@ -63,20 +63,21 @@ export default function ShelfPage() {
     const [isShelfModalOpen, setIsShelfModalOpen] = useState(false);
     const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
     const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
-    const [activeMenuSubjectId, setActiveMenuSubjectId] = useState<string | null>(
-        null
-    );
+    const [activeMenuSubjectId, setActiveMenuSubjectId] = useState<
+        string | null
+    >(null);
     const [importingSubject, setImportingSubject] = useState<Subject | null>(
         null
     );
     const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
     const [isTestSuiteModalOpen, setIsTestSuiteModalOpen] = useState(false);
-    const [editingTestSuite, setEditingTestSuite] = useState<TestSuite | null>(null);
-    
-    const loadData = useCallback(async () => {
+    const [editingTestSuite, setEditingTestSuite] = useState<TestSuite | null>(
+        null
+    );
 
+    const loadData = useCallback(async () => {
         setIsLoading(true);
-        
+
         const filteredShelf = await resolveShelfBySlug(slug);
         if (!filteredShelf) {
             setIsLoading(false);
@@ -92,7 +93,9 @@ export default function ShelfPage() {
             ]);
             if (subjectsRes.isSuccess && subjectsRes.data) {
                 setSubjects(subjectsRes.data.entities);
-                useSubjectStore.getState().setSubjects(filteredShelf.id, subjectsRes.data.entities);
+                useSubjectStore
+                    .getState()
+                    .setSubjects(filteredShelf.id, subjectsRes.data.entities);
             } else {
                 setSubjects([]);
             }
@@ -136,15 +139,23 @@ export default function ShelfPage() {
     const handleSaveTestSuite = async (data: TestSuiteInput) => {
         if (!shelf) return;
         const res = editingTestSuite
-            ? await ApiService.updateTestSuite(shelf.id, editingTestSuite.id, data)
+            ? await ApiService.updateTestSuite(
+                  shelf.id,
+                  editingTestSuite.id,
+                  data
+              )
             : await ApiService.createTestSuite(shelf.id, data);
-        if (!res.isSuccess) throw new Error(res.message || 'Could not save the test suite');
+        if (!res.isSuccess)
+            throw new Error(res.message || 'Could not save the test suite');
         setTestSuites(await loadShelfTestSuites(shelf.id));
     };
 
     const handleDeleteTestSuite = async (suite: TestSuite) => {
         if (!shelf) return;
-        if (!window.confirm(`Delete "${suite.title}" and all of its questions?`)) return;
+        if (
+            !window.confirm(`Delete "${suite.title}" and all of its questions?`)
+        )
+            return;
         const res = await ApiService.deleteTestSuite(shelf.id, suite.id);
         if (res.isSuccess) setTestSuites(await loadShelfTestSuites(shelf.id));
     };
@@ -163,7 +174,7 @@ export default function ShelfPage() {
                 !selectedTag || (s.tags && s.tags.includes(selectedTag));
             return matchesSearch && matchesTag;
         });
-    }, [subjects, subjectSearchQuery, selectedTag]);    
+    }, [subjects, subjectSearchQuery, selectedTag]);
 
     const tags = useMemo(() => {
         const next = new Set<string>();
@@ -265,8 +276,11 @@ export default function ShelfPage() {
                                 shelf.color || 'var(--theme-accent)',
                         }}
                     >
-                            {Object.fromEntries(Object.entries(PRESET_ICONS).filter(([key]) => key === shelf.icon))[shelf.icon] ?? <Folder className="w-5 h-5" />}
-
+                        {Object.fromEntries(
+                            Object.entries(PRESET_ICONS).filter(
+                                ([key]) => key === shelf.icon
+                            )
+                        )[shelf.icon] ?? <Folder className="w-5 h-5" />}
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold">{shelf.name}</h1>
@@ -426,8 +440,12 @@ export default function ShelfPage() {
                     setEditingTestSuite(null);
                     setIsTestSuiteModalOpen(true);
                 }}
-                onOpen={(suite) => router.push(`/home/${shelf.slug}/tests/${suite.slug}`)}
-                onTake={(suite) => router.push(`/home/${shelf.slug}/tests/${suite.slug}/take`)}
+                onOpen={(suite) =>
+                    router.push(`/home/${shelf.slug}/tests/${suite.slug}`)
+                }
+                onTake={(suite) =>
+                    router.push(`/home/${shelf.slug}/tests/${suite.slug}/take`)
+                }
                 onEdit={(suite) => {
                     setEditingTestSuite(suite);
                     setIsTestSuiteModalOpen(true);
@@ -473,7 +491,6 @@ export default function ShelfPage() {
                     }}
                 />
             )} */}
-        
         </div>
     );
 }

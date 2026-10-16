@@ -34,7 +34,13 @@ describe('SubjectDetailsPage', () => {
         vi.mocked(ApiService.getSubjectCards).mockResolvedValue({
             isSuccess: true,
             data: {
-                entities: [card({ id: 'c1', front: 'Mitochondria', back: 'Powerhouse' })],
+                entities: [
+                    card({
+                        id: 'c1',
+                        front: 'Mitochondria',
+                        back: 'Powerhouse',
+                    }),
+                ],
                 currentPage: 1,
                 totalItems: 1,
                 totalPages: 1,
@@ -49,16 +55,26 @@ describe('SubjectDetailsPage', () => {
     it('loads subject details and routes study actions', async () => {
         render(<SubjectDetailsPage />);
         await waitFor(() =>
-            expect(screen.getByTestId('subject-details-page')).toBeInTheDocument()
+            expect(
+                screen.getByTestId('subject-details-page')
+            ).toBeInTheDocument()
         );
         fireEvent.click(screen.getByTestId('btn-subject-review'));
         fireEvent.click(screen.getByTestId('btn-subject-learn'));
         fireEvent.click(screen.getByTestId('btn-subject-match'));
         fireEvent.click(screen.getByTestId('btn-subject-back'));
-        expect(push).toHaveBeenCalledWith('/home/science/subjects/biology/review');
-        expect(push).toHaveBeenCalledWith('/home/science/subjects/biology/learn');
-        expect(push).toHaveBeenCalledWith('/home/science/subjects/biology/match');
+        expect(push).toHaveBeenCalledWith(
+            '/home/science/subjects/biology/review'
+        );
+        expect(push).toHaveBeenCalledWith(
+            '/home/science/subjects/biology/learn'
+        );
+        expect(push).toHaveBeenCalledWith(
+            '/home/science/subjects/biology/match'
+        );
         expect(push).toHaveBeenCalledWith('/home/science');
-        expect(screen.queryByTestId('btn-subject-test')).not.toBeInTheDocument();
+        expect(
+            screen.queryByTestId('btn-subject-test')
+        ).not.toBeInTheDocument();
     });
 });

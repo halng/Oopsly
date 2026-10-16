@@ -17,7 +17,9 @@ export default function TestSuiteModal({
     onSave,
 }: Readonly<TestSuiteModalProps>) {
     const [title, setTitle] = useState(testSuite?.title || '');
-    const [description, setDescription] = useState(testSuite?.description || '');
+    const [description, setDescription] = useState(
+        testSuite?.description || ''
+    );
     const [timeLimit, setTimeLimit] = useState(
         testSuite?.timeLimitMinutes ? String(testSuite.timeLimitMinutes) : ''
     );
@@ -33,8 +35,14 @@ export default function TestSuiteModal({
         let timeLimitMinutes: number | null = null;
         if (timeLimit.trim()) {
             const value = Number(timeLimit);
-            if (!Number.isInteger(value) || value < 1 || value > MAX_TIME_LIMIT_MINUTES) {
-                setError(`Time limit must be a whole number between 1 and ${MAX_TIME_LIMIT_MINUTES} minutes`);
+            if (
+                !Number.isInteger(value) ||
+                value < 1 ||
+                value > MAX_TIME_LIMIT_MINUTES
+            ) {
+                setError(
+                    `Time limit must be a whole number between 1 and ${MAX_TIME_LIMIT_MINUTES} minutes`
+                );
                 return;
             }
             timeLimitMinutes = value;
@@ -50,7 +58,11 @@ export default function TestSuiteModal({
             });
             onClose();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Could not save the test suite');
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : 'Could not save the test suite'
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -69,7 +81,9 @@ export default function TestSuiteModal({
                         </div>
                         <div>
                             <h2 className="text-base font-bold">
-                                {testSuite ? 'Edit Test Suite' : 'New Test Suite'}
+                                {testSuite
+                                    ? 'Edit Test Suite'
+                                    : 'New Test Suite'}
                             </h2>
                             <p className="text-xs text-stone-500">
                                 A set of questions you write yourself
@@ -86,9 +100,15 @@ export default function TestSuiteModal({
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="py-5 space-y-4 text-xs">
+                <form
+                    onSubmit={handleSubmit}
+                    className="py-5 space-y-4 text-xs"
+                >
                     <div>
-                        <label htmlFor="test-suite-title" className="font-bold block mb-1">
+                        <label
+                            htmlFor="test-suite-title"
+                            className="font-bold block mb-1"
+                        >
                             Title
                         </label>
                         <input
@@ -103,7 +123,10 @@ export default function TestSuiteModal({
                         />
                     </div>
                     <div>
-                        <label htmlFor="test-suite-description" className="font-bold block mb-1">
+                        <label
+                            htmlFor="test-suite-description"
+                            className="font-bold block mb-1"
+                        >
                             Description
                         </label>
                         <textarea
@@ -118,7 +141,10 @@ export default function TestSuiteModal({
                         />
                     </div>
                     <div>
-                        <label htmlFor="test-suite-time-limit" className="font-bold block mb-1">
+                        <label
+                            htmlFor="test-suite-time-limit"
+                            className="font-bold block mb-1"
+                        >
                             Time limit (minutes, optional)
                         </label>
                         <input
@@ -135,7 +161,10 @@ export default function TestSuiteModal({
                     </div>
 
                     {error && (
-                        <p data-testid="test-suite-modal-error" className="text-rose-600 font-semibold">
+                        <p
+                            data-testid="test-suite-modal-error"
+                            className="text-rose-600 font-semibold"
+                        >
                             {error}
                         </p>
                     )}

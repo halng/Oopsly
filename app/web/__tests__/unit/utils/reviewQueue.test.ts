@@ -28,7 +28,9 @@ describe('reviewQueue', () => {
             }),
         ];
         const queue = buildReviewQueue(cards, { newLimit: 2, reviewLimit: 1 });
-        expect(queue.map((i) => i.card.id)).toEqual(expect.arrayContaining(['n1', 'n2', 'r1']));
+        expect(queue.map((i) => i.card.id)).toEqual(
+            expect.arrayContaining(['n1', 'n2', 'r1'])
+        );
         expect(queue).toHaveLength(3);
         expect(countQueue(queue)).toEqual({ new: 2, learning: 0, review: 1 });
     });
@@ -42,9 +44,20 @@ describe('reviewQueue', () => {
             { card: card({ id: 'e' }), kind: 'review' as const },
         ];
         const afterAgain = applyGrade(queue, 1);
-        expect(afterAgain.map((i) => i.card.id)).toEqual(['b', 'c', 'd', 'a', 'e']);
+        expect(afterAgain.map((i) => i.card.id)).toEqual([
+            'b',
+            'c',
+            'd',
+            'a',
+            'e',
+        ]);
         expect(afterAgain[AGAIN_REINSERT_OFFSET].kind).toBe('learning');
-        expect(applyGrade(queue, 3).map((i) => i.card.id)).toEqual(['b', 'c', 'd', 'e']);
+        expect(applyGrade(queue, 3).map((i) => i.card.id)).toEqual([
+            'b',
+            'c',
+            'd',
+            'e',
+        ]);
     });
 
     it('finds the next future due date among reviewed cards', () => {
@@ -75,6 +88,8 @@ describe('reviewQueue', () => {
                 now
             )?.toISOString()
         ).toBe('2026-06-03T00:00:00.000Z');
-        expect(nextDueDate([card({ id: 'n', repetitions: 0 })], now)).toBeNull();
+        expect(
+            nextDueDate([card({ id: 'n', repetitions: 0 })], now)
+        ).toBeNull();
     });
 });

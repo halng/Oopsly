@@ -9,7 +9,9 @@ import {
 
 describe('questionForm', () => {
     it('validates each supported type', () => {
-        expect(validateDraft(emptyDraft()).error).toBe('Question text is required');
+        expect(validateDraft(emptyDraft()).error).toBe(
+            'Question text is required'
+        );
 
         const single = {
             ...emptyDraft(),
@@ -28,12 +30,18 @@ describe('questionForm', () => {
             options: ['2', '3', '4'],
             correctOptionIndexes: [0, 1],
         };
-        expect(validateDraft(multi).input?.correctOptionIndexes).toEqual([0, 1]);
-        expect(validateDraft({ ...multi, correctOptionIndexes: [] }).error).toBe(
-            'Mark at least one correct option'
-        );
+        expect(validateDraft(multi).input?.correctOptionIndexes).toEqual([
+            0, 1,
+        ]);
+        expect(
+            validateDraft({ ...multi, correctOptionIndexes: [] }).error
+        ).toBe('Mark at least one correct option');
 
-        const tf = { ...changeDraftType(single, 'TRUE_FALSE'), text: 'Sky is blue', correctOptionIndex: 0 };
+        const tf = {
+            ...changeDraftType(single, 'TRUE_FALSE'),
+            text: 'Sky is blue',
+            correctOptionIndex: 0,
+        };
         expect(validateDraft(tf).input).toMatchObject({
             type: 'TRUE_FALSE',
             options: ['True', 'False'],
@@ -45,8 +53,13 @@ describe('questionForm', () => {
             text: 'Capital is ___',
             acceptedAnswers: ['Paris', ' paris '],
         };
-        expect(validateDraft(blank).input?.acceptedAnswers).toEqual(['Paris', 'paris']);
-        expect(validateDraft({ ...blank, text: 'Capital is' }).error).toMatch(/blank/);
+        expect(validateDraft(blank).input?.acceptedAnswers).toEqual([
+            'Paris',
+            'paris',
+        ]);
+        expect(validateDraft({ ...blank, text: 'Capital is' }).error).toMatch(
+            /blank/
+        );
     });
 
     it('inserts a blank marker and describes stored answers', () => {

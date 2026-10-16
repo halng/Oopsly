@@ -127,7 +127,9 @@ describe('HomePage', () => {
             target: { value: 'missing' },
         });
         expect(screen.getByText('No shelves found')).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: 'Create New Shelf' }));
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Create New Shelf' })
+        );
         expect(screen.getByText('Close shelf modal')).toBeInTheDocument();
     });
 

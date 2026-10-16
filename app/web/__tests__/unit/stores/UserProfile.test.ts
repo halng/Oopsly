@@ -29,7 +29,7 @@ describe('useUserProfileStore', () => {
             totalReviews: 75,
             retentionRate: 0.85,
             xp: 1200,
-            league: "",
+            league: '',
             settings: {},
             avatarUrl: 'https://example.com/avatar.png',
         } as UserProfile;

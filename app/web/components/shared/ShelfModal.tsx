@@ -1,6 +1,20 @@
 'use client';
 import React, { useState } from 'react';
-import { X, Folder, Palette, Save, Book, Star, Tag, Heart, Bookmark, Camera, Music, Film, Gift } from 'lucide-react';
+import {
+    X,
+    Folder,
+    Palette,
+    Save,
+    Book,
+    Star,
+    Tag,
+    Heart,
+    Bookmark,
+    Camera,
+    Music,
+    Film,
+    Gift,
+} from 'lucide-react';
 import { Shelf } from '@/types';
 
 interface ShelfModalProps {
@@ -28,16 +42,16 @@ const PRESET_COLORS = [
 ];
 
 const PRESET_ICONS = {
-        'folder': <Folder className="w-5 h-5" />,
-        'book': <Book className="w-5 h-5" />,
-        'star': <Star className="w-5 h-5" />,
-        'tag': <Tag className="w-5 h-5" />,
-        'heart': <Heart className="w-5 h-5" />,
-        'bookmark': <Bookmark className="w-5 h-5" />,
-        'camera': <Camera className="w-5 h-5" />,
-        'music': <Music className="w-5 h-5" />,
-        'film': <Film className="w-5 h-5" />,
-        'gift': <Gift className="w-5 h-5" />,
+    folder: <Folder className="w-5 h-5" />,
+    book: <Book className="w-5 h-5" />,
+    star: <Star className="w-5 h-5" />,
+    tag: <Tag className="w-5 h-5" />,
+    heart: <Heart className="w-5 h-5" />,
+    bookmark: <Bookmark className="w-5 h-5" />,
+    camera: <Camera className="w-5 h-5" />,
+    music: <Music className="w-5 h-5" />,
+    film: <Film className="w-5 h-5" />,
+    gift: <Gift className="w-5 h-5" />,
 };
 
 export default function ShelfModal({
@@ -82,7 +96,11 @@ export default function ShelfModal({
                             className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
                             style={{ backgroundColor: color }}
                         >
-                            {Object.fromEntries(Object.entries(PRESET_ICONS).filter(([key]) => key === icon))[icon] ?? <Folder className="w-5 h-5" />}
+                            {Object.fromEntries(
+                                Object.entries(PRESET_ICONS).filter(
+                                    ([key]) => key === icon
+                                )
+                            )[icon] ?? <Folder className="w-5 h-5" />}
                         </div>
                         <div>
                             <h2 className="text-base font-bold text-stone-900">
@@ -137,24 +155,23 @@ export default function ShelfModal({
                             Shelf Icon
                         </label>
                         <div className="flex items-center gap-2 flex-wrap">
- {
-                            Object.entries(PRESET_ICONS).map(([key, IconComponent]) => (
-                                <button
-                                    type="button"
-                                    key={key}
-                                    onClick={() => setIcon(key)}
-                                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-transform cursor-pointer ${
-                                        icon === key
-                                            ? 'ring-2 ring-stone-900 ring-offset-2 scale-110'
-                                            : 'hover:scale-105'
-                                    }`}
-                                >
-                                    {IconComponent}
-                                </button>
-                            ))
-                        }
+                            {Object.entries(PRESET_ICONS).map(
+                                ([key, IconComponent]) => (
+                                    <button
+                                        type="button"
+                                        key={key}
+                                        onClick={() => setIcon(key)}
+                                        className={`w-7 h-7 rounded-full flex items-center justify-center transition-transform cursor-pointer ${
+                                            icon === key
+                                                ? 'ring-2 ring-stone-900 ring-offset-2 scale-110'
+                                                : 'hover:scale-105'
+                                        }`}
+                                    >
+                                        {IconComponent}
+                                    </button>
+                                )
+                            )}
                         </div>
-                       
                     </div>
 
                     <div>

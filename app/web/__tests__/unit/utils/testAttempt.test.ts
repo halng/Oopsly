@@ -3,8 +3,18 @@ import { buildOptionOrders, buildSubmission } from '@/utils/testAttempt';
 import { TestAttemptQuestion } from '@/types';
 
 const questions: TestAttemptQuestion[] = [
-    { id: 'q1', text: 'Pick one', type: 'SINGLE_CHOICE', options: ['A', 'B', 'C'] },
-    { id: 'q2', text: 'Pick all', type: 'MULTIPLE_CHOICE', options: ['X', 'Y'] },
+    {
+        id: 'q1',
+        text: 'Pick one',
+        type: 'SINGLE_CHOICE',
+        options: ['A', 'B', 'C'],
+    },
+    {
+        id: 'q2',
+        text: 'Pick all',
+        type: 'MULTIPLE_CHOICE',
+        options: ['X', 'Y'],
+    },
     { id: 'q3', text: 'T/F', type: 'TRUE_FALSE', options: ['True', 'False'] },
     { id: 'q4', text: 'Fill ___', type: 'FILL_IN_THE_BLANK', options: [] },
 ];

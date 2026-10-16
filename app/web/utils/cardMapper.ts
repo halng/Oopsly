@@ -28,7 +28,10 @@ function isCardRes(value: unknown): value is CardRes {
 
 export function mapCardRes(res: CardRes | Card, subjectId: string): Card {
     if (!isCardRes(res)) {
-        return { ...(res as Card), subjectId: (res as Card).subjectId || subjectId };
+        return {
+            ...(res as Card),
+            subjectId: (res as Card).subjectId || subjectId,
+        };
     }
     const now = new Date().toISOString();
     return {

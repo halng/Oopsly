@@ -37,7 +37,8 @@ export function buildSubmission(
         const a = answers[q.id];
         if (!a) continue;
         if (q.type === 'MULTIPLE_CHOICE') {
-            if (a.indexes?.length) submission.multiAnswers[q.id] = [...a.indexes];
+            if (a.indexes?.length)
+                submission.multiAnswers[q.id] = [...a.indexes];
         } else if (q.type === 'FILL_IN_THE_BLANK') {
             if (a.text?.trim()) submission.textAnswers[q.id] = a.text.trim();
         } else if (a.index !== undefined) {

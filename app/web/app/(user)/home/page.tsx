@@ -40,16 +40,16 @@ import { useUserProfileStore, useShelfStore } from '@/store';
 const MAX_ITEMS_PER_PAGE = 50;
 
 const PRESET_ICONS = {
-    'folder': <Folder className="w-5 h-5" />,
-    'book': <Book className="w-5 h-5" />,
-    'star': <Star className="w-5 h-5" />,
-    'tag': <Tag className="w-5 h-5" />,
-    'heart': <Heart className="w-5 h-5" />,
-    'bookmark': <Bookmark className="w-5 h-5" />,
-    'camera': <Camera className="w-5 h-5" />,
-    'music': <Music className="w-5 h-5" />,
-    'film': <Film className="w-5 h-5" />,
-    'gift': <Gift className="w-5 h-5" />,
+    folder: <Folder className="w-5 h-5" />,
+    book: <Book className="w-5 h-5" />,
+    star: <Star className="w-5 h-5" />,
+    tag: <Tag className="w-5 h-5" />,
+    heart: <Heart className="w-5 h-5" />,
+    bookmark: <Bookmark className="w-5 h-5" />,
+    camera: <Camera className="w-5 h-5" />,
+    music: <Music className="w-5 h-5" />,
+    film: <Film className="w-5 h-5" />,
+    gift: <Gift className="w-5 h-5" />,
 };
 
 export const HomePage: React.FC = () => {
@@ -85,7 +85,10 @@ export const HomePage: React.FC = () => {
     const loadShelvesAndSubjects = useCallback(async () => {
         setIsLoading(true);
         try {
-            const shelvesRes = await ApiService.getShelves(currentPage, MAX_ITEMS_PER_PAGE);
+            const shelvesRes = await ApiService.getShelves(
+                currentPage,
+                MAX_ITEMS_PER_PAGE
+            );
             if (shelvesRes.isSuccess && shelvesRes.data) {
                 const fetchedShelves = shelvesRes.data.entities;
                 if (fetchedShelves && fetchedShelves.length > 0) {
@@ -143,9 +146,8 @@ export const HomePage: React.FC = () => {
                     alert('Shelf created successfully');
                     loadShelvesAndSubjects();
                 }
-            })
+            });
         }
-
     };
 
     const handleUpdateNewCommer = async () => {
@@ -154,7 +156,6 @@ export const HomePage: React.FC = () => {
             loadUserData();
         }
     };
-
 
     const filteredShelves = useMemo(() => {
         return shelves.filter((s) => {
@@ -166,7 +167,6 @@ export const HomePage: React.FC = () => {
             );
         });
     }, [shelves, shelfSearchQuery]);
-
 
     const renderStudyGoalTracker = () => {
         const dailyGoal = profile?.settings?.dailyGoal || 20;
@@ -308,8 +308,7 @@ export const HomePage: React.FC = () => {
                 {totalDue > 0 && (
                     <div className="bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-[color-mix(in_srgb,var(--theme-accent)_15%,transparent)] border border-[color-mix(in_srgb,var(--theme-accent)_40%,transparent)] rounded-2xl p-4">
                         <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                            {totalDue} Total Cards Due for Daily
-                            FSRS Review
+                            {totalDue} Total Cards Due for Daily FSRS Review
                         </h3>
                     </div>
                 )}
@@ -394,19 +393,36 @@ export const HomePage: React.FC = () => {
                                                             'var(--theme-accent)',
                                                     }}
                                                 >
-                                                    {Object.fromEntries(Object.entries(PRESET_ICONS).filter(([key]) => key === shelf.icon))[shelf.icon] ?? <Folder className="w-5 h-5" />}
+                                                    {Object.fromEntries(
+                                                        Object.entries(
+                                                            PRESET_ICONS
+                                                        ).filter(
+                                                            ([key]) =>
+                                                                key ===
+                                                                shelf.icon
+                                                        )
+                                                    )[shelf.icon] ?? (
+                                                        <Folder className="w-5 h-5" />
+                                                    )}
                                                 </div>
                                                 <div className="min-w-0">
                                                     <h3 className="text-lg font-bold text-stone-900 dark:text-stone-100 line-clamp-1">
                                                         {shelf.name}
                                                     </h3>
                                                     <span className="text-xs font-semibold text-stone-500 dark:text-stone-400">
-                                                        {shelf?.stats.totalSubjects}{' '}
-                                                        {shelf?.stats.totalSubjects ===
-                                                            1
+                                                        {
+                                                            shelf?.stats
+                                                                .totalSubjects
+                                                        }{' '}
+                                                        {shelf?.stats
+                                                            .totalSubjects === 1
                                                             ? 'subject'
                                                             : 'subjects'}{' '}
-                                                        • {shelf?.stats?.totalCards}{' '}
+                                                        •{' '}
+                                                        {
+                                                            shelf?.stats
+                                                                ?.totalCards
+                                                        }{' '}
                                                         cards
                                                     </span>
                                                 </div>
@@ -423,7 +439,6 @@ export const HomePage: React.FC = () => {
                                                 >
                                                     <MoreVertical className="w-4 h-4" />
                                                 </button>
-                                                
                                             </div>
                                         </div>
                                         <p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 mt-4 min-h-[32px]">
@@ -433,8 +448,8 @@ export const HomePage: React.FC = () => {
                                         <div className="flex items-center gap-2 mt-4 pt-3 border-t border-stone-100 dark:border-stone-800/80">
                                             {shelf.stats.totalDue > 0 ? (
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 text-[11px] font-bold border border-amber-200">
-                                                    {shelf?.stats?.totalDue} cards
-                                                    due
+                                                    {shelf?.stats?.totalDue}{' '}
+                                                    cards due
                                                 </span>
                                             ) : (
                                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">

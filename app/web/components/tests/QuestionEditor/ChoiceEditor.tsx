@@ -9,12 +9,17 @@ interface ChoiceEditorProps {
 }
 
 /** Option list for single choice (radio) and multiple choice (checkboxes). */
-export default function ChoiceEditor({ draft, onChange }: Readonly<ChoiceEditorProps>) {
+export default function ChoiceEditor({
+    draft,
+    onChange,
+}: Readonly<ChoiceEditorProps>) {
     const multiple = draft.type === 'MULTIPLE_CHOICE';
     const groupName = useId();
 
     const isCorrect = (i: number) =>
-        multiple ? draft.correctOptionIndexes.includes(i) : draft.correctOptionIndex === i;
+        multiple
+            ? draft.correctOptionIndexes.includes(i)
+            : draft.correctOptionIndex === i;
 
     const toggleCorrect = (i: number) => {
         if (!multiple) {
@@ -39,10 +44,13 @@ export default function ChoiceEditor({ draft, onChange }: Readonly<ChoiceEditorP
             ...draft,
             options: draft.options.filter((_, idx) => idx !== i),
             correctOptionIndex:
-                draft.correctOptionIndex === i || draft.correctOptionIndex === null
+                draft.correctOptionIndex === i ||
+                draft.correctOptionIndex === null
                     ? null
                     : shift(draft.correctOptionIndex),
-            correctOptionIndexes: draft.correctOptionIndexes.filter((x) => x !== i).map(shift),
+            correctOptionIndexes: draft.correctOptionIndexes
+                .filter((x) => x !== i)
+                .map(shift),
         });
     };
 
@@ -51,7 +59,11 @@ export default function ChoiceEditor({ draft, onChange }: Readonly<ChoiceEditorP
             <p className="font-bold">
                 Options{' '}
                 <span className="font-normal text-stone-500">
-                    ({multiple ? 'tick every correct option' : 'pick the correct option'})
+                    (
+                    {multiple
+                        ? 'tick every correct option'
+                        : 'pick the correct option'}
+                    )
                 </span>
             </p>
             {draft.options.map((option, i) => (
@@ -89,7 +101,9 @@ export default function ChoiceEditor({ draft, onChange }: Readonly<ChoiceEditorP
                 type="button"
                 data-testid="btn-add-option"
                 disabled={draft.options.length >= MAX_OPTIONS}
-                onClick={() => onChange({ ...draft, options: [...draft.options, ''] })}
+                onClick={() =>
+                    onChange({ ...draft, options: [...draft.options, ''] })
+                }
                 className="inline-flex items-center gap-1 text-xs font-bold text-[var(--theme-secondary)] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
             >
                 <Plus className="w-3.5 h-3.5" />

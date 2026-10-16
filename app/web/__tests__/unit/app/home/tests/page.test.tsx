@@ -44,7 +44,9 @@ describe('TestSuiteDetailsPage', () => {
 
     it('lists questions and can start the attempt', async () => {
         render(<TestSuiteDetailsPage />);
-        await waitFor(() => expect(screen.getByText('2+2?')).toBeInTheDocument());
+        await waitFor(() =>
+            expect(screen.getByText('2+2?')).toBeInTheDocument()
+        );
         fireEvent.click(screen.getByTestId('btn-take-test'));
         expect(push).toHaveBeenCalledWith('/home/science/tests/midterm/take');
     });

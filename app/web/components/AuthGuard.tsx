@@ -34,7 +34,10 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
                     </div>
                 </div>
             )}
-            <div className={isAuthenticated ? undefined : 'hidden'} aria-hidden={!isAuthenticated}>
+            <div
+                className={isAuthenticated ? undefined : 'hidden'}
+                aria-hidden={!isAuthenticated}
+            >
                 {children}
             </div>
         </>

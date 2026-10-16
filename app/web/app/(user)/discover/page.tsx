@@ -37,7 +37,11 @@ export default function DiscoverPage() {
     );
     const filteredCatalog = catalog.filter((item) => {
         const q = searchQuery.toLowerCase();
-        const title = (item.name || (item as { title?: string }).title || '').toLowerCase();
+        const title = (
+            item.name ||
+            (item as { title?: string }).title ||
+            ''
+        ).toLowerCase();
         const matchesSearch =
             title.includes(q) ||
             (item.description || '').toLowerCase().includes(q) ||

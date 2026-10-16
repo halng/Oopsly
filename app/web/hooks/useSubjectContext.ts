@@ -24,9 +24,15 @@ export async function resolveSubjectBySlug(
     shelf: Shelf,
     subSlug: string
 ): Promise<Subject | null> {
-    const cached = useSubjectStore.getState().getCurrentSubject(shelf.id, subSlug);
+    const cached = useSubjectStore
+        .getState()
+        .getCurrentSubject(shelf.id, subSlug);
     if (cached) return cached;
-    const res = await ApiService.getShelfSubjects(shelf.id, 1, HYDRATE_PAGE_SIZE);
+    const res = await ApiService.getShelfSubjects(
+        shelf.id,
+        1,
+        HYDRATE_PAGE_SIZE
+    );
     if (!res.isSuccess || !res.data) return null;
     useSubjectStore.getState().setSubjects(shelf.id, res.data.entities);
     return useSubjectStore.getState().getCurrentSubject(shelf.id, subSlug);
@@ -51,10 +57,14 @@ export function useSubjectContext(): SubjectContext {
         subject: Subject | null;
         isLoading: boolean;
     }>(() => {
-        const shelf = slug ? useShelfStore.getState().getCurrentShelf(slug) : null;
+        const shelf = slug
+            ? useShelfStore.getState().getCurrentShelf(slug)
+            : null;
         const subject =
             shelf && subSlug
-                ? useSubjectStore.getState().getCurrentSubject(shelf.id, subSlug)
+                ? useSubjectStore
+                      .getState()
+                      .getCurrentSubject(shelf.id, subSlug)
                 : null;
         return { shelf, subject, isLoading: !(shelf && subject) };
     });
@@ -67,7 +77,9 @@ export function useSubjectContext(): SubjectContext {
                 return;
             }
             const shelf = await resolveShelfBySlug(slug);
-            const subject = shelf ? await resolveSubjectBySlug(shelf, subSlug) : null;
+            const subject = shelf
+                ? await resolveSubjectBySlug(shelf, subSlug)
+                : null;
             if (!cancelled) setState({ shelf, subject, isLoading: false });
         })();
         return () => {

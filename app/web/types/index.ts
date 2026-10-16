@@ -221,10 +221,7 @@ export interface PaginatedResponse<T> {
 }
 
 export type QuestionType =
-    | 'SINGLE_CHOICE'
-    | 'MULTIPLE_CHOICE'
-    | 'TRUE_FALSE'
-    | 'FILL_IN_THE_BLANK';
+    'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'FILL_IN_THE_BLANK';
 
 export interface QuestionInput {
     text: string;

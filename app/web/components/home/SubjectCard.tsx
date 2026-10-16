@@ -157,19 +157,22 @@ export default function SubjectCard({
                     {subject.description || 'No description provided.'}
                 </p>
 
-                {subject.tags?.split(",").length > 0 && (
+                {subject.tags?.split(',').length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-3">
-                        {subject.tags?.split(",").slice(0, 3).map((tag) => (
-                            <span
-                                key={tag}
-                                className="px-2 py-0.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-md text-[10px] font-medium"
-                            >
-                                #{tag}
-                            </span>
-                        ))}
-                        {subject.tags?.split(",").length > 3 && (
+                        {subject.tags
+                            ?.split(',')
+                            .slice(0, 3)
+                            .map((tag) => (
+                                <span
+                                    key={tag}
+                                    className="px-2 py-0.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-md text-[10px] font-medium"
+                                >
+                                    #{tag}
+                                </span>
+                            ))}
+                        {subject.tags?.split(',').length > 3 && (
                             <span className="text-[10px] text-stone-400 font-medium self-center">
-                                +{subject.tags?.split(",").length - 3} more
+                                +{subject.tags?.split(',').length - 3} more
                             </span>
                         )}
                     </div>

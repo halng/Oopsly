@@ -18,7 +18,10 @@ export default function FillInTheBlankEditor({
         const value = pending.trim();
         if (!value) return;
         if (!draft.acceptedAnswers.includes(value)) {
-            onChange({ ...draft, acceptedAnswers: [...draft.acceptedAnswers, value] });
+            onChange({
+                ...draft,
+                acceptedAnswers: [...draft.acceptedAnswers, value],
+            });
         }
         setPending('');
     };
@@ -41,9 +44,10 @@ export default function FillInTheBlankEditor({
                                 onClick={() =>
                                     onChange({
                                         ...draft,
-                                        acceptedAnswers: draft.acceptedAnswers.filter(
-                                            (a) => a !== answer
-                                        ),
+                                        acceptedAnswers:
+                                            draft.acceptedAnswers.filter(
+                                                (a) => a !== answer
+                                            ),
                                     })
                                 }
                                 className="cursor-pointer"
@@ -85,7 +89,9 @@ export default function FillInTheBlankEditor({
                     role="switch"
                     data-testid="case-sensitive-switch"
                     checked={draft.caseSensitive}
-                    onChange={(e) => onChange({ ...draft, caseSensitive: e.target.checked })}
+                    onChange={(e) =>
+                        onChange({ ...draft, caseSensitive: e.target.checked })
+                    }
                     className="h-4 w-4 accent-emerald-600"
                 />
                 Case sensitive

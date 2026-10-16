@@ -139,7 +139,7 @@ export const ApiService = {
         } catch (error: any) {
             return {
                 isSuccess: false,
-                statusCode: 200,    
+                statusCode: 200,
                 message: error?.message || 'Network error occurred',
                 data: null,
                 timestamp: new Date().toISOString(),
@@ -205,8 +205,13 @@ export const ApiService = {
         }),
 
     // Shelves
-    getShelves: async (page: number, size: number): Promise<ApiResponse<PaginatedResponse<Shelf>>> => {
-        const res = await fetchJson<PaginatedResponse<Shelf>>(`/v1/shelves?page=${page}&size=${size}`);
+    getShelves: async (
+        page: number,
+        size: number
+    ): Promise<ApiResponse<PaginatedResponse<Shelf>>> => {
+        const res = await fetchJson<PaginatedResponse<Shelf>>(
+            `/v1/shelves?page=${page}&size=${size}`
+        );
         if (res.isSuccess && res.data) {
             await offlineDb.cacheShelves(res.data.entities);
             return res;
@@ -239,13 +244,15 @@ export const ApiService = {
         icon: string;
         color: string;
     }) => {
-        const payload = {...data, slug: slugify(data.name, {lower: true, strict: true})};
+        const payload = {
+            ...data,
+            slug: slugify(data.name, { lower: true, strict: true }),
+        };
         return fetchJson<Shelf>('/v1/shelves', {
             method: 'POST',
             body: JSON.stringify(payload),
         });
     },
-        
 
     updateShelf: (id: string, data: Partial<Shelf>) =>
         fetchJson<Shelf>(`/v1/shelves/${id}`, {
@@ -345,8 +352,11 @@ export const ApiService = {
             tags: string;
             isPublic: boolean;
         }
-    ) =>{
-        const payload = { ...data, slug: slugify(data.name, { lower: true, strict: true }) };
+    ) => {
+        const payload = {
+            ...data,
+            slug: slugify(data.name, { lower: true, strict: true }),
+        };
         return fetchJson<Subject>(`/v1/shelves/${shelfId}/subjects`, {
             method: 'POST',
             body: JSON.stringify(payload),
@@ -421,7 +431,7 @@ export const ApiService = {
                 await offlineDb.getCachedDueCardsBySubject(subjectId);
             return {
                 isSuccess: true,
-                statusCode: 200, 
+                statusCode: 200,
                 message: 'Loaded cached due cards (offline)',
                 data: cachedDue,
                 timestamp: new Date().toISOString(),
@@ -450,7 +460,7 @@ export const ApiService = {
                 isSuccess: true,
                 statusCode: 200,
                 message: `Imported ${result.importedCount} cards offline (will sync when online)`,
-                data: "Successfully created cards offline",
+                data: 'Successfully created cards offline',
                 timestamp: new Date().toISOString(),
             };
         }
@@ -467,7 +477,7 @@ export const ApiService = {
             return res;
         }
 
-        if (isOfflineOrNetworkFailure(res)) {  
+        if (isOfflineOrNetworkFailure(res)) {
             const result = await offlineDb.saveOfflineBatchCards(
                 subjectId,
                 cards
@@ -478,7 +488,7 @@ export const ApiService = {
                 isSuccess: true,
                 statusCode: 200,
                 message: `Imported ${result.importedCount} cards offline (will sync when online)`,
-                data: "Successfully created cards offline",
+                data: 'Successfully created cards offline',
                 timestamp: new Date().toISOString(),
             };
         }
@@ -560,7 +570,9 @@ export const ApiService = {
             totalXp: number;
         }>(`/v1/shelves/${shelfId}/subjects/${subjectId}/cards/difficulty`, {
             method: 'PUT',
-            body: JSON.stringify([{ cardId: id, newLevel: GRADE_LEVELS[grade] }]),
+            body: JSON.stringify([
+                { cardId: id, newLevel: GRADE_LEVELS[grade] },
+            ]),
         });
 
         if (res.isSuccess && res.data) {
@@ -686,9 +698,15 @@ export const ApiService = {
         }),
 
     getTestAttempt: (shelfId: string, id: string) =>
-        fetchJson<TestAttempt>(`/v1/shelves/${shelfId}/test-suites/${id}/attempt`),
+        fetchJson<TestAttempt>(
+            `/v1/shelves/${shelfId}/test-suites/${id}/attempt`
+        ),
 
-    submitTestSuite: (shelfId: string, id: string, submission: TestSubmission) =>
+    submitTestSuite: (
+        shelfId: string,
+        id: string,
+        submission: TestSubmission
+    ) =>
         fetchJson<TestSubmissionRes>(
             `/v1/shelves/${shelfId}/test-suites/${id}/submit`,
             {
@@ -703,7 +721,11 @@ export const ApiService = {
             `/v1/shelves/${shelfId}/test-suites/${testSuiteId}/questions`
         ),
 
-    createQuestion: (shelfId: string, testSuiteId: string, data: QuestionInput) =>
+    createQuestion: (
+        shelfId: string,
+        testSuiteId: string,
+        data: QuestionInput
+    ) =>
         fetchJson<Question>(
             `/v1/shelves/${shelfId}/test-suites/${testSuiteId}/questions`,
             {

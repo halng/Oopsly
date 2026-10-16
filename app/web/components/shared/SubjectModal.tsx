@@ -36,9 +36,7 @@ export default function SubjectModal({
     const [name, setName] = useState(subject?.name || '');
     const [description, setDescription] = useState(subject?.description || '');
     const [color, setColor] = useState(subject?.color || 'var(--theme-accent)');
-    const [tags, setTags] = useState(
-        subject?.tags || ''
-    );
+    const [tags, setTags] = useState(subject?.tags || '');
     const [isPublic, setIsPublic] = useState(subject?.isPublic || false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -49,12 +47,12 @@ export default function SubjectModal({
             setError('Please provide a name for the subject');
             return;
         }
-        
+
         if (!description.trim()) {
             setError("Let's add a description for the subject");
             return;
         }
-        
+
         if (tags.trim() && tags.split(',').some((t) => !t.trim())) {
             setError('Tags must be comma-separated and cannot be empty');
             return;
@@ -97,7 +95,9 @@ export default function SubjectModal({
                         </div>
                         <div>
                             <h2 className="text-base font-bold text-stone-900">
-                                {subject ? 'Edit Subject' : 'Create New Subject'}
+                                {subject
+                                    ? 'Edit Subject'
+                                    : 'Create New Subject'}
                             </h2>
                             <p className="text-xs text-stone-500">
                                 Flashcard subject for active recall
@@ -180,7 +180,7 @@ export default function SubjectModal({
                         </div>
                     </div>
 
-                    <div className='flex'>
+                    <div className="flex">
                         <label className="font-bold text-stone-700 block mb-2">
                             Make it public
                         </label>

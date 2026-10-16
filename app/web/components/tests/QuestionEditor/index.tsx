@@ -57,7 +57,11 @@ export default function QuestionEditor({
         try {
             await onSubmit(result.input);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Could not save the question');
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : 'Could not save the question'
+            );
         } finally {
             setIsSaving(false);
         }
@@ -69,7 +73,11 @@ export default function QuestionEditor({
             onSubmit={handleSubmit}
             className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 p-4 space-y-4 text-xs"
         >
-            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Question type">
+            <div
+                className="flex flex-wrap gap-1.5"
+                role="radiogroup"
+                aria-label="Question type"
+            >
                 {QUESTION_TYPES.map((type) => (
                     <button
                         key={type}
@@ -121,17 +129,26 @@ export default function QuestionEditor({
                 />
             </div>
 
-            {(draft.type === 'SINGLE_CHOICE' || draft.type === 'MULTIPLE_CHOICE') && (
+            {(draft.type === 'SINGLE_CHOICE' ||
+                draft.type === 'MULTIPLE_CHOICE') && (
                 <ChoiceEditor draft={draft} onChange={update} />
             )}
-            {draft.type === 'TRUE_FALSE' && <TrueFalseEditor draft={draft} onChange={update} />}
+            {draft.type === 'TRUE_FALSE' && (
+                <TrueFalseEditor draft={draft} onChange={update} />
+            )}
             {draft.type === 'FILL_IN_THE_BLANK' && (
                 <FillInTheBlankEditor draft={draft} onChange={update} />
             )}
 
             <div>
-                <label htmlFor={`${testId}-explanation`} className="font-bold block mb-1">
-                    Explanation <span className="font-normal text-stone-500">(optional)</span>
+                <label
+                    htmlFor={`${testId}-explanation`}
+                    className="font-bold block mb-1"
+                >
+                    Explanation{' '}
+                    <span className="font-normal text-stone-500">
+                        (optional)
+                    </span>
                 </label>
                 <textarea
                     id={`${testId}-explanation`}
@@ -139,13 +156,18 @@ export default function QuestionEditor({
                     data-testid="question-explanation-input"
                     placeholder="Shown after the test is submitted"
                     value={draft.explanation}
-                    onChange={(e) => update({ ...draft, explanation: e.target.value })}
+                    onChange={(e) =>
+                        update({ ...draft, explanation: e.target.value })
+                    }
                     className="w-full p-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--theme-accent)]"
                 />
             </div>
 
             {error && (
-                <p data-testid="question-editor-error" className="text-rose-600 font-semibold">
+                <p
+                    data-testid="question-editor-error"
+                    className="text-rose-600 font-semibold"
+                >
                     {error}
                 </p>
             )}

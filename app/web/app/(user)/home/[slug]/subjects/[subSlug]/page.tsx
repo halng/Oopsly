@@ -66,7 +66,9 @@ export default function SubjectDetailsPage() {
         }
         setIsCardsLoading(true);
         const cardsRes = await ApiService.getSubjectCards(shelfId, subjectId);
-        const fetchedCards = cardsRes.isSuccess ? cardsRes.data?.entities || [] : [];
+        const fetchedCards = cardsRes.isSuccess
+            ? cardsRes.data?.entities || []
+            : [];
         setCards(fetchedCards.filter((c) => !c.isDeleted));
         setIsCardsLoading(false);
     }, [shelfId, subjectId]);
@@ -83,7 +85,10 @@ export default function SubjectDetailsPage() {
         };
         window.addEventListener('oopsly-sync-completed', handleSyncComplete);
         return () => {
-            window.removeEventListener('oopsly-sync-completed', handleSyncComplete);
+            window.removeEventListener(
+                'oopsly-sync-completed',
+                handleSyncComplete
+            );
         };
     }, [subjectId, loadData]);
 
@@ -91,11 +96,17 @@ export default function SubjectDetailsPage() {
         e.preventDefault();
         if (!newFront.trim() || !newBack.trim()) return;
         if (!currentShelf || !currentSubject) return;
-        const res = await ApiService.createCards(currentShelf?.id, currentSubject?.id, [{
-            front: newFront,
-            back: newBack,
-            hint: newHint
-        }]);
+        const res = await ApiService.createCards(
+            currentShelf?.id,
+            currentSubject?.id,
+            [
+                {
+                    front: newFront,
+                    back: newBack,
+                    hint: newHint,
+                },
+            ]
+        );
         if (res.isSuccess) {
             setNewFront('');
             setNewBack('');
@@ -134,13 +145,19 @@ export default function SubjectDetailsPage() {
                 aiNotes,
                 aiCardCount
             );
-            if (res.isSuccess && res.data &&  currentShelf && currentSubject) {
+            if (res.isSuccess && res.data && currentShelf && currentSubject) {
                 for (const genCard of res.data) {
-                    await ApiService.createCards(currentShelf?.id, currentSubject?.id, [{ 
-                        front: genCard.front,
-                        back: genCard.back,
-                        hint: genCard.hint
-                    }]);
+                    await ApiService.createCards(
+                        currentShelf?.id,
+                        currentSubject?.id,
+                        [
+                            {
+                                front: genCard.front,
+                                back: genCard.back,
+                                hint: genCard.hint,
+                            },
+                        ]
+                    );
                 }
                 setIsAiModalOpen(false);
                 setAiNotes('');
@@ -173,7 +190,11 @@ export default function SubjectDetailsPage() {
                     type="button"
                     data-testid="btn-subject-back"
                     onClick={() =>
-                        router.push(currentShelf ? `/home/${currentShelf.slug}` : '/home')
+                        router.push(
+                            currentShelf
+                                ? `/home/${currentShelf.slug}`
+                                : '/home'
+                        )
                     }
                     className="px-4 py-2 rounded-xl bg-stone-900 text-white text-xs font-bold cursor-pointer"
                 >
@@ -187,7 +208,9 @@ export default function SubjectDetailsPage() {
         (c) =>
             c.front.toLowerCase().includes(searchQuery.toLowerCase()) ||
             c.back.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+            c.tags.some((t) =>
+                t.toLowerCase().includes(searchQuery.toLowerCase())
+            )
     );
     const masteredCards = cards.filter(
         (c) => c.stability >= 0.8 && c.intervalDays > 21
@@ -212,7 +235,8 @@ export default function SubjectDetailsPage() {
                             className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0"
                             style={{
                                 backgroundColor:
-                                    currentSubject.color || 'var(--theme-accent)',
+                                    currentSubject.color ||
+                                    'var(--theme-accent)',
                             }}
                         >
                             <Layers className="w-6 h-6" />
@@ -227,7 +251,8 @@ export default function SubjectDetailsPage() {
                                 </span>
                             </div>
                             <p className="text-xs text-stone-500 mt-1">
-                                {currentSubject.description || 'No description provided.'}
+                                {currentSubject.description ||
+                                    'No description provided.'}
                             </p>
                             {cards.length > 0 && (
                                 <div className="mt-2">
@@ -597,4 +622,3 @@ export default function SubjectDetailsPage() {
         </div>
     );
 }
-

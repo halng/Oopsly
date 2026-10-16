@@ -1,6 +1,9 @@
 import { Card } from '@/types';
 
-export function shuffle<T>(items: readonly T[], random: () => number = Math.random): T[] {
+export function shuffle<T>(
+    items: readonly T[],
+    random: () => number = Math.random
+): T[] {
     const result = [...items];
     for (let i = result.length - 1; i > 0; i--) {
         const j = Math.floor(random() * (i + 1));
@@ -44,7 +47,11 @@ export function levenshtein(a: string, b: string): number {
         const curr = [i];
         for (let j = 1; j <= b.length; j++) {
             const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-            curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+            curr[j] = Math.min(
+                curr[j - 1] + 1,
+                prev[j] + 1,
+                prev[j - 1] + cost
+            );
         }
         prev = curr;
     }
