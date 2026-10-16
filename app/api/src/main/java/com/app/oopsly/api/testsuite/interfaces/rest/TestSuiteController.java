@@ -32,7 +32,7 @@ import java.util.UUID;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/shelves/{shelveId}/test-suites")
+@RequestMapping("/v1/shelves/{shelveId}/test-suites")
 @Tag(
         name = "Test Suite",
         description =
@@ -187,6 +187,27 @@ public class TestSuiteController {
     }
 
     @Operation(
+            summary = "Start a test attempt",
+            description =
+                    "Returns the questions of a test suite without their answers, plus the time"
+                            + " limit in seconds")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Attempt ready",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "404", description = "Test suite or shelve not found")
+            })
+    @GetMapping("/{id}/attempt")
+    public ApiRes getAttempt(
+            @Parameter(description = "Shelve ID", required = true) @PathVariable UUID shelveId,
+            @Parameter(description = "Test Suite ID", required = true) @PathVariable UUID id) {
+        return this.service.getAttempt(shelveId, id);
+    }
+
+    // TODO(ai): postponed until the AI integration; not used by the web app.
+    @Operation(
             summary = "Auto-generate test suite",
             description = "Auto-generates a test suite from cards in a given subject")
     @ApiResponses(
@@ -213,6 +234,7 @@ public class TestSuiteController {
         return this.service.autoGenerate(shelveId, subjectId, numQuestions);
     }
 
+    // TODO(ai): card-based preset run, postponed until the AI integration.
     @Operation(
             summary = "Run test preset",
             description =

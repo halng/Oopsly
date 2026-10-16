@@ -12,9 +12,9 @@ export default function LeaderboardPage() {
     const currentUser = useUserProfileStore((s) => s.profile);
     const [allCommunities, setAllCommunities] = useState<Community[]>([]);
     const [myCommunities, setMyCommunities] = useState<Community[]>([]);
-    const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(
-        null
-    );
+    const [selectedCommunityId, setSelectedCommunityId] = useState<
+        string | null
+    >(null);
     const [members, setMembers] = useState<CommunityMember[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchFilter, setSearchFilter] = useState('');
@@ -32,9 +32,11 @@ export default function LeaderboardPage() {
         if (allRes.isSuccess && allRes.data) setAllCommunities(allRes.data);
         if (myRes.isSuccess && myRes.data) {
             setMyCommunities(myRes.data);
-            if (myRes.data.length > 0) {
-                // setSelectedCommunityId((prev) => prev || myRes?.data[0]?.id);
-            }
+            // if ( myRes.data.length > 0) {
+            //     setSelectedCommunityId(
+            //         (prev) => prev || myRes.data[0]?.id || null
+            //     );
+            // }
         }
         setIsLoading(false);
     };
@@ -65,9 +67,12 @@ export default function LeaderboardPage() {
     const sortedMembers = useMemo(() => {
         const list = [...members];
         if (sortBy === 'xp') list.sort((a, b) => b.xp - a.xp);
-        if (sortBy === 'streak') list.sort((a, b) => b.streakDays - a.streakDays);
+        if (sortBy === 'streak')
+            list.sort((a, b) => b.streakDays - a.streakDays);
         if (sortBy === 'weekly')
-            list.sort((a, b) => b.cardsStudiedThisWeek - a.cardsStudiedThisWeek);
+            list.sort(
+                (a, b) => b.cardsStudiedThisWeek - a.cardsStudiedThisWeek
+            );
         return list.map((m, idx) => ({ ...m, rank: idx + 1 }));
     }, [members, sortBy]);
 
@@ -199,27 +204,31 @@ export default function LeaderboardPage() {
                     <div className="flex items-center justify-between flex-wrap gap-2">
                         <h2 className="font-bold">{activeCommunity.name}</h2>
                         <div className="flex gap-2">
-                            {(['xp', 'streak', 'weekly'] as const).map((key) => (
-                                <button
-                                    key={key}
-                                    type="button"
-                                    data-testid={`btn-sort-${key}`}
-                                    onClick={() => setSortBy(key)}
-                                    className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer ${
-                                        sortBy === key
-                                            ? 'bg-stone-900 text-white'
-                                            : 'bg-stone-100'
-                                    }`}
-                                >
-                                    {key}
-                                </button>
-                            ))}
+                            {(['xp', 'streak', 'weekly'] as const).map(
+                                (key) => (
+                                    <button
+                                        key={key}
+                                        type="button"
+                                        data-testid={`btn-sort-${key}`}
+                                        onClick={() => setSortBy(key)}
+                                        className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer ${
+                                            sortBy === key
+                                                ? 'bg-stone-900 text-white'
+                                                : 'bg-stone-100'
+                                        }`}
+                                    >
+                                        {key}
+                                    </button>
+                                )
+                            )}
                             {isOwnerOrAdmin && (
                                 <>
                                     <button
                                         type="button"
                                         data-testid="btn-open-invite"
-                                        onClick={() => setIsInviteModalOpen(true)}
+                                        onClick={() =>
+                                            setIsInviteModalOpen(true)
+                                        }
                                         className="px-3 py-1 rounded-lg bg-stone-100 text-xs font-bold cursor-pointer"
                                     >
                                         Invite
@@ -239,7 +248,9 @@ export default function LeaderboardPage() {
                         </div>
                     </div>
                     {sortedMembers.length === 0 ? (
-                        <p className="text-xs text-stone-400">No members yet.</p>
+                        <p className="text-xs text-stone-400">
+                            No members yet.
+                        </p>
                     ) : (
                         <div className="space-y-2">
                             {sortedMembers.map((m) => (

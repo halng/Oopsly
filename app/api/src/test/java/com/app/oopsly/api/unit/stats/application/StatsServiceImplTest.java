@@ -25,7 +25,6 @@ import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shelf.Shelf;
-import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.stats.application.StatsServiceImpl;
 import com.app.oopsly.api.stats.application.vm.StatsRes;
 import com.app.oopsly.api.subject.Subject;
@@ -41,14 +40,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class StatsServiceImplTest {
 
     @Mock private UserService userService;
-    @Mock private ShelfRepository shelfRepository;
     @Mock private SubjectRepository subjectRepository;
     @Mock private CardRepository cardRepository;
 
@@ -94,10 +90,7 @@ class StatsServiceImplTest {
         futureCard.setFsrsDifficulty(2.0);
 
         when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findAllByUser(eq(user), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(shelf)));
-        when(subjectRepository.findAllByShelve(eq(shelf), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(subject)));
+        when(subjectRepository.findAllByUser(user)).thenReturn(List.of(subject));
         when(cardRepository.findAllBySubjectInAndDeletedFalse(List.of(subject)))
                 .thenReturn(List.of(dueCard, futureCard));
         when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(user.getId()), any(), any()))
@@ -124,8 +117,7 @@ class StatsServiceImplTest {
     @Test
     void getUserStats_withNoCards_returnsZeroRetentionAndNullSafeXp() {
         when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findAllByUser(eq(user), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of()));
+        when(subjectRepository.findAllByUser(user)).thenReturn(List.of());
         when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(
                         eq(user.getId()), any(), any()))
                 .thenReturn(List.of());
@@ -136,6 +128,23 @@ class StatsServiceImplTest {
         assertEquals(3, stats.streakDays());
         assertEquals(120, stats.totalXp());
         assertEquals(0L, stats.totalCards());
+        assertEquals(0.0, stats.retentionRate());
+    }
+
+    @Test
+    void getUserStats_withNullSetting_returnsZeroXpAndStreak() {
+        user.setSetting(null);
+        when(userService.getCurrentUser()).thenReturn(user);
+        when(subjectRepository.findAllByUser(user)).thenReturn(List.of());
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(
+                        eq(user.getId()), any(), any()))
+                .thenReturn(List.of());
+
+        StatsRes stats = (StatsRes) statsService.getUserStats().getBody().data();
+
+        assertEquals(0, stats.streakDays());
+        assertEquals(0, stats.totalXp());
+        assertEquals(20, stats.dailyGoal());
         assertEquals(0.0, stats.retentionRate());
     }
 }

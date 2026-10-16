@@ -16,13 +16,21 @@
 
 package com.app.oopsly.api.testsuite.application.vm;
 
+import com.app.oopsly.api.testsuite.domain.QuestionType;
+import java.util.List;
 import java.util.UUID;
 
 /** Per-question breakdown of a graded test submission. */
 public record QuestionBreakdown(
         UUID questionId,
-        String prompt,
-        Integer userAnswer,
-        Integer correctAnswer,
-        boolean isCorrect,
+        String text,
+        QuestionType type,
+        Integer userAnswerIndex,
+        List<Integer> userAnswerIndexes,
+        String userAnswerText,
+        Integer correctOptionIndex,
+        List<Integer> correctOptionIndexes,
+        String correctAnswerText,
+        List<String> options,
+        boolean correct,
         String explanation) {}

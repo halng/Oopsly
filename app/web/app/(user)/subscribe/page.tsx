@@ -43,7 +43,9 @@ export default function SubscribePage() {
             </div>
 
             <div className="text-center space-y-4">
-                <h1 className="text-4xl font-black">Supercharge your memory.</h1>
+                <h1 className="text-4xl font-black">
+                    Supercharge your memory.
+                </h1>
                 <p className="text-stone-600">
                     Unlock unlimited decks, AI generation, and exclusive garden
                     seeds.
@@ -86,7 +88,9 @@ export default function SubscribePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white rounded-3xl p-8 border">
                     <h2 className="text-xl font-bold">Basic</h2>
-                    <p className="text-sm text-stone-500 mt-2">Start learning.</p>
+                    <p className="text-sm text-stone-500 mt-2">
+                        Start learning.
+                    </p>
                     <div className="my-6 text-4xl font-black">$0</div>
                     <ul className="space-y-3 mb-8 text-sm">
                         {['Up to 3 decks', 'FSRS Algorithm', 'Basic stats'].map(
@@ -139,12 +143,14 @@ export default function SubscribePage() {
                     <h2 className="text-xl font-bold">Lifetime</h2>
                     <div className="my-6 text-4xl font-black">$199</div>
                     <ul className="space-y-3 mb-8 text-sm">
-                        {['Everything in Pro', 'All future updates'].map((f) => (
-                            <li key={f} className="flex gap-2">
-                                <Check className="w-5 h-5 text-[var(--theme-accent)]" />
-                                {f}
-                            </li>
-                        ))}
+                        {['Everything in Pro', 'All future updates'].map(
+                            (f) => (
+                                <li key={f} className="flex gap-2">
+                                    <Check className="w-5 h-5 text-[var(--theme-accent)]" />
+                                    {f}
+                                </li>
+                            )
+                        )}
                     </ul>
                     <button
                         type="button"
@@ -152,7 +158,9 @@ export default function SubscribePage() {
                         onClick={() => handleSubscribe('lifetime')}
                         className="w-full py-3.5 rounded-xl bg-stone-900 text-white font-bold text-sm cursor-pointer"
                     >
-                        {isLoading === 'lifetime' ? 'Loading...' : 'Get Lifetime'}
+                        {isLoading === 'lifetime'
+                            ? 'Loading...'
+                            : 'Get Lifetime'}
                     </button>
                 </div>
             </div>

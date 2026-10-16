@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import SubscribePage from '@/app/(app)/subscribe/page';
+import SubscribePage from '@/app/(user)/subscribe/page';
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));

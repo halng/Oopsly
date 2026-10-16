@@ -27,15 +27,19 @@ import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
+import com.app.oopsly.api.shared.exception.ValidationException;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.testsuite.application.QuestionMetadataMapper;
 import com.app.oopsly.api.testsuite.application.TestSuiteServiceImpl;
 import com.app.oopsly.api.testsuite.application.vm.TestSuiteReq;
+import com.app.oopsly.api.testsuite.application.vm.TestSuiteRes;
 import com.app.oopsly.api.testsuite.domain.SelectionMode;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.domain.TestSuiteSelectionPayload;
+import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
 import com.app.oopsly.api.user.User;
 import com.app.oopsly.api.user.UserService;
@@ -63,6 +67,10 @@ class TestSuiteServiceImplTest {
 
     @Mock private CardRepository cardRepository;
 
+    @Mock private QuestionRepository questionRepository;
+
+    @Mock private QuestionMetadataMapper metadataMapper;
+
     @InjectMocks private TestSuiteServiceImpl testSuiteService;
 
     private TestSuiteReq testSuiteReq;
@@ -73,7 +81,7 @@ class TestSuiteServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        testSuiteReq = new TestSuiteReq("Chapter 1 Review", true, null, null);
+        testSuiteReq = new TestSuiteReq("Chapter 1 Review", null, null, true);
         currentUser = new User();
         currentUser.setEmail("test@example.com");
         shelveId = UUID.randomUUID();
@@ -260,7 +268,7 @@ class TestSuiteServiceImplTest {
     @Test
     void testCreateFallback() {
         UUID shelveId = UUID.randomUUID();
-        TestSuiteReq request = new TestSuiteReq("Test Suite", true, null, null);
+        TestSuiteReq request = new TestSuiteReq("Test Suite", null, null, true);
         RuntimeException exception = new RuntimeException("Database connection failed");
 
         RetryLaterException thrown =
@@ -278,7 +286,7 @@ class TestSuiteServiceImplTest {
     void testUpdateFallback() {
         UUID shelveId = UUID.randomUUID();
         UUID testSuiteId = UUID.randomUUID();
-        TestSuiteReq request = new TestSuiteReq("Updated Suite", true, null, null);
+        TestSuiteReq request = new TestSuiteReq("Updated Suite", null, null, true);
         RuntimeException exception = new RuntimeException("Database connection failed");
 
         RetryLaterException thrown =
@@ -511,50 +519,115 @@ class TestSuiteServiceImplTest {
     }
 
     @Test
-    void create_withEmptySubjectIds_clearsSubjects() {
-        TestSuiteReq req = new TestSuiteReq("t", true, List.of(), null);
+    void create_generatesSlugFromTitle_andMapsNewFields() {
+        TestSuiteReq req = new TestSuiteReq("  Chương 1: Cell Biology! ", "  intro ", 15, null);
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findSlugsByShelfExcluding(eq(shelve), any()))
+                .thenReturn(List.of());
         when(testSuiteRepository.save(any(TestSuiteEntity.class)))
                 .thenAnswer(
                         inv -> {
                             TestSuiteEntity t = inv.getArgument(0);
                             t.setId(UUID.randomUUID());
-                            assertNotNull(t.getSubjects());
-                            assertTrue(t.getSubjects().isEmpty());
                             return t;
                         });
+        when(questionRepository.countByTestSuite(any())).thenReturn(4L);
 
         ApiRes result = testSuiteService.create(shelveId, req);
 
-        assertEquals(201, result.getStatusCode().value());
+        TestSuiteRes res = (TestSuiteRes) result.getBody().data();
+        assertEquals("chuong-1-cell-biology", res.slug());
+        assertEquals("Chương 1: Cell Biology!", res.title());
+        assertEquals("intro", res.description());
+        assertEquals(15, res.timeLimitMinutes());
+        assertTrue(res.isActive());
+        assertEquals(4L, res.questionCount());
     }
 
     @Test
-    void create_withSubjectIds_linksSubjects() {
-        UUID subjectId = UUID.randomUUID();
-        Subject subject = new Subject();
-        subject.setId(subjectId);
-        TestSuiteReq req = new TestSuiteReq("t", true, List.of(subjectId), null);
-
+    void create_suffixesSlug_whenTaken() {
+        TestSuiteReq req = new TestSuiteReq("Final", null, null, true);
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(shelve));
-        when(subjectRepository.findByIdAndShelve(subjectId, shelve))
-                .thenReturn(Optional.of(subject));
+        when(testSuiteRepository.findSlugsByShelfExcluding(eq(shelve), any()))
+                .thenReturn(List.of("final", "final-2"));
         when(testSuiteRepository.save(any(TestSuiteEntity.class)))
-                .thenAnswer(
-                        inv -> {
-                            TestSuiteEntity t = inv.getArgument(0);
-                            t.setId(UUID.randomUUID());
-                            assertEquals(1, t.getSubjects().size());
-                            return t;
-                        });
+                .thenAnswer(inv -> inv.getArgument(0));
 
         ApiRes result = testSuiteService.create(shelveId, req);
 
-        assertEquals(201, result.getStatusCode().value());
+        assertEquals("final-3", ((TestSuiteRes) result.getBody().data()).slug());
+    }
+
+    @Test
+    void create_usesFallbackSlug_whenTitleHasNoLetters() {
+        TestSuiteReq req = new TestSuiteReq("???", null, null, true);
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.save(any(TestSuiteEntity.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        ApiRes result = testSuiteService.create(shelveId, req);
+
+        assertEquals("test", ((TestSuiteRes) result.getBody().data()).slug());
+    }
+
+    @Test
+    void update_keepsSlug_whenTitleUnchanged() {
+        TestSuiteEntity existing = new TestSuiteEntity();
+        existing.setId(testSuiteId);
+        existing.setTitle("Chapter 1 Review");
+        existing.setSlug("chapter-1-review");
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
+                .thenReturn(Optional.of(existing));
+
+        testSuiteService.update(
+                shelveId, testSuiteId, new TestSuiteReq("Chapter 1 Review", "", 30, false));
+
+        assertEquals("chapter-1-review", existing.getSlug());
+        assertNull(existing.getDescription());
+        assertEquals(30, existing.getTimeLimitMinutes());
+        assertFalse(existing.getIsActive());
+        verify(testSuiteRepository, never()).findSlugsByShelfExcluding(any(), any());
+    }
+
+    @Test
+    void update_regeneratesSlug_excludingItself_whenTitleChanges() {
+        TestSuiteEntity existing = new TestSuiteEntity();
+        existing.setId(testSuiteId);
+        existing.setTitle("Old");
+        existing.setSlug("old");
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
+                .thenReturn(Optional.of(existing));
+        when(testSuiteRepository.findSlugsByShelfExcluding(shelve, testSuiteId))
+                .thenReturn(List.of("new"));
+
+        testSuiteService.update(shelveId, testSuiteId, new TestSuiteReq("New", null, null, null));
+
+        assertEquals("new-2", existing.getSlug());
+    }
+
+    @Test
+    void getAttemptAndSubmitFallbacks_rethrowValidation() {
+        ValidationException ve = new ValidationException("bad");
+        assertThrows(
+                ValidationException.class,
+                () -> testSuiteService.getAttemptFallback(shelveId, testSuiteId, ve));
+        assertThrows(
+                RetryLaterException.class,
+                () ->
+                        testSuiteService.getAttemptFallback(
+                                shelveId, testSuiteId, new RuntimeException("x")));
     }
 
     @Test

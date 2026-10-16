@@ -186,6 +186,8 @@ export interface Subject {
     isDeleted: boolean;
     cardCount: number;
     dueCount: number;
+    dailyLimit?: number;
+    newCardsPerDay?: number;
     tags: string;
     schedule?: SubjectSchedule;
     createdAt: string;
@@ -218,24 +220,102 @@ export interface PaginatedResponse<T> {
     hasNextPage: boolean;
 }
 
-export interface Question {
-    id: string;
-    testSuiteId: string;
-    prompt: string;
-    options: string[];
-    correctOptionIndex: number;
+export type QuestionType =
+    'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'FILL_IN_THE_BLANK';
+
+export interface QuestionInput {
+    text: string;
+    type: QuestionType;
+    options?: string[];
+    correctOptionIndex?: number | null;
+    correctOptionIndexes?: number[];
+    acceptedAnswers?: string[];
+    caseSensitive?: boolean;
     explanation?: string;
+}
+
+export interface Question extends QuestionInput {
+    id: string;
 }
 
 export interface TestSuite {
     id: string;
-    subjectId: string;
+    title: string;
+    slug: string;
+    description?: string;
+    timeLimitMinutes?: number | null;
+    isActive?: boolean;
+    questionCount: number;
+    highestScore?: number | null;
+}
+
+export interface TestSuiteInput {
     title: string;
     description?: string;
-    timeLimitMinutes?: number;
-    cardIds: string[];
-    questions?: Question[];
-    createdAt: string;
+    timeLimitMinutes?: number | null;
+    isActive?: boolean;
+}
+
+export interface TestAttemptQuestion {
+    id: string;
+    text: string;
+    type: QuestionType;
+    options: string[];
+}
+
+export interface TestAttempt {
+    testSuiteId: string;
+    title: string;
+    timeLimitSeconds: number | null;
+    questions: TestAttemptQuestion[];
+}
+
+export interface TestSubmission {
+    answers: Record<string, number>;
+    multiAnswers: Record<string, number[]>;
+    textAnswers: Record<string, string>;
+    timeSpentSeconds: number;
+}
+
+export interface TestQuestionBreakdown {
+    questionId: string;
+    text: string;
+    type: QuestionType;
+    userAnswerIndex: number | null;
+    userAnswerIndexes: number[] | null;
+    userAnswerText: string | null;
+    correctOptionIndex: number | null;
+    correctOptionIndexes: number[] | null;
+    correctAnswerText: string | null;
+    options: string[];
+    correct: boolean;
+    explanation?: string | null;
+}
+
+export interface TestSubmissionRes {
+    score: number;
+    totalQuestions: number;
+    percentage: number;
+    timeSpentSeconds: number;
+    xpGained: number;
+    totalXp: number;
+    breakdown: TestQuestionBreakdown[];
+}
+
+export type StudyMode = 'LEARN' | 'MATCH';
+
+export interface StudySessionInput {
+    mode: StudyMode;
+    totalItems: number;
+    correctCount: number;
+    mistakes: number;
+    durationSeconds: number;
+}
+
+export interface StudySessionRes {
+    id: string;
+    xpGained: number;
+    totalXp: number;
 }
 
 export interface UserSettings {
@@ -276,6 +356,8 @@ export interface StatsData {
     retentionRate: number;
     overallRetention?: number;
     totalReviews: number;
+    totalCards?: number;
+    dueCards?: number;
     stateDistribution: {
         new: number;
         learning: number;

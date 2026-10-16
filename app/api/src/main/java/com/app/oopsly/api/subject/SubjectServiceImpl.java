@@ -18,7 +18,6 @@ package com.app.oopsly.api.subject;
 
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.application.vm.PagingRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
@@ -36,7 +35,9 @@ import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +55,6 @@ public class SubjectServiceImpl implements SubjectService {
     private final SubjectRepository subjectRepository;
     private final ShelfRepository shelfRepository;
     private final UserService userService;
-    private final CardService cardService;
     private final CardRepository cardRepository;
 
     @Override
@@ -78,7 +78,7 @@ public class SubjectServiceImpl implements SubjectService {
         Subject savedSubject = subjectRepository.save(subject);
         log.info("Successfully created subject: {}", savedSubject.getId());
 
-        return ApiRes.created("Created successfully", toSubjectRes(savedSubject));
+        return ApiRes.created("Created successfully", toSubjectRes(savedSubject, 0, 0));
     }
 
     @Override
@@ -195,8 +195,7 @@ public class SubjectServiceImpl implements SubjectService {
         Shelf shelf = getShelfForCurrentUser(shelfId);
         Pageable pageable = PageRequest.of(queryPage, size);
         Page<Subject> pageData = subjectRepository.findAllByShelve(shelf, pageable);
-        List<SubjectRes> subjects =
-                pageData.getContent().stream().map(this::toSubjectRes).collect(Collectors.toList());
+        List<SubjectRes> subjects = toSubjectRes(pageData.getContent());
 
         PagingRes<SubjectRes> pagingRes =
                 new PagingRes<>(
@@ -214,18 +213,67 @@ public class SubjectServiceImpl implements SubjectService {
         return ApiRes.success("Fetched successfully", pagingRes);
     }
 
+    private List<SubjectRes> toSubjectRes(List<Subject> subjects) {
+        Map<UUID, int[]> stats = practiceStats(subjects);
+        return subjects.stream().map(subject -> toSubjectRes(subject, stats)).toList();
+    }
+
     private SubjectRes toSubjectRes(Subject entity) {
-        var stats = cardService.getShortPracticeStats(entity);
+        return toSubjectRes(entity, practiceStats(List.of(entity)));
+    }
+
+    private SubjectRes toSubjectRes(Subject entity, int overdue, int totalCards) {
+        double completed = totalCards == 0 ? 0.0 : 100.0 - (overdue * 100.0) / totalCards;
         return new SubjectRes(
                 entity.getId(),
                 entity.getName(),
                 entity.getDescription(),
                 entity.getSlug(),
-                stats.getLeft(),
-                stats.getRight(),
+                overdue,
+                completed,
                 entity.getDailyLimit(),
                 entity.getNewCardsPerDay(),
                 entity.getInterval());
+    }
+
+    private SubjectRes toSubjectRes(Subject entity, Map<UUID, int[]> stats) {
+        int[] counts = stats.getOrDefault(entity.getId(), new int[] {0, 0});
+        return toSubjectRes(entity, counts[0], counts[1]);
+    }
+
+    /**
+     * Loads total and overdue card counts for a page of subjects in two grouped queries instead of
+     * calling {@code getShortPracticeStats} per row.
+     *
+     * @return subject id → {@code [overdue, totalCards]}
+     */
+    private Map<UUID, int[]> practiceStats(List<Subject> subjects) {
+        Map<UUID, int[]> result = new HashMap<>();
+        if (subjects == null || subjects.isEmpty()) {
+            return result;
+        }
+        Map<UUID, Integer> totals = toCountMap(cardRepository.countBySubjects(subjects));
+        Map<UUID, Integer> due = toCountMap(cardRepository.countDueBySubjects(subjects));
+        for (Subject subject : subjects) {
+            result.put(
+                    subject.getId(),
+                    new int[] {
+                        due.getOrDefault(subject.getId(), 0),
+                        totals.getOrDefault(subject.getId(), 0)
+                    });
+        }
+        return result;
+    }
+
+    private static Map<UUID, Integer> toCountMap(List<SubjectCount> rows) {
+        Map<UUID, Integer> map = new HashMap<>();
+        if (rows == null) {
+            return map;
+        }
+        for (SubjectCount row : rows) {
+            map.put(row.subjectId(), (int) row.total());
+        }
+        return map;
     }
 
     @Override
@@ -238,8 +286,7 @@ public class SubjectServiceImpl implements SubjectService {
                         ? subjectRepository.findAllPublic(pageable)
                         : subjectRepository.findPublicByQuery(query, pageable);
 
-        List<SubjectRes> subjects =
-                pageData.getContent().stream().map(this::toSubjectRes).collect(Collectors.toList());
+        List<SubjectRes> subjects = toSubjectRes(pageData.getContent());
         PagingRes<SubjectRes> pagingRes =
                 new PagingRes<>(
                         subjects,

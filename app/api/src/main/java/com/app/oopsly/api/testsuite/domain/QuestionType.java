@@ -17,10 +17,13 @@
 package com.app.oopsly.api.testsuite.domain;
 
 public enum QuestionType {
+    /** Exactly one correct option. */
+    SINGLE_CHOICE,
+    /** One or more correct options; graded all-or-nothing. */
     MULTIPLE_CHOICE,
-    MULTIPLE_RESPONSE,
     TRUE_FALSE,
     FILL_IN_THE_BLANK,
+    // TODO(ai): not supported by QuestionValidator yet.
     MATCHING,
     ORDERING
 }

@@ -43,7 +43,10 @@ export default function CommunityModal({
     if (!isOpen) return null;
 
     const handleAddTag = () => {
-        const cleaned = tagInput.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+        const cleaned = tagInput
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9-]/g, '');
         if (cleaned && !tags.includes(cleaned)) {
             setTags([...tags, cleaned]);
             setTagInput('');
@@ -178,7 +181,9 @@ export default function CommunityModal({
                             ) : (
                                 <Globe className="w-4 h-4" />
                             )}
-                            {isPrivate ? 'Private (approval required)' : 'Public (open join)'}
+                            {isPrivate
+                                ? 'Private (approval required)'
+                                : 'Public (open join)'}
                         </span>
                     </button>
                     <div>

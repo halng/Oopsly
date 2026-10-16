@@ -1,5 +1,5 @@
 'use client';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ArrowLeft,
@@ -7,7 +7,6 @@ import {
     Play,
     Brain,
     Gamepad2,
-    FileCheck2,
     Trash2,
     Edit2,
     Search,
@@ -18,7 +17,7 @@ import {
     Users,
     Calendar as CalendarIcon,
 } from 'lucide-react';
-import { Subject, Card, TestSuite } from '@/types';
+import { Card } from '@/types';
 import { ApiService } from '@/services/api';
 import { formatInterval } from '@/utils/fsrs';
 import {
@@ -27,16 +26,18 @@ import {
     JoinGameModal,
     CssProgressBar,
 } from '@/components/shared';
-import { useShelfStore, useSubjectStore } from '@/store';
-
-
+import { useSubjectContext } from '@/hooks/useSubjectContext';
 
 export default function SubjectDetailsPage() {
-        const params = useParams<{ slug: string; subSlug: string }>();
     const router = useRouter();
+    const {
+        shelf: currentShelf,
+        subject: currentSubject,
+        baseUrl,
+        isLoading: isContextLoading,
+    } = useSubjectContext();
     const [cards, setCards] = useState<Card[]>([]);
-    const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isCardsLoading, setIsCardsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddingCard, setIsAddingCard] = useState(false);
     const [newFront, setNewFront] = useState('');
@@ -55,30 +56,24 @@ export default function SubjectDetailsPage() {
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
     const [isJoinGameOpen, setIsJoinGameOpen] = useState(false);
 
-    const currentShelf = params.slug
-        ? useShelfStore.getState().getCurrentShelf(params.slug)
-        : undefined;
-    const currentSubject = currentShelf && params.subSlug
-        ? useSubjectStore.getState().getCurrentSubject(currentShelf.id, params.subSlug)
-        : undefined;
     const subjectId = currentSubject?.id;
-
+    const shelfId = currentShelf?.id;
 
     const loadData = useCallback(async () => {
-        if (!subjectId) return;
-        setIsLoading(true);
-        if (!currentShelf) {
-            setIsLoading(false);
+        if (!subjectId || !shelfId) {
+            setIsCardsLoading(false);
             return;
         }
-        const [cardsRes] = await Promise.all([
-            ApiService.getSubjectCards(currentShelf?.id, subjectId),
-        ]);
-        const fetchedCards = cardsRes.isSuccess ? cardsRes.data?.entities || [] : [];
-        const nextCards = fetchedCards.filter((c) => !c.isDeleted);
-        setCards(nextCards);
-        setIsLoading(false);
-    }, [currentShelf, subjectId]);
+        setIsCardsLoading(true);
+        const cardsRes = await ApiService.getSubjectCards(shelfId, subjectId);
+        const fetchedCards = cardsRes.isSuccess
+            ? cardsRes.data?.entities || []
+            : [];
+        setCards(fetchedCards.filter((c) => !c.isDeleted));
+        setIsCardsLoading(false);
+    }, [shelfId, subjectId]);
+
+    const isLoading = isContextLoading || isCardsLoading;
 
     useEffect(() => {
         const loadInitialData = () => {
@@ -90,27 +85,28 @@ export default function SubjectDetailsPage() {
         };
         window.addEventListener('oopsly-sync-completed', handleSyncComplete);
         return () => {
-            window.removeEventListener('oopsly-sync-completed', handleSyncComplete);
+            window.removeEventListener(
+                'oopsly-sync-completed',
+                handleSyncComplete
+            );
         };
     }, [subjectId, loadData]);
-
-    if (!params.slug || !params.subSlug) {
-        router.push('/home');
-        return null;
-    }
-    
-
-    const baseUrl = `/home/${currentShelf?.slug}/subjects/${currentSubject?.slug}`;
 
     const handleCreateCard = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newFront.trim() || !newBack.trim()) return;
         if (!currentShelf || !currentSubject) return;
-        const res = await ApiService.createCards(currentShelf?.id, currentSubject?.id, [{
-            front: newFront,
-            back: newBack,
-            hint: newHint
-        }]);
+        const res = await ApiService.createCards(
+            currentShelf?.id,
+            currentSubject?.id,
+            [
+                {
+                    front: newFront,
+                    back: newBack,
+                    hint: newHint,
+                },
+            ]
+        );
         if (res.isSuccess) {
             setNewFront('');
             setNewBack('');
@@ -149,13 +145,19 @@ export default function SubjectDetailsPage() {
                 aiNotes,
                 aiCardCount
             );
-            if (res.isSuccess && res.data &&  currentShelf && currentSubject) {
+            if (res.isSuccess && res.data && currentShelf && currentSubject) {
                 for (const genCard of res.data) {
-                    await ApiService.createCards(currentShelf?.id, currentSubject?.id, [{ 
-                        front: genCard.front,
-                        back: genCard.back,
-                        hint: genCard.hint
-                    }]);
+                    await ApiService.createCards(
+                        currentShelf?.id,
+                        currentSubject?.id,
+                        [
+                            {
+                                front: genCard.front,
+                                back: genCard.back,
+                                hint: genCard.hint,
+                            },
+                        ]
+                    );
                 }
                 setIsAiModalOpen(false);
                 setAiNotes('');
@@ -187,10 +189,16 @@ export default function SubjectDetailsPage() {
                 <button
                     type="button"
                     data-testid="btn-subject-back"
-                    onClick={() => router.push(`/home/${currentShelf?.slug}`)}
+                    onClick={() =>
+                        router.push(
+                            currentShelf
+                                ? `/home/${currentShelf.slug}`
+                                : '/home'
+                        )
+                    }
                     className="px-4 py-2 rounded-xl bg-stone-900 text-white text-xs font-bold cursor-pointer"
                 >
-                    Back to {currentShelf?.name}
+                    Back to {currentShelf?.name ?? 'Library'}
                 </button>
             </div>
         );
@@ -200,7 +208,9 @@ export default function SubjectDetailsPage() {
         (c) =>
             c.front.toLowerCase().includes(searchQuery.toLowerCase()) ||
             c.back.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+            c.tags.some((t) =>
+                t.toLowerCase().includes(searchQuery.toLowerCase())
+            )
     );
     const masteredCards = cards.filter(
         (c) => c.stability >= 0.8 && c.intervalDays > 21
@@ -225,7 +235,8 @@ export default function SubjectDetailsPage() {
                             className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0"
                             style={{
                                 backgroundColor:
-                                    currentSubject.color || 'var(--theme-accent)',
+                                    currentSubject.color ||
+                                    'var(--theme-accent)',
                             }}
                         >
                             <Layers className="w-6 h-6" />
@@ -240,7 +251,8 @@ export default function SubjectDetailsPage() {
                                 </span>
                             </div>
                             <p className="text-xs text-stone-500 mt-1">
-                                {currentSubject.description || 'No description provided.'}
+                                {currentSubject.description ||
+                                    'No description provided.'}
                             </p>
                             {cards.length > 0 && (
                                 <div className="mt-2">
@@ -258,7 +270,7 @@ export default function SubjectDetailsPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                     <button
                         type="button"
                         data-testid="btn-subject-review"
@@ -285,15 +297,6 @@ export default function SubjectDetailsPage() {
                     >
                         <Gamepad2 className="w-4 h-4" />
                         Speed Match
-                    </button>
-                    <button
-                        type="button"
-                        data-testid="btn-subject-test"
-                        onClick={() => router.push(`${baseUrl}/test`)}
-                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold cursor-pointer"
-                    >
-                        <FileCheck2 className="w-4 h-4" />
-                        Practice Test
                     </button>
                     <button
                         type="button"
@@ -541,13 +544,6 @@ export default function SubjectDetailsPage() {
                         ))
                     )}
                 </div>
-
-                {testSuites.length > 0 && (
-                    <p className="text-xs text-stone-400">
-                        {testSuites.length} saved test suite
-                        {testSuites.length === 1 ? '' : 's'}
-                    </p>
-                )}
             </div>
 
             {isAiModalOpen && (
@@ -626,4 +622,3 @@ export default function SubjectDetailsPage() {
         </div>
     );
 }
-

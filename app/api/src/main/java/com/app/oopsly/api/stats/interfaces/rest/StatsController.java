@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/users/me/stats")
+@RequestMapping("/v1/users/me/stats")
 @RequiredArgsConstructor
 @Tag(name = "Stats", description = "User statistics APIs")
 public class StatsController {

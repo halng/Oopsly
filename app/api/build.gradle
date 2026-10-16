@@ -48,7 +48,8 @@ ext {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
-	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	// TODO: consider to use a platform for sending mail or custom ourself
+	 implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
@@ -57,8 +58,8 @@ dependencies {
 //	implementation 'org.springframework.ai:spring-ai-starter-model-vertex-ai-embedding'
 //	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation("com.google.api-client:google-api-client:2.7.2")
-	implementation 'com.google.auth:google-auth-library-oauth2-http:1.40.0'
+	// implementation("com.google.api-client:google-api-client:2.7.2")
+	// implementation 'com.google.auth:google-auth-library-oauth2-http:1.40.0'
 	implementation 'io.jsonwebtoken:jjwt:0.13.0'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
@@ -211,7 +212,7 @@ jacocoTestReport {
 			)
 	)
 
-	executionData.setFrom(fileTree(dir: layout.buildDirectory.dir('jacoco'), includes: ['*.exec']))
+	executionData.setFrom(files(layout.buildDirectory.file('jacoco/test.exec')))
 
 	reports {
 		xml.required = true
@@ -235,7 +236,7 @@ jacocoTestCoverageVerification {
 			)
 	)
 
-	executionData.setFrom(fileTree(dir: layout.buildDirectory.dir('jacoco'), includes: ['*.exec']))
+	executionData.setFrom(files(layout.buildDirectory.file('jacoco/test.exec')))
 
 	violationRules {
 		rule {

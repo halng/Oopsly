@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import LeaderboardPage from '@/app/(app)/leaderboard/page';
+import LeaderboardPage from '@/app/(user)/leaderboard/page';
 import { ApiService } from '@/services/api';
 
 vi.mock('@/services/api', () => ({

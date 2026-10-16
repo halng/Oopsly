@@ -51,7 +51,6 @@ function makeAudioContext(state: string) {
     return context;
 }
 
-
 describe('soundscape utilities with "running" state ', () => {
     beforeEach(() => {
         vi.useFakeTimers();

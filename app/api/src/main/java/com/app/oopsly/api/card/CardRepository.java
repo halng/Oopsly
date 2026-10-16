@@ -16,7 +16,10 @@
 
 package com.app.oopsly.api.card;
 
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfCount;
 import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectCount;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -59,10 +62,47 @@ public interface CardRepository extends JpaRepository<Card, UUID> {
             @Param("subject") Subject subject, @Param("now") Instant now, Pageable pageable);
 
     @Query(
+            "SELECT c FROM cards c WHERE c.subject = :subject AND c.deleted = false AND"
+                    + " c.lastReviewedAt IS NOT NULL AND c.nextPracticeTime <= :now"
+                    + " ORDER BY c.nextPracticeTime ASC")
+    Page<Card> findDueReviewCards(
+            @Param("subject") Subject subject, @Param("now") Instant now, Pageable pageable);
+
+    @Query(
+            "SELECT c FROM cards c WHERE c.subject = :subject AND c.deleted = false AND"
+                    + " c.lastReviewedAt IS NULL ORDER BY c.createdAt ASC")
+    Page<Card> findNewCards(@Param("subject") Subject subject, Pageable pageable);
+
+    @Query(
             "SELECT COUNT(c) FROM cards c WHERE c.subject = :subject AND c.deleted = false"
                     + " AND c.lastReviewedAt >= :startOfDay AND c.lastReviewedAt < :endOfDay")
     long countReviewedToday(
             @Param("subject") Subject subject,
             @Param("startOfDay") Instant startOfDay,
             @Param("endOfDay") Instant endOfDay);
+
+    @Query(
+            "SELECT new com.app.oopsly.api.shelf.ShelfCount(c.subject.shelf.id, COUNT(c))"
+                    + " FROM cards c WHERE c.subject.shelf IN :shelves AND c.deleted = false"
+                    + " AND c.subject.deleted = false GROUP BY c.subject.shelf.id")
+    List<ShelfCount> countByShelves(@Param("shelves") List<Shelf> shelves);
+
+    @Query(
+            "SELECT new com.app.oopsly.api.shelf.ShelfCount(c.subject.shelf.id, COUNT(c))"
+                    + " FROM cards c WHERE c.subject.shelf IN :shelves AND c.deleted = false"
+                    + " AND c.subject.deleted = false AND c.nextPracticeTime < CURRENT_DATE"
+                    + " GROUP BY c.subject.shelf.id")
+    List<ShelfCount> countDueByShelves(@Param("shelves") List<Shelf> shelves);
+
+    @Query(
+            "SELECT new com.app.oopsly.api.subject.SubjectCount(c.subject.id, COUNT(c))"
+                    + " FROM cards c WHERE c.subject IN :subjects AND c.deleted = false"
+                    + " GROUP BY c.subject.id")
+    List<SubjectCount> countBySubjects(@Param("subjects") List<Subject> subjects);
+
+    @Query(
+            "SELECT new com.app.oopsly.api.subject.SubjectCount(c.subject.id, COUNT(c))"
+                    + " FROM cards c WHERE c.subject IN :subjects AND c.deleted = false"
+                    + " AND c.nextPracticeTime < CURRENT_DATE GROUP BY c.subject.id")
+    List<SubjectCount> countDueBySubjects(@Param("subjects") List<Subject> subjects);
 }

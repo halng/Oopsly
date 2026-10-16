@@ -77,7 +77,7 @@ class CircuitBreakerFallbackTest {
                 IllegalArgumentException.class,
                 () ->
                         cardService.getDueCardsFallback(
-                                ID, ID, 5, new IllegalArgumentException("bad limit")));
+                                ID, ID, 5, null, new IllegalArgumentException("bad limit")));
     }
 
     @Test
@@ -142,25 +142,29 @@ class CircuitBreakerFallbackTest {
     void questionFallbacks_preserveDomainErrors() {
         assertThrows(
                 NotFoundException.class,
-                () -> questionService.getByIdFallback(ID, ID, new NotFoundException("missing")));
+                () ->
+                        questionService.getByIdFallback(
+                                ID, ID, ID, new NotFoundException("missing")));
         assertThrows(
                 ValidationException.class,
-                () -> questionService.createFallback(ID, null, new ValidationException("invalid")));
+                () ->
+                        questionService.createFallback(
+                                ID, ID, null, new ValidationException("invalid")));
         assertThrows(
                 UnauthenticatedException.class,
                 () ->
                         questionService.deleteFallback(
-                                ID, ID, new UnauthenticatedException("no session")));
+                                ID, ID, ID, new UnauthenticatedException("no session")));
     }
 
     @Test
     void questionFallbacks_degradeUnknownFailures() {
         assertThrows(
                 RetryLaterException.class,
-                () -> questionService.getAllByTestSuiteFallback(ID, INFRASTRUCTURE));
+                () -> questionService.getAllByTestSuiteFallback(ID, ID, INFRASTRUCTURE));
         assertThrows(
                 RetryLaterException.class,
-                () -> questionService.updateFallback(ID, ID, null, INFRASTRUCTURE));
+                () -> questionService.updateFallback(ID, ID, ID, null, INFRASTRUCTURE));
     }
 
     // ------------------------------------------------------------ test suite

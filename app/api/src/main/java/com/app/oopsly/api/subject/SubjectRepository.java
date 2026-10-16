@@ -17,6 +17,9 @@
 package com.app.oopsly.api.subject;
 
 import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfCount;
+import com.app.oopsly.api.user.User;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -42,4 +45,15 @@ public interface SubjectRepository extends JpaRepository<Subject, UUID> {
 
     @Query("SELECT s FROM Subject s WHERE s.isPublic = true AND s.deleted = false")
     Page<Subject> findAllPublic(Pageable pageable);
+
+    @Query(
+            "SELECT s FROM Subject s WHERE s.shelf.user = :user AND s.deleted = false"
+                    + " AND s.shelf.deleted = false")
+    List<Subject> findAllByUser(@Param("user") User user);
+
+    @Query(
+            "SELECT new com.app.oopsly.api.shelf.ShelfCount(s.shelf.id, COUNT(s))"
+                    + " FROM Subject s WHERE s.shelf IN :shelves AND s.deleted = false"
+                    + " GROUP BY s.shelf.id")
+    List<ShelfCount> countByShelves(@Param("shelves") List<Shelf> shelves);
 }

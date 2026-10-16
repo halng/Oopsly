@@ -14,10 +14,9 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.testsuite.application;
+package com.app.oopsly.api.shelf;
 
-import java.util.List;
+import java.util.UUID;
 
-/** Options payload stored as JSON on the question entity. */
-public record QuestionMetadata(
-        List<String> options, Integer correctOptionIndex, String explanation) {}
+/** Grouped count keyed by shelf id, used to avoid N+1 stats queries. */
+public record ShelfCount(UUID shelfId, long total) {}

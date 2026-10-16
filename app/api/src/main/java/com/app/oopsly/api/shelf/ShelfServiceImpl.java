@@ -18,7 +18,6 @@ package com.app.oopsly.api.shelf;
 
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.application.vm.PagingRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
@@ -29,14 +28,12 @@ import com.app.oopsly.api.shelf.vm.ShelfReq;
 import com.app.oopsly.api.shelf.vm.ShelfRes;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
-import com.app.oopsly.api.subject.vm.SubjectRes;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
 import com.app.oopsly.api.user.User;
 import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +56,6 @@ public class ShelfServiceImpl implements ShelfService {
     private final CardRepository cardRepository;
     private final TestSuiteRepository testSuiteRepository;
     private final UserService userService;
-    private final CardService cardService;
 
     private static final String TOTAL_CARDS_COUNT = "totalCards";
     private static final String TOTAL_SUBJECTS_COUNT = "totalSubjects";
@@ -70,7 +66,7 @@ public class ShelfServiceImpl implements ShelfService {
     public ApiRes create(ShelfReq request) {
         log.info("Creating shelve for user {}", this.currentUser().getId());
         Shelf savedEntity = shelfRepository.save(this.toEntity(request, null));
-        return ApiRes.created("Created successfully", this.toViewModel(savedEntity));
+        return ApiRes.created("Created successfully", this.toViewModel(savedEntity, zeroStats()));
     }
 
     @Override
@@ -141,7 +137,9 @@ public class ShelfServiceImpl implements ShelfService {
                         .findByIdAndUser(id, this.currentUser())
                         .orElseThrow(
                                 () -> new NotFoundException("Entity not found with id: " + id));
-        return ApiRes.success("Fetched successfully", this.toViewModel(entity));
+        return ApiRes.success(
+                "Fetched successfully",
+                this.toViewModel(entity, shelfStats(List.of(entity)).get(entity.getId())));
     }
 
     @Override
@@ -159,7 +157,12 @@ public class ShelfServiceImpl implements ShelfService {
         }
         Pageable pageable = PageRequest.of(querryPage, size);
         Page<Shelf> pageData = shelfRepository.findAllByUser(this.currentUser(), pageable);
-        List<ShelfRes> entities = pageData.getContent().stream().map(this::toViewModel).toList();
+        List<Shelf> shelves = pageData.getContent();
+        Map<UUID, Map<String, Integer>> statsByShelf = shelfStats(shelves);
+        List<ShelfRes> entities =
+                shelves.stream()
+                        .map(shelf -> this.toViewModel(shelf, statsByShelf.get(shelf.getId())))
+                        .toList();
 
         PagingRes<ShelfRes> response =
                 new PagingRes<>(
@@ -190,30 +193,7 @@ public class ShelfServiceImpl implements ShelfService {
         return to;
     }
 
-    ShelfRes toViewModel(Shelf from) {
-        if (from.getSubjects() == null || from.getSubjects().isEmpty()) {
-            return new ShelfRes(
-                    from.getId(),
-                    from.getIcon(),
-                    from.getName(),
-                    from.getDescription(),
-                    from.getColor(),
-                    from.getSlug(),
-                    Collections.EMPTY_MAP);
-        }
-
-        List<SubjectRes> subjects = getSubjects(from);
-        Map<String, Integer> stats = new HashMap<>();
-        int totalCards = from.getSubjects().stream().mapToInt((sub) -> sub.getCards().size()).sum();
-        int totalDueCards =
-                from.getSubjects().stream()
-                        .mapToInt((sub) -> cardService.getShortPracticeStats(sub).getLeft())
-                        .sum();
-
-        stats.put(TOTAL_SUBJECTS_COUNT, subjects.size());
-        stats.put(TOTAL_DUE_CARDS_COUNT, totalDueCards);
-        stats.put(TOTAL_CARDS_COUNT, totalCards);
-
+    ShelfRes toViewModel(Shelf from, Map<String, Integer> stats) {
         return new ShelfRes(
                 from.getId(),
                 from.getIcon(),
@@ -221,31 +201,53 @@ public class ShelfServiceImpl implements ShelfService {
                 from.getDescription(),
                 from.getColor(),
                 from.getSlug(),
-                stats);
+                stats == null ? zeroStats() : stats);
+    }
+
+    /**
+     * Loads subject/card/due counts for every shelf on the page in three grouped queries instead of
+     * walking subjects and cards one by one.
+     */
+    private Map<UUID, Map<String, Integer>> shelfStats(List<Shelf> shelves) {
+        Map<UUID, Map<String, Integer>> result = new HashMap<>();
+        if (shelves == null || shelves.isEmpty()) {
+            return result;
+        }
+        Map<UUID, Integer> subjects = toCountMap(subjectRepository.countByShelves(shelves));
+        Map<UUID, Integer> cards = toCountMap(cardRepository.countByShelves(shelves));
+        Map<UUID, Integer> due = toCountMap(cardRepository.countDueByShelves(shelves));
+        for (Shelf shelf : shelves) {
+            Map<String, Integer> stats = new HashMap<>();
+            stats.put(TOTAL_SUBJECTS_COUNT, subjects.getOrDefault(shelf.getId(), 0));
+            stats.put(TOTAL_DUE_CARDS_COUNT, due.getOrDefault(shelf.getId(), 0));
+            stats.put(TOTAL_CARDS_COUNT, cards.getOrDefault(shelf.getId(), 0));
+            result.put(shelf.getId(), stats);
+        }
+        return result;
+    }
+
+    private static Map<UUID, Integer> toCountMap(List<ShelfCount> rows) {
+        Map<UUID, Integer> map = new HashMap<>();
+        if (rows == null) {
+            return map;
+        }
+        for (ShelfCount row : rows) {
+            map.put(row.shelfId(), (int) row.total());
+        }
+        return map;
+    }
+
+    private static Map<String, Integer> zeroStats() {
+        Map<String, Integer> stats = new HashMap<>();
+        stats.put(TOTAL_SUBJECTS_COUNT, 0);
+        stats.put(TOTAL_DUE_CARDS_COUNT, 0);
+        stats.put(TOTAL_CARDS_COUNT, 0);
+        return stats;
     }
 
     User currentUser() {
         log.info("Retrieving current user info from UserService");
         return userService.getCurrentUser();
-    }
-
-    private List<SubjectRes> getSubjects(Shelf from) {
-        return from.getSubjects().stream()
-                .map(
-                        subject -> {
-                            var stats = cardService.getShortPracticeStats(subject);
-                            return new SubjectRes(
-                                    subject.getId(),
-                                    subject.getName(),
-                                    subject.getDescription(),
-                                    subject.getSlug(),
-                                    stats.getLeft(),
-                                    stats.getRight(),
-                                    subject.getDailyLimit(),
-                                    subject.getNewCardsPerDay(),
-                                    subject.getInterval());
-                        })
-                .toList();
     }
 
     /** FALLBACK METHODS */

@@ -15,11 +15,33 @@ import {
     CommunityJoinRequest,
     Grade,
     PaginatedResponse,
+    Question,
+    QuestionInput,
+    StudySessionInput,
+    StudySessionRes,
+    TestAttempt,
+    TestSubmission,
+    TestSubmissionRes,
+    TestSuiteInput,
 } from '../types';
-import { offlineDb, OfflineCard } from './offlineDb';
+import { offlineDb } from './offlineDb';
 import { syncManager } from './syncManager';
 import { ulid } from 'ulid';
 import slugify from 'slugify';
+import { CardRes, mapCardList, mapCardRes } from '@/utils/cardMapper';
+
+export const GRADE_LEVELS: Record<Grade, 'AGAIN' | 'HARD' | 'GOOD' | 'EASY'> = {
+    1: 'AGAIN',
+    2: 'HARD',
+    3: 'GOOD',
+    4: 'EASY',
+};
+
+export interface GradeResult {
+    card: Card | null;
+    xpGained: number;
+    totalXp: number;
+}
 
 /**
  * Shared axios instance.
@@ -117,7 +139,7 @@ export const ApiService = {
         } catch (error: any) {
             return {
                 isSuccess: false,
-                statusCode: 200,    
+                statusCode: 200,
                 message: error?.message || 'Network error occurred',
                 data: null,
                 timestamp: new Date().toISOString(),
@@ -183,8 +205,13 @@ export const ApiService = {
         }),
 
     // Shelves
-    getShelves: async (page: number, size: number): Promise<ApiResponse<PaginatedResponse<Shelf>>> => {
-        const res = await fetchJson<PaginatedResponse<Shelf>>(`/v1/shelves?page=${page}&size=${size}`);
+    getShelves: async (
+        page: number,
+        size: number
+    ): Promise<ApiResponse<PaginatedResponse<Shelf>>> => {
+        const res = await fetchJson<PaginatedResponse<Shelf>>(
+            `/v1/shelves?page=${page}&size=${size}`
+        );
         if (res.isSuccess && res.data) {
             await offlineDb.cacheShelves(res.data.entities);
             return res;
@@ -217,13 +244,15 @@ export const ApiService = {
         icon: string;
         color: string;
     }) => {
-        const payload = {...data, slug: slugify(data.name, {lower: true, strict: true})};
+        const payload = {
+            ...data,
+            slug: slugify(data.name, { lower: true, strict: true }),
+        };
         return fetchJson<Shelf>('/v1/shelves', {
             method: 'POST',
             body: JSON.stringify(payload),
         });
     },
-        
 
     updateShelf: (id: string, data: Partial<Shelf>) =>
         fetchJson<Shelf>(`/v1/shelves/${id}`, {
@@ -323,8 +352,11 @@ export const ApiService = {
             tags: string;
             isPublic: boolean;
         }
-    ) =>{
-        const payload = { ...data, slug: slugify(data.name, { lower: true, strict: true }) };
+    ) => {
+        const payload = {
+            ...data,
+            slug: slugify(data.name, { lower: true, strict: true }),
+        };
         return fetchJson<Subject>(`/v1/shelves/${shelfId}/subjects`, {
             method: 'POST',
             body: JSON.stringify(payload),
@@ -347,10 +379,13 @@ export const ApiService = {
         shelfId: string,
         subjectId: string
     ): Promise<ApiResponse<PaginatedResponse<Card>>> => {
-        const res = await fetchJson<PaginatedResponse<Card>>(`/v1/shelves/${shelfId}/subjects/${subjectId}/cards?page=1&size=1000`);;
+        const res = await fetchJson<PaginatedResponse<Card>>(
+            `/v1/shelves/${shelfId}/subjects/${subjectId}/cards?page=1&size=1000`
+        );
         if (res.isSuccess && res.data) {
-            await offlineDb.cacheCards(res.data.entities);
-            return res;
+            const entities = mapCardList(res.data.entities, subjectId);
+            await offlineDb.cacheCards(entities);
+            return { ...res, data: { ...res.data, entities } };
         }
 
         if (isOfflineOrNetworkFailure(res)) {
@@ -374,13 +409,21 @@ export const ApiService = {
         return res;
     },
 
-    getDueCards: async (subjectId: string): Promise<ApiResponse<Card[]>> => {
+    getDueCards: async (
+        shelfId: string,
+        subjectId: string,
+        limit = 20,
+        newLimit?: number
+    ): Promise<ApiResponse<Card[]>> => {
+        const query = new URLSearchParams({ limit: String(limit) });
+        if (newLimit !== undefined) query.set('newLimit', String(newLimit));
         const res = await fetchJson<Card[]>(
-            `/api/subjects/${subjectId}/cards/due`
+            `/v1/shelves/${shelfId}/subjects/${subjectId}/cards/due?${query.toString()}`
         );
         if (res.isSuccess && res.data) {
-            await offlineDb.cacheCards(res.data);
-            return res;
+            const cards = mapCardList(res.data, subjectId);
+            await offlineDb.cacheCards(cards);
+            return { ...res, data: cards };
         }
 
         if (isOfflineOrNetworkFailure(res)) {
@@ -388,7 +431,7 @@ export const ApiService = {
                 await offlineDb.getCachedDueCardsBySubject(subjectId);
             return {
                 isSuccess: true,
-                statusCode: 200, 
+                statusCode: 200,
                 message: 'Loaded cached due cards (offline)',
                 data: cachedDue,
                 timestamp: new Date().toISOString(),
@@ -417,7 +460,7 @@ export const ApiService = {
                 isSuccess: true,
                 statusCode: 200,
                 message: `Imported ${result.importedCount} cards offline (will sync when online)`,
-                data: "Successfully created cards offline",
+                data: 'Successfully created cards offline',
                 timestamp: new Date().toISOString(),
             };
         }
@@ -434,7 +477,7 @@ export const ApiService = {
             return res;
         }
 
-        if (isOfflineOrNetworkFailure(res)) {  
+        if (isOfflineOrNetworkFailure(res)) {
             const result = await offlineDb.saveOfflineBatchCards(
                 subjectId,
                 cards
@@ -445,7 +488,7 @@ export const ApiService = {
                 isSuccess: true,
                 statusCode: 200,
                 message: `Imported ${result.importedCount} cards offline (will sync when online)`,
-                data: "Successfully created cards offline",
+                data: 'Successfully created cards offline',
                 timestamp: new Date().toISOString(),
             };
         }
@@ -497,21 +540,18 @@ export const ApiService = {
     },
 
     gradeCard: async (
+        shelfId: string,
+        subjectId: string,
         id: string,
-        grade: 1 | 2 | 3 | 4
-    ): Promise<
-        ApiResponse<{
-            card: Card;
-            scheduled: any;
-            xpGained: number;
-            totalXp: number;
-        }>
-    > => {
+        grade: Grade
+    ): Promise<ApiResponse<GradeResult>> => {
+        const context = { shelfId, subjectId };
         // If offline, calculate FSRS review schedule locally and queue for sync
         if (typeof navigator !== 'undefined' && !navigator.onLine) {
             const localResult = await offlineDb.saveOfflineCardReview(
                 id,
-                grade as Grade
+                grade,
+                context
             );
             await syncManager.requestBackgroundSync();
             await syncManager.refreshPendingCount();
@@ -525,25 +565,37 @@ export const ApiService = {
         }
 
         const res = await fetchJson<{
-            card: Card;
-            scheduled: any;
+            cards: CardRes[];
             xpGained: number;
             totalXp: number;
-        }>(`/api/cards/${id}/difficulty`, {
-            method: 'PATCH',
-            body: JSON.stringify({ grade }),
+        }>(`/v1/shelves/${shelfId}/subjects/${subjectId}/cards/difficulty`, {
+            method: 'PUT',
+            body: JSON.stringify([
+                { cardId: id, newLevel: GRADE_LEVELS[grade] },
+            ]),
         });
 
-        if (res.isSuccess && res.data?.card) {
-            await offlineDb.cacheCards([res.data.card]);
-            return res;
+        if (res.isSuccess && res.data) {
+            const card = res.data.cards?.[0]
+                ? mapCardRes(res.data.cards[0], subjectId)
+                : null;
+            if (card) await offlineDb.cacheCards([card]);
+            return {
+                ...res,
+                data: {
+                    card,
+                    xpGained: res.data.xpGained,
+                    totalXp: res.data.totalXp,
+                },
+            };
         }
 
         // Network failure fallback during review
         if (isOfflineOrNetworkFailure(res)) {
             const localResult = await offlineDb.saveOfflineCardReview(
                 id,
-                grade as Grade
+                grade,
+                context
             );
             await syncManager.requestBackgroundSync();
             await syncManager.refreshPendingCount();
@@ -556,7 +608,7 @@ export const ApiService = {
             };
         }
 
-        return res;
+        return { ...res, data: null };
     },
 
     deleteCard: async (id: string): Promise<ApiResponse<Card>> => {
@@ -610,43 +662,102 @@ export const ApiService = {
             body: JSON.stringify({ targetShelfId }),
         }),
 
-    // Test Suites
-    getTestSuites: (subjectId: string) =>
-        fetchJson<TestSuite[]>(`/api/subjects/${subjectId}/test-suites`),
+    // Study sessions (Learn / Match XP)
+    logStudySession: (
+        shelfId: string,
+        subjectId: string,
+        session: StudySessionInput
+    ) =>
+        fetchJson<StudySessionRes>(
+            `/v1/shelves/${shelfId}/subjects/${subjectId}/study-sessions`,
+            {
+                method: 'POST',
+                body: JSON.stringify(session),
+            }
+        ),
 
-    createTestSuite: (subjectId: string, data: Partial<TestSuite>) =>
-        fetchJson<TestSuite>(`/api/subjects/${subjectId}/test-suites`, {
+    // Test Suites (shelf level)
+    getTestSuites: (shelfId: string) =>
+        fetchJson<TestSuite[]>(`/v1/shelves/${shelfId}/test-suites`),
+
+    createTestSuite: (shelfId: string, data: TestSuiteInput) =>
+        fetchJson<TestSuite>(`/v1/shelves/${shelfId}/test-suites`, {
             method: 'POST',
             body: JSON.stringify(data),
         }),
 
-    runTestSuite: (id: string) =>
-        fetchJson<{ suite: TestSuite; cards: Card[]; questions: any[] }>(
-            `/api/test-suites/${id}/run`,
-            {
-                method: 'POST',
-            }
+    updateTestSuite: (shelfId: string, id: string, data: TestSuiteInput) =>
+        fetchJson<TestSuite>(`/v1/shelves/${shelfId}/test-suites/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        }),
+
+    deleteTestSuite: (shelfId: string, id: string) =>
+        fetchJson<null>(`/v1/shelves/${shelfId}/test-suites/${id}`, {
+            method: 'PATCH',
+        }),
+
+    getTestAttempt: (shelfId: string, id: string) =>
+        fetchJson<TestAttempt>(
+            `/v1/shelves/${shelfId}/test-suites/${id}/attempt`
         ),
 
     submitTestSuite: (
+        shelfId: string,
         id: string,
-        answers: Record<string, number>,
-        timeSpentSeconds: number
+        submission: TestSubmission
     ) =>
-        fetchJson<{
-            score: number;
-            totalQuestions: number;
-            percentage: number;
-            timeSpentSeconds: number;
-            xpGained: number;
-            breakdown: any[];
-        }>(`/api/test-suites/${id}/submit`, {
-            method: 'POST',
-            body: JSON.stringify({ answers, timeSpentSeconds }),
-        }),
+        fetchJson<TestSubmissionRes>(
+            `/v1/shelves/${shelfId}/test-suites/${id}/submit`,
+            {
+                method: 'POST',
+                body: JSON.stringify(submission),
+            }
+        ),
+
+    // Questions inside a test suite
+    getQuestions: (shelfId: string, testSuiteId: string) =>
+        fetchJson<Question[]>(
+            `/v1/shelves/${shelfId}/test-suites/${testSuiteId}/questions`
+        ),
+
+    createQuestion: (
+        shelfId: string,
+        testSuiteId: string,
+        data: QuestionInput
+    ) =>
+        fetchJson<Question>(
+            `/v1/shelves/${shelfId}/test-suites/${testSuiteId}/questions`,
+            {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }
+        ),
+
+    updateQuestion: (
+        shelfId: string,
+        testSuiteId: string,
+        id: string,
+        data: QuestionInput
+    ) =>
+        fetchJson<Question>(
+            `/v1/shelves/${shelfId}/test-suites/${testSuiteId}/questions/${id}`,
+            {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            }
+        ),
+
+    deleteQuestion: (shelfId: string, testSuiteId: string, id: string) =>
+        fetchJson<null>(
+            `/v1/shelves/${shelfId}/test-suites/${testSuiteId}/questions/${id}`,
+            {
+                method: 'PATCH',
+            }
+        ),
 
     // Stats & Leaderboard
-    getStats: () => fetchJson<StatsData>('/api/stats'),
+    getStats: () => fetchJson<StatsData>('/v1/users/me/stats'),
 
     getLeaderboard: () => fetchJson<LeaderboardUser[]>('/api/leaderboard'),
 

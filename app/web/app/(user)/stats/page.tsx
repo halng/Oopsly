@@ -82,7 +82,9 @@ export default function StatsPage() {
                 </div>
                 <div className="p-4 rounded-2xl bg-white dark:bg-stone-900 border">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 mb-2" />
-                    <div className="text-2xl font-black">{dailyGoalPercent}%</div>
+                    <div className="text-2xl font-black">
+                        {dailyGoalPercent}%
+                    </div>
                     <div className="text-[10px] uppercase font-bold text-stone-400">
                         Daily goal
                     </div>
@@ -144,7 +146,9 @@ export default function StatsPage() {
                                 key={day.day}
                                 className="flex items-center justify-between text-xs"
                             >
-                                <span className="font-bold w-10">{day.day}</span>
+                                <span className="font-bold w-10">
+                                    {day.day}
+                                </span>
                                 <span>{day.cardsReviewed} cards</span>
                                 <span>{day.retention}% retention</span>
                             </div>

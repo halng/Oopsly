@@ -261,13 +261,21 @@ public class CardController {
                     UUID subjectId,
             @Parameter(description = "Maximum number of cards to return", example = "20")
                     @RequestParam(defaultValue = "20")
-                    int limit) {
+                    int limit,
+            @Parameter(
+                            description =
+                                    "Maximum number of new (never reviewed) cards; defaults to"
+                                            + " the subject's newCardsPerDay",
+                            example = "5")
+                    @RequestParam(required = false)
+                    Integer newLimit) {
         log.info(
-                "Getting due cards for subject: {} in shelve: {} with limit: {}",
+                "Getting due cards for subject: {} in shelve: {} with limit: {}, newLimit: {}",
                 subjectId,
                 shelveId,
-                limit);
-        return cardService.getDueCards(shelveId, subjectId, limit);
+                limit,
+                newLimit);
+        return cardService.getDueCards(shelveId, subjectId, limit, newLimit);
     }
 
     @Operation(

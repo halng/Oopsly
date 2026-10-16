@@ -45,7 +45,7 @@ class TestSuiteControllerTest {
 
     @BeforeEach
     void setUp() {
-        testSuiteReq = new TestSuiteReq("Chapter 1 Review", true, null, null);
+        testSuiteReq = new TestSuiteReq("Chapter 1 Review", null, null, true);
         shelveId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
         expectedResponse = ApiRes.success("Success");
@@ -100,6 +100,13 @@ class TestSuiteControllerTest {
 
         assertSame(expectedResponse, result);
         verify(testSuiteService, times(1)).getAllByShelve(shelveId);
+    }
+
+    @Test
+    void getAttempt_delegatesToTestSuiteService() {
+        when(testSuiteService.getAttempt(shelveId, testSuiteId)).thenReturn(expectedResponse);
+
+        assertSame(expectedResponse, testSuiteController.getAttempt(shelveId, testSuiteId));
     }
 
     @Test

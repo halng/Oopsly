@@ -20,14 +20,15 @@ import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.testsuite.application.vm.QuestionReq;
 import java.util.UUID;
 
+/** Question CRUD; every call checks that the shelf belongs to the current user. */
 public interface QuestionService {
-    ApiRes create(UUID testSuiteId, QuestionReq request);
+    ApiRes create(UUID shelveId, UUID testSuiteId, QuestionReq request);
 
-    ApiRes update(UUID testSuiteId, UUID questionId, QuestionReq request);
+    ApiRes update(UUID shelveId, UUID testSuiteId, UUID questionId, QuestionReq request);
 
-    ApiRes delete(UUID testSuiteId, UUID questionId);
+    ApiRes delete(UUID shelveId, UUID testSuiteId, UUID questionId);
 
-    ApiRes getById(UUID testSuiteId, UUID questionId);
+    ApiRes getById(UUID shelveId, UUID testSuiteId, UUID questionId);
 
-    ApiRes getAllByTestSuite(UUID testSuiteId);
+    ApiRes getAllByTestSuite(UUID shelveId, UUID testSuiteId);
 }

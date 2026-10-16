@@ -33,9 +33,17 @@ public interface TestSuiteRepository extends JpaRepository<TestSuiteEntity, UUID
                     + " false")
     Optional<TestSuiteEntity> findByIdAndShelve(UUID id, Shelf shelve);
 
-    @Query("SELECT t FROM TestSuiteEntity t WHERE t.shelf = ?1 AND t.deleted = false")
+    @Query(
+            "SELECT t FROM TestSuiteEntity t WHERE t.shelf = ?1 AND t.deleted = false ORDER BY"
+                    + " t.createdAt, t.id")
     List<TestSuiteEntity> findAllByShelve(Shelf shelve);
 
+    @Query(
+            "SELECT t.slug FROM TestSuiteEntity t WHERE t.shelf = ?1 AND t.deleted = false AND"
+                    + " t.id <> ?2")
+    List<String> findSlugsByShelfExcluding(Shelf shelve, UUID excludeId);
+
+    // TODO(ai): used by the card-based preset run.
     @Query(
             "SELECT DISTINCT t FROM TestSuiteEntity t LEFT JOIN FETCH t.subjects WHERE t.id = :id"
                     + " AND t.shelf = :shelf AND t.deleted = false")

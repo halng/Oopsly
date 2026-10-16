@@ -22,19 +22,25 @@ import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
+import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.util.AnswerMatcher;
 import com.app.oopsly.api.shared.util.ApiMessages;
 import com.app.oopsly.api.shared.util.GamificationRules;
+import com.app.oopsly.api.shared.util.StringUtils;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.testsuite.application.vm.QuestionBreakdown;
+import com.app.oopsly.api.testsuite.application.vm.TestAttemptRes;
 import com.app.oopsly.api.testsuite.application.vm.TestRunCardRes;
 import com.app.oopsly.api.testsuite.application.vm.TestSubmissionReq;
 import com.app.oopsly.api.testsuite.application.vm.TestSubmissionRes;
 import com.app.oopsly.api.testsuite.application.vm.TestSuiteReq;
 import com.app.oopsly.api.testsuite.application.vm.TestSuiteRes;
 import com.app.oopsly.api.testsuite.domain.QuestionEntity;
+import com.app.oopsly.api.testsuite.domain.QuestionMetadata;
+import com.app.oopsly.api.testsuite.domain.QuestionType;
 import com.app.oopsly.api.testsuite.domain.SelectionMode;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.domain.TestSuiteSelectionPayload;
@@ -42,15 +48,18 @@ import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
 import com.app.oopsly.api.user.User;
 import com.app.oopsly.api.user.UserService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.NonNull;
@@ -66,12 +75,15 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TestSuiteServiceImpl implements TestSuiteService {
 
+    static final String DEFAULT_SLUG = "test";
+    private static final UUID NO_ID = new UUID(0L, 0L);
+
     private final TestSuiteRepository testSuiteRepository;
     private final ShelfRepository shelfRepository;
     private final SubjectRepository subjectRepository;
     private final CardRepository cardRepository;
     private final QuestionRepository questionRepository;
-    private final ObjectMapper objectMapper;
+    private final QuestionMetadataMapper metadataMapper;
     private final UserService userService;
 
     @Override
@@ -83,7 +95,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
 
         TestSuiteEntity testSuite = this.toEntity(request, null);
         testSuite.setShelf(shelve);
-        applySubjectLinks(shelve, request, testSuite);
+        testSuite.setSlug(uniqueSlug(shelve, request.title(), null));
         TestSuiteEntity savedEntity = testSuiteRepository.save(testSuite);
 
         return ApiRes.created("Test suite created successfully", this.toViewModel(savedEntity));
@@ -99,16 +111,15 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     public ApiRes update(UUID deckId, UUID testSuiteId, TestSuiteReq request) {
         log.info("Updating test suite {} for shelve {}", testSuiteId, deckId);
         Shelf shelve = this.findShelveByIdAndUser(deckId);
-        TestSuiteEntity existingTestSuite =
-                testSuiteRepository
-                        .findByIdAndShelve(testSuiteId, shelve)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Test suite not found with id: " + testSuiteId));
+        TestSuiteEntity existingTestSuite = findSuite(testSuiteId, shelve);
 
+        boolean titleChanged = !Objects.equals(existingTestSuite.getTitle(), request.title());
         TestSuiteEntity updatedTestSuite = this.toEntity(request, existingTestSuite);
-        applySubjectLinks(shelve, request, updatedTestSuite);
+        if (titleChanged
+                || updatedTestSuite.getSlug() == null
+                || updatedTestSuite.getSlug().isBlank()) {
+            updatedTestSuite.setSlug(uniqueSlug(shelve, request.title(), testSuiteId));
+        }
         testSuiteRepository.save(updatedTestSuite);
 
         return ApiRes.success(
@@ -125,13 +136,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     public ApiRes delete(UUID deckId, UUID testSuiteId) {
         log.info("Deleting test suite {} for shelve {}", testSuiteId, deckId);
         Shelf shelve = this.findShelveByIdAndUser(deckId);
-        TestSuiteEntity testSuite =
-                testSuiteRepository
-                        .findByIdAndShelve(testSuiteId, shelve)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Test suite not found with id: " + testSuiteId));
+        TestSuiteEntity testSuite = findSuite(testSuiteId, shelve);
 
         testSuite.setDeleted(true);
         testSuiteRepository.save(testSuite);
@@ -146,13 +151,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     public ApiRes getById(UUID deckId, UUID testSuiteId) {
         log.info("Fetching test suite {} for shelve {}", testSuiteId, deckId);
         Shelf shelve = this.findShelveByIdAndUser(deckId);
-        TestSuiteEntity testSuite =
-                testSuiteRepository
-                        .findByIdAndShelve(testSuiteId, shelve)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Test suite not found with id: " + testSuiteId));
+        TestSuiteEntity testSuite = findSuite(testSuiteId, shelve);
 
         return ApiRes.success("Test suite fetched successfully", this.toViewModel(testSuite));
     }
@@ -170,6 +169,39 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         List<TestSuiteRes> responses = testSuites.stream().map(this::toViewModel).toList();
 
         return ApiRes.success("Test suites fetched successfully", responses);
+    }
+
+    @Override
+    @Transactional
+    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "getAttemptFallback")
+    public ApiRes getAttempt(UUID shelveId, UUID testSuiteId) {
+        log.info("Starting attempt of test suite {} under shelve {}", testSuiteId, shelveId);
+        Shelf shelve = this.findShelveByIdAndUser(shelveId);
+        TestSuiteEntity suite = findSuite(testSuiteId, shelve);
+
+        List<TestAttemptRes.Question> questions =
+                questionRepository.findAllByTestSuite(suite).stream()
+                        .map(
+                                question -> {
+                                    List<String> options =
+                                            question.getType() == QuestionType.FILL_IN_THE_BLANK
+                                                    ? List.of()
+                                                    : metadataMapper
+                                                            .read(question.getMetadata())
+                                                            .optionsOrEmpty();
+                                    return new TestAttemptRes.Question(
+                                            question.getId(),
+                                            question.getText(),
+                                            question.getType(),
+                                            options);
+                                })
+                        .toList();
+
+        Integer timeLimitSeconds =
+                suite.getTimeLimitMinutes() == null ? null : suite.getTimeLimitMinutes() * 60;
+        return ApiRes.success(
+                "Test attempt ready",
+                new TestAttemptRes(suite.getId(), suite.getTitle(), timeLimitSeconds, questions));
     }
 
     @Override
@@ -234,47 +266,35 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
+    @Caching(
+            evict = {
+                @CacheEvict(value = "testSuites", key = "#shelveId + ':' + #testSuiteId"),
+                @CacheEvict(value = "testSuites", key = "#shelveId + ':all'")
+            })
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "submitFallback")
     @Transactional
     public ApiRes submit(UUID shelveId, UUID testSuiteId, TestSubmissionReq request) {
         log.info("Submitting test run {} under shelve {}", testSuiteId, shelveId);
         Shelf shelve = findShelveByIdAndUser(shelveId);
-        TestSuiteEntity suite =
-                testSuiteRepository
-                        .findByIdAndShelve(testSuiteId, shelve)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Test suite not found with id: " + testSuiteId));
+        TestSuiteEntity suite = findSuite(testSuiteId, shelve);
 
         List<QuestionEntity> questions = questionRepository.findAllByTestSuite(suite);
+        if (questions.isEmpty()) {
+            throw new ValidationException("This test suite has no questions yet");
+        }
 
         List<QuestionBreakdown> breakdown = new ArrayList<>();
         int score = 0;
-
         for (QuestionEntity question : questions) {
-            QuestionMetadata metadata = readMetadata(question.getMetadata());
-            Integer userAnswer =
-                    request.answers() == null ? null : request.answers().get(question.getId());
-            boolean correct =
-                    userAnswer != null
-                            && metadata.correctOptionIndex() != null
-                            && userAnswer.equals(metadata.correctOptionIndex());
-            if (correct) {
+            QuestionBreakdown graded = grade(question, request);
+            if (graded.correct()) {
                 score++;
             }
-            breakdown.add(
-                    new QuestionBreakdown(
-                            question.getId(),
-                            question.getText(),
-                            userAnswer,
-                            metadata.correctOptionIndex(),
-                            correct,
-                            metadata.explanation()));
+            breakdown.add(graded);
         }
 
         int totalQuestions = questions.size();
-        int percentage = totalQuestions == 0 ? 100 : Math.round((score * 100.0f) / totalQuestions);
+        int percentage = Math.round((score * 100.0f) / totalQuestions);
         int xpGained =
                 score * GamificationRules.XP_PER_CORRECT_ANSWER
                         + GamificationRules.XP_TEST_COMPLETION_BONUS;
@@ -285,10 +305,10 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         }
         userService.updateUserProgress(xpGained);
 
-        int totalXp =
-                userService.getCurrentUser().getSetting().getTotalXp() == null
-                        ? xpGained
-                        : userService.getCurrentUser().getSetting().getTotalXp();
+        User refreshed = userService.getCurrentUser();
+        Integer storedXp =
+                refreshed.getSetting() == null ? null : refreshed.getSetting().getTotalXp();
+        int totalXp = storedXp == null ? xpGained : storedXp;
 
         log.info(
                 "Test suite {} submitted with score {}/{} ({}%)",
@@ -306,27 +326,90 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                         breakdown));
     }
 
-    private QuestionMetadata readMetadata(String rawMetadata) {
-        if (rawMetadata == null || rawMetadata.isBlank()) {
-            return new QuestionMetadata(List.of(), null, null);
+    QuestionBreakdown grade(QuestionEntity question, TestSubmissionReq request) {
+        QuestionMetadata metadata = metadataMapper.read(question.getMetadata());
+        QuestionType type = question.getType();
+        List<String> options = metadata.optionsOrEmpty();
+
+        Integer userIndex = null;
+        List<Integer> userIndexes = null;
+        String userText = null;
+        Integer correctIndex = null;
+        List<Integer> correctIndexes = null;
+        String correctText;
+        boolean correct;
+
+        if (type == QuestionType.MULTIPLE_CHOICE) {
+            List<Integer> raw = valueFor(request.multiAnswers(), question.getId());
+            userIndexes = raw == null ? List.of() : sortedDistinct(raw);
+            correctIndexes = sortedDistinct(metadata.correctOptionIndexesOrEmpty());
+            correct =
+                    !correctIndexes.isEmpty()
+                            && new HashSet<>(userIndexes).equals(new HashSet<>(correctIndexes));
+            correctText = optionTexts(options, correctIndexes);
+        } else if (type == QuestionType.FILL_IN_THE_BLANK) {
+            userText = valueFor(request.textAnswers(), question.getId());
+            List<String> accepted = metadata.acceptedAnswersOrEmpty();
+            correct = AnswerMatcher.matches(userText, accepted, metadata.caseSensitiveOrFalse());
+            correctText = String.join(" / ", accepted);
+            options = List.of();
+        } else if (type == QuestionType.SINGLE_CHOICE || type == QuestionType.TRUE_FALSE) {
+            userIndex = valueFor(request.answers(), question.getId());
+            correctIndex = metadata.correctOptionIndex();
+            correct = userIndex != null && userIndex.equals(correctIndex);
+            correctText = correctIndex == null ? null : optionTexts(options, List.of(correctIndex));
+        } else {
+            correct = false;
+            correctText = null;
         }
-        try {
-            JsonNode node = objectMapper.readTree(rawMetadata);
-            List<String> options = new ArrayList<>();
-            if (node.has("options") && node.get("options").isArray()) {
-                node.get("options").forEach(option -> options.add(option.asText()));
-            }
-            Integer correctIndex =
-                    node.hasNonNull("correctOptionIndex")
-                            ? node.get("correctOptionIndex").asInt()
-                            : null;
-            String explanation =
-                    node.hasNonNull("explanation") ? node.get("explanation").asText() : null;
-            return new QuestionMetadata(options, correctIndex, explanation);
-        } catch (Exception exception) {
-            log.warn("Unable to parse question metadata: {}", exception.getMessage());
-            return new QuestionMetadata(List.of(), null, null);
+
+        return new QuestionBreakdown(
+                question.getId(),
+                question.getText(),
+                type,
+                userIndex,
+                userIndexes,
+                userText,
+                correctIndex,
+                correctIndexes,
+                correctText,
+                options,
+                correct,
+                metadata.explanation());
+    }
+
+    private static <T> T valueFor(Map<UUID, T> answers, UUID questionId) {
+        return answers == null ? null : answers.get(questionId);
+    }
+
+    private static List<Integer> sortedDistinct(List<Integer> values) {
+        return new ArrayList<>(
+                values.stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toCollection(TreeSet::new)));
+    }
+
+    private static String optionTexts(List<String> options, List<Integer> indexes) {
+        return indexes.stream()
+                .filter(index -> index >= 0 && index < options.size())
+                .map(options::get)
+                .collect(Collectors.joining(", "));
+    }
+
+    String uniqueSlug(Shelf shelve, String title, UUID excludeId) {
+        String base = StringUtils.slugify(title, DEFAULT_SLUG);
+        Set<String> taken =
+                new HashSet<>(
+                        testSuiteRepository.findSlugsByShelfExcluding(
+                                shelve, excludeId == null ? NO_ID : excludeId));
+        if (!taken.contains(base)) {
+            return base;
         }
+        int suffix = 2;
+        while (taken.contains(base + "-" + suffix)) {
+            suffix++;
+        }
+        return base + "-" + suffix;
     }
 
     private static int computeCap(TestSuiteSelectionPayload effective, int poolSize) {
@@ -353,55 +436,49 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         return new TestSuiteSelectionPayload(mode, s.getLimit(), shuffle);
     }
 
-    void applySubjectLinks(Shelf shelve, TestSuiteReq request, TestSuiteEntity entity) {
-        if (request.subjectIds() == null) {
-            return;
-        }
-        if (request.subjectIds().isEmpty()) {
-            entity.setSubjects(new ArrayList<>());
-            return;
-        }
-        List<Subject> subjects =
-                request.subjectIds().stream()
-                        .map(
-                                subjectId ->
-                                        subjectRepository
-                                                .findByIdAndShelve(subjectId, shelve)
-                                                .orElseThrow(
-                                                        () ->
-                                                                new NotFoundException(
-                                                                        "Subject not found: "
-                                                                                + subjectId)))
-                        .collect(Collectors.toList());
-        entity.setSubjects(subjects);
-    }
-
     TestSuiteEntity toEntity(@NonNull TestSuiteReq from, TestSuiteEntity to) {
+        String description = blankToNull(from.description());
         if (to == null) {
             return TestSuiteEntity.builder()
-                    .title(from.title())
+                    .title(from.title().trim())
+                    .description(description)
+                    .timeLimitMinutes(from.timeLimitMinutes())
                     .isActive(from.isActive() != null ? from.isActive() : true)
-                    .selection(from.selection())
                     .build();
         }
 
-        to.setTitle(from.title());
+        to.setTitle(from.title().trim());
+        to.setDescription(description);
+        to.setTimeLimitMinutes(from.timeLimitMinutes());
         if (from.isActive() != null) {
             to.setIsActive(from.isActive());
-        }
-        if (from.selection() != null) {
-            to.setSelection(from.selection());
         }
         return to;
     }
 
     TestSuiteRes toViewModel(TestSuiteEntity from) {
-        List<UUID> subjectIds =
-                from.getSubjects() == null
-                        ? List.of()
-                        : from.getSubjects().stream().map(Subject::getId).toList();
         return new TestSuiteRes(
-                from.getId(), from.getTitle(), from.getIsActive(), subjectIds, from.getSelection());
+                from.getId(),
+                from.getTitle(),
+                from.getSlug(),
+                from.getDescription(),
+                from.getTimeLimitMinutes(),
+                from.getIsActive(),
+                questionRepository.countByTestSuite(from),
+                from.getHighestScore());
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private TestSuiteEntity findSuite(UUID testSuiteId, Shelf shelve) {
+        return testSuiteRepository
+                .findByIdAndShelve(testSuiteId, shelve)
+                .orElseThrow(
+                        () ->
+                                new NotFoundException(
+                                        "Test suite not found with id: " + testSuiteId));
     }
 
     private Shelf findShelveByIdAndUser(UUID deckId) {
@@ -427,9 +504,11 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                                         new NotFoundException(
                                                 "Subject not found with id: " + subjectId));
 
+        String title = "Auto: " + subject.getName();
         TestSuiteEntity testSuite =
                 TestSuiteEntity.builder()
-                        .title("Auto: " + subject.getName())
+                        .title(title)
+                        .slug(uniqueSlug(shelve, title, null))
                         .isActive(true)
                         .shelf(shelve)
                         .build();
@@ -466,6 +545,11 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         throw unwrapTestSuiteException(t);
     }
 
+    public ApiRes getAttemptFallback(UUID shelveId, UUID testSuiteId, Throwable t) {
+        log.error("Test suite service unavailable during getAttempt: {}", t.getMessage());
+        throw unwrapTestSuiteException(t);
+    }
+
     public ApiRes runFallback(UUID shelveId, UUID testSuiteId, Throwable t) {
         log.error("Test suite service unavailable during run: {}", t.getMessage());
         throw unwrapTestSuiteException(t);
@@ -480,6 +564,9 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     private RuntimeException unwrapTestSuiteException(Throwable t) {
         if (t instanceof NotFoundException nfe) {
             return nfe;
+        }
+        if (t instanceof ValidationException ve) {
+            return ve;
         }
         if (t instanceof UnauthenticatedException ue) {
             return ue;

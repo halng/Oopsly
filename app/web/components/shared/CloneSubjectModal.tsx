@@ -47,7 +47,9 @@ export default function CloneSubjectModal({
     const [isCreatingShelf, setIsCreatingShelf] = useState(false);
     const [newShelfName, setNewShelfName] = useState('');
     const [isSubmittingNewShelf, setIsSubmittingNewShelf] = useState(false);
-    const activeShelves = Object.freeze(useShelfStore((state) => state.shelves));
+    const activeShelves = Object.freeze(
+        useShelfStore((state) => state.shelves)
+    );
 
     useEffect(() => {
         if (subject) {
@@ -132,10 +134,7 @@ export default function CloneSubjectModal({
                 selectedShelfId
             );
             if (res.isSuccess && res.data) {
-                if (
-                    customTitle.trim() &&
-                    customTitle.trim() !== subject.name
-                ) {
+                if (customTitle.trim() && customTitle.trim() !== subject.name) {
                     await ApiService.updateSubject(res.data.id, {
                         name: customTitle.trim(),
                         description: customDescription.trim() || undefined,
@@ -227,7 +226,7 @@ export default function CloneSubjectModal({
                                         Source Deck
                                     </span>
                                     <h3 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100">
-                                        {subject.name }
+                                        {subject.name}
                                     </h3>
                                 </div>
                             </div>
@@ -296,52 +295,54 @@ export default function CloneSubjectModal({
                             </form>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {Object.values(activeShelves || []).map((shelf) => {
-                                    const isSelected =
-                                        selectedShelfId === shelf.id;
-                                    return (
-                                        <button
-                                            key={shelf.id}
-                                            type="button"
-                                            data-testid={`clone-shelf-${shelf.id}`}
-                                            onClick={() =>
-                                                setSelectedShelfId(shelf.id)
-                                            }
-                                            className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                                                isSelected
-                                                    ? 'border-[var(--theme-accent)] bg-[color-mix(in_srgb,var(--theme-accent)_10%,transparent)] ring-2 ring-[color-mix(in_srgb,var(--theme-accent)_30%,transparent)]'
-                                                    : 'border-stone-200 dark:border-stone-800 bg-stone-50/70 dark:bg-stone-800/40 hover:bg-stone-100 dark:hover:bg-stone-800'
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-2.5 min-w-0">
-                                                <div
-                                                    className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-bold shrink-0 text-xs shadow-2xs"
-                                                    style={{
-                                                        backgroundColor:
-                                                            shelf.color ||
-                                                            'var(--theme-accent)',
-                                                    }}
-                                                >
-                                                    <Folder className="w-4 h-4" />
-                                                </div>
-                                                <h4 className="text-xs font-bold text-stone-900 dark:text-stone-100 truncate">
-                                                    {shelf.name}
-                                                </h4>
-                                            </div>
-                                            <div
-                                                className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border ${
+                                {Object.values(activeShelves || []).map(
+                                    (shelf) => {
+                                        const isSelected =
+                                            selectedShelfId === shelf.id;
+                                        return (
+                                            <button
+                                                key={shelf.id}
+                                                type="button"
+                                                data-testid={`clone-shelf-${shelf.id}`}
+                                                onClick={() =>
+                                                    setSelectedShelfId(shelf.id)
+                                                }
+                                                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between gap-3 ${
                                                     isSelected
-                                                        ? 'bg-[var(--theme-accent)] border-[var(--theme-accent)] text-white'
-                                                        : 'border-stone-300 dark:border-stone-600'
+                                                        ? 'border-[var(--theme-accent)] bg-[color-mix(in_srgb,var(--theme-accent)_10%,transparent)] ring-2 ring-[color-mix(in_srgb,var(--theme-accent)_30%,transparent)]'
+                                                        : 'border-stone-200 dark:border-stone-800 bg-stone-50/70 dark:bg-stone-800/40 hover:bg-stone-100 dark:hover:bg-stone-800'
                                                 }`}
                                             >
-                                                {isSelected && (
-                                                    <Check className="w-3 h-3 stroke-[3]" />
-                                                )}
-                                            </div>
-                                        </button>
-                                    );
-                                })}
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <div
+                                                        className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-bold shrink-0 text-xs shadow-2xs"
+                                                        style={{
+                                                            backgroundColor:
+                                                                shelf.color ||
+                                                                'var(--theme-accent)',
+                                                        }}
+                                                    >
+                                                        <Folder className="w-4 h-4" />
+                                                    </div>
+                                                    <h4 className="text-xs font-bold text-stone-900 dark:text-stone-100 truncate">
+                                                        {shelf.name}
+                                                    </h4>
+                                                </div>
+                                                <div
+                                                    className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border ${
+                                                        isSelected
+                                                            ? 'bg-[var(--theme-accent)] border-[var(--theme-accent)] text-white'
+                                                            : 'border-stone-300 dark:border-stone-600'
+                                                    }`}
+                                                >
+                                                    {isSelected && (
+                                                        <Check className="w-3 h-3 stroke-[3]" />
+                                                    )}
+                                                </div>
+                                            </button>
+                                        );
+                                    }
+                                )}
                             </div>
                         )}
                     </div>
@@ -398,9 +399,7 @@ export default function CloneSubjectModal({
                         type="button"
                         data-testid="btn-confirm-clone"
                         disabled={
-                            isCloning ||
-                            !selectedShelfId ||
-                            !customTitle.trim()
+                            isCloning || !selectedShelfId || !customTitle.trim()
                         }
                         onClick={handleConfirmClone}
                         className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-xs font-bold shadow-md disabled:opacity-50 cursor-pointer"

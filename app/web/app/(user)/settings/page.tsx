@@ -88,7 +88,10 @@ export default function SettingsPage() {
     };
 
     return (
-        <div data-testid="settings-page" className="max-w-2xl mx-auto space-y-6">
+        <div
+            data-testid="settings-page"
+            className="max-w-2xl mx-auto space-y-6"
+        >
             <button
                 type="button"
                 data-testid="btn-settings-back"
@@ -173,7 +176,9 @@ export default function SettingsPage() {
                         />
                     </div>
                     <div className="flex items-center justify-between p-4 bg-stone-50 rounded-2xl border">
-                        <span className="font-bold">Daily Card Review Goal</span>
+                        <span className="font-bold">
+                            Daily Card Review Goal
+                        </span>
                         <input
                             data-testid="input-daily-goal"
                             type="number"

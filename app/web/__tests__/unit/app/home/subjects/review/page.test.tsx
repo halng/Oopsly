@@ -1,56 +1,57 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import ReviewPage from '@/app/(app)/home/[shelfId]/subjects/[subjectId]/review/page';
+import ReviewPage from '@/app/(user)/home/[slug]/subjects/[subSlug]/review/page';
 import { ApiService } from '@/services/api';
+import { card, subjectContext } from '@/__tests__/unit/helpers/studyFixtures';
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock('next/navigation', () => ({
     useRouter: () => ({ push }),
-    useParams: () => ({ shelfId: 's1', subjectId: 'sub1' }),
+    useParams: () => ({ slug: 'science', subSlug: 'biology' }),
 }));
 vi.mock('@/hooks/useSyncStatus', () => ({
     useSyncStatus: () => ({ isOnline: true }),
 }));
+vi.mock('@/hooks/useSubjectContext', () => ({
+    useSubjectContext: () => subjectContext,
+}));
 vi.mock('@/services/api', () => ({
     ApiService: {
-        getSubject: vi.fn(),
         getDueCards: vi.fn(),
         getSubjectCards: vi.fn(),
         gradeCard: vi.fn(),
     },
 }));
 
-const card = {
+const due = card({
     id: 'c1',
     front: 'Q',
     back: 'A',
-    isDeleted: false,
-};
+    hint: 'think',
+    repetitions: 2,
+    lastReviewedAt: '2026-01-01T00:00:00Z',
+});
 
 describe('ReviewPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.mocked(ApiService.getSubject).mockResolvedValue({
-            isSuccess: true,
-            data: { id: 'sub1', title: 'Biology' },
-            message: '',
-            timestamp: '',
-        } as never);
         vi.mocked(ApiService.getDueCards).mockResolvedValue({
             isSuccess: true,
-            data: [card],
+            data: [due],
             message: '',
+            statusCode: 200,
             timestamp: '',
-        } as never);
+        });
         vi.mocked(ApiService.gradeCard).mockResolvedValue({
             isSuccess: true,
-            data: card,
+            data: { card: due, xpGained: 20, totalXp: 40 },
             message: '',
+            statusCode: 200,
             timestamp: '',
-        } as never);
+        });
     });
 
-    it('loads a due card and grades it', async () => {
+    it('loads a due card and grades it Easy', async () => {
         render(<ReviewPage />);
         expect(screen.getByTestId('review-loading')).toBeInTheDocument();
         await waitFor(() =>
@@ -58,31 +59,53 @@ describe('ReviewPage', () => {
                 screen.getByTestId('flashcard-review-screen')
             ).toBeInTheDocument()
         );
+        expect(screen.getByTestId('review-progress')).toBeInTheDocument();
+        expect(screen.getByTestId('flashcard-flip-hint')).toBeInTheDocument();
         fireEvent.click(screen.getByTestId('flashcard-box'));
         fireEvent.click(screen.getByTestId('btn-grade-4'));
         await waitFor(() =>
-            expect(ApiService.gradeCard).toHaveBeenCalled()
+            expect(ApiService.gradeCard).toHaveBeenCalledWith(
+                's1',
+                'sub1',
+                'c1',
+                4
+            )
         );
     });
 
-    it('shows empty state when there are no cards', async () => {
+    it('shows the done-for-today screen and offers a cram of every card', async () => {
         vi.mocked(ApiService.getDueCards).mockResolvedValue({
             isSuccess: true,
             data: [],
             message: '',
+            statusCode: 200,
             timestamp: '',
-        } as never);
+        });
         vi.mocked(ApiService.getSubjectCards).mockResolvedValue({
             isSuccess: true,
-            data: [],
+            data: {
+                entities: [due],
+                currentPage: 1,
+                totalItems: 1,
+                totalPages: 1,
+                hasNextPage: false,
+            },
             message: '',
+            statusCode: 200,
             timestamp: '',
-        } as never);
+        });
         render(<ReviewPage />);
         await waitFor(() =>
             expect(screen.getByTestId('review-empty')).toBeInTheDocument()
         );
-        fireEvent.click(screen.getByTestId('btn-exit-review'));
-        expect(push).toHaveBeenCalledWith('/home/s1/subjects/sub1');
+        await waitFor(() =>
+            expect(screen.getByTestId('study-confetti')).toBeInTheDocument()
+        );
+        fireEvent.click(screen.getByTestId('btn-review-all'));
+        await waitFor(() =>
+            expect(
+                screen.getByTestId('flashcard-review-screen')
+            ).toBeInTheDocument()
+        );
     });
 });

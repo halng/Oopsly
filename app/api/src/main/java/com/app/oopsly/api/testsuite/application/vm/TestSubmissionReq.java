@@ -17,8 +17,19 @@
 package com.app.oopsly.api.testsuite.application.vm;
 
 import jakarta.validation.constraints.Min;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** Submission of a finished test run: answers per question id plus elapsed time. */
-public record TestSubmissionReq(Map<UUID, Integer> answers, @Min(0) Integer timeSpentSeconds) {}
+/**
+ * Submission of a finished test run, keyed by question id.
+ *
+ * @param answers selected option index for single choice and True/False
+ * @param multiAnswers selected option indexes for multiple choice
+ * @param textAnswers typed answer for fill in the blank
+ */
+public record TestSubmissionReq(
+        Map<UUID, Integer> answers,
+        Map<UUID, List<Integer>> multiAnswers,
+        Map<UUID, String> textAnswers,
+        @Min(0) Integer timeSpentSeconds) {}

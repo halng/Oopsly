@@ -23,503 +23,335 @@ import static org.mockito.Mockito.*;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
+import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.testsuite.application.QuestionMetadataMapper;
 import com.app.oopsly.api.testsuite.application.QuestionServiceImpl;
 import com.app.oopsly.api.testsuite.application.vm.QuestionReq;
+import com.app.oopsly.api.testsuite.application.vm.QuestionRes;
 import com.app.oopsly.api.testsuite.domain.QuestionEntity;
 import com.app.oopsly.api.testsuite.domain.QuestionType;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
+import com.app.oopsly.api.user.User;
+import com.app.oopsly.api.user.UserService;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class QuestionServiceImplTest {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Mock private QuestionRepository questionRepository;
-
     @Mock private TestSuiteRepository testSuiteRepository;
+    @Mock private ShelfRepository shelfRepository;
+    @Mock private UserService userService;
 
-    @Spy private ObjectMapper objectMapper;
-
-    @InjectMocks private QuestionServiceImpl questionService;
-
+    private QuestionServiceImpl questionService;
+    private User user;
+    private Shelf shelf;
     private TestSuiteEntity testSuite;
+    private UUID shelfId;
     private UUID testSuiteId;
     private UUID questionId;
 
     @BeforeEach
     void setUp() {
+        questionService =
+                new QuestionServiceImpl(
+                        questionRepository,
+                        testSuiteRepository,
+                        shelfRepository,
+                        new QuestionMetadataMapper(objectMapper),
+                        userService);
+        shelfId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
         questionId = UUID.randomUUID();
-
+        user = new User();
+        shelf = new Shelf();
+        shelf.setId(shelfId);
         testSuite = new TestSuiteEntity();
         testSuite.setId(testSuiteId);
-        testSuite.setTitle("Test Suite");
-        testSuite.setIsActive(true);
-        testSuite.setDeleted(false);
+        testSuite.setShelf(shelf);
+    }
+
+    private void ownsSuite() {
+        when(userService.getCurrentUser()).thenReturn(user);
+        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelf))
+                .thenReturn(Optional.of(testSuite));
+    }
+
+    private static QuestionReq single(String text, List<String> options, Integer index) {
+        return new QuestionReq(
+                text, QuestionType.SINGLE_CHOICE, options, index, null, null, null, " why ");
+    }
+
+    private QuestionEntity captureSaved() {
+        ArgumentCaptor<QuestionEntity> captor = ArgumentCaptor.forClass(QuestionEntity.class);
+        verify(questionRepository).save(captor.capture());
+        return captor.getValue();
     }
 
     @Test
-    void create_savesNewQuestion_withMultipleChoice() {
-        String metadata = "{\"options\":[\"A\",\"B\",\"C\"],\"correct_indices\":[0,2]}";
-        QuestionReq questionReq =
-                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+    void create_storesNormalizedMetadata_andReturnsTypedQuestion() throws Exception {
+        ownsSuite();
+        when(questionRepository.save(any(QuestionEntity.class)))
+                .thenAnswer(
+                        inv -> {
+                            QuestionEntity q = inv.getArgument(0);
+                            q.setId(questionId);
+                            return q;
+                        });
 
-        QuestionEntity savedQuestion = new QuestionEntity();
-        savedQuestion.setId(questionId);
-        savedQuestion.setText(questionReq.text());
-        savedQuestion.setType(questionReq.type());
-        savedQuestion.setMetadata(questionReq.metadata());
-        savedQuestion.setTestSuite(testSuite);
+        ApiRes result =
+                questionService.create(
+                        shelfId, testSuiteId, single("  2+2?  ", List.of(" 3 ", "4"), 1));
 
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.save(any(QuestionEntity.class))).thenReturn(savedQuestion);
+        assertEquals(HttpStatus.CREATED, result.getStatusCode());
+        QuestionEntity saved = captureSaved();
+        assertEquals("2+2?", saved.getText());
+        assertSame(testSuite, saved.getTestSuite());
+        JsonNode json = objectMapper.readTree(saved.getMetadata());
+        assertEquals("3", json.get("options").get(0).asText());
+        assertEquals(1, json.get("correctOptionIndex").asInt());
+        assertEquals("why", json.get("explanation").asText());
+        assertFalse(json.has("acceptedAnswers"));
 
-        ApiRes result = questionService.create(testSuiteId, questionReq);
-
-        assertNotNull(result);
-        verify(questionRepository, times(1)).save(any(QuestionEntity.class));
+        QuestionRes res = (QuestionRes) result.getBody().data();
+        assertEquals(questionId, res.id());
+        assertEquals(QuestionType.SINGLE_CHOICE, res.type());
+        assertEquals(List.of("3", "4"), res.options());
+        assertEquals(1, res.correctOptionIndex());
     }
 
     @Test
-    void create_savesNewQuestion_withTrueFalse() {
-        String metadata = "{\"correct_value\":true}";
-        QuestionReq questionReq =
-                new QuestionReq("Is the sky blue?", QuestionType.TRUE_FALSE, metadata);
+    void create_trueFalse_forcesOptions() {
+        ownsSuite();
+        when(questionRepository.save(any(QuestionEntity.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
-        QuestionEntity savedQuestion = new QuestionEntity();
-        savedQuestion.setId(questionId);
-        savedQuestion.setText(questionReq.text());
-        savedQuestion.setType(questionReq.type());
-        savedQuestion.setMetadata(questionReq.metadata());
-        savedQuestion.setTestSuite(testSuite);
+        ApiRes result =
+                questionService.create(
+                        shelfId,
+                        testSuiteId,
+                        new QuestionReq(
+                                "Sky is blue",
+                                QuestionType.TRUE_FALSE,
+                                List.of("ignored"),
+                                0,
+                                null,
+                                null,
+                                null,
+                                null));
 
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.save(any(QuestionEntity.class))).thenReturn(savedQuestion);
-
-        ApiRes result = questionService.create(testSuiteId, questionReq);
-
-        assertNotNull(result);
-        verify(questionRepository, times(1)).save(any(QuestionEntity.class));
+        QuestionRes res = (QuestionRes) result.getBody().data();
+        assertEquals(List.of("True", "False"), res.options());
+        assertEquals(0, res.correctOptionIndex());
     }
 
     @Test
-    void create_savesNewQuestion_withFillBlank() {
-        String metadata = "{\"accepted_answers\":[\"photosynthesis\",\"Photosynthesis\"]}";
-        QuestionReq questionReq =
-                new QuestionReq(
-                        "What is the process by which plants make food?",
-                        QuestionType.FILL_IN_THE_BLANK,
-                        metadata);
+    void create_fillInTheBlank_mapsAcceptedAnswers() {
+        ownsSuite();
+        when(questionRepository.save(any(QuestionEntity.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
-        QuestionEntity savedQuestion = new QuestionEntity();
-        savedQuestion.setId(questionId);
-        savedQuestion.setText(questionReq.text());
-        savedQuestion.setType(questionReq.type());
-        savedQuestion.setMetadata(questionReq.metadata());
-        savedQuestion.setTestSuite(testSuite);
+        ApiRes result =
+                questionService.create(
+                        shelfId,
+                        testSuiteId,
+                        new QuestionReq(
+                                "Capital of France is ___",
+                                QuestionType.FILL_IN_THE_BLANK,
+                                null,
+                                null,
+                                null,
+                                List.of("Paris", " paris "),
+                                true,
+                                null));
 
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.save(any(QuestionEntity.class))).thenReturn(savedQuestion);
-
-        ApiRes result = questionService.create(testSuiteId, questionReq);
-
-        assertNotNull(result);
-        verify(questionRepository, times(1)).save(any(QuestionEntity.class));
+        QuestionRes res = (QuestionRes) result.getBody().data();
+        assertEquals(List.of("Paris", "paris"), res.acceptedAnswers());
+        assertTrue(res.caseSensitive());
+        assertEquals(List.of(), res.options());
     }
 
     @Test
-    void create_throwsValidationException_whenMultipleChoiceHasNoOptions() {
-        String metadata = "{\"correct_indices\":[0,2]}";
-        QuestionReq questionReq =
-                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+    void create_invalidQuestion_throwsValidationAndDoesNotSave() {
+        ownsSuite();
 
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-
+        QuestionReq invalid = single("2+2?", List.of("4"), 0);
         assertThrows(
-                ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
-        verify(questionRepository, never()).save(any(QuestionEntity.class));
+                ValidationException.class,
+                () -> questionService.create(shelfId, testSuiteId, invalid));
+        verify(questionRepository, never()).save(any());
     }
 
     @Test
-    void create_throwsValidationException_whenTrueFalseHasNoCorrectValue() {
-        String metadata = "{\"something\":\"else\"}";
-        QuestionReq questionReq =
-                new QuestionReq("Is the sky blue?", QuestionType.TRUE_FALSE, metadata);
+    void create_shelfOfAnotherUser_throwsNotFound() {
+        when(userService.getCurrentUser()).thenReturn(user);
+        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.empty());
 
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-
+        QuestionReq req = single("q", List.of("a", "b"), 0);
         assertThrows(
-                ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
-        verify(questionRepository, never()).save(any(QuestionEntity.class));
+                NotFoundException.class, () -> questionService.create(shelfId, testSuiteId, req));
+        verifyNoInteractions(testSuiteRepository, questionRepository);
     }
 
     @Test
-    void create_throwsValidationException_whenFillBlankHasNoAcceptedAnswers() {
-        String metadata = "{\"something\":\"else\"}";
-        QuestionReq questionReq =
-                new QuestionReq("Fill in the blank", QuestionType.FILL_IN_THE_BLANK, metadata);
+    void create_suiteOutsideShelf_throwsNotFound() {
+        when(userService.getCurrentUser()).thenReturn(user);
+        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelf))
+                .thenReturn(Optional.empty());
 
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-
+        QuestionReq req = single("q", List.of("a", "b"), 0);
         assertThrows(
-                ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
-        verify(questionRepository, never()).save(any(QuestionEntity.class));
+                NotFoundException.class, () -> questionService.create(shelfId, testSuiteId, req));
     }
 
     @Test
-    void create_throwsValidationException_whenFillBlankHasEmptyAcceptedAnswers() {
-        String metadata = "{\"accepted_answers\":[]}";
-        QuestionReq questionReq =
-                new QuestionReq("Fill in the blank", QuestionType.FILL_IN_THE_BLANK, metadata);
-
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-
-        assertThrows(
-                ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
-        verify(questionRepository, never()).save(any(QuestionEntity.class));
-    }
-
-    @Test
-    void create_throwsValidationException_whenMetadataIsInvalidJson() {
-        String metadata = "invalid json";
-        QuestionReq questionReq =
-                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
-
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-
-        assertThrows(
-                ValidationException.class, () -> questionService.create(testSuiteId, questionReq));
-        verify(questionRepository, never()).save(any(QuestionEntity.class));
-    }
-
-    @Test
-    void create_throwsNotFoundException_whenTestSuiteNotFound() {
-        String metadata = "{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}";
-        QuestionReq questionReq =
-                new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
-
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.empty());
-
-        assertThrows(
-                NotFoundException.class, () -> questionService.create(testSuiteId, questionReq));
-        verify(questionRepository, never()).save(any(QuestionEntity.class));
-    }
-
-    @Test
-    void update_updatesExistingQuestion() {
-        String metadata = "{\"options\":[\"A\",\"B\",\"C\"],\"correct_indices\":[1]}";
-        QuestionReq questionReq =
-                new QuestionReq("Updated question?", QuestionType.MULTIPLE_CHOICE, metadata);
-
-        QuestionEntity existingQuestion = new QuestionEntity();
-        existingQuestion.setId(questionId);
-        existingQuestion.setText("Old question");
-        existingQuestion.setType(QuestionType.MULTIPLE_CHOICE);
-        existingQuestion.setMetadata("{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}");
-        existingQuestion.setTestSuite(testSuite);
-
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+    void update_replacesTypeAndMetadata() throws Exception {
+        QuestionEntity existing = new QuestionEntity();
+        existing.setId(questionId);
+        existing.setText("old");
+        existing.setType(QuestionType.SINGLE_CHOICE);
+        existing.setMetadata("{\"options\":[\"a\",\"b\"],\"correctOptionIndex\":0}");
+        ownsSuite();
         when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
-                .thenReturn(Optional.of(existingQuestion));
-        when(questionRepository.save(any(QuestionEntity.class))).thenReturn(existingQuestion);
+                .thenReturn(Optional.of(existing));
 
-        ApiRes result = questionService.update(testSuiteId, questionId, questionReq);
+        ApiRes result =
+                questionService.update(
+                        shelfId,
+                        testSuiteId,
+                        questionId,
+                        new QuestionReq(
+                                "Primes",
+                                QuestionType.MULTIPLE_CHOICE,
+                                List.of("2", "3", "4"),
+                                null,
+                                List.of(1, 0, 1),
+                                null,
+                                null,
+                                null));
 
-        assertNotNull(result);
-        verify(questionRepository, times(1)).save(any(QuestionEntity.class));
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertEquals(QuestionType.MULTIPLE_CHOICE, existing.getType());
+        assertEquals(
+                "[0,1]",
+                objectMapper
+                        .readTree(existing.getMetadata())
+                        .get("correctOptionIndexes")
+                        .toString());
+        verify(questionRepository).save(existing);
     }
 
     @Test
-    void update_throwsNotFoundException_whenQuestionNotFound() {
-        String metadata = "{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}";
-        QuestionReq questionReq =
-                new QuestionReq("Updated question?", QuestionType.MULTIPLE_CHOICE, metadata);
-
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+    void update_unknownQuestion_throwsNotFound() {
+        ownsSuite();
         when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
                 .thenReturn(Optional.empty());
 
+        QuestionReq req = single("q", List.of("a", "b"), 0);
         assertThrows(
                 NotFoundException.class,
-                () -> questionService.update(testSuiteId, questionId, questionReq));
-        verify(questionRepository, never()).save(any(QuestionEntity.class));
+                () -> questionService.update(shelfId, testSuiteId, questionId, req));
     }
 
     @Test
-    void delete_softDeletesQuestion() {
-        QuestionEntity existingQuestion = new QuestionEntity();
-        existingQuestion.setId(questionId);
-        existingQuestion.setDeleted(false);
-        existingQuestion.setTestSuite(testSuite);
-
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+    void delete_softDeletes() {
+        QuestionEntity existing = new QuestionEntity();
+        existing.setId(questionId);
+        ownsSuite();
         when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
-                .thenReturn(Optional.of(existingQuestion));
-        when(questionRepository.save(any(QuestionEntity.class))).thenReturn(existingQuestion);
+                .thenReturn(Optional.of(existing));
 
-        ApiRes result = questionService.delete(testSuiteId, questionId);
+        questionService.delete(shelfId, testSuiteId, questionId);
 
-        assertNotNull(result);
-        assertTrue(existingQuestion.getDeleted());
-        verify(questionRepository, times(1)).save(existingQuestion);
+        assertTrue(existing.getDeleted());
+        verify(questionRepository).save(existing);
     }
 
     @Test
-    void delete_throwsNotFoundException_whenQuestionNotFound() {
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
+    void getById_readsLegacyMetadata() {
+        QuestionEntity existing = new QuestionEntity();
+        existing.setId(questionId);
+        existing.setText("Old TF");
+        existing.setType(QuestionType.TRUE_FALSE);
+        existing.setMetadata("{\"correct_value\":true}");
+        ownsSuite();
         when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
-                .thenReturn(Optional.empty());
+                .thenReturn(Optional.of(existing));
 
+        QuestionRes res =
+                (QuestionRes)
+                        questionService.getById(shelfId, testSuiteId, questionId).getBody().data();
+
+        assertEquals(0, res.correctOptionIndex());
+    }
+
+    @Test
+    void getAllByTestSuite_mapsEveryQuestion() {
+        QuestionEntity a = new QuestionEntity();
+        a.setType(QuestionType.SINGLE_CHOICE);
+        a.setMetadata(null);
+        QuestionEntity b = new QuestionEntity();
+        b.setType(QuestionType.FILL_IN_THE_BLANK);
+        b.setMetadata("not json");
+        ownsSuite();
+        when(questionRepository.findAllByTestSuite(testSuite)).thenReturn(List.of(a, b));
+
+        List<?> data =
+                (List<?>) questionService.getAllByTestSuite(shelfId, testSuiteId).getBody().data();
+
+        assertEquals(2, data.size());
+        assertEquals(List.of(), ((QuestionRes) data.get(1)).options());
+    }
+
+    @Test
+    void fallbacks_preserveDomainErrors_andWrapOthers() {
         assertThrows(
-                NotFoundException.class, () -> questionService.delete(testSuiteId, questionId));
-    }
-
-    @Test
-    void getById_returnsQuestion() {
-        QuestionEntity question = new QuestionEntity();
-        question.setId(questionId);
-        question.setText("Test Question");
-        question.setType(QuestionType.TRUE_FALSE);
-        question.setMetadata("{\"correct_value\":true}");
-        question.setTestSuite(testSuite);
-
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
-                .thenReturn(Optional.of(question));
-
-        ApiRes result = questionService.getById(testSuiteId, questionId);
-
-        assertNotNull(result);
-        verify(questionRepository, times(1)).findByIdAndTestSuite(questionId, testSuite);
-    }
-
-    @Test
-    void getById_throwsNotFoundException_whenQuestionNotFound() {
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.findByIdAndTestSuite(questionId, testSuite))
-                .thenReturn(Optional.empty());
-
+                ValidationException.class,
+                () ->
+                        questionService.createFallback(
+                                shelfId, testSuiteId, null, new ValidationException("bad")));
         assertThrows(
-                NotFoundException.class, () -> questionService.getById(testSuiteId, questionId));
-    }
-
-    @Test
-    void getAllByTestSuite_returnsAllQuestions() {
-        List<QuestionEntity> questions = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            QuestionEntity question = new QuestionEntity();
-            question.setId(UUID.randomUUID());
-            question.setText("QuestionEntity " + i);
-            question.setType(QuestionType.TRUE_FALSE);
-            question.setMetadata("{\"correct_value\":true}");
-            question.setTestSuite(testSuite);
-            questions.add(question);
-        }
-
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.findAllByTestSuite(testSuite)).thenReturn(questions);
-
-        ApiRes result = questionService.getAllByTestSuite(testSuiteId);
-
-        assertNotNull(result);
-        verify(questionRepository, times(1)).findAllByTestSuite(testSuite);
-    }
-
-    @Test
-    void testCreateFallback() {
-        UUID testSuiteId = UUID.randomUUID();
-        QuestionReq request =
-                new QuestionReq(
-                        "Test Question",
-                        QuestionType.MULTIPLE_CHOICE,
-                        "{\"options\":[\"A\",\"B\"],\"correct_indices\":[0]}");
-        RuntimeException exception = new RuntimeException("Database connection failed");
-
-        RetryLaterException thrown =
-                assertThrows(
-                        RetryLaterException.class,
-                        () -> questionService.createFallback(testSuiteId, request, exception));
-
-        assertEquals(
-                "Question service is currently unavailable. Please try again later.",
-                thrown.getMessage());
-        assertSame(exception, thrown.getCause());
-    }
-
-    @Test
-    void testUpdateFallback() {
-        UUID testSuiteId = UUID.randomUUID();
-        UUID questionId = UUID.randomUUID();
-        QuestionReq request =
-                new QuestionReq(
-                        "Updated Question", QuestionType.TRUE_FALSE, "{\"correct_value\":true}");
-        RuntimeException exception = new RuntimeException("Database connection failed");
-
-        RetryLaterException thrown =
-                assertThrows(
-                        RetryLaterException.class,
-                        () ->
-                                questionService.updateFallback(
-                                        testSuiteId, questionId, request, exception));
-
-        assertEquals(
-                "Question service is currently unavailable. Please try again later.",
-                thrown.getMessage());
-        assertSame(exception, thrown.getCause());
-    }
-
-    @Test
-    void testDeleteFallback() {
-        UUID testSuiteId = UUID.randomUUID();
-        UUID questionId = UUID.randomUUID();
-        RuntimeException exception = new RuntimeException("Database connection failed");
-
-        RetryLaterException thrown =
-                assertThrows(
-                        RetryLaterException.class,
-                        () -> questionService.deleteFallback(testSuiteId, questionId, exception));
-
-        assertEquals(
-                "Question service is currently unavailable. Please try again later.",
-                thrown.getMessage());
-        assertSame(exception, thrown.getCause());
-    }
-
-    @Test
-    void testGetByIdFallback() {
-        UUID testSuiteId = UUID.randomUUID();
-        UUID questionId = UUID.randomUUID();
-        RuntimeException exception = new RuntimeException("Database connection failed");
-
-        RetryLaterException thrown =
-                assertThrows(
-                        RetryLaterException.class,
-                        () -> questionService.getByIdFallback(testSuiteId, questionId, exception));
-
-        assertEquals(
-                "Question service is currently unavailable. Please try again later.",
-                thrown.getMessage());
-        assertSame(exception, thrown.getCause());
-    }
-
-    @Test
-    void testGetAllByTestSuiteFallback() {
-        UUID testSuiteId = UUID.randomUUID();
-        RuntimeException exception = new RuntimeException("Database connection failed");
-
-        RetryLaterException thrown =
-                assertThrows(
-                        RetryLaterException.class,
-                        () -> questionService.getAllByTestSuiteFallback(testSuiteId, exception));
-
-        assertEquals(
-                "Question service is currently unavailable. Please try again later.",
-                thrown.getMessage());
-        assertSame(exception, thrown.getCause());
-    }
-
-    @Test
-    void create_savesMultipleResponseQuestion() {
-        String metadata = "{\"options\":[\"A\",\"B\"],\"correct_indices\":[0,1]}";
-        QuestionReq req = new QuestionReq("Pick all", QuestionType.MULTIPLE_RESPONSE, metadata);
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.save(any(QuestionEntity.class)))
-                .thenAnswer(
-                        inv -> {
-                            QuestionEntity q = inv.getArgument(0);
-                            q.setId(questionId);
-                            return q;
-                        });
-
-        assertTrue(questionService.create(testSuiteId, req).getBody().isSuccess());
-    }
-
-    @Test
-    void create_throwsWhenOptionsNotArray() {
-        String metadata = "{\"options\":\"A\",\"correct_indices\":[0]}";
-        QuestionReq req = new QuestionReq("Q", QuestionType.MULTIPLE_CHOICE, metadata);
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, req));
-    }
-
-    @Test
-    void create_throwsWhenCorrectIndicesNotArray() {
-        String metadata = "{\"options\":[\"A\"],\"correct_indices\":0}";
-        QuestionReq req = new QuestionReq("Q", QuestionType.MULTIPLE_CHOICE, metadata);
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, req));
-    }
-
-    @Test
-    void create_throwsWhenCorrectValueNotBoolean() {
-        String metadata = "{\"correct_value\":\"yes\"}";
-        QuestionReq req = new QuestionReq("Q", QuestionType.TRUE_FALSE, metadata);
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, req));
-    }
-
-    @Test
-    void create_savesMatchingQuestion() {
-        String metadata = "{\"pairs\":[{\"left\":\"a\",\"right\":\"b\"}]}";
-        QuestionReq req = new QuestionReq("Match", QuestionType.MATCHING, metadata);
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.save(any(QuestionEntity.class)))
-                .thenAnswer(
-                        inv -> {
-                            QuestionEntity q = inv.getArgument(0);
-                            q.setId(questionId);
-                            return q;
-                        });
-        assertTrue(questionService.create(testSuiteId, req).getBody().isSuccess());
-    }
-
-    @Test
-    void create_throwsWhenMatchingMissingPairs() {
-        QuestionReq req = new QuestionReq("Match", QuestionType.MATCHING, "{}");
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, req));
-    }
-
-    @Test
-    void create_savesOrderingQuestion() {
-        String metadata = "{\"correct_order\":[\"a\",\"b\"]}";
-        QuestionReq req = new QuestionReq("Order", QuestionType.ORDERING, metadata);
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        when(questionRepository.save(any(QuestionEntity.class)))
-                .thenAnswer(
-                        inv -> {
-                            QuestionEntity q = inv.getArgument(0);
-                            q.setId(questionId);
-                            return q;
-                        });
-        assertTrue(questionService.create(testSuiteId, req).getBody().isSuccess());
-    }
-
-    @Test
-    void create_throwsWhenOrderingMissingOrder() {
-        QuestionReq req = new QuestionReq("Order", QuestionType.ORDERING, "{\"correct_order\":1}");
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        assertThrows(ValidationException.class, () -> questionService.create(testSuiteId, req));
-    }
-
-    @Test
-    void create_throwsWhenTestSuiteSoftDeleted() {
-        testSuite.setDeleted(true);
-        QuestionReq req = new QuestionReq("Q", QuestionType.TRUE_FALSE, "{\"correct_value\":true}");
-        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(testSuite));
-        assertThrows(NotFoundException.class, () -> questionService.create(testSuiteId, req));
+                NotFoundException.class,
+                () ->
+                        questionService.getByIdFallback(
+                                shelfId, testSuiteId, questionId, new NotFoundException("x")));
+        assertThrows(
+                UnauthenticatedException.class,
+                () ->
+                        questionService.deleteFallback(
+                                shelfId,
+                                testSuiteId,
+                                questionId,
+                                new UnauthenticatedException("x")));
+        assertThrows(
+                RetryLaterException.class,
+                () ->
+                        questionService.updateFallback(
+                                shelfId, testSuiteId, questionId, null, new RuntimeException()));
+        assertThrows(
+                RetryLaterException.class,
+                () ->
+                        questionService.getAllByTestSuiteFallback(
+                                shelfId, testSuiteId, new RuntimeException()));
     }
 }

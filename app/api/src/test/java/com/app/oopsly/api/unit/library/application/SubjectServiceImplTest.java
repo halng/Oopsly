@@ -24,17 +24,19 @@ import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shared.application.vm.PagingRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.ValidationException;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.subject.Subject;
+import com.app.oopsly.api.subject.SubjectCount;
 import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.subject.SubjectServiceImpl;
 import com.app.oopsly.api.subject.vm.SubjectReq;
+import com.app.oopsly.api.subject.vm.SubjectRes;
 import com.app.oopsly.api.subject.vm.SubjectSettingReq;
 import com.app.oopsly.api.user.User;
 import com.app.oopsly.api.user.UserService;
@@ -42,7 +44,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,8 +63,6 @@ class SubjectServiceImplTest {
     @Mock private ShelfRepository shelfRepository;
 
     @Mock private UserService userService;
-
-    @Mock private CardService cardService;
 
     @Mock private CardRepository cardRepository;
 
@@ -109,7 +108,6 @@ class SubjectServiceImplTest {
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(shelve));
         when(subjectRepository.save(any(Subject.class))).thenReturn(subject);
-        when(cardService.getShortPracticeStats(subject)).thenReturn(Pair.of(1, 1.0));
 
         ApiRes result = subjectService.create(shelveId, subjectReq);
 
@@ -144,7 +142,6 @@ class SubjectServiceImplTest {
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
         when(subjectRepository.save(any(Subject.class))).thenReturn(subject);
-        when(cardService.getShortPracticeStats(any(Subject.class))).thenReturn(Pair.of(1, 1.0));
         ApiRes result = subjectService.update(shelveId, subjectId, updateReq);
 
         assertNotNull(result);
@@ -273,13 +270,21 @@ class SubjectServiceImplTest {
                 .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
-        when(cardService.getShortPracticeStats(subject)).thenReturn(Pair.of(1, 1.0));
+        when(cardRepository.countBySubjects(anyList()))
+                .thenReturn(List.of(new SubjectCount(subjectId, 10)));
+        when(cardRepository.countDueBySubjects(anyList()))
+                .thenReturn(List.of(new SubjectCount(subjectId, 3)));
 
         ApiRes result = subjectService.getById(shelveId, subjectId);
 
         assertNotNull(result);
+        SubjectRes view = (SubjectRes) result.getBody().data();
+        assertEquals(3, view.overdue());
+        assertEquals(70.0, view.completedPercent());
         verify(shelfRepository, times(1)).findByIdAndUser(shelveId, currentUser);
         verify(subjectRepository, times(1)).findByIdAndShelve(subjectId, shelve);
+        verify(cardRepository, times(1)).countBySubjects(anyList());
+        verify(cardRepository, times(1)).countDueBySubjects(anyList());
     }
 
     @Test
@@ -318,13 +323,29 @@ class SubjectServiceImplTest {
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(shelve));
         when(subjectRepository.findAllByShelve(eq(shelve), any(Pageable.class))).thenReturn(page);
-        when(cardService.getShortPracticeStats(any(Subject.class))).thenReturn(Pair.of(1, 1.0));
+        when(cardRepository.countBySubjects(anyList()))
+                .thenReturn(
+                        List.of(
+                                new SubjectCount(collections.get(0).getId(), 4),
+                                new SubjectCount(collections.get(1).getId(), 2)));
+        when(cardRepository.countDueBySubjects(anyList()))
+                .thenReturn(List.of(new SubjectCount(collections.get(0).getId(), 1)));
 
         ApiRes result = subjectService.getAllByShelve(shelveId, 1, 10);
 
         assertNotNull(result);
+        @SuppressWarnings("unchecked")
+        PagingRes<SubjectRes> paging = (PagingRes<SubjectRes>) result.getBody().data();
+        assertEquals(1, paging.entities().get(0).overdue());
+        assertEquals(75.0, paging.entities().get(0).completedPercent());
+        assertEquals(0, paging.entities().get(1).overdue());
+        assertEquals(100.0, paging.entities().get(1).completedPercent());
+        assertEquals(0, paging.entities().get(2).overdue());
+        assertEquals(0.0, paging.entities().get(2).completedPercent());
         verify(shelfRepository, times(1)).findByIdAndUser(shelveId, currentUser);
         verify(subjectRepository, times(1)).findAllByShelve(eq(shelve), any(Pageable.class));
+        verify(cardRepository, times(1)).countBySubjects(anyList());
+        verify(cardRepository, times(1)).countDueBySubjects(anyList());
     }
 
     @Test
@@ -459,7 +480,6 @@ class SubjectServiceImplTest {
     void discoverPublicDecks_blankQuery_usesFindAllPublic() {
         Page<Subject> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
         when(subjectRepository.findAllPublic(any(Pageable.class))).thenReturn(page);
-        when(cardService.getShortPracticeStats(any(Subject.class))).thenReturn(Pair.of(0, 100.0));
 
         ApiRes result = subjectService.discoverPublicDecks("  ", 0, 10);
 
@@ -472,7 +492,6 @@ class SubjectServiceImplTest {
     void discoverPublicDecks_withQuery_usesFindPublicByQuery() {
         Page<Subject> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
         when(subjectRepository.findPublicByQuery(eq("java"), any(Pageable.class))).thenReturn(page);
-        when(cardService.getShortPracticeStats(any(Subject.class))).thenReturn(Pair.of(1, 90.0));
 
         ApiRes result = subjectService.discoverPublicDecks("java", 0, 10);
 
@@ -506,7 +525,6 @@ class SubjectServiceImplTest {
                             return s;
                         });
         when(cardRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
-        when(cardService.getShortPracticeStats(any(Subject.class))).thenReturn(Pair.of(0, 100.0));
 
         ApiRes result = subjectService.cloneDeck(subjectId);
 
@@ -576,7 +594,6 @@ class SubjectServiceImplTest {
     void discoverPublicDecks_nullQuery_usesFindAllPublic() {
         Page<Subject> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
         when(subjectRepository.findAllPublic(any(Pageable.class))).thenReturn(page);
-        when(cardService.getShortPracticeStats(any(Subject.class))).thenReturn(Pair.of(0, 100.0));
 
         subjectService.discoverPublicDecks(null, 0, 10);
         verify(subjectRepository).findAllPublic(any(Pageable.class));

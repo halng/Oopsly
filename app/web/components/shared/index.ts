@@ -9,8 +9,10 @@ import JoinGameModal from './JoinGameModal';
 import SubjectScheduleModal from './SubjectScheduleModal';
 import InviteUserModal from './InviteUserModal';
 import CssProgressBar from './CssProgressBar';
+import TestSuiteModal from './TestSuiteModal';
 
 export {
+    TestSuiteModal,
     CalendarModal,
     ThemeModal,
     ShelfModal,

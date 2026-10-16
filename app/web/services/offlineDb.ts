@@ -450,7 +450,8 @@ class OfflineDatabase {
 
     async saveOfflineCardReview(
         cardId: string,
-        grade: Grade
+        grade: Grade,
+        context?: { shelfId: string; subjectId: string }
     ): Promise<{
         card: OfflineCard;
         scheduled: ScheduleResult;
@@ -524,6 +525,8 @@ class OfflineDatabase {
         // Enqueue sync action
         await this.enqueueSyncAction('GRADE_CARD', {
             cardId,
+            shelfId: context?.shelfId,
+            subjectId: context?.subjectId ?? card.subjectId,
             grade,
             scheduled,
             timestamp: nowIso,

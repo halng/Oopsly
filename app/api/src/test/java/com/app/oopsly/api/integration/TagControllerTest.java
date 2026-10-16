@@ -16,7 +16,6 @@
 
 package com.app.oopsly.api.integration;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -24,7 +23,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.app.oopsly.api.integration.support.AbstractControllerTest;
-import com.app.oopsly.api.integration.support.LibraryFixture;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,12 +33,10 @@ import org.springframework.http.MediaType;
 class TagControllerTest extends AbstractControllerTest {
 
     private AuthSession session;
-    private LibraryFixture.LibraryIds library;
 
     @BeforeEach
     void setUp() throws Exception {
         session = authenticate(EMAIL);
-        library = LibraryFixture.seed(mockMvc, objectMapper, session.accessToken());
     }
 
     @Test
@@ -69,37 +65,6 @@ class TagControllerTest extends AbstractControllerTest {
         mockMvc.perform(get("/tags").with(bearer(session)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true));
-
-        mockMvc.perform(
-                        post(
-                                        "/shelves/{s}/subjects/{sub}/cards/{c}/tags/{t}",
-                                        library.shelfId(),
-                                        library.subjectId(),
-                                        library.cardId(),
-                                        tagId)
-                                .with(bearer(session)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.isSuccess").value(true));
-
-        mockMvc.perform(
-                        get(
-                                        "/shelves/{s}/subjects/{sub}/cards/by-tag/{t}",
-                                        library.shelfId(),
-                                        library.subjectId(),
-                                        tagId)
-                                .with(bearer(session)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.isSuccess").value(true));
-
-        mockMvc.perform(
-                        delete(
-                                        "/shelves/{s}/subjects/{sub}/cards/{c}/tags/{t}",
-                                        library.shelfId(),
-                                        library.subjectId(),
-                                        library.cardId(),
-                                        tagId)
-                                .with(bearer(session)))
-                .andExpect(status().isOk());
 
         mockMvc.perform(patch("/tags/{id}", tagId).with(bearer(session)))
                 .andExpect(status().isOk());

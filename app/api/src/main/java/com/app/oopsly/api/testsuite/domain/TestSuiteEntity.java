@@ -37,10 +37,18 @@ public class TestSuiteEntity extends Audit {
 
     private String title;
 
+    private String slug;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    private Integer timeLimitMinutes;
+
     private Boolean isActive;
 
     private Integer highestScore;
 
+    // TODO(ai): card-based presets (selection + subjects) are kept for the AI integration.
     @JdbcTypeCode(SqlTypes.JSON)
     private TestSuiteSelectionPayload selection;
 

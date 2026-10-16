@@ -21,15 +21,17 @@ import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.testsuite.application.vm.QuestionReq;
 import com.app.oopsly.api.testsuite.application.vm.QuestionRes;
 import com.app.oopsly.api.testsuite.domain.QuestionEntity;
-import com.app.oopsly.api.testsuite.domain.QuestionType;
+import com.app.oopsly.api.testsuite.domain.QuestionMetadata;
+import com.app.oopsly.api.testsuite.domain.QuestionValidator;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.List;
 import java.util.UUID;
@@ -46,26 +48,23 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class QuestionServiceImpl implements QuestionService {
 
-    // Metadata property name constants
-    private static final String METADATA_OPTIONS = "options";
-    private static final String METADATA_CORRECT_INDICES = "correct_indices";
-    private static final String METADATA_CORRECT_VALUE = "correct_value";
-    private static final String METADATA_ACCEPTED_ANSWERS = "accepted_answers";
-    private static final String METADATA_PAIRS = "pairs";
-    private static final String METADATA_CORRECT_ORDER = "correct_order";
-
     private final QuestionRepository questionRepository;
     private final TestSuiteRepository testSuiteRepository;
-    private final ObjectMapper objectMapper;
+    private final ShelfRepository shelfRepository;
+    private final QuestionMetadataMapper metadataMapper;
+    private final UserService userService;
 
     @Override
-    @CacheEvict(value = "questions", key = "#testSuiteId + ':all'")
+    @Caching(
+            evict = {
+                @CacheEvict(value = "questions", key = "#testSuiteId + ':all'"),
+                @CacheEvict(value = "testSuites", key = "#shelveId + ':all'"),
+                @CacheEvict(value = "testSuites", key = "#shelveId + ':' + #testSuiteId")
+            })
     @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "createFallback")
-    public ApiRes create(UUID testSuiteId, QuestionReq request) {
+    public ApiRes create(UUID shelveId, UUID testSuiteId, QuestionReq request) {
         log.info("Creating question for test suite {}", testSuiteId);
-        TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
-
-        this.validateQuestionMetadata(request.type(), request.metadata());
+        TestSuiteEntity testSuite = this.findTestSuite(shelveId, testSuiteId);
 
         QuestionEntity question = this.toEntity(request, null);
         question.setTestSuite(testSuite);
@@ -81,42 +80,30 @@ public class QuestionServiceImpl implements QuestionService {
                 @CacheEvict(value = "questions", key = "#testSuiteId + ':all'")
             })
     @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "updateFallback")
-    public ApiRes update(UUID testSuiteId, UUID questionId, QuestionReq request) {
+    public ApiRes update(UUID shelveId, UUID testSuiteId, UUID questionId, QuestionReq request) {
         log.info("Updating question {} for test suite {}", questionId, testSuiteId);
-        TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
-        QuestionEntity existingQuestion =
-                questionRepository
-                        .findByIdAndTestSuite(questionId, testSuite)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Question not found with id: " + questionId));
-
-        this.validateQuestionMetadata(request.type(), request.metadata());
+        TestSuiteEntity testSuite = this.findTestSuite(shelveId, testSuiteId);
+        QuestionEntity existingQuestion = findQuestion(questionId, testSuite);
 
         QuestionEntity updatedQuestion = this.toEntity(request, existingQuestion);
         questionRepository.save(updatedQuestion);
 
-        return ApiRes.success("Question updated successfully");
+        return ApiRes.success("Question updated successfully", this.toViewModel(updatedQuestion));
     }
 
     @Override
     @Caching(
             evict = {
                 @CacheEvict(value = "questions", key = "#testSuiteId + ':' + #questionId"),
-                @CacheEvict(value = "questions", key = "#testSuiteId + ':all'")
+                @CacheEvict(value = "questions", key = "#testSuiteId + ':all'"),
+                @CacheEvict(value = "testSuites", key = "#shelveId + ':all'"),
+                @CacheEvict(value = "testSuites", key = "#shelveId + ':' + #testSuiteId")
             })
     @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "deleteFallback")
-    public ApiRes delete(UUID testSuiteId, UUID questionId) {
+    public ApiRes delete(UUID shelveId, UUID testSuiteId, UUID questionId) {
         log.info("Deleting question {} for test suite {}", questionId, testSuiteId);
-        TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
-        QuestionEntity question =
-                questionRepository
-                        .findByIdAndTestSuite(questionId, testSuite)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Question not found with id: " + questionId));
+        TestSuiteEntity testSuite = this.findTestSuite(shelveId, testSuiteId);
+        QuestionEntity question = findQuestion(questionId, testSuite);
 
         question.setDeleted(true);
         questionRepository.save(question);
@@ -125,18 +112,11 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    @Cacheable(value = "questions", key = "#testSuiteId + ':' + #questionId")
     @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
-    public ApiRes getById(UUID testSuiteId, UUID questionId) {
+    public ApiRes getById(UUID shelveId, UUID testSuiteId, UUID questionId) {
         log.info("Fetching question {} for test suite {}", questionId, testSuiteId);
-        TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
-        QuestionEntity question =
-                questionRepository
-                        .findByIdAndTestSuite(questionId, testSuite)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Question not found with id: " + questionId));
+        TestSuiteEntity testSuite = this.findTestSuite(shelveId, testSuiteId);
+        QuestionEntity question = findQuestion(questionId, testSuite);
 
         return ApiRes.success("Question fetched successfully", this.toViewModel(question));
     }
@@ -146,103 +126,70 @@ public class QuestionServiceImpl implements QuestionService {
     @CircuitBreaker(
             name = "questionServiceCircuitBreaker",
             fallbackMethod = "getAllByTestSuiteFallback")
-    public ApiRes getAllByTestSuite(UUID testSuiteId) {
+    public ApiRes getAllByTestSuite(UUID shelveId, UUID testSuiteId) {
         log.info("Fetching all questions for test suite {}", testSuiteId);
-        TestSuiteEntity testSuite = this.findTestSuiteById(testSuiteId);
+        TestSuiteEntity testSuite = this.findTestSuite(shelveId, testSuiteId);
         List<QuestionEntity> questions = questionRepository.findAllByTestSuite(testSuite);
         List<QuestionRes> responses = questions.stream().map(this::toViewModel).toList();
 
         return ApiRes.success("Questions fetched successfully", responses);
     }
 
-    void validateQuestionMetadata(QuestionType type, String metadata) {
-        try {
-            JsonNode jsonNode = objectMapper.readTree(metadata);
-
-            switch (type) {
-                case MULTIPLE_CHOICE, MULTIPLE_RESPONSE:
-                    if (!jsonNode.has(METADATA_OPTIONS)
-                            || !jsonNode.get(METADATA_OPTIONS).isArray()) {
-                        throw new ValidationException(
-                                "Multiple choice and multiple response questions must have"
-                                        + " 'options' array in metadata");
-                    }
-                    if (!jsonNode.has(METADATA_CORRECT_INDICES)
-                            || !jsonNode.get(METADATA_CORRECT_INDICES).isArray()) {
-                        throw new ValidationException(
-                                "Multiple choice and multiple response questions must have"
-                                        + " 'correct_indices' array in metadata");
-                    }
-                    break;
-
-                case TRUE_FALSE:
-                    if (!jsonNode.has(METADATA_CORRECT_VALUE)
-                            || !jsonNode.get(METADATA_CORRECT_VALUE).isBoolean()) {
-                        throw new ValidationException(
-                                "True/False questions must have 'correct_value' boolean in"
-                                        + " metadata");
-                    }
-                    break;
-
-                case FILL_IN_THE_BLANK:
-                    if (!jsonNode.has(METADATA_ACCEPTED_ANSWERS)
-                            || !jsonNode.get(METADATA_ACCEPTED_ANSWERS).isArray()) {
-                        throw new ValidationException(
-                                "Fill in the blank questions must have 'accepted_answers' array in"
-                                        + " metadata");
-                    }
-                    if (jsonNode.get(METADATA_ACCEPTED_ANSWERS).size() == 0) {
-                        throw new ValidationException(
-                                "Fill in the blank questions must have at least one accepted"
-                                        + " answer");
-                    }
-                    break;
-
-                case MATCHING:
-                    if (!jsonNode.has(METADATA_PAIRS) || !jsonNode.get(METADATA_PAIRS).isArray()) {
-                        throw new ValidationException(
-                                "Matching questions must have 'pairs' array in metadata");
-                    }
-                    break;
-
-                case ORDERING:
-                    if (!jsonNode.has(METADATA_CORRECT_ORDER)
-                            || !jsonNode.get(METADATA_CORRECT_ORDER).isArray()) {
-                        throw new ValidationException(
-                                "Ordering questions must have 'correct_order' array in metadata");
-                    }
-                    break;
-            }
-        } catch (ValidationException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ValidationException("Invalid JSON format in metadata: " + e.getMessage());
-        }
-    }
-
     QuestionEntity toEntity(@NonNull QuestionReq from, QuestionEntity to) {
+        QuestionMetadata metadata =
+                QuestionValidator.validate(
+                        from.text(),
+                        from.type(),
+                        new QuestionMetadata(
+                                from.options(),
+                                from.correctOptionIndex(),
+                                from.correctOptionIndexes(),
+                                from.acceptedAnswers(),
+                                from.caseSensitive(),
+                                from.explanation()));
+        String json = metadataMapper.write(metadata);
+        String text = from.text().trim();
         if (to == null) {
-            return QuestionEntity.builder()
-                    .text(from.text())
-                    .type(from.type())
-                    .metadata(from.metadata())
-                    .build();
+            return QuestionEntity.builder().text(text).type(from.type()).metadata(json).build();
         }
 
-        to.setText(from.text());
+        to.setText(text);
         to.setType(from.type());
-        to.setMetadata(from.metadata());
+        to.setMetadata(json);
         return to;
     }
 
     QuestionRes toViewModel(QuestionEntity from) {
-        return new QuestionRes(from.getId(), from.getText(), from.getType(), from.getMetadata());
+        QuestionMetadata metadata = metadataMapper.read(from.getMetadata());
+        return new QuestionRes(
+                from.getId(),
+                from.getText(),
+                from.getType(),
+                metadata.options(),
+                metadata.correctOptionIndex(),
+                metadata.correctOptionIndexes(),
+                metadata.acceptedAnswers(),
+                metadata.caseSensitive(),
+                metadata.explanation());
     }
 
-    private TestSuiteEntity findTestSuiteById(UUID testSuiteId) {
+    private QuestionEntity findQuestion(UUID questionId, TestSuiteEntity testSuite) {
+        return questionRepository
+                .findByIdAndTestSuite(questionId, testSuite)
+                .orElseThrow(
+                        () -> new NotFoundException("Question not found with id: " + questionId));
+    }
+
+    private TestSuiteEntity findTestSuite(UUID shelveId, UUID testSuiteId) {
+        Shelf shelve =
+                shelfRepository
+                        .findByIdAndUser(shelveId, userService.getCurrentUser())
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                "Shelve not found with id: " + shelveId));
         return testSuiteRepository
-                .findById(testSuiteId)
-                .filter(ts -> !ts.getDeleted())
+                .findByIdAndShelve(testSuiteId, shelve)
                 .orElseThrow(
                         () ->
                                 new NotFoundException(
@@ -250,28 +197,29 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     // Fallback methods for Circuit Breaker
-    public ApiRes createFallback(UUID testSuiteId, QuestionReq request, Throwable t) {
+    public ApiRes createFallback(
+            UUID shelveId, UUID testSuiteId, QuestionReq request, Throwable t) {
         log.error("Question service unavailable during create: {}", t.getMessage());
         throw unwrapQuestionException(t);
     }
 
     public ApiRes updateFallback(
-            UUID testSuiteId, UUID questionId, QuestionReq request, Throwable t) {
+            UUID shelveId, UUID testSuiteId, UUID questionId, QuestionReq request, Throwable t) {
         log.error("Question service unavailable during update: {}", t.getMessage());
         throw unwrapQuestionException(t);
     }
 
-    public ApiRes deleteFallback(UUID testSuiteId, UUID questionId, Throwable t) {
+    public ApiRes deleteFallback(UUID shelveId, UUID testSuiteId, UUID questionId, Throwable t) {
         log.error("Question service unavailable during delete: {}", t.getMessage());
         throw unwrapQuestionException(t);
     }
 
-    public ApiRes getByIdFallback(UUID testSuiteId, UUID questionId, Throwable t) {
+    public ApiRes getByIdFallback(UUID shelveId, UUID testSuiteId, UUID questionId, Throwable t) {
         log.error("Question service unavailable during getById: {}", t.getMessage());
         throw unwrapQuestionException(t);
     }
 
-    public ApiRes getAllByTestSuiteFallback(UUID testSuiteId, Throwable t) {
+    public ApiRes getAllByTestSuiteFallback(UUID shelveId, UUID testSuiteId, Throwable t) {
         log.error("Question service unavailable during getAllByTestSuite: {}", t.getMessage());
         throw unwrapQuestionException(t);
     }
