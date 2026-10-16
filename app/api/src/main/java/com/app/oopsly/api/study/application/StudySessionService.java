@@ -18,9 +18,13 @@ package com.app.oopsly.api.study.application;
 
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.study.application.vm.StudySessionReq;
+import com.app.oopsly.api.study.application.vm.StudySessionStartReq;
 import java.util.UUID;
 
 public interface StudySessionService {
+    /** Creates a server-tracked session before study begins. */
+    ApiRes start(UUID shelfId, UUID subjectId, StudySessionStartReq request);
+
     /** Records a finished Learn / Match session and credits XP computed on the server. */
     ApiRes record(UUID shelfId, UUID subjectId, StudySessionReq request);
 }

@@ -22,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.app.oopsly.api.integration.support.AbstractControllerTest;
 import com.app.oopsly.api.integration.support.LibraryFixture;
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,6 +36,21 @@ class StudySessionControllerTest extends AbstractControllerTest {
 
     private AuthSession session;
     private LibraryFixture.LibraryIds ids;
+
+    private SessionStart startSession(String mode) throws Exception {
+        var result =
+                mockMvc.perform(
+                                post(PATH + "/start", ids.shelfId(), ids.subjectId())
+                                        .with(bearer(session))
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content("{\"mode\":\"%s\"}".formatted(mode)))
+                        .andExpect(status().isCreated())
+                        .andReturn();
+        JsonNode data =
+                objectMapper.readTree(result.getResponse().getContentAsString()).path("data");
+        return new SessionStart(
+                UUID.fromString(data.path("id").asText()), data.path("totalItems").asInt());
+    }
 
     @BeforeEach
     void setUp() throws Exception {
@@ -52,34 +68,51 @@ class StudySessionControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void learn_capsItemsAtSubjectCardCount() throws Exception {
+    void learn_recordsOnlyAStartedSession() throws Exception {
+        SessionStart started = startSession("LEARN");
+        Thread.sleep(1500);
         mockMvc.perform(
                         post(PATH, ids.shelfId(), ids.subjectId())
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
-                                        {"mode":"LEARN","totalItems":50,"correctCount":50,
+                                        {"sessionId":"%s","mode":"LEARN","totalItems":%d,"correctCount":1,
                                          "mistakes":2,"durationSeconds":120}
-                                        """))
+                                        """
+                                                .formatted(started.id(), started.totalItems())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.id").isNotEmpty())
                 .andExpect(jsonPath("$.data.xpGained").value(30));
     }
 
     @Test
-    void match_awardsFastBonus() throws Exception {
+    void match_awardsFastBonusOnceForAStartedSession() throws Exception {
+        SessionStart started = startSession("MATCH");
+        Thread.sleep(1500);
         mockMvc.perform(
                         post(PATH, ids.shelfId(), ids.subjectId())
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
-                                        {"mode":"MATCH","totalItems":1,"correctCount":1,
+                                        {"sessionId":"%s","mode":"MATCH","totalItems":%d,"correctCount":1,
                                          "mistakes":0,"durationSeconds":3}
-                                        """))
+                                        """
+                                                .formatted(started.id(), started.totalItems())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.xpGained").value(30));
+        mockMvc.perform(
+                        post(PATH, ids.shelfId(), ids.subjectId())
+                                .with(bearer(session))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {"sessionId":"%s","mode":"MATCH","totalItems":%d,"correctCount":1,
+                                         "mistakes":0,"durationSeconds":3}
+                                        """
+                                                .formatted(started.id(), started.totalItems())))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -98,7 +131,14 @@ class StudySessionControllerTest extends AbstractControllerTest {
                         post(PATH, ids.shelfId(), UUID.randomUUID())
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content("{\"mode\":\"MATCH\",\"totalItems\":1}"))
+                                .content(
+                                        """
+                                        {"sessionId":"%s","mode":"MATCH","totalItems":1,"correctCount":1,
+                                         "mistakes":0,"durationSeconds":1}
+                                        """
+                                                .formatted(UUID.randomUUID())))
                 .andExpect(status().isNotFound());
     }
+
+    private record SessionStart(UUID id, int totalItems) {}
 }

@@ -25,9 +25,7 @@ describe('study presentation components', () => {
         expect(screen.getByText('Q')).toBeInTheDocument();
         expect(screen.getByTestId('flashcard-flip-hint')).toBeInTheDocument();
         expect(
-            screen
-                .getByTestId('flashcard-answer')
-                .closest('.study-flip-back')
+            screen.getByTestId('flashcard-answer').closest('.study-flip-back')
         ).toHaveAttribute('aria-hidden', 'true');
         expect(
             screen
@@ -48,9 +46,7 @@ describe('study presentation components', () => {
     it('applies the vertical flip class when the back is showing', () => {
         render(<StudyFlashcard front="Q" back="A" flipped onFlip={vi.fn()} />);
         expect(
-            screen
-                .getByTestId('flashcard-answer')
-                .closest('.study-flip-back')
+            screen.getByTestId('flashcard-answer').closest('.study-flip-back')
         ).toHaveAttribute('aria-hidden', 'false');
         expect(
             screen

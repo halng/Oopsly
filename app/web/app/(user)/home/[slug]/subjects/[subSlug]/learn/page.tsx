@@ -48,6 +48,7 @@ export default function LearnPage() {
     const [typed, setTyped] = useState('');
     const [xpGained, setXpGained] = useState<number | null>(null);
     const startedAtRef = useRef(0);
+    const sessionIdRef = useRef<string | null>(null);
     const loggedRef = useRef(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const lastFeedbackRef = useRef<string | null>(null);
@@ -74,8 +75,18 @@ export default function LearnPage() {
             if (cancelled) return;
             const list = res.isSuccess ? (res.data?.entities ?? []) : [];
             setCards(list);
+            if (list.length >= MIN_CARDS) {
+                const started = await ApiService.startStudySession(
+                    shelf.id,
+                    subject.id,
+                    'LEARN'
+                );
+                if (cancelled) return;
+                sessionIdRef.current =
+                    started.isSuccess && started.data ? started.data.id : null;
+                start(list);
+            }
             setIsLoadingCards(false);
-            if (list.length >= MIN_CARDS) start(list);
         })();
         return () => {
             cancelled = true;
@@ -87,13 +98,20 @@ export default function LearnPage() {
             return;
         loggedRef.current = true;
         play('complete');
+        const sessionId = sessionIdRef.current;
+        if (!sessionId) {
+            setXpGained(0);
+            return;
+        }
         ApiService.logStudySession(shelf.id, subject.id, {
+            sessionId,
             mode: 'LEARN',
             totalItems: state.order.length,
             correctCount: state.correctAnswers,
             mistakes: state.mistakes,
-            durationSeconds: Math.round(
-                (Date.now() - startedAtRef.current) / 1000
+            durationSeconds: Math.max(
+                1,
+                Math.round((Date.now() - startedAtRef.current) / 1000)
             ),
         }).then((res) =>
             setXpGained(res.isSuccess && res.data ? res.data.xpGained : 0)

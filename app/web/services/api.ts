@@ -19,6 +19,8 @@ import {
     QuestionInput,
     StudySessionInput,
     StudySessionRes,
+    StudySessionStartRes,
+    StudyMode,
     TestAttempt,
     TestSubmission,
     TestSubmissionRes,
@@ -663,6 +665,14 @@ export const ApiService = {
         }),
 
     // Study sessions (Learn / Match XP)
+    startStudySession: (shelfId: string, subjectId: string, mode: StudyMode) =>
+        fetchJson<StudySessionStartRes>(
+            `/v1/shelves/${shelfId}/subjects/${subjectId}/study-sessions/start`,
+            {
+                method: 'POST',
+                body: JSON.stringify({ mode }),
+            }
+        ),
     logStudySession: (
         shelfId: string,
         subjectId: string,

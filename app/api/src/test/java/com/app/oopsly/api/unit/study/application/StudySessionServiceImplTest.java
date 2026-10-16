@@ -30,6 +30,8 @@ import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.study.application.StudySessionServiceImpl;
 import com.app.oopsly.api.study.application.vm.StudySessionReq;
 import com.app.oopsly.api.study.application.vm.StudySessionRes;
+import com.app.oopsly.api.study.application.vm.StudySessionStartReq;
+import com.app.oopsly.api.study.application.vm.StudySessionStartRes;
 import com.app.oopsly.api.study.domain.StudyMode;
 import com.app.oopsly.api.study.domain.StudySessionEntity;
 import com.app.oopsly.api.study.infrastructure.StudySessionRepository;
@@ -38,6 +40,7 @@ import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.user.Setting;
 import com.app.oopsly.api.user.User;
 import com.app.oopsly.api.user.UserService;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +64,7 @@ class StudySessionServiceImplTest {
 
     private final UUID shelfId = UUID.randomUUID();
     private final UUID subjectId = UUID.randomUUID();
+    private final UUID sessionId = UUID.randomUUID();
     private User user;
     private Shelf shelf;
     private Subject subject;
@@ -83,23 +87,63 @@ class StudySessionServiceImplTest {
         when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
         when(subjectRepository.findByIdAndShelve(subjectId, shelf))
                 .thenReturn(Optional.of(subject));
+    }
+
+    private void stubSave() {
         when(studySessionRepository.save(any(StudySessionEntity.class)))
                 .thenAnswer(
                         inv -> {
                             StudySessionEntity e = inv.getArgument(0);
-                            e.setId(UUID.randomUUID());
+                            if (e.getId() == null) e.setId(UUID.randomUUID());
                             return e;
                         });
     }
 
+    private void stubPendingSession(StudyMode mode, int totalItems, int elapsedSeconds) {
+        StudySessionEntity session = new StudySessionEntity();
+        session.setId(sessionId);
+        session.setUserId(user.getId());
+        session.setSubjectId(subjectId);
+        session.setMode(mode);
+        session.setTotalItems(totalItems);
+        session.setStartedAt(Instant.now().minusSeconds(elapsedSeconds));
+        when(studySessionRepository.findUncompletedForUpdate(sessionId, user.getId(), subjectId))
+                .thenReturn(Optional.of(session));
+    }
+
     @Test
-    void learn_capsTotalItemsAndCreditsXp() {
+    void start_tracksSessionAndLimitsMatchPairsToSix() {
         stubOwnership();
-        when(cardRepository.countBySubjectAndDeletedFalse(subject)).thenReturn(4L);
+        stubSave();
+        when(cardRepository.countBySubjectAndDeletedFalse(subject)).thenReturn(12L);
+
+        ApiRes res = service.start(shelfId, subjectId, new StudySessionStartReq(StudyMode.MATCH));
+
+        assertEquals(HttpStatus.CREATED, res.getStatusCode());
+        StudySessionStartRes data = (StudySessionStartRes) res.getBody().data();
+        assertNotNull(data.id());
+        assertEquals(6, data.totalItems());
+
+        ArgumentCaptor<StudySessionEntity> captor =
+                ArgumentCaptor.forClass(StudySessionEntity.class);
+        verify(studySessionRepository).save(captor.capture());
+        assertEquals(6, captor.getValue().getTotalItems());
+        assertEquals(StudyMode.MATCH, captor.getValue().getMode());
+        assertNull(captor.getValue().getCompletedAt());
+        verify(userService, never()).updateUserProgress(anyInt());
+    }
+
+    @Test
+    void learn_recordsOnlyTheServerTrackedCompletedSession() {
+        stubOwnership();
+        stubSave();
+        stubPendingSession(StudyMode.LEARN, 4, 100);
 
         ApiRes res =
                 service.record(
-                        shelfId, subjectId, new StudySessionReq(StudyMode.LEARN, 40, 99, 3, 200));
+                        shelfId,
+                        subjectId,
+                        new StudySessionReq(sessionId, StudyMode.LEARN, 4, 4, 3, 200));
 
         assertEquals(HttpStatus.CREATED, res.getStatusCode());
         StudySessionRes data = (StudySessionRes) res.getBody().data();
@@ -114,18 +158,22 @@ class StudySessionServiceImplTest {
         assertEquals(4, saved.getTotalItems());
         assertEquals(4, saved.getCorrectCount());
         assertEquals(3, saved.getMistakes());
-        assertEquals(200, saved.getDurationSeconds());
+        assertEquals(100, saved.getDurationSeconds());
         assertEquals(user.getId(), saved.getUserId());
+        assertNotNull(saved.getCompletedAt());
     }
 
     @Test
     void match_slowRun_getsBaseXpOnly() {
         stubOwnership();
-        when(cardRepository.countBySubjectAndDeletedFalse(subject)).thenReturn(10L);
+        stubSave();
+        stubPendingSession(StudyMode.MATCH, 6, 90);
 
         ApiRes res =
                 service.record(
-                        shelfId, subjectId, new StudySessionReq(StudyMode.MATCH, 6, 6, 2, 90));
+                        shelfId,
+                        subjectId,
+                        new StudySessionReq(sessionId, StudyMode.MATCH, 6, 6, 2, 90));
 
         assertEquals(20, ((StudySessionRes) res.getBody().data()).xpGained());
     }
@@ -133,30 +181,27 @@ class StudySessionServiceImplTest {
     @Test
     void match_fastRun_getsBonus() {
         stubOwnership();
-        when(cardRepository.countBySubjectAndDeletedFalse(subject)).thenReturn(10L);
-
-        ApiRes res =
-                service.record(
-                        shelfId, subjectId, new StudySessionReq(StudyMode.MATCH, 6, 6, 0, 20));
-
-        assertEquals(30, ((StudySessionRes) res.getBody().data()).xpGained());
-    }
-
-    @Test
-    void emptySubject_awardsNoXp_andNullsDefaultToZero() {
-        stubOwnership();
-        user.setSetting(null);
-        when(cardRepository.countBySubjectAndDeletedFalse(subject)).thenReturn(0L);
+        stubSave();
+        stubPendingSession(StudyMode.MATCH, 6, 20);
 
         ApiRes res =
                 service.record(
                         shelfId,
                         subjectId,
-                        new StudySessionReq(StudyMode.LEARN, 5, null, null, null));
+                        new StudySessionReq(sessionId, StudyMode.MATCH, 6, 6, 0, 20));
 
-        StudySessionRes data = (StudySessionRes) res.getBody().data();
-        assertEquals(0, data.xpGained());
-        assertEquals(0, data.totalXp());
+        assertEquals(30, ((StudySessionRes) res.getBody().data()).xpGained());
+    }
+
+    @Test
+    void emptySubjectCannotStartARewardableSession() {
+        stubOwnership();
+        user.setSetting(null);
+        when(cardRepository.countBySubjectAndDeletedFalse(subject)).thenReturn(0L);
+
+        assertThrows(
+                ValidationException.class,
+                () -> service.start(shelfId, subjectId, new StudySessionStartReq(StudyMode.LEARN)));
         verify(userService, never()).updateUserProgress(anyInt());
     }
 
@@ -164,7 +209,57 @@ class StudySessionServiceImplTest {
     void missingMode_throwsValidation() {
         assertThrows(
                 ValidationException.class,
-                () -> service.record(shelfId, subjectId, new StudySessionReq(null, 1, 0, 0, 0)));
+                () ->
+                        service.record(
+                                shelfId,
+                                subjectId,
+                                new StudySessionReq(sessionId, null, 1, 0, 0, 0)));
+    }
+
+    @Test
+    void completionWithNoCorrectAnswersOrNoTimeIsRejected() {
+        stubOwnership();
+        stubPendingSession(StudyMode.LEARN, 4, 100);
+
+        assertThrows(
+                ValidationException.class,
+                () ->
+                        service.record(
+                                shelfId,
+                                subjectId,
+                                new StudySessionReq(sessionId, StudyMode.LEARN, 4, 0, 3, 0)));
+        verify(userService, never()).updateUserProgress(anyInt());
+    }
+
+    @Test
+    void completionCannotClaimMoreItemsThanTheStartedSession() {
+        stubOwnership();
+        stubPendingSession(StudyMode.LEARN, 4, 100);
+
+        assertThrows(
+                ValidationException.class,
+                () ->
+                        service.record(
+                                shelfId,
+                                subjectId,
+                                new StudySessionReq(sessionId, StudyMode.LEARN, 5, 5, 0, 10)));
+        verify(userService, never()).updateUserProgress(anyInt());
+    }
+
+    @Test
+    void completedOrUnknownSessionCannotEarnXpAgain() {
+        stubOwnership();
+        when(studySessionRepository.findUncompletedForUpdate(sessionId, user.getId(), subjectId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                ValidationException.class,
+                () ->
+                        service.record(
+                                shelfId,
+                                subjectId,
+                                new StudySessionReq(sessionId, StudyMode.LEARN, 4, 2, 0, 10)));
+        verify(userService, never()).updateUserProgress(anyInt());
     }
 
     @Test
@@ -178,7 +273,7 @@ class StudySessionServiceImplTest {
                         service.record(
                                 shelfId,
                                 subjectId,
-                                new StudySessionReq(StudyMode.MATCH, 1, 1, 0, 1)));
+                                new StudySessionReq(sessionId, StudyMode.MATCH, 1, 1, 0, 1)));
     }
 
     @Test
@@ -193,6 +288,6 @@ class StudySessionServiceImplTest {
                         service.record(
                                 shelfId,
                                 subjectId,
-                                new StudySessionReq(StudyMode.MATCH, 1, 1, 0, 1)));
+                                new StudySessionReq(sessionId, StudyMode.MATCH, 1, 1, 0, 1)));
     }
 }

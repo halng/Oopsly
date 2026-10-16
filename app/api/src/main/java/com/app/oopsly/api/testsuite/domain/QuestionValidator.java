@@ -97,8 +97,7 @@ public final class QuestionValidator {
                                 .filter(answer -> !answer.isEmpty())
                                 .map(
                                         answer -> {
-                                            if (answer.length()
-                                                    > AnswerMatcher.MAX_ANSWER_LENGTH) {
+                                            if (answer.length() > AnswerMatcher.MAX_ANSWER_LENGTH) {
                                                 throw new ValidationException(
                                                         "Accepted answers cannot exceed "
                                                                 + AnswerMatcher.MAX_ANSWER_LENGTH

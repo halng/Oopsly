@@ -15,6 +15,7 @@ vi.mock('@/hooks/useSubjectContext', () => ({
 vi.mock('@/services/api', () => ({
     ApiService: {
         getSubjectCards: vi.fn(),
+        startStudySession: vi.fn(),
         logStudySession: vi.fn(),
     },
 }));
@@ -36,6 +37,13 @@ describe('MatchPage', () => {
             },
             message: '',
             statusCode: 200,
+            timestamp: '',
+        });
+        vi.mocked(ApiService.startStudySession).mockResolvedValue({
+            isSuccess: true,
+            data: { id: 'session-1', totalItems: 2 },
+            message: '',
+            statusCode: 201,
             timestamp: '',
         });
     });

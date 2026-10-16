@@ -89,6 +89,7 @@ export default function MatchPage() {
     const [isNewBest, setIsNewBest] = useState(false);
     const [xpGained, setXpGained] = useState<number | null>(null);
     const mismatchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const sessionIdRef = useRef<string | null>(null);
 
     const pairCount = tiles.length / 2;
     const totalSeconds = elapsedMs / 1000 + mistakes * MISTAKE_PENALTY_SECONDS;
@@ -107,6 +108,21 @@ export default function MatchPage() {
         setXpGained(null);
     }, []);
 
+    const startGame = useCallback(
+        async (list: Card[]) => {
+            if (!shelf || !subject) return;
+            const started = await ApiService.startStudySession(
+                shelf.id,
+                subject.id,
+                'MATCH'
+            );
+            sessionIdRef.current =
+                started.isSuccess && started.data ? started.data.id : null;
+            newGame(list);
+        },
+        [newGame, shelf, subject]
+    );
+
     useEffect(() => {
         if (!shelf || !subject) return;
         let cancelled = false;
@@ -116,8 +132,18 @@ export default function MatchPage() {
             setBestTime(readBestTime(subject.id));
             const list = res.isSuccess ? (res.data?.entities ?? []) : [];
             setCards(list);
+            if (list.length >= MIN_CARDS) {
+                const started = await ApiService.startStudySession(
+                    shelf.id,
+                    subject.id,
+                    'MATCH'
+                );
+                if (cancelled) return;
+                sessionIdRef.current =
+                    started.isSuccess && started.data ? started.data.id : null;
+                newGame(list);
+            }
             setIsLoadingCards(false);
-            if (list.length >= MIN_CARDS) newGame(list);
         })();
         return () => {
             cancelled = true;
@@ -160,7 +186,13 @@ export default function MatchPage() {
                 setBestTime(rounded);
                 setIsNewBest(true);
             }
+            const sessionId = sessionIdRef.current;
+            if (!sessionId) {
+                setXpGained(0);
+                return;
+            }
             ApiService.logStudySession(shelf.id, subject.id, {
+                sessionId,
                 mode: 'MATCH',
                 totalItems: pairCount,
                 correctCount: pairCount,
@@ -325,7 +357,7 @@ export default function MatchPage() {
                             <button
                                 type="button"
                                 data-testid="btn-match-restart"
-                                onClick={() => newGame(cards)}
+                                onClick={() => void startGame(cards)}
                                 className="px-4 py-2 rounded-xl border border-[var(--theme-border)] text-xs font-bold cursor-pointer"
                             >
                                 <RotateCcw className="w-4 h-4 inline mr-1" />

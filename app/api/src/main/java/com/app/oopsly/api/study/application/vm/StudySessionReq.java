@@ -19,10 +19,12 @@ package com.app.oopsly.api.study.application.vm;
 import com.app.oopsly.api.study.domain.StudyMode;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
 
 public record StudySessionReq(
+        @NotNull UUID sessionId,
         @NotNull StudyMode mode,
         @NotNull @Min(1) Integer totalItems,
-        @Min(0) Integer correctCount,
+        @Min(1) Integer correctCount,
         @Min(0) Integer mistakes,
-        @Min(0) Integer durationSeconds) {}
+        @Min(1) Integer durationSeconds) {}

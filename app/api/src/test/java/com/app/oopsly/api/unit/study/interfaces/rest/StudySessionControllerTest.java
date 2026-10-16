@@ -22,6 +22,8 @@ import static org.mockito.Mockito.*;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.study.application.StudySessionService;
 import com.app.oopsly.api.study.application.vm.StudySessionReq;
+import com.app.oopsly.api.study.application.vm.StudySessionStartReq;
+import com.app.oopsly.api.study.application.vm.StudySessionStartRes;
 import com.app.oopsly.api.study.domain.StudyMode;
 import com.app.oopsly.api.study.interfaces.rest.StudySessionController;
 import java.util.UUID;
@@ -38,10 +40,21 @@ class StudySessionControllerTest {
     @InjectMocks private StudySessionController controller;
 
     @Test
+    void start_delegates() {
+        UUID shelfId = UUID.randomUUID();
+        UUID subjectId = UUID.randomUUID();
+        StudySessionStartReq req = new StudySessionStartReq(StudyMode.LEARN);
+        ApiRes expected = ApiRes.created("started", new StudySessionStartRes(UUID.randomUUID(), 3));
+        when(studySessionService.start(shelfId, subjectId, req)).thenReturn(expected);
+
+        assertSame(expected, controller.start(shelfId, subjectId, req));
+    }
+
+    @Test
     void record_delegates() {
         UUID shelfId = UUID.randomUUID();
         UUID subjectId = UUID.randomUUID();
-        StudySessionReq req = new StudySessionReq(StudyMode.LEARN, 3, 3, 0, 30);
+        StudySessionReq req = new StudySessionReq(UUID.randomUUID(), StudyMode.LEARN, 3, 3, 0, 30);
         ApiRes expected = ApiRes.created("ok");
         when(studySessionService.record(shelfId, subjectId, req)).thenReturn(expected);
 

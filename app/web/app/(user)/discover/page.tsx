@@ -45,7 +45,9 @@ export default function DiscoverPage() {
         });
     }, []);
 
-    const allTags = Array.from(new Set(catalog.flatMap((item) => catalogTags(item.tags))));
+    const allTags = Array.from(
+        new Set(catalog.flatMap((item) => catalogTags(item.tags)))
+    );
     const filteredCatalog = catalog.filter((item) => {
         const q = searchQuery.toLowerCase();
         const tags = catalogTags(item.tags);

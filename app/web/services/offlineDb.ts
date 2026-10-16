@@ -459,7 +459,9 @@ class OfflineDatabase {
         totalXp: number;
     }> {
         if (!context?.shelfId || !context.subjectId) {
-            throw new Error('Shelf and subject context are required for card reviews');
+            throw new Error(
+                'Shelf and subject context are required for card reviews'
+            );
         }
         let card = await this.getCachedCardById(cardId);
 
