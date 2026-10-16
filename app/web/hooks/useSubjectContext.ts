@@ -14,10 +14,23 @@ const HYDRATE_PAGE_SIZE = 100;
 export async function resolveShelfBySlug(slug: string): Promise<Shelf | null> {
     const cached = useShelfStore.getState().getCurrentShelf(slug);
     if (cached) return cached;
-    const res = await ApiService.getShelves(1, HYDRATE_PAGE_SIZE);
-    if (!res.isSuccess || !res.data) return null;
-    useShelfStore.getState().setShelves(res.data.entities);
-    return useShelfStore.getState().getCurrentShelf(slug);
+    const shelves: Shelf[] = [];
+    let page = 1;
+    let hasNextPage = true;
+    while (hasNextPage) {
+        const res = await ApiService.getShelves(page, HYDRATE_PAGE_SIZE);
+        if (!res.isSuccess || !res.data) break;
+        shelves.push(...res.data.entities);
+        const shelf = shelves.find((item) => item.slug === slug);
+        if (shelf) {
+            useShelfStore.getState().setShelves(shelves);
+            return shelf;
+        }
+        hasNextPage = res.data.hasNextPage;
+        page++;
+    }
+    useShelfStore.getState().setShelves(shelves);
+    return null;
 }
 
 export async function resolveSubjectBySlug(

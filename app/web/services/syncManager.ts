@@ -293,7 +293,17 @@ class SyncManager {
             }
 
             case 'GRADE_CARD': {
-                const { cardId, grade, shelfId, subjectId } = payload;
+                const { cardId, grade } = payload;
+                let { shelfId, subjectId } = payload;
+                if (!shelfId || !subjectId) {
+                    const card = await offlineDb.getCachedCardById(cardId);
+                    subjectId = subjectId || card?.subjectId;
+                    if (!shelfId && subjectId) {
+                        const subject =
+                            await offlineDb.getCachedSubjectById(subjectId);
+                        shelfId = subject?.shelfId;
+                    }
+                }
                 if (!shelfId || !subjectId) return false;
                 const res = await apiClient.put(
                     `/v1/shelves/${shelfId}/subjects/${subjectId}/cards/difficulty`,

@@ -451,13 +451,16 @@ class OfflineDatabase {
     async saveOfflineCardReview(
         cardId: string,
         grade: Grade,
-        context?: { shelfId: string; subjectId: string }
+        context: { shelfId: string; subjectId: string }
     ): Promise<{
         card: OfflineCard;
         scheduled: ScheduleResult;
         xpGained: number;
         totalXp: number;
     }> {
+        if (!context?.shelfId || !context.subjectId) {
+            throw new Error('Shelf and subject context are required for card reviews');
+        }
         let card = await this.getCachedCardById(cardId);
 
         if (!card) {
@@ -525,8 +528,8 @@ class OfflineDatabase {
         // Enqueue sync action
         await this.enqueueSyncAction('GRADE_CARD', {
             cardId,
-            shelfId: context?.shelfId,
-            subjectId: context?.subjectId ?? card.subjectId,
+            shelfId: context.shelfId,
+            subjectId: context.subjectId,
             grade,
             scheduled,
             timestamp: nowIso,
