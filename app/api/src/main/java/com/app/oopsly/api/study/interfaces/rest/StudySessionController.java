@@ -19,6 +19,7 @@ package com.app.oopsly.api.study.interfaces.rest;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.study.application.StudySessionService;
 import com.app.oopsly.api.study.application.vm.StudySessionReq;
+import com.app.oopsly.api.study.application.vm.StudySessionStartReq;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -42,6 +43,24 @@ import org.springframework.web.bind.annotation.RestController;
 public class StudySessionController {
 
     private final StudySessionService studySessionService;
+
+    @Operation(summary = "Start a server-tracked study session")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "201",
+                        description = "Session started",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "400", description = "Invalid request body"),
+                @ApiResponse(responseCode = "404", description = "Shelf or subject not found")
+            })
+    @PostMapping("/start")
+    public ApiRes start(
+            @Parameter(description = "Shelf ID", required = true) @PathVariable UUID shelfId,
+            @Parameter(description = "Subject ID", required = true) @PathVariable UUID subjectId,
+            @Valid @RequestBody StudySessionStartReq request) {
+        return studySessionService.start(shelfId, subjectId, request);
+    }
 
     @Operation(
             summary = "Record a study session",

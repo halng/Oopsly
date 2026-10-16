@@ -25,6 +25,9 @@ import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.study.application.vm.StudySessionReq;
 import com.app.oopsly.api.study.application.vm.StudySessionRes;
+import com.app.oopsly.api.study.application.vm.StudySessionStartReq;
+import com.app.oopsly.api.study.application.vm.StudySessionStartRes;
+import com.app.oopsly.api.study.domain.StudyMode;
 import com.app.oopsly.api.study.domain.StudySessionEntity;
 import com.app.oopsly.api.study.infrastructure.StudySessionRepository;
 import com.app.oopsly.api.subject.Subject;
@@ -32,6 +35,7 @@ import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.user.User;
 import com.app.oopsly.api.user.UserService;
 import jakarta.transaction.Transactional;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +47,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class StudySessionServiceImpl implements StudySessionService {
 
+    private static final int LEARN_MAX_ITEMS = 1_000;
+    private static final int MATCH_MAX_PAIRS = 6;
+    private static final int MATCH_MISTAKE_PENALTY_SECONDS = 1;
+    private static final long MILLIS_PER_SECOND = 1_000L;
+
     private final StudySessionRepository studySessionRepository;
     private final ShelfRepository shelfRepository;
     private final SubjectRepository subjectRepository;
@@ -51,51 +60,90 @@ public class StudySessionServiceImpl implements StudySessionService {
 
     @Override
     @Transactional
-    public ApiRes record(UUID shelfId, UUID subjectId, StudySessionReq request) {
+    public ApiRes start(UUID shelfId, UUID subjectId, StudySessionStartReq request) {
         if (request.mode() == null) {
             throw new ValidationException("Study mode is required");
         }
         User currentUser = userService.getCurrentUser();
-        Shelf shelf =
-                shelfRepository
-                        .findByIdAndUser(shelfId, currentUser)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Shelve not found with id: " + shelfId));
-        Subject subject =
-                subjectRepository
-                        .findByIdAndShelve(subjectId, shelf)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Subject not found with id: " + subjectId));
-
-        int cardCount = (int) cardRepository.countBySubjectAndDeletedFalse(subject);
-        int totalItems = clamp(request.totalItems(), cardCount);
-        int correctCount = clamp(request.correctCount(), totalItems);
-        int mistakes = Math.max(0, valueOrZero(request.mistakes()));
-        int duration = Math.max(0, valueOrZero(request.durationSeconds()));
-
-        int xpGained =
+        Subject subject = findOwnedSubject(shelfId, subjectId, currentUser);
+        int cardCount = Math.toIntExact(cardRepository.countBySubjectAndDeletedFalse(subject));
+        int totalItems =
                 switch (request.mode()) {
-                    case LEARN -> GamificationRules.learnXp(totalItems);
-                    case MATCH -> GamificationRules.matchXp(totalItems, duration);
+                    case LEARN -> Math.min(cardCount, LEARN_MAX_ITEMS);
+                    case MATCH -> Math.min(cardCount, MATCH_MAX_PAIRS);
                 };
-
-        StudySessionEntity saved =
+        if (totalItems == 0) {
+            throw new ValidationException("A study session requires at least one card");
+        }
+        StudySessionEntity started =
                 studySessionRepository.save(
                         StudySessionEntity.builder()
                                 .userId(currentUser.getId())
                                 .subjectId(subject.getId())
                                 .mode(request.mode())
                                 .totalItems(totalItems)
-                                .correctCount(correctCount)
-                                .mistakes(mistakes)
-                                .durationSeconds(duration)
-                                .xpGained(xpGained)
-                                .completedAt(Instant.now())
+                                .startedAt(Instant.now())
+                                .completedAt(null)
                                 .build());
+        return ApiRes.created(
+                "Study session started", new StudySessionStartRes(started.getId(), totalItems));
+    }
+
+    @Override
+    @Transactional
+    public ApiRes record(UUID shelfId, UUID subjectId, StudySessionReq request) {
+        if (request.mode() == null) {
+            throw new ValidationException("Study mode is required");
+        }
+        User currentUser = userService.getCurrentUser();
+        Subject subject = findOwnedSubject(shelfId, subjectId, currentUser);
+        StudySessionEntity session =
+                studySessionRepository
+                        .findUncompletedForUpdate(
+                                request.sessionId(), currentUser.getId(), subject.getId())
+                        .orElseThrow(
+                                () ->
+                                        new ValidationException(
+                                                "Study session was not found or is already"
+                                                        + " completed"));
+        if (session.getMode() != request.mode()
+                || !session.getTotalItems().equals(request.totalItems())
+                || request.correctCount() == null
+                || request.correctCount() < session.getTotalItems()
+                || (session.getMode() == StudyMode.MATCH
+                        && request.correctCount() != session.getTotalItems())
+                || request.durationSeconds() == null
+                || request.durationSeconds() < 1) {
+            throw new ValidationException("Study session completion data is invalid");
+        }
+        Instant completedAt = Instant.now();
+        if (session.getStartedAt() == null) {
+            throw new ValidationException("Study session start time is unavailable");
+        }
+        long elapsedMillis = Duration.between(session.getStartedAt(), completedAt).toMillis();
+        if (elapsedMillis < MILLIS_PER_SECOND) {
+            throw new ValidationException("Study session must run for at least one second");
+        }
+        int totalItems = session.getTotalItems();
+        int correctCount = Math.min(request.correctCount(), totalItems);
+        int mistakes = Math.max(0, valueOrZero(request.mistakes()));
+        long durationSeconds = elapsedMillis / MILLIS_PER_SECOND;
+        if (session.getMode() == StudyMode.MATCH) {
+            durationSeconds += (long) mistakes * MATCH_MISTAKE_PENALTY_SECONDS;
+        }
+        int duration = (int) Math.min(durationSeconds, Integer.MAX_VALUE);
+        int xpGained =
+                switch (session.getMode()) {
+                    case LEARN -> GamificationRules.learnXp(totalItems);
+                    case MATCH -> GamificationRules.matchXp(totalItems, duration);
+                };
+
+        session.setCorrectCount(correctCount);
+        session.setMistakes(mistakes);
+        session.setDurationSeconds(duration);
+        session.setXpGained(xpGained);
+        session.setCompletedAt(completedAt);
+        StudySessionEntity saved = studySessionRepository.save(session);
 
         if (xpGained > 0) {
             userService.updateUserProgress(xpGained);
@@ -108,7 +156,7 @@ public class StudySessionServiceImpl implements StudySessionService {
 
         log.info(
                 "Recorded {} session for subject {}: items={}, xp={}",
-                request.mode(),
+                session.getMode(),
                 subjectId,
                 totalItems,
                 xpGained);
@@ -116,8 +164,18 @@ public class StudySessionServiceImpl implements StudySessionService {
                 "Study session recorded", new StudySessionRes(saved.getId(), xpGained, totalXp));
     }
 
-    private static int clamp(Integer value, int max) {
-        return Math.max(0, Math.min(valueOrZero(value), max));
+    private Subject findOwnedSubject(UUID shelfId, UUID subjectId, User currentUser) {
+        Shelf shelf =
+                shelfRepository
+                        .findByIdAndUser(shelfId, currentUser)
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                "Shelve not found with id: " + shelfId));
+        return subjectRepository
+                .findByIdAndShelve(subjectId, shelf)
+                .orElseThrow(
+                        () -> new NotFoundException("Subject not found with id: " + subjectId));
     }
 
     private static int valueOrZero(Integer value) {

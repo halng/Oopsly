@@ -1,5 +1,12 @@
 'use client';
-import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useReducer,
+    useRef,
+    useState,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import {
     ArrowRight,
@@ -30,6 +37,7 @@ import {
 
 const MIN_CARDS = 2;
 const DISTRACTORS = 3;
+const STUDY_MODE = 'LEARN' as const;
 
 export default function LearnPage() {
     const router = useRouter();
@@ -48,6 +56,7 @@ export default function LearnPage() {
     const [typed, setTyped] = useState('');
     const [xpGained, setXpGained] = useState<number | null>(null);
     const startedAtRef = useRef(0);
+    const sessionIdRef = useRef<string | null>(null);
     const loggedRef = useRef(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const lastFeedbackRef = useRef<string | null>(null);
@@ -57,14 +66,24 @@ export default function LearnPage() {
         [cards]
     );
 
-    const start = (list: Card[]) => {
+    const start = useCallback((list: Card[]) => {
         loggedRef.current = false;
         lastFeedbackRef.current = null;
         setXpGained(null);
         setTyped('');
         startedAtRef.current = Date.now();
         dispatch({ type: 'start', cardIds: shuffle(list.map((c) => c.id)) });
-    };
+    }, []);
+
+    const createSession = useCallback(async () => {
+        if (!shelf || !subject) return null;
+        const started = await ApiService.startStudySession(
+            shelf.id,
+            subject.id,
+            STUDY_MODE
+        );
+        return started.isSuccess && started.data ? started.data.id : null;
+    }, [shelf, subject]);
 
     useEffect(() => {
         if (!shelf || !subject) return;
@@ -74,26 +93,37 @@ export default function LearnPage() {
             if (cancelled) return;
             const list = res.isSuccess ? (res.data?.entities ?? []) : [];
             setCards(list);
+            if (list.length >= MIN_CARDS) {
+                sessionIdRef.current = await createSession();
+                if (cancelled) return;
+                start(list);
+            }
             setIsLoadingCards(false);
-            if (list.length >= MIN_CARDS) start(list);
         })();
         return () => {
             cancelled = true;
         };
-    }, [shelf, subject]);
+    }, [createSession, shelf, start, subject]);
 
     useEffect(() => {
         if (state.phase !== 'done' || loggedRef.current || !shelf || !subject)
             return;
         loggedRef.current = true;
         play('complete');
+        const sessionId = sessionIdRef.current;
+        if (!sessionId) {
+            setXpGained(0);
+            return;
+        }
         ApiService.logStudySession(shelf.id, subject.id, {
+            sessionId,
             mode: 'LEARN',
             totalItems: state.order.length,
             correctCount: state.correctAnswers,
             mistakes: state.mistakes,
-            durationSeconds: Math.round(
-                (Date.now() - startedAtRef.current) / 1000
+            durationSeconds: Math.max(
+                1,
+                Math.round((Date.now() - startedAtRef.current) / 1000)
             ),
         }).then((res) =>
             setXpGained(res.isSuccess && res.data ? res.data.xpGained : 0)
@@ -165,6 +195,10 @@ export default function LearnPage() {
     }, [play, state.phase]);
 
     const exit = () => router.push(baseUrl);
+    const restart = async () => {
+        sessionIdRef.current = await createSession();
+        start(cards);
+    };
 
     if (notFound) {
         return (
@@ -279,7 +313,7 @@ export default function LearnPage() {
                             <button
                                 type="button"
                                 data-testid="btn-learn-restart"
-                                onClick={() => start(cards)}
+                                onClick={() => void restart()}
                                 className="px-4 py-2 rounded-xl border border-[var(--theme-border)] text-xs font-bold cursor-pointer"
                             >
                                 <RotateCcw className="w-4 h-4 inline mr-1" />

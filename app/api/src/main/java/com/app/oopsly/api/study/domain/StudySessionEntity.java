@@ -22,7 +22,7 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.*;
 
-/** A finished Learn or Match session. Does not affect FSRS scheduling. */
+/** A server-tracked Learn or Match session. Does not affect FSRS scheduling. */
 @Getter
 @Setter
 @Builder
@@ -38,6 +38,9 @@ public class StudySessionEntity extends Audit {
     @Column(name = "subject_id", nullable = false)
     private UUID subjectId;
 
+    @Column(name = "started_at", nullable = false)
+    private Instant startedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StudyMode mode;
@@ -48,7 +51,5 @@ public class StudySessionEntity extends Audit {
     @Builder.Default private Integer durationSeconds = 0;
     @Builder.Default private Integer xpGained = 0;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private Instant completedAt = Instant.now();
+    private Instant completedAt;
 }

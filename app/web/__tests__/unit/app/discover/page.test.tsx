@@ -64,4 +64,23 @@ describe('DiscoverPage', () => {
         fireEvent.click(screen.getByTestId('btn-clone-d1'));
         expect(screen.getByTestId('clone-subject-modal')).toBeInTheDocument();
     });
+
+    it('normalizes comma-separated string tags for filtering', async () => {
+        vi.mocked(ApiService.getDiscoverCatalog).mockResolvedValue({
+            isSuccess: true,
+            data: [{ ...catalogItem, tags: 'science, biology' }],
+            message: '',
+            timestamp: '',
+        } as never);
+        render(<DiscoverPage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('discover-card-d1')).toBeInTheDocument()
+        );
+        fireEvent.click(screen.getByRole('button', { name: '#science' }));
+        expect(screen.getByTestId('discover-card-d1')).toBeInTheDocument();
+        fireEvent.change(screen.getByTestId('input-discover-search'), {
+            target: { value: 'biology' },
+        });
+        expect(screen.getByTestId('discover-card-d1')).toBeInTheDocument();
+    });
 });

@@ -16,6 +16,7 @@
 
 package com.app.oopsly.api.testsuite.application.vm;
 
+import com.app.oopsly.api.shared.util.AnswerMatcher;
 import com.app.oopsly.api.testsuite.domain.QuestionType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -32,6 +33,6 @@ public record QuestionReq(
         List<String> options,
         Integer correctOptionIndex,
         List<Integer> correctOptionIndexes,
-        List<String> acceptedAnswers,
+        List<@Size(max = AnswerMatcher.MAX_ANSWER_LENGTH) String> acceptedAnswers,
         Boolean caseSensitive,
         @Size(max = 2000) String explanation) {}

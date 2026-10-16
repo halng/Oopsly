@@ -66,4 +66,87 @@ describe('useSubjectContext', () => {
         expect(result.current.subject?.slug).toBe('biology');
         expect(result.current.notFound).toBe(false);
     });
+
+    it('continues through shelf pages until the requested shelf is found', async () => {
+        const laterShelf = { ...shelf, id: 'shelf2', slug: 'science' };
+        vi.mocked(ApiService.getShelves).mockImplementation(async (page) => ({
+            isSuccess: true,
+            data: {
+                entities: page === 1 ? [] : [laterShelf],
+                currentPage: page,
+                totalItems: 101,
+                totalPages: 2,
+                hasNextPage: page === 1,
+            },
+            message: '',
+            statusCode: 200,
+            timestamp: '',
+        }));
+        vi.mocked(ApiService.getShelfSubjects).mockResolvedValue({
+            isSuccess: true,
+            data: {
+                entities: [subject],
+                currentPage: 1,
+                totalItems: 1,
+                totalPages: 1,
+                hasNextPage: false,
+            },
+            message: '',
+            statusCode: 200,
+            timestamp: '',
+        });
+
+        const { result } = renderHook(() => useSubjectContext());
+        await waitFor(() => expect(result.current.shelf?.id).toBe('shelf2'));
+
+        expect(ApiService.getShelves).toHaveBeenNthCalledWith(1, 1, 100);
+        expect(ApiService.getShelves).toHaveBeenNthCalledWith(2, 2, 100);
+    });
+
+    it('continues through subject pages until the requested subject is found', async () => {
+        vi.mocked(ApiService.getShelves).mockResolvedValue({
+            isSuccess: true,
+            data: {
+                entities: [shelf],
+                currentPage: 1,
+                totalItems: 1,
+                totalPages: 1,
+                hasNextPage: false,
+            },
+            message: '',
+            statusCode: 200,
+            timestamp: '',
+        });
+        vi.mocked(ApiService.getShelfSubjects).mockImplementation(
+            async (_shelfId, page) => ({
+                isSuccess: true,
+                data: {
+                    entities: page === 1 ? [] : [subject],
+                    currentPage: page,
+                    totalItems: 101,
+                    totalPages: 2,
+                    hasNextPage: page === 1,
+                },
+                message: '',
+                statusCode: 200,
+                timestamp: '',
+            })
+        );
+
+        const { result } = renderHook(() => useSubjectContext());
+        await waitFor(() => expect(result.current.subject?.id).toBe('sub1'));
+
+        expect(ApiService.getShelfSubjects).toHaveBeenNthCalledWith(
+            1,
+            shelf.id,
+            1,
+            100
+        );
+        expect(ApiService.getShelfSubjects).toHaveBeenNthCalledWith(
+            2,
+            shelf.id,
+            2,
+            100
+        );
+    });
 });

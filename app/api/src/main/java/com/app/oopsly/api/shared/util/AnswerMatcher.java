@@ -22,6 +22,8 @@ import java.util.Locale;
 /** Lenient comparison of free-text answers (fill in the blank). */
 public final class AnswerMatcher {
 
+    public static final int MAX_ANSWER_LENGTH = 100;
+
     /** Answers at least this long tolerate a single-character typo. */
     public static final int TYPO_TOLERANCE_MIN_LENGTH = 6;
 
@@ -36,7 +38,10 @@ public final class AnswerMatcher {
     }
 
     public static boolean matches(String input, List<String> accepted, boolean caseSensitive) {
-        if (accepted == null || accepted.isEmpty()) {
+        if (input == null
+                || input.length() > MAX_ANSWER_LENGTH
+                || accepted == null
+                || accepted.isEmpty()) {
             return false;
         }
         String given = normalize(input, caseSensitive);
@@ -44,6 +49,9 @@ public final class AnswerMatcher {
             return false;
         }
         for (String candidate : accepted) {
+            if (candidate == null || candidate.length() > MAX_ANSWER_LENGTH) {
+                continue;
+            }
             String expected = normalize(candidate, caseSensitive);
             if (expected.isEmpty()) {
                 continue;
@@ -53,11 +61,33 @@ public final class AnswerMatcher {
             }
             if (expected.length() >= TYPO_TOLERANCE_MIN_LENGTH
                     && Math.abs(expected.length() - given.length()) <= 1
-                    && levenshtein(given, expected) <= 1) {
+                    && withinOneEdit(given, expected)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean withinOneEdit(String a, String b) {
+        int i = 0;
+        int j = 0;
+        int edits = 0;
+        while (i < a.length() && j < b.length()) {
+            if (a.charAt(i) == b.charAt(j)) {
+                i++;
+                j++;
+            } else if (++edits > 1) {
+                return false;
+            } else if (a.length() > b.length()) {
+                i++;
+            } else if (a.length() < b.length()) {
+                j++;
+            } else {
+                i++;
+                j++;
+            }
+        }
+        return edits + (i < a.length() || j < b.length() ? 1 : 0) <= 1;
     }
 
     public static int levenshtein(String a, String b) {

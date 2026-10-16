@@ -16,7 +16,9 @@
 
 package com.app.oopsly.api.testsuite.application.vm;
 
+import com.app.oopsly.api.shared.util.AnswerMatcher;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -31,5 +33,5 @@ import java.util.UUID;
 public record TestSubmissionReq(
         Map<UUID, Integer> answers,
         Map<UUID, List<Integer>> multiAnswers,
-        Map<UUID, String> textAnswers,
+        Map<UUID, @Size(max = AnswerMatcher.MAX_ANSWER_LENGTH) String> textAnswers,
         @Min(0) Integer timeSpentSeconds) {}

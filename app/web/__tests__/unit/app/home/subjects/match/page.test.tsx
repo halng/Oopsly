@@ -15,6 +15,7 @@ vi.mock('@/hooks/useSubjectContext', () => ({
 vi.mock('@/services/api', () => ({
     ApiService: {
         getSubjectCards: vi.fn(),
+        startStudySession: vi.fn(),
         logStudySession: vi.fn(),
     },
 }));
@@ -38,6 +39,13 @@ describe('MatchPage', () => {
             statusCode: 200,
             timestamp: '',
         });
+        vi.mocked(ApiService.startStudySession).mockResolvedValue({
+            isSuccess: true,
+            data: { id: 'session-1', totalItems: 2 },
+            message: '',
+            statusCode: 201,
+            timestamp: '',
+        });
     });
 
     it('loads matching tiles and can close', async () => {
@@ -49,6 +57,27 @@ describe('MatchPage', () => {
         expect(screen.getByTestId('match-progress')).toBeInTheDocument();
         fireEvent.click(screen.getByTestId('btn-match-close'));
         expect(push).toHaveBeenCalledWith('/home/science/subjects/biology');
+    });
+
+    it('starts the displayed clock when the board is ready', async () => {
+        const now = vi.spyOn(Date, 'now').mockReturnValue(10_000);
+        try {
+            render(<MatchPage />);
+            await waitFor(() =>
+                expect(
+                    screen.getByTestId('matching-game-page')
+                ).toBeInTheDocument()
+            );
+
+            now.mockReturnValue(50_000);
+            await waitFor(() =>
+                expect(screen.getByTestId('study-timer')).toHaveTextContent(
+                    '00:40'
+                )
+            );
+        } finally {
+            now.mockRestore();
+        }
     });
 
     it('shows empty state when there are too few cards', async () => {

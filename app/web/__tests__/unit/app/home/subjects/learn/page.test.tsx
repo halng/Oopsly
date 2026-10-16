@@ -15,6 +15,7 @@ vi.mock('@/hooks/useSubjectContext', () => ({
 vi.mock('@/services/api', () => ({
     ApiService: {
         getSubjectCards: vi.fn(),
+        startStudySession: vi.fn(),
         logStudySession: vi.fn(),
     },
 }));
@@ -40,6 +41,13 @@ describe('LearnPage', () => {
             statusCode: 200,
             timestamp: '',
         });
+        vi.mocked(ApiService.startStudySession).mockResolvedValue({
+            isSuccess: true,
+            data: { id: 'session-1', totalItems: 2 },
+            message: '',
+            statusCode: 201,
+            timestamp: '',
+        });
         vi.mocked(ApiService.logStudySession).mockResolvedValue({
             isSuccess: true,
             data: { id: 'ss1', xpGained: 20, totalXp: 100 },
@@ -59,6 +67,68 @@ describe('LearnPage', () => {
         expect(screen.getByTestId('learn-feedback')).toBeInTheDocument();
         fireEvent.click(screen.getByTestId('btn-learn-close'));
         expect(push).toHaveBeenCalledWith('/home/science/subjects/biology');
+    });
+
+    it('starts a fresh tracked session when learning again', async () => {
+        vi.mocked(ApiService.startStudySession)
+            .mockResolvedValueOnce({
+                isSuccess: true,
+                data: { id: 'session-1', totalItems: 2 },
+                message: '',
+                statusCode: 201,
+                timestamp: '',
+            })
+            .mockResolvedValueOnce({
+                isSuccess: true,
+                data: { id: 'session-2', totalItems: 2 },
+                message: '',
+                statusCode: 201,
+                timestamp: '',
+            });
+        render(<LearnPage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('learn-mode-page')).toBeInTheDocument()
+        );
+
+        for (let attempt = 0; attempt < 10; attempt += 1) {
+            if (screen.queryByTestId('learn-complete')) break;
+            if (screen.queryByTestId('learn-round-summary')) {
+                fireEvent.click(screen.getByTestId('btn-learn-next-round'));
+            } else if (screen.queryByTestId('learn-feedback')) {
+                fireEvent.click(screen.getByTestId('btn-learn-next'));
+            } else {
+                const answer =
+                    screen.getByTestId('learn-prompt').textContent === 'Q1'
+                        ? 'A1'
+                        : 'A2';
+                const input = screen.queryByTestId('learn-written-input');
+                if (input) {
+                    fireEvent.change(input, { target: { value: answer } });
+                    fireEvent.click(screen.getByTestId('btn-learn-submit'));
+                } else {
+                    const option = screen
+                        .getAllByTestId('btn-learn-option')
+                        .find((button) => button.textContent?.includes(answer));
+                    expect(option).toBeDefined();
+                    fireEvent.click(option!);
+                }
+            }
+        }
+
+        await waitFor(() =>
+            expect(screen.getByTestId('learn-complete')).toBeInTheDocument()
+        );
+        fireEvent.click(screen.getByTestId('btn-learn-restart'));
+
+        await waitFor(() =>
+            expect(ApiService.startStudySession).toHaveBeenCalledTimes(2)
+        );
+        expect(ApiService.startStudySession).toHaveBeenLastCalledWith(
+            's1',
+            'sub1',
+            'LEARN'
+        );
+        expect(screen.getByTestId('learn-mode-page')).toBeInTheDocument();
     });
 
     it('shows empty state when there are fewer than two cards', async () => {

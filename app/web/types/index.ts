@@ -305,11 +305,17 @@ export interface TestSubmissionRes {
 export type StudyMode = 'LEARN' | 'MATCH';
 
 export interface StudySessionInput {
+    sessionId: string;
     mode: StudyMode;
     totalItems: number;
     correctCount: number;
     mistakes: number;
     durationSeconds: number;
+}
+
+export interface StudySessionStartRes {
+    id: string;
+    totalItems: number;
 }
 
 export interface StudySessionRes {

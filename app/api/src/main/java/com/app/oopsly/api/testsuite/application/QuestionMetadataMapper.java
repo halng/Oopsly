@@ -18,6 +18,7 @@ package com.app.oopsly.api.testsuite.application;
 
 import com.app.oopsly.api.shared.exception.ValidationException;
 import com.app.oopsly.api.testsuite.domain.QuestionMetadata;
+import com.app.oopsly.api.testsuite.domain.QuestionValidator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,6 +33,8 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class QuestionMetadataMapper {
+
+    private static final String LEGACY_CORRECT_VALUE_KEY = "correct_value";
 
     private final ObjectMapper objectMapper;
 
@@ -60,8 +63,13 @@ public class QuestionMetadataMapper {
             if (index == null && indexes != null && indexes.size() == 1) {
                 index = indexes.get(0);
             }
-            if (index == null && node.hasNonNull("correct_value")) {
-                index = node.get("correct_value").asBoolean() ? 0 : 1;
+            if (node.hasNonNull(LEGACY_CORRECT_VALUE_KEY)) {
+                if (index == null) {
+                    index = node.get(LEGACY_CORRECT_VALUE_KEY).asBoolean() ? 0 : 1;
+                }
+                if (options == null || options.isEmpty()) {
+                    options = QuestionValidator.TRUE_FALSE_OPTIONS;
+                }
             }
             List<String> accepted = textList(node, "acceptedAnswers");
             if (accepted == null) {

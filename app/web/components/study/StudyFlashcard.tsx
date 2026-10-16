@@ -60,7 +60,10 @@ export default function StudyFlashcard({
                             Tap or press Space to flip
                         </div>
                     </div>
-                    <div className="study-flip-face study-flip-back rounded-3xl border border-[var(--theme-accent)] bg-[color-mix(in_srgb,var(--theme-accent)_10%,var(--theme-card))] p-6 sm:p-8 text-center shadow-sm">
+                    <div
+                        aria-hidden={!flipped}
+                        className="study-flip-face study-flip-back rounded-3xl border border-[var(--theme-accent)] bg-[color-mix(in_srgb,var(--theme-accent)_10%,var(--theme-card))] p-6 sm:p-8 text-center shadow-sm"
+                    >
                         <span className="inline-flex items-center rounded-full bg-[var(--theme-card)] px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[var(--theme-accent)]">
                             Answer
                         </span>
