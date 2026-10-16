@@ -33,6 +33,7 @@ import com.app.oopsly.api.testsuite.application.vm.QuestionReq;
 import com.app.oopsly.api.testsuite.application.vm.QuestionRes;
 import com.app.oopsly.api.testsuite.domain.QuestionEntity;
 import com.app.oopsly.api.testsuite.domain.QuestionType;
+import com.app.oopsly.api.testsuite.domain.QuestionValidator;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
@@ -162,6 +163,7 @@ class QuestionServiceImplTest {
         QuestionRes res = (QuestionRes) result.getBody().data();
         assertEquals(List.of("True", "False"), res.options());
         assertEquals(0, res.correctOptionIndex());
+        assertEquals(QuestionValidator.TRUE_FALSE_OPTIONS, res.options());
     }
 
     @Test

@@ -17,6 +17,7 @@
 package com.app.oopsly.api.testsuite.domain;
 
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.util.AnswerMatcher;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -94,6 +95,17 @@ public final class QuestionValidator {
                                 .filter(Objects::nonNull)
                                 .map(String::trim)
                                 .filter(answer -> !answer.isEmpty())
+                                .map(
+                                        answer -> {
+                                            if (answer.length()
+                                                    > AnswerMatcher.MAX_ANSWER_LENGTH) {
+                                                throw new ValidationException(
+                                                        "Accepted answers cannot exceed "
+                                                                + AnswerMatcher.MAX_ANSWER_LENGTH
+                                                                + " characters");
+                                            }
+                                            return answer;
+                                        })
                                 .distinct()
                                 .toList();
                 if (accepted.isEmpty()) {

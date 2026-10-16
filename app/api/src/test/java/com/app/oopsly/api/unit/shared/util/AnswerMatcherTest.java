@@ -71,6 +71,14 @@ class AnswerMatcherTest {
     }
 
     @Test
+    void matches_rejectsAnswersThatExceedTheLengthLimit() {
+        String oversized = "a".repeat(AnswerMatcher.MAX_ANSWER_LENGTH + 1);
+
+        assertFalse(AnswerMatcher.matches(oversized, List.of(oversized), false));
+        assertFalse(AnswerMatcher.matches("answer", List.of(oversized), false));
+    }
+
+    @Test
     void levenshtein_countsEdits() {
         assertEquals(0, AnswerMatcher.levenshtein("abc", "abc"));
         assertEquals(3, AnswerMatcher.levenshtein("", "abc"));

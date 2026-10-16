@@ -307,6 +307,23 @@ class QuestionValidatorTest {
                                     QuestionType.FILL_IN_THE_BLANK,
                                     QuestionMetadata.empty()));
         }
+
+        @Test
+        void rejectsAcceptedAnswersOverTheMaximumLength() {
+            assertThrows(
+                    ValidationException.class,
+                    () ->
+                            QuestionValidator.validate(
+                                    "___",
+                                    QuestionType.FILL_IN_THE_BLANK,
+                                    new QuestionMetadata(
+                                            null,
+                                            null,
+                                            null,
+                                            List.of("a".repeat(1025)),
+                                            null,
+                                            null)));
+        }
     }
 
     @Test

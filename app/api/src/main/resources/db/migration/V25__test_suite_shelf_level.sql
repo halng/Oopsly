@@ -30,7 +30,7 @@ ranked AS (
 UPDATE test_suites t
 SET slug = CASE
                WHEN r.rn = 1 THEN r.base_slug
-               ELSE r.base_slug || '-' || LEFT(t.id::text, 8)
+               ELSE LEFT(r.base_slug, 246) || '-' || LEFT(t.id::text, 8)
            END
 FROM ranked r
 WHERE t.id = r.id;
