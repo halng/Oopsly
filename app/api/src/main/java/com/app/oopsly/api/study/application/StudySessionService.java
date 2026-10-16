@@ -22,7 +22,7 @@ import com.app.oopsly.api.study.application.vm.StudySessionStartReq;
 import java.util.UUID;
 
 public interface StudySessionService {
-    /** Creates a server-tracked session before study begins. */
+    /** Sessions complete when recorded; abandoned sessions do not expire automatically. */
     ApiRes start(UUID shelfId, UUID subjectId, StudySessionStartReq request);
 
     /** Records a finished Learn / Match session and credits XP computed on the server. */

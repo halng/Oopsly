@@ -1,5 +1,12 @@
 'use client';
-import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useReducer,
+    useRef,
+    useState,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import {
     ArrowRight,
@@ -30,6 +37,7 @@ import {
 
 const MIN_CARDS = 2;
 const DISTRACTORS = 3;
+const STUDY_MODE = 'LEARN' as const;
 
 export default function LearnPage() {
     const router = useRouter();
@@ -58,14 +66,24 @@ export default function LearnPage() {
         [cards]
     );
 
-    const start = (list: Card[]) => {
+    const start = useCallback((list: Card[]) => {
         loggedRef.current = false;
         lastFeedbackRef.current = null;
         setXpGained(null);
         setTyped('');
         startedAtRef.current = Date.now();
         dispatch({ type: 'start', cardIds: shuffle(list.map((c) => c.id)) });
-    };
+    }, []);
+
+    const createSession = useCallback(async () => {
+        if (!shelf || !subject) return null;
+        const started = await ApiService.startStudySession(
+            shelf.id,
+            subject.id,
+            STUDY_MODE
+        );
+        return started.isSuccess && started.data ? started.data.id : null;
+    }, [shelf, subject]);
 
     useEffect(() => {
         if (!shelf || !subject) return;
@@ -76,14 +94,8 @@ export default function LearnPage() {
             const list = res.isSuccess ? (res.data?.entities ?? []) : [];
             setCards(list);
             if (list.length >= MIN_CARDS) {
-                const started = await ApiService.startStudySession(
-                    shelf.id,
-                    subject.id,
-                    'LEARN'
-                );
+                sessionIdRef.current = await createSession();
                 if (cancelled) return;
-                sessionIdRef.current =
-                    started.isSuccess && started.data ? started.data.id : null;
                 start(list);
             }
             setIsLoadingCards(false);
@@ -91,7 +103,7 @@ export default function LearnPage() {
         return () => {
             cancelled = true;
         };
-    }, [shelf, subject]);
+    }, [createSession, shelf, start, subject]);
 
     useEffect(() => {
         if (state.phase !== 'done' || loggedRef.current || !shelf || !subject)
@@ -183,6 +195,10 @@ export default function LearnPage() {
     }, [play, state.phase]);
 
     const exit = () => router.push(baseUrl);
+    const restart = async () => {
+        sessionIdRef.current = await createSession();
+        start(cards);
+    };
 
     if (notFound) {
         return (
@@ -297,7 +313,7 @@ export default function LearnPage() {
                             <button
                                 type="button"
                                 data-testid="btn-learn-restart"
-                                onClick={() => start(cards)}
+                                onClick={() => void restart()}
                                 className="px-4 py-2 rounded-xl border border-[var(--theme-border)] text-xs font-bold cursor-pointer"
                             >
                                 <RotateCcw className="w-4 h-4 inline mr-1" />

@@ -320,7 +320,7 @@ class QuestionValidatorTest {
                                             null,
                                             null,
                                             null,
-                                            List.of("a".repeat(1025)),
+                                            List.of("a".repeat(101)),
                                             null,
                                             null)));
         }

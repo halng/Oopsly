@@ -22,7 +22,7 @@ import java.util.Locale;
 /** Lenient comparison of free-text answers (fill in the blank). */
 public final class AnswerMatcher {
 
-    public static final int MAX_ANSWER_LENGTH = 1024;
+    public static final int MAX_ANSWER_LENGTH = 100;
 
     /** Answers at least this long tolerate a single-character typo. */
     public static final int TYPO_TOLERANCE_MIN_LENGTH = 6;

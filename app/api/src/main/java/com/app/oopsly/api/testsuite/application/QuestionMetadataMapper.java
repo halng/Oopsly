@@ -34,6 +34,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class QuestionMetadataMapper {
 
+    private static final String LEGACY_CORRECT_VALUE_KEY = "correct_value";
+
     private final ObjectMapper objectMapper;
 
     public String write(QuestionMetadata metadata) {
@@ -61,9 +63,9 @@ public class QuestionMetadataMapper {
             if (index == null && indexes != null && indexes.size() == 1) {
                 index = indexes.get(0);
             }
-            if (node.hasNonNull("correct_value")) {
+            if (node.hasNonNull(LEGACY_CORRECT_VALUE_KEY)) {
                 if (index == null) {
-                    index = node.get("correct_value").asBoolean() ? 0 : 1;
+                    index = node.get(LEGACY_CORRECT_VALUE_KEY).asBoolean() ? 0 : 1;
                 }
                 if (options == null || options.isEmpty()) {
                     options = QuestionValidator.TRUE_FALSE_OPTIONS;

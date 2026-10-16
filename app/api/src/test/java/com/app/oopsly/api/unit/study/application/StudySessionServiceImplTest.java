@@ -134,6 +134,22 @@ class StudySessionServiceImplTest {
     }
 
     @Test
+    void start_limitsLearnItemsToTheClientPageSize() {
+        stubOwnership();
+        stubSave();
+        when(cardRepository.countBySubjectAndDeletedFalse(subject)).thenReturn(1_001L);
+
+        ApiRes res = service.start(shelfId, subjectId, new StudySessionStartReq(StudyMode.LEARN));
+
+        StudySessionStartRes data = (StudySessionStartRes) res.getBody().data();
+        assertEquals(1_000, data.totalItems());
+        ArgumentCaptor<StudySessionEntity> captor =
+                ArgumentCaptor.forClass(StudySessionEntity.class);
+        verify(studySessionRepository).save(captor.capture());
+        assertEquals(1_000, captor.getValue().getTotalItems());
+    }
+
+    @Test
     void learn_recordsOnlyTheServerTrackedCompletedSession() {
         stubOwnership();
         stubSave();
@@ -191,6 +207,25 @@ class StudySessionServiceImplTest {
                         new StudySessionReq(sessionId, StudyMode.MATCH, 6, 6, 0, 20));
 
         assertEquals(30, ((StudySessionRes) res.getBody().data()).xpGained());
+    }
+
+    @Test
+    void match_includesMistakePenaltyInServerMeasuredDuration() {
+        stubOwnership();
+        stubSave();
+        stubPendingSession(StudyMode.MATCH, 6, 29);
+
+        ApiRes res =
+                service.record(
+                        shelfId,
+                        subjectId,
+                        new StudySessionReq(sessionId, StudyMode.MATCH, 6, 6, 2, 31));
+
+        assertEquals(20, ((StudySessionRes) res.getBody().data()).xpGained());
+        ArgumentCaptor<StudySessionEntity> captor =
+                ArgumentCaptor.forClass(StudySessionEntity.class);
+        verify(studySessionRepository).save(captor.capture());
+        assertTrue(captor.getValue().getDurationSeconds() >= 31);
     }
 
     @Test

@@ -59,6 +59,27 @@ describe('MatchPage', () => {
         expect(push).toHaveBeenCalledWith('/home/science/subjects/biology');
     });
 
+    it('starts the displayed clock when the board is ready', async () => {
+        const now = vi.spyOn(Date, 'now').mockReturnValue(10_000);
+        try {
+            render(<MatchPage />);
+            await waitFor(() =>
+                expect(
+                    screen.getByTestId('matching-game-page')
+                ).toBeInTheDocument()
+            );
+
+            now.mockReturnValue(50_000);
+            await waitFor(() =>
+                expect(screen.getByTestId('study-timer')).toHaveTextContent(
+                    '00:40'
+                )
+            );
+        } finally {
+            now.mockRestore();
+        }
+    });
+
     it('shows empty state when there are too few cards', async () => {
         vi.mocked(ApiService.getSubjectCards).mockResolvedValue({
             isSuccess: true,

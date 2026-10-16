@@ -72,8 +72,11 @@ class AnswerMatcherTest {
 
     @Test
     void matches_rejectsAnswersThatExceedTheLengthLimit() {
+        String maximumLength = "a".repeat(AnswerMatcher.MAX_ANSWER_LENGTH);
         String oversized = "a".repeat(AnswerMatcher.MAX_ANSWER_LENGTH + 1);
 
+        assertEquals(100, AnswerMatcher.MAX_ANSWER_LENGTH);
+        assertTrue(AnswerMatcher.matches(maximumLength, List.of(maximumLength), false));
         assertFalse(AnswerMatcher.matches(oversized, List.of(oversized), false));
         assertFalse(AnswerMatcher.matches("answer", List.of(oversized), false));
     }

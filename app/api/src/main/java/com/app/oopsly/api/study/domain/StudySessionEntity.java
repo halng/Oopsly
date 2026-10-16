@@ -22,7 +22,7 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.*;
 
-/** A finished Learn or Match session. Does not affect FSRS scheduling. */
+/** A server-tracked Learn or Match session. Does not affect FSRS scheduling. */
 @Getter
 @Setter
 @Builder

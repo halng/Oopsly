@@ -99,9 +99,7 @@ public final class QuestionValidator {
                                         answer -> {
                                             if (answer.length() > AnswerMatcher.MAX_ANSWER_LENGTH) {
                                                 throw new ValidationException(
-                                                        "Accepted answers cannot exceed "
-                                                                + AnswerMatcher.MAX_ANSWER_LENGTH
-                                                                + " characters");
+                                                        "Accepted answer is too long");
                                             }
                                             return answer;
                                         })

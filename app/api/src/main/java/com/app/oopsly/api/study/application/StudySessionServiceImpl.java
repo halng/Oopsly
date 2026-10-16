@@ -47,7 +47,10 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class StudySessionServiceImpl implements StudySessionService {
 
+    private static final int LEARN_MAX_ITEMS = 1_000;
     private static final int MATCH_MAX_PAIRS = 6;
+    private static final int MATCH_MISTAKE_PENALTY_SECONDS = 1;
+    private static final long MILLIS_PER_SECOND = 1_000L;
 
     private final StudySessionRepository studySessionRepository;
     private final ShelfRepository shelfRepository;
@@ -65,9 +68,10 @@ public class StudySessionServiceImpl implements StudySessionService {
         Subject subject = findOwnedSubject(shelfId, subjectId, currentUser);
         int cardCount = Math.toIntExact(cardRepository.countBySubjectAndDeletedFalse(subject));
         int totalItems =
-                request.mode() == StudyMode.MATCH
-                        ? Math.min(cardCount, MATCH_MAX_PAIRS)
-                        : cardCount;
+                switch (request.mode()) {
+                    case LEARN -> Math.min(cardCount, LEARN_MAX_ITEMS);
+                    case MATCH -> Math.min(cardCount, MATCH_MAX_PAIRS);
+                };
         if (totalItems == 0) {
             throw new ValidationException("A study session requires at least one card");
         }
@@ -117,13 +121,17 @@ public class StudySessionServiceImpl implements StudySessionService {
             throw new ValidationException("Study session start time is unavailable");
         }
         long elapsedMillis = Duration.between(session.getStartedAt(), completedAt).toMillis();
-        if (elapsedMillis < 1_000) {
+        if (elapsedMillis < MILLIS_PER_SECOND) {
             throw new ValidationException("Study session must run for at least one second");
         }
         int totalItems = session.getTotalItems();
         int correctCount = Math.min(request.correctCount(), totalItems);
         int mistakes = Math.max(0, valueOrZero(request.mistakes()));
-        int duration = (int) Math.min(elapsedMillis / 1_000, Integer.MAX_VALUE);
+        long durationSeconds = elapsedMillis / MILLIS_PER_SECOND;
+        if (session.getMode() == StudyMode.MATCH) {
+            durationSeconds += (long) mistakes * MATCH_MISTAKE_PENALTY_SECONDS;
+        }
+        int duration = (int) Math.min(durationSeconds, Integer.MAX_VALUE);
         int xpGained =
                 switch (session.getMode()) {
                     case LEARN -> GamificationRules.learnXp(totalItems);

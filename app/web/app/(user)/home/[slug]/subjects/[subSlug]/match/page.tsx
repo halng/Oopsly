@@ -25,6 +25,7 @@ const MIN_CARDS = 2;
 const MISTAKE_PENALTY_SECONDS = 1;
 const MISMATCH_FLASH_MS = 600;
 const TICK_MS = 100;
+const STUDY_MODE = 'MATCH' as const;
 
 interface MatchTile {
     id: string;
@@ -109,16 +110,18 @@ export default function MatchPage() {
     }, []);
 
     const startGame = useCallback(
-        async (list: Card[]) => {
+        async (list: Card[], isCancelled: () => boolean = () => false) => {
             if (!shelf || !subject) return;
             const started = await ApiService.startStudySession(
                 shelf.id,
                 subject.id,
-                'MATCH'
+                STUDY_MODE
             );
+            if (isCancelled()) return;
             sessionIdRef.current =
                 started.isSuccess && started.data ? started.data.id : null;
             newGame(list);
+            setStartedAt(Date.now());
         },
         [newGame, shelf, subject]
     );
@@ -133,22 +136,15 @@ export default function MatchPage() {
             const list = res.isSuccess ? (res.data?.entities ?? []) : [];
             setCards(list);
             if (list.length >= MIN_CARDS) {
-                const started = await ApiService.startStudySession(
-                    shelf.id,
-                    subject.id,
-                    'MATCH'
-                );
+                await startGame(list, () => cancelled);
                 if (cancelled) return;
-                sessionIdRef.current =
-                    started.isSuccess && started.data ? started.data.id : null;
-                newGame(list);
             }
             setIsLoadingCards(false);
         })();
         return () => {
             cancelled = true;
         };
-    }, [newGame, shelf, subject]);
+    }, [newGame, shelf, startGame, subject]);
 
     useEffect(() => {
         if (startedAt === null || finished) return;
