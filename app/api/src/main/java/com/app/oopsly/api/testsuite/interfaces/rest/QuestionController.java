@@ -31,7 +31,7 @@ import java.util.UUID;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/test-suites/{testSuiteId}/questions")
+@RequestMapping("/v1/shelves/{shelveId}/test-suites/{testSuiteId}/questions")
 @Tag(
         name = "Question",
         description =
@@ -47,152 +47,98 @@ public class QuestionController {
     @Operation(
             summary = "Create question",
             description =
-                    "Creates a new question within a specific test suite with type-specific"
-                            + " metadata validation")
+                    "Creates a single choice, multiple choice, true/false or fill-in-the-blank"
+                            + " question in a test suite")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "201",
                         description = "Question created successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(
-                        responseCode = "400",
-                        description = "Invalid request body or metadata validation failed"),
-                @ApiResponse(responseCode = "404", description = "Test suite not found"),
-                @ApiResponse(responseCode = "500", description = "Internal server error")
+                @ApiResponse(responseCode = "400", description = "Invalid question"),
+                @ApiResponse(responseCode = "404", description = "Shelve or test suite not found")
             })
     @PostMapping("")
     public ApiRes create(
-            @Parameter(
-                            description = "Test Suite ID",
-                            required = true,
-                            example = "123e4567-e89b-12d3-a456-426614174000")
-                    @PathVariable
+            @Parameter(description = "Shelve ID", required = true) @PathVariable UUID shelveId,
+            @Parameter(description = "Test Suite ID", required = true) @PathVariable
                     UUID testSuiteId,
-            @Parameter(description = "Question creation request", required = true)
-                    @Valid @RequestBody
-                    QuestionReq requestBody) {
-        return this.service.create(testSuiteId, requestBody);
+            @Valid @RequestBody QuestionReq requestBody) {
+        return this.service.create(shelveId, testSuiteId, requestBody);
     }
 
-    @Operation(
-            summary = "Update question",
-            description = "Updates an existing question in a specific test suite")
+    @Operation(summary = "Update question", description = "Replaces an existing question")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
                         description = "Question updated successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(
-                        responseCode = "400",
-                        description = "Invalid request body or metadata validation failed"),
-                @ApiResponse(
-                        responseCode = "404",
-                        description = "Question or test suite not found"),
-                @ApiResponse(responseCode = "500", description = "Internal server error")
+                @ApiResponse(responseCode = "400", description = "Invalid question"),
+                @ApiResponse(responseCode = "404", description = "Question not found")
             })
     @PutMapping("/{id}")
     public ApiRes update(
-            @Parameter(
-                            description = "Test Suite ID",
-                            required = true,
-                            example = "123e4567-e89b-12d3-a456-426614174000")
-                    @PathVariable
+            @Parameter(description = "Shelve ID", required = true) @PathVariable UUID shelveId,
+            @Parameter(description = "Test Suite ID", required = true) @PathVariable
                     UUID testSuiteId,
-            @Parameter(
-                            description = "Question ID",
-                            required = true,
-                            example = "123e4567-e89b-12d3-a456-426614174001")
-                    @PathVariable
-                    UUID id,
-            @Parameter(description = "Question update request", required = true) @Valid @RequestBody
-                    QuestionReq requestBody) {
-        return this.service.update(testSuiteId, id, requestBody);
+            @Parameter(description = "Question ID", required = true) @PathVariable UUID id,
+            @Valid @RequestBody QuestionReq requestBody) {
+        return this.service.update(shelveId, testSuiteId, id, requestBody);
     }
 
-    @Operation(
-            summary = "Get question by ID",
-            description = "Retrieves a specific question from a test suite by its ID")
+    @Operation(summary = "Get question by ID", description = "Retrieves a question with its key")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
                         description = "Question retrieved successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(
-                        responseCode = "404",
-                        description = "Question or test suite not found"),
-                @ApiResponse(responseCode = "500", description = "Internal server error")
+                @ApiResponse(responseCode = "404", description = "Question not found")
             })
     @GetMapping("/{id}")
     public ApiRes getById(
-            @Parameter(
-                            description = "Test Suite ID",
-                            required = true,
-                            example = "123e4567-e89b-12d3-a456-426614174000")
-                    @PathVariable
+            @Parameter(description = "Shelve ID", required = true) @PathVariable UUID shelveId,
+            @Parameter(description = "Test Suite ID", required = true) @PathVariable
                     UUID testSuiteId,
-            @Parameter(
-                            description = "Question ID",
-                            required = true,
-                            example = "123e4567-e89b-12d3-a456-426614174001")
-                    @PathVariable
-                    UUID id) {
-        return this.service.getById(testSuiteId, id);
+            @Parameter(description = "Question ID", required = true) @PathVariable UUID id) {
+        return this.service.getById(shelveId, testSuiteId, id);
     }
 
-    @Operation(
-            summary = "Delete question",
-            description = "Soft deletes a question from a specific test suite")
+    @Operation(summary = "Delete question", description = "Soft deletes a question")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
                         description = "Question soft-deleted successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(
-                        responseCode = "404",
-                        description = "Question or test suite not found"),
-                @ApiResponse(responseCode = "500", description = "Internal server error")
+                @ApiResponse(responseCode = "404", description = "Question not found")
             })
     @PatchMapping("/{id}")
     public ApiRes deleteById(
-            @Parameter(
-                            description = "Test Suite ID",
-                            required = true,
-                            example = "123e4567-e89b-12d3-a456-426614174000")
-                    @PathVariable
+            @Parameter(description = "Shelve ID", required = true) @PathVariable UUID shelveId,
+            @Parameter(description = "Test Suite ID", required = true) @PathVariable
                     UUID testSuiteId,
-            @Parameter(
-                            description = "Question ID",
-                            required = true,
-                            example = "123e4567-e89b-12d3-a456-426614174001")
-                    @PathVariable
-                    UUID id) {
-        return this.service.delete(testSuiteId, id);
+            @Parameter(description = "Question ID", required = true) @PathVariable UUID id) {
+        return this.service.delete(shelveId, testSuiteId, id);
     }
 
     @Operation(
             summary = "Get all questions by test suite",
-            description = "Retrieves a list of all questions for a specific test suite")
+            description = "Lists the questions of a test suite, oldest first, with their keys")
     @ApiResponses(
             value = {
                 @ApiResponse(
                         responseCode = "200",
                         description = "Questions retrieved successfully",
                         content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(responseCode = "404", description = "Test suite not found"),
-                @ApiResponse(responseCode = "500", description = "Internal server error")
+                @ApiResponse(responseCode = "404", description = "Shelve or test suite not found")
             })
     @GetMapping("")
     public ApiRes getAllByTestSuite(
-            @Parameter(
-                            description = "Test Suite ID",
-                            required = true,
-                            example = "123e4567-e89b-12d3-a456-426614174000")
-                    @PathVariable
+            @Parameter(description = "Shelve ID", required = true) @PathVariable UUID shelveId,
+            @Parameter(description = "Test Suite ID", required = true) @PathVariable
                     UUID testSuiteId) {
-        return this.service.getAllByTestSuite(testSuiteId);
+        return this.service.getAllByTestSuite(shelveId, testSuiteId);
     }
 }

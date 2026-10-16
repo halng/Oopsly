@@ -11,34 +11,49 @@ describe('CalendarModal', () => {
     it('shows scheduled subjects sorted by time and supports closing', async () => {
         vi.mocked(ApiService.getShelves).mockResolvedValue({
             isSuccess: true,
-            data: [{ id: 's1' }],
+            data: {
+                entities: [{ id: 's1' }],
+                currentPage: 1,
+                totalItems: 1,
+                totalPages: 1,
+                hasNextPage: false,
+            },
             message: '',
             timestamp: '',
         } as never);
         vi.mocked(ApiService.getShelfSubjects).mockResolvedValue({
             isSuccess: true,
-            data: [
-                {
-                    id: 'late',
-                    title: 'Late',
-                    cardCount: 2,
-                    dueCount: 1,
-                    color: '#111',
-                    schedule: { enabled: true, days: [1], time: '18:00' },
-                },
-                {
-                    id: 'early',
-                    title: 'Early',
-                    cardCount: 3,
-                    dueCount: 0,
-                    schedule: { enabled: true, days: [1], time: '08:00' },
-                },
-                {
-                    id: 'ignored',
-                    title: 'Ignored',
-                    schedule: { enabled: false, days: [1], time: '01:00' },
-                },
-            ] as never,
+            data: {
+                entities: [
+                    {
+                        id: 'late',
+                        name: 'Late',
+                        title: 'Late',
+                        cardCount: 2,
+                        dueCount: 1,
+                        color: '#111',
+                        schedule: { enabled: true, days: [1], time: '18:00' },
+                    },
+                    {
+                        id: 'early',
+                        name: 'Early',
+                        title: 'Early',
+                        cardCount: 3,
+                        dueCount: 0,
+                        schedule: { enabled: true, days: [1], time: '08:00' },
+                    },
+                    {
+                        id: 'ignored',
+                        name: 'Ignored',
+                        title: 'Ignored',
+                        schedule: { enabled: false, days: [1], time: '01:00' },
+                    },
+                ],
+                currentPage: 1,
+                totalItems: 3,
+                totalPages: 1,
+                hasNextPage: false,
+            } as never,
             message: '',
             timestamp: '',
         });

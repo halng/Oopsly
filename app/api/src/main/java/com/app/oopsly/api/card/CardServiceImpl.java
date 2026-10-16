@@ -212,6 +212,9 @@ public class CardServiceImpl implements CardService {
 
         existingCard.setFront(item.front());
         existingCard.setBack(item.back());
+        if (item.hint() != null) {
+            existingCard.setHint(item.hint());
+        }
         cardRepository.save(existingCard);
         log.info("Successfully updated card: {}", cardId);
         return ApiRes.success("Updated successfully", toCardRes(existingCard));
@@ -258,10 +261,10 @@ public class CardServiceImpl implements CardService {
 
         List<CardRes> cards =
                 updatedList.stream().map(this::toCardRes).collect(Collectors.toList());
-        int totalXp =
-                userService.getCurrentUser().getSetting().getTotalXp() == null
-                        ? xpGained
-                        : userService.getCurrentUser().getSetting().getTotalXp();
+        User refreshed = userService.getCurrentUser();
+        Integer storedXp =
+                refreshed.getSetting() == null ? null : refreshed.getSetting().getTotalXp();
+        int totalXp = storedXp == null ? xpGained : storedXp;
 
         return ApiRes.success(
                 ApiMessages.CARD_REVIEWED, new ReviewResultRes(cards, xpGained, totalXp));
@@ -269,17 +272,32 @@ public class CardServiceImpl implements CardService {
 
     @Override
     @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "getDueCardsFallback")
-    public ApiRes getDueCards(UUID shelfId, UUID subjectId, int limit) {
+    public ApiRes getDueCards(UUID shelfId, UUID subjectId, int limit, Integer newLimit) {
         log.info(
-                "Getting due cards for subject: {} in shelve: {} with limit: {}",
+                "Getting due cards for subject: {} in shelve: {} with limit: {}, newLimit: {}",
                 subjectId,
                 shelfId,
-                limit);
+                limit,
+                newLimit);
         Subject subject = getSubjectForCurrentUser(shelfId, subjectId);
-        List<Card> dueCards =
-                cardRepository
-                        .findDueBySubjectAndLimit(subject, Instant.now(), PageRequest.of(0, limit))
-                        .getContent();
+        int effectiveNewLimit =
+                newLimit != null
+                        ? newLimit
+                        : subject.getNewCardsPerDay() == null ? 0 : subject.getNewCardsPerDay();
+
+        List<Card> dueCards = new ArrayList<>();
+        if (limit > 0) {
+            dueCards.addAll(
+                    cardRepository
+                            .findDueReviewCards(subject, Instant.now(), PageRequest.of(0, limit))
+                            .getContent());
+        }
+        if (effectiveNewLimit > 0) {
+            dueCards.addAll(
+                    cardRepository
+                            .findNewCards(subject, PageRequest.of(0, effectiveNewLimit))
+                            .getContent());
+        }
         List<CardRes> result = dueCards.stream().map(this::toCardRes).collect(Collectors.toList());
         log.info("Successfully retrieved {} due cards for subject: {}", result.size(), subjectId);
         return ApiRes.success(ApiMessages.FETCHED, result);
@@ -360,7 +378,7 @@ public class CardServiceImpl implements CardService {
     }
 
     private Card toEntityFromItem(CardItemReq item) {
-        return Card.builder().front(item.front()).back(item.back()).build();
+        return Card.builder().front(item.front()).back(item.back()).hint(item.hint()).build();
     }
 
     private Card createCardEntity(CardItemReq cardItem, Subject subject) {
@@ -375,13 +393,15 @@ public class CardServiceImpl implements CardService {
                 entity.getId(),
                 entity.getFront(),
                 entity.getBack(),
+                entity.getHint(),
                 entity.getDifficultyLevel(),
                 entity.getNextPracticeTime(),
                 entity.getNumberOfPractice(),
                 entity.getFsrsStability(),
                 entity.getFsrsDifficulty(),
                 entity.getFsrsIntervalDays(),
-                entity.getFsrsRepetitions());
+                entity.getFsrsRepetitions(),
+                entity.getLastReviewedAt());
     }
 
     private Subject getSubjectForCurrentUser(UUID shelfId, UUID subjectId) {
@@ -477,7 +497,8 @@ public class CardServiceImpl implements CardService {
     }
 
     // Fallback method for getDueCards
-    public ApiRes getDueCardsFallback(UUID shelfId, UUID subjectId, int limit, Throwable t) {
+    public ApiRes getDueCardsFallback(
+            UUID shelfId, UUID subjectId, int limit, Integer newLimit, Throwable t) {
         log.error(
                 "Card service unavailable during getDueCards: {}, shelfId={}, subjectId={}",
                 t.getMessage(),

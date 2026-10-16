@@ -24,6 +24,7 @@ import com.app.oopsly.api.testsuite.application.QuestionService;
 import com.app.oopsly.api.testsuite.application.vm.QuestionReq;
 import com.app.oopsly.api.testsuite.domain.QuestionType;
 import com.app.oopsly.api.testsuite.interfaces.rest.QuestionController;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,14 +41,24 @@ class QuestionControllerTest {
     @InjectMocks private QuestionController questionController;
 
     private QuestionReq questionReq;
+    private UUID shelveId;
     private UUID testSuiteId;
     private UUID questionId;
     private ApiRes expectedResponse;
 
     @BeforeEach
     void setUp() {
-        String metadata = "{\"options\":[\"A\",\"B\",\"C\"],\"correct_indices\":[0,2]}";
-        questionReq = new QuestionReq("What is 2+2?", QuestionType.MULTIPLE_CHOICE, metadata);
+        questionReq =
+                new QuestionReq(
+                        "Pick the primes",
+                        QuestionType.MULTIPLE_CHOICE,
+                        List.of("2", "3", "4"),
+                        null,
+                        List.of(0, 1),
+                        null,
+                        null,
+                        null);
+        shelveId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
         questionId = UUID.randomUUID();
         expectedResponse = ApiRes.success("Success");
@@ -55,52 +66,43 @@ class QuestionControllerTest {
 
     @Test
     void create_delegatesToQuestionService() {
-        when(questionService.create(testSuiteId, questionReq)).thenReturn(expectedResponse);
+        when(questionService.create(shelveId, testSuiteId, questionReq))
+                .thenReturn(expectedResponse);
 
-        ApiRes result = questionController.create(testSuiteId, questionReq);
-
-        assertSame(expectedResponse, result);
-        verify(questionService, times(1)).create(testSuiteId, questionReq);
+        assertSame(expectedResponse, questionController.create(shelveId, testSuiteId, questionReq));
     }
 
     @Test
     void update_delegatesToQuestionService() {
-        when(questionService.update(testSuiteId, questionId, questionReq))
+        when(questionService.update(shelveId, testSuiteId, questionId, questionReq))
                 .thenReturn(expectedResponse);
 
-        ApiRes result = questionController.update(testSuiteId, questionId, questionReq);
-
-        assertSame(expectedResponse, result);
-        verify(questionService, times(1)).update(testSuiteId, questionId, questionReq);
+        assertSame(
+                expectedResponse,
+                questionController.update(shelveId, testSuiteId, questionId, questionReq));
     }
 
     @Test
     void getById_delegatesToQuestionService() {
-        when(questionService.getById(testSuiteId, questionId)).thenReturn(expectedResponse);
+        when(questionService.getById(shelveId, testSuiteId, questionId))
+                .thenReturn(expectedResponse);
 
-        ApiRes result = questionController.getById(testSuiteId, questionId);
-
-        assertSame(expectedResponse, result);
-        verify(questionService, times(1)).getById(testSuiteId, questionId);
+        assertSame(expectedResponse, questionController.getById(shelveId, testSuiteId, questionId));
     }
 
     @Test
     void deleteById_delegatesToQuestionService() {
-        when(questionService.delete(testSuiteId, questionId)).thenReturn(expectedResponse);
+        when(questionService.delete(shelveId, testSuiteId, questionId))
+                .thenReturn(expectedResponse);
 
-        ApiRes result = questionController.deleteById(testSuiteId, questionId);
-
-        assertSame(expectedResponse, result);
-        verify(questionService, times(1)).delete(testSuiteId, questionId);
+        assertSame(
+                expectedResponse, questionController.deleteById(shelveId, testSuiteId, questionId));
     }
 
     @Test
     void getAllByTestSuite_delegatesToQuestionService() {
-        when(questionService.getAllByTestSuite(testSuiteId)).thenReturn(expectedResponse);
+        when(questionService.getAllByTestSuite(shelveId, testSuiteId)).thenReturn(expectedResponse);
 
-        ApiRes result = questionController.getAllByTestSuite(testSuiteId);
-
-        assertSame(expectedResponse, result);
-        verify(questionService, times(1)).getAllByTestSuite(testSuiteId);
+        assertSame(expectedResponse, questionController.getAllByTestSuite(shelveId, testSuiteId));
     }
 }

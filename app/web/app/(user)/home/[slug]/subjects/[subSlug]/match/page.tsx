@@ -1,256 +1,397 @@
 'use client';
-import React, { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { Gamepad2, RotateCcw, Timer, Trophy, X } from 'lucide-react';
-import { Card, Subject } from '@/types';
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
+import { useRouter } from 'next/navigation';
+import { Gamepad2, RotateCcw, Trophy } from 'lucide-react';
+import { Card } from '@/types';
 import { ApiService } from '@/services/api';
+import { useSubjectContext } from '@/hooks/useSubjectContext';
+import { useStudyFx } from '@/hooks/useStudyFx';
+import {
+    StudyHeader,
+    StudyProgress,
+    StudyResultCard,
+    StudyShell,
+} from '@/components/study';
+import { formatClock, shuffle } from '@/utils/study';
 
-interface MatchItem {
+const PAIRS_PER_GAME = 6;
+const MIN_CARDS = 2;
+const MISTAKE_PENALTY_SECONDS = 1;
+const MISMATCH_FLASH_MS = 600;
+const TICK_MS = 100;
+
+interface MatchTile {
     id: string;
     cardId: string;
-    type: 'front' | 'back';
+    side: 'front' | 'back';
     text: string;
 }
 
-export default function MatchPage() {
-    const params = useParams<{ shelfId: string; subjectId: string }>();
-    const router = useRouter();
-    const shelfId = String(params.shelfId || '');
-    const subjectId = String(params.subjectId || '');
-    const base = `/home/${shelfId}/subjects/${subjectId}`;
+function matchBestTimeKey(subjectId: string): string {
+    return `oopsly:match-best:${subjectId}`;
+}
 
-    const [subject, setSubject] = useState<Subject | null>(null);
-    const [cards, setCards] = useState<Card[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [selectedItem, setSelectedItem] = useState<MatchItem | null>(null);
-    const [matchedCardIds, setMatchedCardIds] = useState<Set<string>>(
-        new Set()
-    );
-    const [mismatchedPair, setMismatchedPair] = useState<[string, string] | null>(
-        null
-    );
-    const [secondsElapsed, setSecondsElapsed] = useState(0);
-    const [isGameActive, setIsGameActive] = useState(true);
-    const [mistakes, setMistakes] = useState(0);
-    const [shuffleKey, setShuffleKey] = useState(0);
+function readBestTime(subjectId: string): number | null {
+    if (typeof window === 'undefined') return null;
+    const raw = window.localStorage.getItem(matchBestTimeKey(subjectId));
+    const value = raw === null ? NaN : Number(raw);
+    return Number.isFinite(value) && value > 0 ? value : null;
+}
 
-    useEffect(() => {
-        // let mounted = true;
-        // (async () => {
-        //     const [subjectRes, cardsRes] = await Promise.all([
-        //         ApiService.getSubject(subjectId),
-        //         ApiService.getSubjectCards(shelfId, subjectId),
-        //     ]);
-        //     if (!mounted) return;
-        //     if (subjectRes.isSuccess && subjectRes.data) {
-        //         setSubject(subjectRes.data);
-        //     }
-        //     // setCards((cardsRes.data || []).filter((c) => !c.isDeleted));
-        //     setIsLoading(false);
-        // })();
-        // return () => {
-        //     mounted = false;
-        // };
-    }, [subjectId]);
-
-    const gameCards = useMemo(() => cards.slice(0, 6), [cards]);
-    const tiles: MatchItem[] = useMemo(() => {
-        const items: MatchItem[] = [];
-        gameCards.forEach((c) => {
-            items.push({
+function buildTiles(cards: Card[]): MatchTile[] {
+    const picked = shuffle(cards).slice(0, PAIRS_PER_GAME);
+    return shuffle(
+        picked.flatMap((c) => [
+            {
                 id: `front-${c.id}`,
                 cardId: c.id,
-                type: 'front',
+                side: 'front' as const,
                 text: c.front,
-            });
-            items.push({
+            },
+            {
                 id: `back-${c.id}`,
                 cardId: c.id,
-                type: 'back',
+                side: 'back' as const,
                 text: c.back,
-            });
-        });
-        return [...items].sort(
-            (a, b) =>
-                ((a.id.charCodeAt(0) + shuffleKey) % 7) -
-                ((b.id.charCodeAt(0) + shuffleKey) % 7)
-        );
-    }, [gameCards, shuffleKey]);
+            },
+        ])
+    );
+}
+
+export default function MatchPage() {
+    const router = useRouter();
+    const { play } = useStudyFx();
+    const {
+        shelf,
+        subject,
+        baseUrl,
+        isLoading: isContextLoading,
+        notFound,
+    } = useSubjectContext();
+
+    const [cards, setCards] = useState<Card[]>([]);
+    const [isLoadingCards, setIsLoadingCards] = useState(true);
+    const [tiles, setTiles] = useState<MatchTile[]>([]);
+    const [selected, setSelected] = useState<MatchTile | null>(null);
+    const [matched, setMatched] = useState<Set<string>>(new Set());
+    const [mismatch, setMismatch] = useState<[string, string] | null>(null);
+    const [mistakes, setMistakes] = useState(0);
+    const [startedAt, setStartedAt] = useState<number | null>(null);
+    const [elapsedMs, setElapsedMs] = useState(0);
+    const [finished, setFinished] = useState(false);
+    const [bestTime, setBestTime] = useState<number | null>(null);
+    const [isNewBest, setIsNewBest] = useState(false);
+    const [xpGained, setXpGained] = useState<number | null>(null);
+    const mismatchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const pairCount = tiles.length / 2;
+    const totalSeconds = elapsedMs / 1000 + mistakes * MISTAKE_PENALTY_SECONDS;
+
+    const newGame = useCallback((list: Card[]) => {
+        if (mismatchTimerRef.current) clearTimeout(mismatchTimerRef.current);
+        setTiles(buildTiles(list));
+        setSelected(null);
+        setMatched(new Set());
+        setMismatch(null);
+        setMistakes(0);
+        setStartedAt(null);
+        setElapsedMs(0);
+        setFinished(false);
+        setIsNewBest(false);
+        setXpGained(null);
+    }, []);
 
     useEffect(() => {
-        if (!isGameActive) return;
-        const interval = setInterval(
-            () => setSecondsElapsed((s) => s + 1),
-            1000
-        );
-        return () => clearInterval(interval);
-    }, [isGameActive]);
+        if (!shelf || !subject) return;
+        let cancelled = false;
+        (async () => {
+            const res = await ApiService.getSubjectCards(shelf.id, subject.id);
+            if (cancelled) return;
+            setBestTime(readBestTime(subject.id));
+            const list = res.isSuccess ? (res.data?.entities ?? []) : [];
+            setCards(list);
+            setIsLoadingCards(false);
+            if (list.length >= MIN_CARDS) newGame(list);
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [newGame, shelf, subject]);
 
     useEffect(() => {
-        if (gameCards.length > 0 && matchedCardIds.size === gameCards.length) {
-            setIsGameActive(false);
-        }
-    }, [matchedCardIds, gameCards]);
+        if (startedAt === null || finished) return;
+        const id = setInterval(
+            () => setElapsedMs(Date.now() - startedAt),
+            TICK_MS
+        );
+        return () => clearInterval(id);
+    }, [finished, startedAt]);
 
-    const handleTileClick = (tile: MatchItem) => {
-        if (matchedCardIds.has(tile.cardId) || mismatchedPair) return;
-        if (!selectedItem) {
-            setSelectedItem(tile);
-            return;
-        }
-        if (selectedItem.id === tile.id) {
-            setSelectedItem(null);
-            return;
-        }
-        if (
-            selectedItem.cardId === tile.cardId &&
-            selectedItem.type !== tile.type
-        ) {
-            setMatchedCardIds((prev) => new Set([...prev, tile.cardId]));
-            setSelectedItem(null);
-        } else {
-            setMismatchedPair([selectedItem.id, tile.id]);
+    useEffect(
+        () => () => {
+            if (mismatchTimerRef.current)
+                clearTimeout(mismatchTimerRef.current);
+        },
+        []
+    );
+
+    const finish = useCallback(
+        (finalMistakes: number) => {
+            if (!shelf || !subject || startedAt === null) return;
+            const finalElapsed = Date.now() - startedAt;
+            setElapsedMs(finalElapsed);
+            setFinished(true);
+            play('complete');
+            const seconds =
+                finalElapsed / 1000 + finalMistakes * MISTAKE_PENALTY_SECONDS;
+            const rounded = Math.round(seconds * 10) / 10;
+            const previous = readBestTime(subject.id);
+            if (previous === null || rounded < previous) {
+                window.localStorage.setItem(
+                    matchBestTimeKey(subject.id),
+                    String(rounded)
+                );
+                setBestTime(rounded);
+                setIsNewBest(true);
+            }
+            ApiService.logStudySession(shelf.id, subject.id, {
+                mode: 'MATCH',
+                totalItems: pairCount,
+                correctCount: pairCount,
+                mistakes: finalMistakes,
+                durationSeconds: Math.max(1, Math.round(seconds)),
+            }).then((res) =>
+                setXpGained(res.isSuccess && res.data ? res.data.xpGained : 0)
+            );
+        },
+        [pairCount, play, shelf, startedAt, subject]
+    );
+
+    const handleTile = useCallback(
+        (tile: MatchTile) => {
+            if (finished || mismatch || matched.has(tile.cardId)) return;
+            if (startedAt === null) setStartedAt(Date.now());
+            if (!selected) {
+                play('tap');
+                setSelected(tile);
+                return;
+            }
+            if (selected.id === tile.id) {
+                setSelected(null);
+                return;
+            }
+            if (selected.cardId === tile.cardId) {
+                const next = new Set(matched).add(tile.cardId);
+                play('match');
+                setMatched(next);
+                setSelected(null);
+                if (next.size === pairCount) finish(mistakes);
+                return;
+            }
+            play('incorrect');
+            setMismatch([selected.id, tile.id]);
             setMistakes((m) => m + 1);
-            setTimeout(() => {
-                setMismatchedPair(null);
-                setSelectedItem(null);
-            }, 700);
-        }
-    };
+            mismatchTimerRef.current = setTimeout(() => {
+                setMismatch(null);
+                setSelected(null);
+            }, MISMATCH_FLASH_MS);
+        },
+        [
+            finish,
+            finished,
+            matched,
+            mismatch,
+            mistakes,
+            pairCount,
+            play,
+            selected,
+            startedAt,
+        ]
+    );
 
-    if (isLoading) {
+    const exit = () => router.push(baseUrl);
+
+    const bestLabel = useMemo(
+        () => (bestTime === null ? null : `${bestTime.toFixed(1)}s`),
+        [bestTime]
+    );
+
+    if (notFound) {
         return (
-            <div data-testid="match-loading" className="py-24 text-center text-sm">
+            <div
+                data-testid="match-not-found"
+                className="py-16 text-center text-sm text-[var(--theme-text)]/60"
+            >
+                This subject could not be found.
+            </div>
+        );
+    }
+
+    if (isContextLoading || isLoadingCards) {
+        return (
+            <div
+                data-testid="match-loading"
+                className="py-24 text-center text-sm text-[var(--theme-text)]/70"
+            >
                 Loading matching game...
             </div>
         );
     }
 
-    if (!gameCards.length) {
+    if (cards.length < MIN_CARDS) {
         return (
-            <div data-testid="match-empty" className="py-16 text-center space-y-3">
-                <p className="text-sm text-stone-500">Need cards to play match.</p>
+            <div
+                data-testid="match-empty"
+                className="py-16 text-center space-y-3 text-[var(--theme-text)]"
+            >
+                <p className="text-sm text-[var(--theme-text)]/60">
+                    Match needs at least {MIN_CARDS} cards in this subject.
+                </p>
                 <button
                     type="button"
                     data-testid="btn-match-close"
-                    onClick={() => router.push(base)}
-                    className="px-4 py-2 bg-stone-900 text-white rounded-xl text-xs font-bold cursor-pointer"
+                    onClick={exit}
+                    className="px-4 py-2 bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white rounded-xl text-xs font-bold cursor-pointer"
                 >
-                    Close
+                    Back to subject
                 </button>
             </div>
         );
     }
 
     return (
-        <div
-            data-testid="matching-game-page"
-            className="bg-white dark:bg-stone-900 rounded-3xl max-w-3xl mx-auto p-6 border"
+        <StudyShell
+            testId="matching-game-page"
+            className="max-w-3xl mx-auto p-6"
         >
-            <div className="flex items-center justify-between pb-4 border-b">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-                        <Gamepad2 className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <h1 className="text-base font-bold">
-                            Matching Game: {subject?.name}
-                        </h1>
-                        <p className="text-xs text-stone-500">
-                            Match every prompt to its definition
-                        </p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1 font-mono text-xs font-bold">
-                        <Timer className="w-4 h-4" />
-                        {Math.floor(secondsElapsed / 60)}:
-                        {(secondsElapsed % 60).toString().padStart(2, '0')}
-                    </span>
-                    <button
-                        type="button"
-                        data-testid="btn-match-close"
-                        onClick={() => router.push(base)}
-                        className="p-2 cursor-pointer"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-            </div>
+            <StudyHeader
+                icon={<Gamepad2 className="w-5 h-5" />}
+                title={`Match: ${subject?.name ?? ''}`}
+                subtitle={
+                    startedAt === null && !finished
+                        ? 'Tap any tile to start the clock'
+                        : `+${MISTAKE_PENALTY_SECONDS}s per mistake`
+                }
+                seconds={Math.floor(totalSeconds)}
+                extra={
+                    bestLabel && (
+                        <span
+                            data-testid="match-best-time"
+                            className="text-xs text-[var(--theme-text)]/55"
+                        >
+                            Best {bestLabel}
+                        </span>
+                    )
+                }
+                onClose={exit}
+                closeTestId="btn-match-close"
+            />
 
-            {!isGameActive ? (
-                <div className="py-10 text-center space-y-4">
-                    <Trophy className="w-8 h-8 mx-auto text-amber-600" />
-                    <h2 className="text-2xl font-black">All Cleared!</h2>
-                    <p className="text-sm text-stone-500">
-                        Completed in {secondsElapsed}s with {mistakes} mistakes.
-                    </p>
-                    <div className="flex justify-center gap-2">
-                        <button
-                            type="button"
-                            data-testid="btn-match-restart"
-                            onClick={() => {
-                                setMatchedCardIds(new Set());
-                                setSelectedItem(null);
-                                setMismatchedPair(null);
-                                setSecondsElapsed(0);
-                                setMistakes(0);
-                                setIsGameActive(true);
-                                setShuffleKey((k) => k + 1);
-                            }}
-                            className="px-4 py-2 rounded-xl border text-xs font-bold cursor-pointer"
-                        >
-                            <RotateCcw className="w-4 h-4 inline mr-1" />
-                            Play Again
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => router.push('/home')}
-                            className="px-5 py-2 rounded-xl bg-[var(--theme-accent)] text-white text-xs font-bold cursor-pointer"
-                        >
-                            Return to Library
-                        </button>
-                    </div>
-                </div>
+            {!finished && (
+                <StudyProgress
+                    testId="match-progress-bar"
+                    segments={[
+                        {
+                            width:
+                                (matched.size / Math.max(pairCount, 1)) * 100,
+                        },
+                    ]}
+                />
+            )}
+
+            {finished ? (
+                <StudyResultCard
+                    testId="match-complete"
+                    icon={
+                        <Trophy className="w-8 h-8 text-[var(--theme-accent)]" />
+                    }
+                    title={isNewBest ? 'New best time!' : 'All cleared!'}
+                    description={`Finished in ${totalSeconds.toFixed(1)}s (${formatClock(totalSeconds)}) with ${mistakes} mistakes.`}
+                    xpGained={xpGained}
+                    stats={[
+                        { label: 'Pairs', value: pairCount },
+                        { label: 'Time', value: `${totalSeconds.toFixed(1)}s` },
+                        { label: 'Mistakes', value: mistakes },
+                        { label: 'Best', value: bestLabel ?? '-' },
+                    ]}
+                    actions={
+                        <>
+                            <button
+                                type="button"
+                                data-testid="btn-match-restart"
+                                onClick={() => newGame(cards)}
+                                className="px-4 py-2 rounded-xl border border-[var(--theme-border)] text-xs font-bold cursor-pointer"
+                            >
+                                <RotateCcw className="w-4 h-4 inline mr-1" />
+                                Play again
+                            </button>
+                            <button
+                                type="button"
+                                onClick={exit}
+                                className="px-5 py-2 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-xs font-bold cursor-pointer"
+                            >
+                                Back to subject
+                            </button>
+                        </>
+                    }
+                />
             ) : (
                 <div className="py-6 space-y-4">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        {tiles.map((tile) => {
-                            const isMatched = matchedCardIds.has(tile.cardId);
-                            const isSelected = selectedItem?.id === tile.id;
-                            const isMismatched = mismatchedPair?.includes(
-                                tile.id
-                            );
+                        {tiles.map((tile, index) => {
+                            const isMatched = matched.has(tile.cardId);
+                            const isSelected = selected?.id === tile.id;
+                            const isMismatched = mismatch?.includes(tile.id);
+                            const style = isMatched
+                                ? 'study-matched border-[var(--theme-accent)] bg-[color-mix(in_srgb,var(--theme-accent)_18%,transparent)]'
+                                : isMismatched
+                                  ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-400 study-shake'
+                                  : isSelected
+                                    ? 'border-[var(--theme-accent)] ring-2 ring-[var(--theme-accent)] bg-[color-mix(in_srgb,var(--theme-accent)_16%,transparent)] study-pop'
+                                    : 'bg-[var(--theme-subtle)] hover:border-[var(--theme-accent)] hover:-translate-y-0.5';
                             return (
                                 <button
                                     key={tile.id}
                                     type="button"
                                     data-testid={`match-tile-${tile.id}`}
                                     disabled={isMatched}
-                                    onClick={() => handleTileClick(tile)}
-                                    className={`min-h-[80px] p-3 rounded-2xl border text-xs cursor-pointer ${
-                                        isMatched
-                                            ? 'opacity-40'
-                                            : isMismatched
-                                              ? 'bg-rose-50 border-rose-400'
-                                              : isSelected
-                                                ? 'border-[var(--theme-accent)] bg-[color-mix(in_srgb,var(--theme-accent)_20%,transparent)]'
-                                                : 'bg-stone-50'
-                                    }`}
+                                    aria-pressed={isSelected}
+                                    onClick={() => handleTile(tile)}
+                                    style={{
+                                        animationDelay: isMatched
+                                            ? undefined
+                                            : `${index * 30}ms`,
+                                    }}
+                                    className={`min-h-[108px] p-3.5 rounded-2xl border border-[var(--theme-border)] text-left text-xs font-medium cursor-pointer break-words transition-all ${isMatched ? '' : 'study-enter'} ${style}`}
                                 >
-                                    {tile.text}
+                                    <span className="block text-[9px] font-extrabold uppercase tracking-wider text-[var(--theme-text)]/35 mb-1.5">
+                                        {tile.side === 'front'
+                                            ? 'Term'
+                                            : 'Definition'}
+                                    </span>
+                                    <span className="block text-sm font-semibold leading-snug">
+                                        {tile.text}
+                                    </span>
                                 </button>
                             );
                         })}
                     </div>
-                    <div className="flex justify-between text-xs text-stone-400">
-                        <span>
-                            Matched: {matchedCardIds.size} / {gameCards.length}
+                    <div className="flex justify-between text-xs text-[var(--theme-text)]/45">
+                        <span data-testid="match-progress">
+                            Matched: {matched.size} / {pairCount}
                         </span>
-                        <span>Mistakes: {mistakes}</span>
+                        <span data-testid="match-mistakes">
+                            Mistakes: {mistakes}
+                        </span>
                     </div>
                 </div>
             )}
-        </div>
+        </StudyShell>
     );
 }

@@ -31,6 +31,13 @@ public final class GamificationRules {
     public static final int XP_PER_CORRECT_ANSWER = 25;
     public static final int XP_TEST_COMPLETION_BONUS = 50;
 
+    // Study sessions (Learn / Match)
+    public static final int XP_LEARN_PER_CARD = 5;
+    public static final int XP_LEARN_COMPLETION_BONUS = 25;
+    public static final int XP_MATCH_BASE = 20;
+    public static final int XP_MATCH_FAST_BONUS = 10;
+    public static final int MATCH_FAST_SECONDS_PER_PAIR = 5;
+
     // Quiz (Kahoot style)
     public static final int QUIZ_MIN_POINTS = 10;
     public static final int QUIZ_MAX_POINTS = 1000;
@@ -57,6 +64,22 @@ public final class GamificationRules {
             case 2 -> XP_GRADE_HARD;
             default -> XP_GRADE_AGAIN;
         };
+    }
+
+    public static int learnXp(int masteredCards) {
+        if (masteredCards <= 0) {
+            return 0;
+        }
+        return masteredCards * XP_LEARN_PER_CARD + XP_LEARN_COMPLETION_BONUS;
+    }
+
+    public static int matchXp(int pairs, int durationSeconds) {
+        if (pairs <= 0) {
+            return 0;
+        }
+        boolean fast =
+                durationSeconds > 0 && durationSeconds <= pairs * MATCH_FAST_SECONDS_PER_PAIR;
+        return XP_MATCH_BASE + (fast ? XP_MATCH_FAST_BONUS : 0);
     }
 
     public static int quizPoints(long elapsedMillis) {

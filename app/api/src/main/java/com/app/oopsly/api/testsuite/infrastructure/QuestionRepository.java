@@ -32,6 +32,11 @@ public interface QuestionRepository extends JpaRepository<QuestionEntity, UUID> 
                     + " false")
     Optional<QuestionEntity> findByIdAndTestSuite(UUID id, TestSuiteEntity testSuite);
 
-    @Query("SELECT q FROM QuestionEntity q WHERE q.testSuite = ?1 AND q.deleted = false")
+    @Query(
+            "SELECT q FROM QuestionEntity q WHERE q.testSuite = ?1 AND q.deleted = false ORDER BY"
+                    + " q.createdAt, q.id")
     List<QuestionEntity> findAllByTestSuite(TestSuiteEntity testSuite);
+
+    @Query("SELECT COUNT(q) FROM QuestionEntity q WHERE q.testSuite = ?1 AND q.deleted = false")
+    long countByTestSuite(TestSuiteEntity testSuite);
 }

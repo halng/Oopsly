@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import DiscoverPage from '@/app/(app)/discover/page';
+import DiscoverPage from '@/app/(user)/discover/page';
 import { ApiService } from '@/services/api';
 
 vi.mock('@/services/api', () => ({

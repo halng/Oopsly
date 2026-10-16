@@ -17,10 +17,21 @@
 package com.app.oopsly.api.testsuite.application.vm;
 
 import com.app.oopsly.api.testsuite.domain.QuestionType;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.NonNull;
+import jakarta.validation.constraints.Size;
+import java.util.List;
 
+/**
+ * Typed question payload. Which fields are used depends on {@code type}; see {@link
+ * com.app.oopsly.api.testsuite.domain.QuestionValidator}.
+ */
 public record QuestionReq(
-        @NonNull @NotNull String text,
-        @NonNull @NotNull QuestionType type,
-        @NonNull @NotNull String metadata) {}
+        @NotBlank @Size(max = 2000) String text,
+        @NotNull QuestionType type,
+        List<String> options,
+        Integer correctOptionIndex,
+        List<Integer> correctOptionIndexes,
+        List<String> acceptedAnswers,
+        Boolean caseSensitive,
+        @Size(max = 2000) String explanation) {}

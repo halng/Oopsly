@@ -39,13 +39,15 @@ class StatsControllerTest extends AbstractControllerTest {
 
     @Test
     void getStats_authenticated_returnsOk() throws Exception {
-        mockMvc.perform(get("/users/me/stats").with(bearer(session)))
+        mockMvc.perform(get("/v1/users/me/stats").with(bearer(session)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.isSuccess").value(true));
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.data.dueCards").exists())
+                .andExpect(jsonPath("$.data.totalCards").exists());
     }
 
     @Test
     void getStats_unauthenticated_returnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/users/me/stats")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/v1/users/me/stats")).andExpect(status().isUnauthorized());
     }
 }

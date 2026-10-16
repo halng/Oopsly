@@ -16,13 +16,14 @@
 
 package com.app.oopsly.api.testsuite.application.vm;
 
-import com.app.oopsly.api.testsuite.domain.TestSuiteSelectionPayload;
-import java.util.List;
 import java.util.UUID;
 
 public record TestSuiteRes(
         UUID id,
         String title,
+        String slug,
+        String description,
+        Integer timeLimitMinutes,
         Boolean isActive,
-        List<UUID> subjectIds,
-        TestSuiteSelectionPayload selection) {}
+        long questionCount,
+        Integer highestScore) {}

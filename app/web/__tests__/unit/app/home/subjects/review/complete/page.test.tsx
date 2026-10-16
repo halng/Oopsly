@@ -1,12 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import ReviewCompletePage from '@/app/(app)/home/[shelfId]/subjects/[subjectId]/review/complete/page';
+import ReviewCompletePage from '@/app/(user)/home/[slug]/subjects/[subSlug]/review/complete/page';
 import { useStudySessionStore } from '@/store';
+import { subjectContext } from '@/__tests__/unit/helpers/studyFixtures';
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock('next/navigation', () => ({
-    useRouter: () => ({ push }),
-    useParams: () => ({ shelfId: 's1', subjectId: 'sub1' }),
+    useRouter: () => ({ push, replace: push }),
+    useParams: () => ({ slug: 'science', subSlug: 'biology' }),
+}));
+vi.mock('@/hooks/useSubjectContext', () => ({
+    useSubjectContext: () => subjectContext,
 }));
 
 describe('ReviewCompletePage', () => {
@@ -29,10 +33,22 @@ describe('ReviewCompletePage', () => {
     it('shows recap stats and routes back', () => {
         render(<ReviewCompletePage />);
         expect(screen.getByTestId('review-complete-page')).toBeInTheDocument();
+        expect(screen.getByTestId('study-confetti')).toBeInTheDocument();
         expect(screen.getByText('Biology')).toBeInTheDocument();
+        expect(screen.getByTestId('complete-xp')).toHaveTextContent('+40');
         fireEvent.click(screen.getByTestId('btn-practice-again'));
-        expect(push).toHaveBeenCalledWith('/home/s1/subjects/sub1/review');
+        expect(push).toHaveBeenCalledWith(
+            '/home/science/subjects/biology/review'
+        );
         fireEvent.click(screen.getByTestId('btn-return-shelf'));
-        expect(push).toHaveBeenCalledWith('/home');
+        expect(push).toHaveBeenCalledWith('/home/science');
+    });
+
+    it('redirects when there is no last review', () => {
+        useStudySessionStore.getState().clearLastReview();
+        render(<ReviewCompletePage />);
+        expect(
+            screen.getByTestId('review-complete-redirect')
+        ).toBeInTheDocument();
     });
 });

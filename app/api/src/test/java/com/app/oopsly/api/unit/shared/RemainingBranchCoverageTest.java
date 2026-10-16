@@ -362,7 +362,8 @@ class RemainingBranchCoverageTest {
         void submitRun_shouldDelegateToService_whenSubmissionIsValid() {
             UUID shelveId = UUID.randomUUID();
             UUID suiteId = UUID.randomUUID();
-            TestSubmissionReq request = new TestSubmissionReq(Map.of(UUID.randomUUID(), 1), 120);
+            TestSubmissionReq request =
+                    new TestSubmissionReq(Map.of(UUID.randomUUID(), 1), null, null, 120);
             ApiRes expected = ApiRes.success("submitted");
             when(testSuiteService.submit(shelveId, suiteId, request)).thenReturn(expected);
 
@@ -375,7 +376,7 @@ class RemainingBranchCoverageTest {
         void submitRun_shouldPropagateNotFoundException_whenSuiteIsMissing() {
             UUID shelveId = UUID.randomUUID();
             UUID suiteId = UUID.randomUUID();
-            TestSubmissionReq request = new TestSubmissionReq(Map.of(), 0);
+            TestSubmissionReq request = new TestSubmissionReq(Map.of(), null, null, 0);
             when(testSuiteService.submit(shelveId, suiteId, request))
                     .thenThrow(new NotFoundException("suite is gone"));
 

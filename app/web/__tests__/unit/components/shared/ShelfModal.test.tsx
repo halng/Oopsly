@@ -44,6 +44,7 @@ describe('ShelfModal', () => {
                 name: 'Biology',
                 description: 'Cells',
                 color: '#4CAF50',
+                icon: 'folder',
             })
         );
         expect(onClose).toHaveBeenCalledOnce();

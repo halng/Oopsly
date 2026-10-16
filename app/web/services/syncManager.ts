@@ -1,5 +1,7 @@
-import { ApiService } from './api';
+import { ApiService, apiClient, GRADE_LEVELS } from './api';
 import { offlineDb, SyncAction } from './offlineDb';
+import { mapCardRes } from '@/utils/cardMapper';
+import { Grade } from '@/types';
 
 export interface SyncStatus {
     isOnline: boolean;
@@ -291,21 +293,21 @@ class SyncManager {
             }
 
             case 'GRADE_CARD': {
-                const { cardId, grade } = payload;
-                const res = await fetch(`/api/cards/${cardId}/difficulty`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ grade }),
-                });
-
-                if (!res.ok) return false;
-                const data = await res.json();
-                if (data.isSuccess && data.data?.card) {
+                const { cardId, grade, shelfId, subjectId } = payload;
+                if (!shelfId || !subjectId) return false;
+                const res = await apiClient.put(
+                    `/v1/shelves/${shelfId}/subjects/${subjectId}/cards/difficulty`,
+                    [{ cardId, newLevel: GRADE_LEVELS[grade as Grade] }]
+                );
+                const data = res.data;
+                if (data?.isSuccess && data.data?.cards?.[0]) {
                     // Update local card with server state
-                    await offlineDb.cacheCards([data.data.card]);
+                    await offlineDb.cacheCards([
+                        mapCardRes(data.data.cards[0], subjectId),
+                    ]);
                     return true;
                 }
-                return false;
+                return Boolean(data?.isSuccess);
             }
 
             case 'UPDATE_CARD': {

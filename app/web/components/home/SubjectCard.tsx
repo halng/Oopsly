@@ -5,7 +5,6 @@ import {
     Play,
     Brain,
     Gamepad2,
-    FileCheck2,
     Clock,
     ChevronRight,
     MoreVertical,
@@ -25,7 +24,6 @@ interface SubjectCardProps {
     onStartReview: () => void;
     onStartLearn: () => void;
     onStartMatch: () => void;
-    onStartTest: () => void;
     onImport: () => void;
     onClone: () => void;
     onEdit: () => void;
@@ -40,7 +38,6 @@ export default function SubjectCard({
     onStartReview,
     onStartLearn,
     onStartMatch,
-    onStartTest,
     onImport,
     onClone,
     onEdit,
@@ -194,7 +191,7 @@ export default function SubjectCard({
                     </span>
                 </button>
 
-                <div className="grid grid-cols-3 gap-1.5 pt-1">
+                <div className="grid grid-cols-2 gap-1.5 pt-1">
                     <button
                         id={`learn-mode-btn-${subject.id}`}
                         data-testid={`btn-learn-${subject.id}`}
@@ -215,16 +212,6 @@ export default function SubjectCard({
                         <Gamepad2 className="w-3.5 h-3.5 text-sky-500" />
                         <span>Match</span>
                     </button>
-                    <button
-                        id={`test-suite-btn-${subject.id}`}
-                        data-testid={`btn-test-${subject.id}`}
-                        onClick={onStartTest}
-                        title="Diagnostic test assessment"
-                        className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 text-[11px] font-semibold transition-colors cursor-pointer"
-                    >
-                        <FileCheck2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                        <span>Test</span>
-                    </button>
                 </div>
 
                 <button
@@ -232,7 +219,7 @@ export default function SubjectCard({
                     onClick={onViewDetails}
                     className="w-full flex items-center justify-center gap-1 text-[11px] font-bold text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 pt-1 cursor-pointer"
                 >
-                    <span>View Cards & Test Suites</span>
+                    <span>View Cards</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                 </button>
             </div>

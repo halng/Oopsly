@@ -45,7 +45,7 @@
     }
   ],
   "paths": {
-    "/test-suites/{testSuiteId}/questions/{id}": {
+    "/v1/shelves/{shelveId}/test-suites/{testSuiteId}/questions/{id}": {
       "get": {
         "tags": [
           "Question"
@@ -54,6 +54,16 @@
         "description": "Retrieves a specific question from a test suite by its ID",
         "operationId": "getById",
         "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           {
             "name": "testSuiteId",
             "in": "path",
@@ -118,6 +128,16 @@
         "description": "Updates an existing question in a specific test suite",
         "operationId": "update",
         "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           {
             "name": "testSuiteId",
             "in": "path",
@@ -202,6 +222,16 @@
         "description": "Soft deletes a question from a specific test suite",
         "operationId": "deleteById",
         "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           {
             "name": "testSuiteId",
             "in": "path",
@@ -440,7 +470,7 @@
         }
       }
     },
-    "/shelves/{shelveId}/test-suites/{id}": {
+    "/v1/shelves/{shelveId}/test-suites/{id}": {
       "get": {
         "tags": [
           "Test Suite"
@@ -654,7 +684,7 @@
         }
       }
     },
-    "/shelves/{shelveId}/test-suites/{id}/run": {
+    "/v1/shelves/{shelveId}/test-suites/{id}/run": {
       "post": {
         "tags": [
           "Test Suite"
@@ -1375,7 +1405,7 @@
         }
       }
     },
-    "/test-suites/{testSuiteId}/questions": {
+    "/v1/shelves/{shelveId}/test-suites/{testSuiteId}/questions": {
       "get": {
         "tags": [
           "Question"
@@ -1384,6 +1414,16 @@
         "description": "Retrieves a list of all questions for a specific test suite",
         "operationId": "getAllByTestSuite",
         "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           {
             "name": "testSuiteId",
             "in": "path",
@@ -1437,6 +1477,16 @@
         "description": "Creates a new question within a specific test suite with type-specific metadata validation",
         "operationId": "create",
         "parameters": [
+          {
+            "name": "shelveId",
+            "in": "path",
+            "description": "Shelve ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           {
             "name": "testSuiteId",
             "in": "path",
@@ -1738,7 +1788,7 @@
         }
       }
     },
-    "/shelves/{shelveId}/test-suites": {
+    "/v1/shelves/{shelveId}/test-suites": {
       "get": {
         "tags": [
           "Test Suite"
@@ -2391,7 +2441,7 @@
     "schemas": {
       "QuestionReq": {
         "type": "object",
-        "description": "Question creation request",
+        "description": "Typed question request; fields used depend on type",
         "properties": {
           "text": {
             "type": "string"
@@ -2399,20 +2449,45 @@
           "type": {
             "type": "string",
             "enum": [
+              "SINGLE_CHOICE",
               "MULTIPLE_CHOICE",
-              "MULTIPLE_RESPONSE",
               "TRUE_FALSE",
               "FILL_IN_THE_BLANK",
               "MATCHING",
               "ORDERING"
             ]
           },
-          "metadata": {
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "correctOptionIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "correctOptionIndexes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "acceptedAnswers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "caseSensitive": {
+            "type": "boolean"
+          },
+          "explanation": {
             "type": "string"
           }
         },
         "required": [
-          "metadata",
           "text",
           "type"
         ]

@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+// TODO(ai): card-based presets, postponed until the AI integration.
 @RestController
 @RequestMapping("/test-suites")
 @Tag(

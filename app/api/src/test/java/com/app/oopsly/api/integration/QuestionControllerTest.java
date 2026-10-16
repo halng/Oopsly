@@ -16,6 +16,7 @@
 
 package com.app.oopsly.api.integration;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -29,134 +30,144 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MvcResult;
 
 @DisplayName("QuestionController integration")
 class QuestionControllerTest extends AbstractControllerTest {
 
+    private static final String QUESTIONS = "/v1/shelves/{s}/test-suites/{t}/questions";
+    private static final String QUESTION = QUESTIONS + "/{id}";
+
     private AuthSession session;
+    private UUID shelfId;
     private UUID testSuiteId;
 
     @BeforeEach
     void setUp() throws Exception {
         session = authenticate(EMAIL);
-        LibraryFixture.LibraryIds library =
-                LibraryFixture.seed(mockMvc, objectMapper, session.accessToken());
-
-        MvcResult createSuite =
-                mockMvc.perform(
-                                post("/shelves/{s}/test-suites", library.shelfId())
-                                        .with(bearer(session))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(
-                                                """
-                                                {
-                                                  "title": "Q Suite",
-                                                  "isActive": true,
-                                                  "subjectIds": ["%s"],
-                                                  "selection": { "mode": "ALL", "limit": 10, "shuffle": false }
-                                                }
-                                                """
-                                                        .formatted(library.subjectId())))
-                        .andExpect(status().isCreated())
-                        .andReturn();
+        shelfId = LibraryFixture.seed(mockMvc, objectMapper, session.accessToken()).shelfId();
         testSuiteId =
-                UUID.fromString(
-                        objectMapper
-                                .readTree(createSuite.getResponse().getContentAsString())
-                                .get("data")
-                                .get("id")
-                                .asText());
+                uuidFromDataId(
+                        mockMvc.perform(
+                                        post("/v1/shelves/{s}/test-suites", shelfId)
+                                                .with(bearer(session))
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content("{\"title\":\"Q Suite\"}"))
+                                .andExpect(status().isCreated())
+                                .andReturn());
     }
 
     @Test
     void unauthenticated_returnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/test-suites/{id}/questions", testSuiteId))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get(QUESTIONS, shelfId, testSuiteId)).andExpect(status().isUnauthorized());
     }
 
     @Test
     void create_list_get_update_delete() throws Exception {
-        MvcResult create =
-                mockMvc.perform(
-                                post("/test-suites/{id}/questions", testSuiteId)
-                                        .with(bearer(session))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(
-                                                """
-                                                {
-                                                  "text": "2+2=?",
-                                                  "type": "MULTIPLE_CHOICE",
-                                                  "metadata": "{\\"options\\":[\\"3\\",\\"4\\"],\\"correct_indices\\":[1]}"
-                                                }
-                                                """))
-                        .andExpect(status().isCreated())
-                        .andExpect(jsonPath("$.isSuccess").value(true))
-                        .andReturn();
-
         UUID questionId =
-                UUID.fromString(
-                        objectMapper
-                                .readTree(create.getResponse().getContentAsString())
-                                .get("data")
-                                .get("id")
-                                .asText());
+                uuidFromDataId(
+                        mockMvc.perform(
+                                        post(QUESTIONS, shelfId, testSuiteId)
+                                                .with(bearer(session))
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(
+                                                        """
+                                                        {"text":"2+2=?","type":"SINGLE_CHOICE",
+                                                         "options":["3","4"],"correctOptionIndex":1}
+                                                        """))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.data.type").value("SINGLE_CHOICE"))
+                                .andExpect(jsonPath("$.data.options", hasSize(2)))
+                                .andExpect(jsonPath("$.data.correctOptionIndex").value(1))
+                                .andReturn());
 
-        mockMvc.perform(get("/test-suites/{id}/questions", testSuiteId).with(bearer(session)))
-                .andExpect(status().isOk());
+        mockMvc.perform(get(QUESTIONS, shelfId, testSuiteId).with(bearer(session)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data", hasSize(1)));
 
-        mockMvc.perform(
-                        get("/test-suites/{id}/questions/{qid}", testSuiteId, questionId)
-                                .with(bearer(session)))
+        mockMvc.perform(get(QUESTION, shelfId, testSuiteId, questionId).with(bearer(session)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(questionId.toString()));
 
         mockMvc.perform(
-                        get("/test-suites/{id}/questions/{qid}", testSuiteId, UUID.randomUUID())
+                        get(QUESTION, shelfId, testSuiteId, UUID.randomUUID())
                                 .with(bearer(session)))
                 .andExpect(status().isNotFound());
 
         mockMvc.perform(
-                        put("/test-suites/{id}/questions/{qid}", testSuiteId, questionId)
+                        put(QUESTION, shelfId, testSuiteId, questionId)
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
-                                        {
-                                          "text": "Earth is flat?",
-                                          "type": "TRUE_FALSE",
-                                          "metadata": "{\\"correct_value\\":false}"
-                                        }
+                                        {"text":"Earth is flat?","type":"TRUE_FALSE","correctOptionIndex":1}
                                         """))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.type").value("TRUE_FALSE"))
+                .andExpect(jsonPath("$.data.options[1]").value("False"));
 
-        mockMvc.perform(
-                        patch("/test-suites/{id}/questions/{qid}", testSuiteId, questionId)
-                                .with(bearer(session)))
+        mockMvc.perform(patch(QUESTION, shelfId, testSuiteId, questionId).with(bearer(session)))
                 .andExpect(status().isOk());
+        mockMvc.perform(get(QUESTIONS, shelfId, testSuiteId).with(bearer(session)))
+                .andExpect(jsonPath("$.data", hasSize(0)));
     }
 
     @Test
-    void create_missingFields_returnsClientError() throws Exception {
+    void create_multipleChoiceAndFillInTheBlank() throws Exception {
         mockMvc.perform(
-                        post("/test-suites/{id}/questions", testSuiteId)
+                        post(QUESTIONS, shelfId, testSuiteId)
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
-                                        {"text":"","type":"TRUE_FALSE","metadata":"{}"}
+                                        {"text":"Primes","type":"MULTIPLE_CHOICE",
+                                         "options":["2","3","4"],"correctOptionIndexes":[1,0]}
                                         """))
-                .andExpect(
-                        result -> {
-                            int status = result.getResponse().getStatus();
-                            if (status != 400 && status != 500) {
-                                throw new AssertionError(
-                                        "Unexpected status: "
-                                                + status
-                                                + " body="
-                                                + result.getResponse().getContentAsString());
-                            }
-                        });
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.correctOptionIndexes[0]").value(0))
+                .andExpect(jsonPath("$.data.correctOptionIndexes[1]").value(1));
+
+        mockMvc.perform(
+                        post(QUESTIONS, shelfId, testSuiteId)
+                                .with(bearer(session))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {"text":"H2___","type":"FILL_IN_THE_BLANK",
+                                         "acceptedAnswers":["O"],"caseSensitive":true}
+                                        """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.acceptedAnswers[0]").value("O"))
+                .andExpect(jsonPath("$.data.caseSensitive").value(true));
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "{\"text\":\"\",\"type\":\"TRUE_FALSE\",\"correctOptionIndex\":0}",
+                "{\"text\":\"q\",\"type\":\"SINGLE_CHOICE\",\"options\":[\"a\"],\"correctOptionIndex\":0}",
+                "{\"text\":\"q\",\"type\":\"SINGLE_CHOICE\",\"options\":[\"a\",\"b\"],\"correctOptionIndex\":4}",
+                "{\"text\":\"q\",\"type\":\"MULTIPLE_CHOICE\",\"options\":[\"a\",\"b\"],\"correctOptionIndexes\":[]}",
+                "{\"text\":\"no"
+                        + " blank\",\"type\":\"FILL_IN_THE_BLANK\",\"acceptedAnswers\":[\"x\"]}",
+                "{\"text\":\"q\",\"type\":\"MATCHING\"}"
+            })
+    void create_invalidQuestion_returnsBadRequest(String body) throws Exception {
+        mockMvc.perform(
+                        post(QUESTIONS, shelfId, testSuiteId)
+                                .with(bearer(session))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void otherUsersShelf_returnsNotFound() throws Exception {
+        AuthSession other = authenticate(EMAIL_2);
+
+        mockMvc.perform(get(QUESTIONS, shelfId, testSuiteId).with(bearer(other)))
+                .andExpect(status().isNotFound());
     }
 }

@@ -20,16 +20,20 @@ import {
     Tag,
     Target,
 } from 'lucide-react';
-import { Shelf, Subject } from '@/types';
+import { Shelf, Subject, TestSuite, TestSuiteInput } from '@/types';
 import { ApiService } from '@/services/api';
 import {
     CloneSubjectModal,
     ImportCardsModal,
     ShelfModal,
     SubjectModal,
+    TestSuiteModal,
 } from '@/components/shared';
 import SubjectCard from '@/components/home/SubjectCard';
-import { useShelfStore, useSubjectStore, useUserProfileStore } from '@/store';
+import TestSuiteList from '@/components/tests/TestSuiteList';
+import { loadShelfTestSuites } from '@/hooks/useTestSuiteContext';
+import { resolveShelfBySlug } from '@/hooks/useSubjectContext';
+import { useSubjectStore, useUserProfileStore } from '@/store';
 
 const PRESET_ICONS = {
         'folder': <Folder className="w-5 h-5" />,
@@ -65,30 +69,34 @@ export default function ShelfPage() {
     const [importingSubject, setImportingSubject] = useState<Subject | null>(
         null
     );
+    const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
+    const [isTestSuiteModalOpen, setIsTestSuiteModalOpen] = useState(false);
+    const [editingTestSuite, setEditingTestSuite] = useState<TestSuite | null>(null);
     
     const loadData = useCallback(async () => {
 
         setIsLoading(true);
         
-        const filteredShelf = useShelfStore.getState().getCurrentShelf(slug);
+        const filteredShelf = await resolveShelfBySlug(slug);
         if (!filteredShelf) {
-            router.push('/home'); // Redirect to home if shelf not found
+            setIsLoading(false);
+            router.push('/home');
             return;
         }
 
         setShelf(filteredShelf);
         try {
-            const [ subjectsRes] =
-                await Promise.all([
-                    ApiService.getShelfSubjects(filteredShelf.id),
-                    // ApiService.getStats(),
-                ]);
+            const [subjectsRes, suites] = await Promise.all([
+                ApiService.getShelfSubjects(filteredShelf.id),
+                loadShelfTestSuites(filteredShelf.id),
+            ]);
             if (subjectsRes.isSuccess && subjectsRes.data) {
                 setSubjects(subjectsRes.data.entities);
                 useSubjectStore.getState().setSubjects(filteredShelf.id, subjectsRes.data.entities);
             } else {
                 setSubjects([]);
             }
+            setTestSuites(suites);
         } finally {
             setIsLoading(false);
         }
@@ -123,6 +131,22 @@ export default function ShelfPage() {
             await ApiService.createSubject(shelf.id, data);
         }
         loadData();
+    };
+
+    const handleSaveTestSuite = async (data: TestSuiteInput) => {
+        if (!shelf) return;
+        const res = editingTestSuite
+            ? await ApiService.updateTestSuite(shelf.id, editingTestSuite.id, data)
+            : await ApiService.createTestSuite(shelf.id, data);
+        if (!res.isSuccess) throw new Error(res.message || 'Could not save the test suite');
+        setTestSuites(await loadShelfTestSuites(shelf.id));
+    };
+
+    const handleDeleteTestSuite = async (suite: TestSuite) => {
+        if (!shelf) return;
+        if (!window.confirm(`Delete "${suite.title}" and all of its questions?`)) return;
+        const res = await ApiService.deleteTestSuite(shelf.id, suite.id);
+        if (res.isSuccess) setTestSuites(await loadShelfTestSuites(shelf.id));
     };
 
     const filteredSubjects = useMemo(() => {
@@ -268,7 +292,7 @@ export default function ShelfPage() {
                             );
                             if (firstDue) {
                                 router.push(
-                                    `/home/${firstDue.shelfId}/subjects/${firstDue.id}/review`
+                                    `/home/${shelf.slug}/subjects/${firstDue.slug}/review`
                                 );
                             }
                         }}
@@ -374,11 +398,6 @@ export default function ShelfPage() {
                                     `/home/${shelf.slug}/subjects/${subject.slug}/match`
                                 )
                             }
-                            onStartTest={() =>
-                                router.push(
-                                    `/home/${shelf.slug}/subjects/${subject.slug}/test`
-                                )
-                            }
                             onImport={() => {
                                 setActiveMenuSubjectId(null);
                                 setImportingSubject(subject);
@@ -401,6 +420,31 @@ export default function ShelfPage() {
                 </div>
             )}
 
+            <TestSuiteList
+                testSuites={testSuites}
+                onCreate={() => {
+                    setEditingTestSuite(null);
+                    setIsTestSuiteModalOpen(true);
+                }}
+                onOpen={(suite) => router.push(`/home/${shelf.slug}/tests/${suite.slug}`)}
+                onTake={(suite) => router.push(`/home/${shelf.slug}/tests/${suite.slug}/take`)}
+                onEdit={(suite) => {
+                    setEditingTestSuite(suite);
+                    setIsTestSuiteModalOpen(true);
+                }}
+                onDelete={handleDeleteTestSuite}
+            />
+
+            {isTestSuiteModalOpen && (
+                <TestSuiteModal
+                    testSuite={editingTestSuite}
+                    onClose={() => {
+                        setIsTestSuiteModalOpen(false);
+                        setEditingTestSuite(null);
+                    }}
+                    onSave={handleSaveTestSuite}
+                />
+            )}
             {isShelfModalOpen && (
                 <ShelfModal
                     shelf={shelf}

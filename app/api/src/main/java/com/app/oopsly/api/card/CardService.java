@@ -45,5 +45,9 @@ public interface CardService {
 
     Pair<Integer, Double> getShortPracticeStats(Subject subject);
 
-    ApiRes getDueCards(UUID shelfId, UUID subjectId, int limit);
+    /**
+     * Due review cards (capped by {@code limit}) followed by never-reviewed cards (capped by {@code
+     * newLimit}, defaulting to the subject's {@code newCardsPerDay}).
+     */
+    ApiRes getDueCards(UUID shelfId, UUID subjectId, int limit, Integer newLimit);
 }

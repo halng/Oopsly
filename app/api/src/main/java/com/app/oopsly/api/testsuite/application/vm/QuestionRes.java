@@ -17,6 +17,17 @@
 package com.app.oopsly.api.testsuite.application.vm;
 
 import com.app.oopsly.api.testsuite.domain.QuestionType;
+import java.util.List;
 import java.util.UUID;
 
-public record QuestionRes(UUID id, String text, QuestionType type, String metadata) {}
+/** Question with its answer key, for the owner's question editor. */
+public record QuestionRes(
+        UUID id,
+        String text,
+        QuestionType type,
+        List<String> options,
+        Integer correctOptionIndex,
+        List<Integer> correctOptionIndexes,
+        List<String> acceptedAnswers,
+        Boolean caseSensitive,
+        String explanation) {}

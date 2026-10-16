@@ -72,7 +72,7 @@ export const HomePage: React.FC = () => {
     const [editingShelf, setEditingShelf] = useState<Shelf | null>(null);
     const [isJoinGameOpen, setIsJoinGameOpen] = useState(false);
 
-    const [totalDue, setTotalDue] = useState(1);
+    const [totalDue, setTotalDue] = useState(0);
 
     const loadUserData = useCallback(async () => {
         const profileRes = await ApiService.getProfile();
@@ -108,6 +108,7 @@ export const HomePage: React.FC = () => {
         ApiService.getStats().then((res) => {
             if (res.isSuccess && res.data) {
                 setReviewedToday(res.data.reviewedToday);
+                setTotalDue(res.data.dueCards ?? 0);
             }
         });
     }, [profile?.totalReviews]);
@@ -157,13 +158,12 @@ export const HomePage: React.FC = () => {
 
     const filteredShelves = useMemo(() => {
         return shelves.filter((s) => {
-            const matches =
+            return (
                 s.name.toLowerCase().includes(shelfSearchQuery.toLowerCase()) ||
                 (s.description || '')
                     .toLowerCase()
-                    .includes(shelfSearchQuery.toLowerCase());
-            setTotalDue((prevTotal) => prevTotal + (matches ? s?.stats?.totalDue : 0));
-            return matches;
+                    .includes(shelfSearchQuery.toLowerCase())
+            );
         });
     }, [shelves, shelfSearchQuery]);
 

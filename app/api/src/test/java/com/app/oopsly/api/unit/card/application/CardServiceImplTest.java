@@ -52,6 +52,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -570,14 +571,58 @@ class CardServiceImplTest {
                 .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
-        when(cardRepository.findDueBySubjectAndLimit(
+        when(cardRepository.findDueReviewCards(
                         eq(subject), any(Instant.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(card)));
 
-        ApiRes result = cardService.getDueCards(shelveId, subjectId, 5);
+        ApiRes result = cardService.getDueCards(shelveId, subjectId, 5, 0);
 
         assertTrue(result.getBody().isSuccess());
         assertEquals(1, ((List<?>) result.getBody().data()).size());
+        verify(cardRepository, never()).findNewCards(any(), any());
+    }
+
+    @Test
+    void getDueCards_appendsNewCardsUsingSubjectDefaultLimit() {
+        Card review = new Card();
+        review.setId(UUID.randomUUID());
+        Card fresh = new Card();
+        fresh.setId(UUID.randomUUID());
+        subject.setNewCardsPerDay(3);
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve))
+                .thenReturn(Optional.of(subject));
+        when(cardRepository.findDueReviewCards(
+                        eq(subject), any(Instant.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(review)));
+        when(cardRepository.findNewCards(eq(subject), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(fresh)));
+
+        ApiRes result = cardService.getDueCards(shelveId, subjectId, 10, null);
+
+        List<?> data = (List<?>) result.getBody().data();
+        assertEquals(2, data.size());
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(cardRepository).findNewCards(eq(subject), pageable.capture());
+        assertEquals(3, pageable.getValue().getPageSize());
+    }
+
+    @Test
+    void getDueCards_zeroLimitSkipsReviewQuery() {
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+                .thenReturn(Optional.of(shelve));
+        when(subjectRepository.findByIdAndShelve(subjectId, shelve))
+                .thenReturn(Optional.of(subject));
+        subject.setNewCardsPerDay(null);
+
+        ApiRes result = cardService.getDueCards(shelveId, subjectId, 0, null);
+
+        assertEquals(0, ((List<?>) result.getBody().data()).size());
+        verify(cardRepository, never()).findDueReviewCards(any(), any(), any());
+        verify(cardRepository, never()).findNewCards(any(), any());
     }
 
     @Test
@@ -710,7 +755,7 @@ class CardServiceImplTest {
         RetryLaterException exception =
                 assertThrows(
                         RetryLaterException.class,
-                        () -> cardService.getDueCardsFallback(shelveId, subjectId, 5, cause));
+                        () -> cardService.getDueCardsFallback(shelveId, subjectId, 5, null, cause));
         assertTrue(exception.getMessage().contains("currently unavailable"));
     }
 

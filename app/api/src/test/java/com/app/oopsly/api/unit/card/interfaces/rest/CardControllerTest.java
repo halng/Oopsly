@@ -161,12 +161,12 @@ class CardControllerTest {
 
     @Test
     void getDueCards_delegatesToCardService() {
-        when(cardService.getDueCards(shelveId, subjectId, 10)).thenReturn(expectedResponse);
+        when(cardService.getDueCards(shelveId, subjectId, 10, 3)).thenReturn(expectedResponse);
 
-        ApiRes result = cardController.getDueCards(shelveId, subjectId, 10);
+        ApiRes result = cardController.getDueCards(shelveId, subjectId, 10, 3);
 
         assertSame(expectedResponse, result);
-        verify(cardService).getDueCards(shelveId, subjectId, 10);
+        verify(cardService).getDueCards(shelveId, subjectId, 10, 3);
     }
 
     @Test

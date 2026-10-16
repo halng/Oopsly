@@ -16,6 +16,12 @@
 
 package com.app.oopsly.api.stats.application.vm;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /** Distribution of cards across FSRS states. */
 public record StateDistribution(
-        long newCards, long learning, long review, long relearning, long mastered) {}
+        @JsonProperty("new") long newCards,
+        long learning,
+        long review,
+        long relearning,
+        long mastered) {}

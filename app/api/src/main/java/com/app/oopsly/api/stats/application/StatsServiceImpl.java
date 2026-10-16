@@ -23,8 +23,6 @@ import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
 import com.app.oopsly.api.shared.util.ApiMessages;
 import com.app.oopsly.api.shared.util.CircuitBreakerNames;
-import com.app.oopsly.api.shelf.Shelf;
-import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.stats.application.vm.DueForecast;
 import com.app.oopsly.api.stats.application.vm.StateDistribution;
 import com.app.oopsly.api.stats.application.vm.StatsRes;
@@ -32,6 +30,7 @@ import com.app.oopsly.api.stats.application.vm.WeeklyActivity;
 import com.app.oopsly.api.stats.infrastructure.ReviewLogRepository;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
+import com.app.oopsly.api.user.Setting;
 import com.app.oopsly.api.user.User;
 import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -43,10 +42,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -61,7 +58,6 @@ public class StatsServiceImpl implements StatsService {
     private static final double RELEARNING_DIFFICULTY_LIMIT = 7.0;
 
     private final UserService userService;
-    private final ShelfRepository shelfRepository;
     private final SubjectRepository subjectRepository;
     private final CardRepository cardRepository;
     private final ReviewLogRepository reviewLogRepository;
@@ -94,17 +90,18 @@ public class StatsServiceImpl implements StatsService {
                         currentUser.getId(), startOfDay, endOfDay);
 
         double retention = retentionOf(currentUser, totalCards, dueCards);
+        Setting setting = currentUser.getSetting();
 
         StatsRes stats =
                 new StatsRes(
-                        safeInt(currentUser.getSetting().getDailyStreak()),
-                        safeInt(currentUser.getSetting().getTotalXp()),
+                        safeInt(setting == null ? null : setting.getDailyStreak()),
+                        safeInt(setting == null ? null : setting.getTotalXp()),
                         (int) reviewedToday,
                         (int) reviewedToday,
                         dailyGoalOf(currentUser),
                         retention,
                         retention,
-                        safeInt(currentUser.getSetting().getTotalReviews()),
+                        safeInt(setting == null ? null : setting.getTotalReviews()),
                         totalCards,
                         dueCards,
                         stateDistribution(cards),
@@ -117,20 +114,8 @@ public class StatsServiceImpl implements StatsService {
     // ---------------------------------------------------------------- helpers
 
     private List<Subject> findSubjects(User currentUser) {
-        List<Shelf> shelves =
-                shelfRepository
-                        .findAllByUser(currentUser, PageRequest.of(0, Integer.MAX_VALUE))
-                        .getContent();
-
-        return shelves.stream()
-                .flatMap(
-                        shelf ->
-                                subjectRepository
-                                        .findAllByShelve(
-                                                shelf, PageRequest.of(0, Integer.MAX_VALUE))
-                                        .getContent()
-                                        .stream())
-                .collect(Collectors.toList());
+        List<Subject> subjects = subjectRepository.findAllByUser(currentUser);
+        return subjects == null ? List.of() : subjects;
     }
 
     private StateDistribution stateDistribution(List<Card> cards) {

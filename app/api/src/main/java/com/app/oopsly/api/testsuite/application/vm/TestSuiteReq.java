@@ -16,14 +16,14 @@
 
 package com.app.oopsly.api.testsuite.application.vm;
 
-import com.app.oopsly.api.testsuite.domain.TestSuiteSelectionPayload;
-import jakarta.validation.constraints.NotNull;
-import java.util.List;
-import java.util.UUID;
-import lombok.NonNull;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
+/** The slug is generated on the server from the title. */
 public record TestSuiteReq(
-        @NonNull @NotNull String title,
-        Boolean isActive,
-        List<UUID> subjectIds,
-        TestSuiteSelectionPayload selection) {}
+        @NotBlank @Size(max = 255) String title,
+        @Size(max = 2000) String description,
+        @Min(1) @Max(600) Integer timeLimitMinutes,
+        Boolean isActive) {}

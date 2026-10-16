@@ -45,14 +45,14 @@ class SubjectControllerTest extends AbstractControllerTest {
 
     @Test
     void unauthenticated_returnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/shelves/{shelfId}/subjects", shelfId))
+        mockMvc.perform(get("/v1/shelves/{shelfId}/subjects", shelfId))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void create_valid_returnsCreated() throws Exception {
         mockMvc.perform(
-                        post("/shelves/{shelfId}/subjects", shelfId)
+                        post("/v1/shelves/{shelfId}/subjects", shelfId)
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
@@ -66,7 +66,7 @@ class SubjectControllerTest extends AbstractControllerTest {
     @Test
     void create_blankName_returnsBadRequest() throws Exception {
         mockMvc.perform(
-                        post("/shelves/{shelfId}/subjects", shelfId)
+                        post("/v1/shelves/{shelfId}/subjects", shelfId)
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
@@ -80,8 +80,8 @@ class SubjectControllerTest extends AbstractControllerTest {
     void list_returnsOk() throws Exception {
         LibraryFixture.createSubject(mockMvc, objectMapper, session.accessToken(), shelfId);
         mockMvc.perform(
-                        get("/shelves/{shelfId}/subjects", shelfId)
-                                .param("page", "0")
+                        get("/v1/shelves/{shelfId}/subjects", shelfId)
+                                .param("page", "1")
                                 .param("size", "20")
                                 .with(bearer(session)))
                 .andExpect(status().isOk())
@@ -93,12 +93,12 @@ class SubjectControllerTest extends AbstractControllerTest {
         UUID subjectId =
                 LibraryFixture.createSubject(mockMvc, objectMapper, session.accessToken(), shelfId);
         mockMvc.perform(
-                        get("/shelves/{shelfId}/subjects/{id}", shelfId, subjectId)
+                        get("/v1/shelves/{shelfId}/subjects/{id}", shelfId, subjectId)
                                 .with(bearer(session)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(subjectId.toString()));
         mockMvc.perform(
-                        get("/shelves/{shelfId}/subjects/{id}", shelfId, UUID.randomUUID())
+                        get("/v1/shelves/{shelfId}/subjects/{id}", shelfId, UUID.randomUUID())
                                 .with(bearer(session)))
                 .andExpect(status().isNotFound());
     }
@@ -108,7 +108,7 @@ class SubjectControllerTest extends AbstractControllerTest {
         UUID subjectId =
                 LibraryFixture.createSubject(mockMvc, objectMapper, session.accessToken(), shelfId);
         mockMvc.perform(
-                        put("/shelves/{shelfId}/subjects/{id}", shelfId, subjectId)
+                        put("/v1/shelves/{shelfId}/subjects/{id}", shelfId, subjectId)
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
@@ -124,7 +124,7 @@ class SubjectControllerTest extends AbstractControllerTest {
         UUID subjectId =
                 LibraryFixture.createSubject(mockMvc, objectMapper, session.accessToken(), shelfId);
         mockMvc.perform(
-                        put("/shelves/{shelfId}/subjects/{id}/settings", shelfId, subjectId)
+                        put("/v1/shelves/{shelfId}/subjects/{id}/settings", shelfId, subjectId)
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
@@ -140,11 +140,11 @@ class SubjectControllerTest extends AbstractControllerTest {
         UUID subjectId =
                 LibraryFixture.createSubject(mockMvc, objectMapper, session.accessToken(), shelfId);
         mockMvc.perform(
-                        patch("/shelves/{shelfId}/subjects/{id}", shelfId, subjectId)
+                        patch("/v1/shelves/{shelfId}/subjects/{id}", shelfId, subjectId)
                                 .with(bearer(session)))
                 .andExpect(status().isOk());
         mockMvc.perform(
-                        get("/shelves/{shelfId}/subjects/{id}", shelfId, subjectId)
+                        get("/v1/shelves/{shelfId}/subjects/{id}", shelfId, subjectId)
                                 .with(bearer(session)))
                 .andExpect(status().isNotFound());
     }
@@ -152,7 +152,7 @@ class SubjectControllerTest extends AbstractControllerTest {
     @Test
     void create_unknownShelf_returnsNotFound() throws Exception {
         mockMvc.perform(
-                        post("/shelves/{shelfId}/subjects", UUID.randomUUID())
+                        post("/v1/shelves/{shelfId}/subjects", UUID.randomUUID())
                                 .with(bearer(session))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(

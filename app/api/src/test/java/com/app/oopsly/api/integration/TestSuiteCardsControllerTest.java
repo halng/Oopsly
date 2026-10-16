@@ -42,19 +42,16 @@ class TestSuiteCardsControllerTest extends AbstractControllerTest {
                 LibraryFixture.seed(mockMvc, objectMapper, session.accessToken());
         var create =
                 mockMvc.perform(
-                                post("/shelves/{s}/test-suites", library.shelfId())
+                                post("/v1/shelves/{s}/test-suites", library.shelfId())
                                         .with(bearer(session))
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(
                                                 """
                                                 {
                                                   "title": "Cards Suite",
-                                                  "isActive": true,
-                                                  "subjectIds": ["%s"],
-                                                  "selection": { "mode": "ALL", "limit": 20, "shuffle": false }
+                                                  "isActive": true
                                                 }
-                                                """
-                                                        .formatted(library.subjectId())))
+                                                """))
                         .andExpect(status().isCreated())
                         .andReturn();
         suiteId =

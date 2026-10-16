@@ -36,15 +36,16 @@ export default function DiscoverPage() {
         new Set(catalog.flatMap((item) => item.tags || []))
     );
     const filteredCatalog = catalog.filter((item) => {
-        // const q = searchQuery.toLowerCase();
-        // const matchesSearch =
-        //     item.title.toLowerCase().includes(q) ||
-        //     (item.description || '').toLowerCase().includes(q) ||
-        //     (item.tags || []).some((t) => t.toLowerCase().includes(q));
-        // const matchesTag = selectedTag
-        //     ? (item.tags || []).includes(selectedTag)
-        //     : true;
-        // return matchesSearch && matchesTag;
+        const q = searchQuery.toLowerCase();
+        const title = (item.name || (item as { title?: string }).title || '').toLowerCase();
+        const matchesSearch =
+            title.includes(q) ||
+            (item.description || '').toLowerCase().includes(q) ||
+            (item.tags || []).some((t) => t.toLowerCase().includes(q));
+        const matchesTag = selectedTag
+            ? (item.tags || []).includes(selectedTag)
+            : true;
+        return matchesSearch && matchesTag;
     });
 
     return (

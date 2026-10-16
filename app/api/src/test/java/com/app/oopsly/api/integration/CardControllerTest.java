@@ -88,7 +88,7 @@ class CardControllerTest extends AbstractControllerTest {
 
         mockMvc.perform(
                         get("/v1/shelves/{s}/subjects/{sub}/cards", shelfId, subjectId)
-                                .param("page", "0")
+                                .param("page", "1")
                                 .param("size", "20")
                                 .with(bearer(session)))
                 .andExpect(status().isOk())
@@ -173,6 +173,40 @@ class CardControllerTest extends AbstractControllerTest {
                         get("/v1/shelves/{s}/subjects/{sub}/cards/{id}", shelfId, subjectId, cardId)
                                 .with(bearer(session)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void due_returnsNewCardsCappedByNewLimit_andKeepsHint() throws Exception {
+        mockMvc.perform(
+                        post("/v1/shelves/{s}/subjects/{sub}/cards", shelfId, subjectId)
+                                .with(bearer(session))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {
+                                          "cards": [
+                                            {"front":"Q1","back":"A1","hint":"first"},
+                                            {"front":"Q2","back":"A2"},
+                                            {"front":"Q3","back":"A3"}
+                                          ]
+                                        }
+                                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].hint").value("first"));
+
+        mockMvc.perform(
+                        get("/v1/shelves/{s}/subjects/{sub}/cards/due", shelfId, subjectId)
+                                .param("limit", "10")
+                                .param("newLimit", "2")
+                                .with(bearer(session)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(2));
+
+        mockMvc.perform(
+                        get("/v1/shelves/{s}/subjects/{sub}/cards/due", shelfId, subjectId)
+                                .with(bearer(session)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(3));
     }
 
     @Test

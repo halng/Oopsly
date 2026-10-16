@@ -1,5 +1,5 @@
 'use client';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ArrowLeft,
@@ -7,7 +7,6 @@ import {
     Play,
     Brain,
     Gamepad2,
-    FileCheck2,
     Trash2,
     Edit2,
     Search,
@@ -18,7 +17,7 @@ import {
     Users,
     Calendar as CalendarIcon,
 } from 'lucide-react';
-import { Subject, Card, TestSuite } from '@/types';
+import { Card } from '@/types';
 import { ApiService } from '@/services/api';
 import { formatInterval } from '@/utils/fsrs';
 import {
@@ -27,16 +26,18 @@ import {
     JoinGameModal,
     CssProgressBar,
 } from '@/components/shared';
-import { useShelfStore, useSubjectStore } from '@/store';
-
-
+import { useSubjectContext } from '@/hooks/useSubjectContext';
 
 export default function SubjectDetailsPage() {
-        const params = useParams<{ slug: string; subSlug: string }>();
     const router = useRouter();
+    const {
+        shelf: currentShelf,
+        subject: currentSubject,
+        baseUrl,
+        isLoading: isContextLoading,
+    } = useSubjectContext();
     const [cards, setCards] = useState<Card[]>([]);
-    const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isCardsLoading, setIsCardsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddingCard, setIsAddingCard] = useState(false);
     const [newFront, setNewFront] = useState('');
@@ -55,30 +56,22 @@ export default function SubjectDetailsPage() {
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
     const [isJoinGameOpen, setIsJoinGameOpen] = useState(false);
 
-    const currentShelf = params.slug
-        ? useShelfStore.getState().getCurrentShelf(params.slug)
-        : undefined;
-    const currentSubject = currentShelf && params.subSlug
-        ? useSubjectStore.getState().getCurrentSubject(currentShelf.id, params.subSlug)
-        : undefined;
     const subjectId = currentSubject?.id;
-
+    const shelfId = currentShelf?.id;
 
     const loadData = useCallback(async () => {
-        if (!subjectId) return;
-        setIsLoading(true);
-        if (!currentShelf) {
-            setIsLoading(false);
+        if (!subjectId || !shelfId) {
+            setIsCardsLoading(false);
             return;
         }
-        const [cardsRes] = await Promise.all([
-            ApiService.getSubjectCards(currentShelf?.id, subjectId),
-        ]);
+        setIsCardsLoading(true);
+        const cardsRes = await ApiService.getSubjectCards(shelfId, subjectId);
         const fetchedCards = cardsRes.isSuccess ? cardsRes.data?.entities || [] : [];
-        const nextCards = fetchedCards.filter((c) => !c.isDeleted);
-        setCards(nextCards);
-        setIsLoading(false);
-    }, [currentShelf, subjectId]);
+        setCards(fetchedCards.filter((c) => !c.isDeleted));
+        setIsCardsLoading(false);
+    }, [shelfId, subjectId]);
+
+    const isLoading = isContextLoading || isCardsLoading;
 
     useEffect(() => {
         const loadInitialData = () => {
@@ -93,14 +86,6 @@ export default function SubjectDetailsPage() {
             window.removeEventListener('oopsly-sync-completed', handleSyncComplete);
         };
     }, [subjectId, loadData]);
-
-    if (!params.slug || !params.subSlug) {
-        router.push('/home');
-        return null;
-    }
-    
-
-    const baseUrl = `/home/${currentShelf?.slug}/subjects/${currentSubject?.slug}`;
 
     const handleCreateCard = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -187,10 +172,12 @@ export default function SubjectDetailsPage() {
                 <button
                     type="button"
                     data-testid="btn-subject-back"
-                    onClick={() => router.push(`/home/${currentShelf?.slug}`)}
+                    onClick={() =>
+                        router.push(currentShelf ? `/home/${currentShelf.slug}` : '/home')
+                    }
                     className="px-4 py-2 rounded-xl bg-stone-900 text-white text-xs font-bold cursor-pointer"
                 >
-                    Back to {currentShelf?.name}
+                    Back to {currentShelf?.name ?? 'Library'}
                 </button>
             </div>
         );
@@ -258,7 +245,7 @@ export default function SubjectDetailsPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                     <button
                         type="button"
                         data-testid="btn-subject-review"
@@ -285,15 +272,6 @@ export default function SubjectDetailsPage() {
                     >
                         <Gamepad2 className="w-4 h-4" />
                         Speed Match
-                    </button>
-                    <button
-                        type="button"
-                        data-testid="btn-subject-test"
-                        onClick={() => router.push(`${baseUrl}/test`)}
-                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold cursor-pointer"
-                    >
-                        <FileCheck2 className="w-4 h-4" />
-                        Practice Test
                     </button>
                     <button
                         type="button"
@@ -541,13 +519,6 @@ export default function SubjectDetailsPage() {
                         ))
                     )}
                 </div>
-
-                {testSuites.length > 0 && (
-                    <p className="text-xs text-stone-400">
-                        {testSuites.length} saved test suite
-                        {testSuites.length === 1 ? '' : 's'}
-                    </p>
-                )}
             </div>
 
             {isAiModalOpen && (

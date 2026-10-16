@@ -21,4 +21,10 @@ import jakarta.validation.constraints.Size;
 
 public record CardItemReq(
         @NotNull @Size(min = 1, max = 500) String front,
-        @NotNull @Size(min = 1, max = 2000) String back) {}
+        @NotNull @Size(min = 1, max = 2000) String back,
+        @Size(max = 255) String hint) {
+
+    public CardItemReq(String front, String back) {
+        this(front, back, null);
+    }
+}

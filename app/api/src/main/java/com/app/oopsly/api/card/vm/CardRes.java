@@ -24,10 +24,12 @@ public record CardRes(
         UUID id,
         String front,
         String back,
+        String hint,
         DifficultyLevel difficultyLevel,
         Instant nextPracticeTime,
         Integer numberOfPractice,
         Double fsrsStability,
         Double fsrsDifficulty,
         Integer fsrsIntervalDays,
-        Integer fsrsRepetitions) {}
+        Integer fsrsRepetitions,
+        Instant lastReviewedAt) {}

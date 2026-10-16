@@ -16,7 +16,31 @@
 
 package com.app.oopsly.api.shared.util;
 
+import java.text.Normalizer;
+import java.util.Locale;
+
 public class StringUtils {
+    /**
+     * Build a URL slug: strip accents, lowercase, and join alphanumeric runs with dashes.
+     *
+     * @param value the source text
+     * @param fallback returned when the value has no alphanumeric characters
+     * @return the slug
+     */
+    public static String slugify(String value, String fallback) {
+        if (value == null) {
+            return fallback;
+        }
+        String ascii =
+                Normalizer.normalize(value.replace('đ', 'd').replace('Đ', 'D'), Normalizer.Form.NFD)
+                        .replaceAll("\\p{M}+", "");
+        String slug =
+                ascii.toLowerCase(Locale.ROOT)
+                        .replaceAll("[^a-z0-9]+", "-")
+                        .replaceAll("(^-+)|(-+$)", "");
+        return slug.isEmpty() ? fallback : slug;
+    }
+
     /**
      * Mask a string by replacing all characters except the first and last with asterisks. If the
      * string length is less than or equal to 2, return the original string

@@ -37,6 +37,19 @@ class StringUtilTest {
     }
 
     @Test
+    void slugify_stripsAccentsAndJoinsWithDashes() {
+        assertEquals("chuong-1-te-bao", StringUtils.slugify("  Chương 1: Tế bào! ", "x"));
+        assertEquals("dap-an", StringUtils.slugify("Đáp án", "x"));
+        assertEquals("a-b", StringUtils.slugify("--A  &  B--", "x"));
+    }
+
+    @Test
+    void slugify_returnsFallbackWhenNothingIsLeft() {
+        assertEquals("x", StringUtils.slugify(null, "x"));
+        assertEquals("x", StringUtils.slugify("???", "x"));
+    }
+
+    @Test
     void masked_masksMiddleForLengthThree() {
         assertEquals("a*c", StringUtils.masked("abc"));
     }

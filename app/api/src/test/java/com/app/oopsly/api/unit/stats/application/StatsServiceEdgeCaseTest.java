@@ -25,7 +25,6 @@ import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shelf.Shelf;
-import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.stats.application.StatsServiceImpl;
 import com.app.oopsly.api.stats.application.vm.StatsRes;
 import com.app.oopsly.api.stats.domain.ReviewLogEntity;
@@ -44,8 +43,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 
 // @Disabled("Disabled because the retention rate calculation is not yet implemented in the
 // StatsServiceImpl")
@@ -54,7 +51,6 @@ import org.springframework.data.domain.Pageable;
 class StatsServiceEdgeCaseTest {
 
     @Mock private UserService userService;
-    @Mock private ShelfRepository shelfRepository;
     @Mock private SubjectRepository subjectRepository;
     @Mock private CardRepository cardRepository;
     @Mock private ReviewLogRepository reviewLogRepository;
@@ -104,10 +100,7 @@ class StatsServiceEdgeCaseTest {
 
     private void libraryOf(List<Card> cards) {
         when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findAllByUser(eq(user), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(shelf)));
-        when(subjectRepository.findAllByShelve(eq(shelf), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(subject)));
+        when(subjectRepository.findAllByUser(user)).thenReturn(List.of(subject));
         when(cardRepository.findAllBySubjectInAndDeletedFalse(List.of(subject))).thenReturn(cards);
     }
 
@@ -118,8 +111,7 @@ class StatsServiceEdgeCaseTest {
     @Test
     void getUserStats_withoutAnyShelfSkipsTheCardLookup() {
         when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findAllByUser(eq(user), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of()));
+        when(subjectRepository.findAllByUser(user)).thenReturn(List.of());
         when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(user.getId()), any(), any()))
                 .thenReturn(0L);
         when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(

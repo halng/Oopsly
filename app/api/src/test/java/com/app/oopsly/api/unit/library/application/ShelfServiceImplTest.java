@@ -24,14 +24,16 @@ import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
-import com.app.oopsly.api.card.CardService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shared.application.vm.PagingRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfCount;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.shelf.ShelfServiceImpl;
 import com.app.oopsly.api.shelf.vm.ShelfReq;
+import com.app.oopsly.api.shelf.vm.ShelfRes;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
@@ -43,7 +45,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,8 +68,6 @@ class ShelfServiceImplTest {
     @Mock private TestSuiteRepository testSuiteRepository;
 
     @Mock private UserService userService;
-
-    @Mock private CardService cardService;
 
     @InjectMocks private ShelfServiceImpl shelveService;
 
@@ -279,11 +278,26 @@ class ShelfServiceImplTest {
         Page<Shelf> page = new PageImpl<>(shelves, PageRequest.of(1, 10), 3);
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findAllByUser(eq(currentUser), any(Pageable.class))).thenReturn(page);
+        when(subjectRepository.countByShelves(anyList()))
+                .thenReturn(List.of(new ShelfCount(shelves.get(0).getId(), 2)));
+        when(cardRepository.countByShelves(anyList()))
+                .thenReturn(List.of(new ShelfCount(shelves.get(0).getId(), 5)));
+        when(cardRepository.countDueByShelves(anyList()))
+                .thenReturn(List.of(new ShelfCount(shelves.get(0).getId(), 1)));
 
         ApiRes result = shelveService.getAll(1, 10);
 
         assertNotNull(result);
+        @SuppressWarnings("unchecked")
+        PagingRes<ShelfRes> paging = (PagingRes<ShelfRes>) result.getBody().data();
+        assertEquals(2, paging.entities().get(0).stats().get("totalSubjects"));
+        assertEquals(5, paging.entities().get(0).stats().get("totalCards"));
+        assertEquals(1, paging.entities().get(0).stats().get("totalDue"));
+        assertEquals(0, paging.entities().get(1).stats().get("totalDue"));
         verify(shelfRepository, times(1)).findAllByUser(eq(currentUser), any(Pageable.class));
+        verify(subjectRepository, times(1)).countByShelves(anyList());
+        verify(cardRepository, times(1)).countByShelves(anyList());
+        verify(cardRepository, times(1)).countDueByShelves(anyList());
     }
 
     // Fallback Function Tests
@@ -479,11 +493,22 @@ class ShelfServiceImplTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(shelfRepository.findByIdAndUser(shelveId, currentUser))
                 .thenReturn(Optional.of(existingShelve));
-        when(cardService.getShortPracticeStats(subject)).thenReturn(Pair.of(3, 70.0));
+        when(subjectRepository.countByShelves(anyList()))
+                .thenReturn(List.of(new ShelfCount(shelveId, 1)));
+        when(cardRepository.countByShelves(anyList()))
+                .thenReturn(List.of(new ShelfCount(shelveId, 1)));
+        when(cardRepository.countDueByShelves(anyList()))
+                .thenReturn(List.of(new ShelfCount(shelveId, 3)));
 
         ApiRes result = shelveService.getById(shelveId);
 
         assertTrue(result.getBody().isSuccess());
-        verify(cardService, times(2)).getShortPracticeStats(subject);
+        ShelfRes view = (ShelfRes) result.getBody().data();
+        assertEquals(1, view.stats().get("totalSubjects"));
+        assertEquals(1, view.stats().get("totalCards"));
+        assertEquals(3, view.stats().get("totalDue"));
+        verify(subjectRepository, times(1)).countByShelves(anyList());
+        verify(cardRepository, times(1)).countByShelves(anyList());
+        verify(cardRepository, times(1)).countDueByShelves(anyList());
     }
 }

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import StudyPage from '@/app/(app)/study/page';
+import StudyPage from '@/app/(user)/study/page';
 import { getInitialGardenState } from '@/utils/gardenData';
 
 vi.mock('@/utils/gardenData', async () => {

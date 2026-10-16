@@ -82,6 +82,20 @@ class GamificationRulesTest {
         assertEquals(GamificationRules.QUIZ_MIN_POINTS, GamificationRules.quizPoints(boundary));
     }
 
+    @ParameterizedTest
+    @DisplayName("learnXp should pay per mastered card plus a completion bonus")
+    @CsvSource({"0,0", "-3,0", "1,30", "10,75"})
+    void learnXp_shouldPayPerCardPlusBonus(int cards, int expected) {
+        assertEquals(expected, GamificationRules.learnXp(cards));
+    }
+
+    @ParameterizedTest
+    @DisplayName("matchXp should add the fast bonus only for quick, non-empty rounds")
+    @CsvSource({"0,10,0", "6,0,20", "6,30,30", "6,31,20", "1,5,30"})
+    void matchXp_shouldAddFastBonusOnlyWhenQuick(int pairs, int seconds, int expected) {
+        assertEquals(expected, GamificationRules.matchXp(pairs, seconds));
+    }
+
     @Test
     @DisplayName("constants should stay consistent when compared against the game design")
     void constants_shouldStayConsistent_whenComparedAgainstGameDesign() {
