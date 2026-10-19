@@ -1,0 +1,375 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Oopsly Java API on Fargate. Postgres and Redis sit in the same VPC.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: stg
+    AllowedPattern: "[a-z0-9-]+"
+  JwtSecret:
+    Type: String
+    NoEcho: true
+    Description: JWT_SECRET used to sign access tokens.
+  AllowedOrigins:
+    Type: String
+    Default: http://localhost:3000
+    Description: Comma-separated browser origins allowed to call the API.
+  DbEngineVersion:
+    Type: String
+    Default: "15.10"
+  RedisEngineVersion:
+    Type: String
+    Default: "7.1"
+  ImageTag:
+    Type: String
+    Default: latest
+  DesiredCount:
+    Type: Number
+    Default: 1
+    MinValue: 0
+    MaxValue: 4
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.43.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: 10.43.0.0/24
+      MapPublicIpOnLaunch: true
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: 10.43.1.0/24
+      MapPublicIpOnLaunch: true
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicRouteA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicRouteB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref PublicRouteTable
+
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Public entry for the Oopsly API
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  TaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: API tasks accept traffic only from the load balancer
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 9009
+          ToPort: 9009
+          SourceSecurityGroupId: !Ref AlbSecurityGroup
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Postgres accepts API tasks only
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref TaskSecurityGroup
+
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Redis accepts API tasks only
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !Ref TaskSecurityGroup
+
+  DbSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub oopsly-api-${Environment}
+      RecoveryWindowInDays: 0
+      GenerateSecretString:
+        SecretStringTemplate: '{"username":"oopsly"}'
+        GenerateStringKey: password
+        PasswordLength: 32
+        ExcludePunctuation: true
+
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: API database subnets
+      SubnetIds:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+
+  ApiDatabase:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      DBInstanceIdentifier: !Sub oopsly-api-${Environment}
+      Engine: postgres
+      EngineVersion: !Ref DbEngineVersion
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: 20
+      StorageType: gp3
+      StorageEncrypted: true
+      DBName: oopsly
+      MasterUsername: oopsly
+      MasterUserPassword: !Sub "{{resolve:secretsmanager:${DbSecret}:SecretString:password}}"
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      VPCSecurityGroups:
+        - !Ref DatabaseSecurityGroup
+      PubliclyAccessible: false
+      BackupRetentionPeriod: 1
+      DeletionProtection: false
+
+  RedisSubnets:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: API Redis subnets
+      SubnetIds:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+
+  Redis:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:
+      ClusterName: !Sub oopsly-api-${Environment}
+      Engine: redis
+      EngineVersion: !Ref RedisEngineVersion
+      CacheNodeType: cache.t4g.micro
+      NumCacheNodes: 1
+      CacheSubnetGroupName: !Ref RedisSubnets
+      VpcSecurityGroupIds:
+        - !Ref RedisSecurityGroup
+
+  AppSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub oopsly-api-${Environment}-app
+      RecoveryWindowInDays: 0
+      SecretString: !Sub
+        - '{"DB_PASSWORD":"${Password}","JWT_SECRET":"${Jwt}"}'
+        - Password: !Sub "{{resolve:secretsmanager:${DbSecret}:SecretString:password}}"
+          Jwt: !Ref JwtSecret
+
+  ApiRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub oopsly-api-${Environment}
+      EmptyOnDelete: true
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {"rules":[{"rulePriority":1,"description":"Keep the last 10 images","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}}]}
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/oopsly-api-${Environment}
+      RetentionInDays: 14
+
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub oopsly-api-${Environment}-execution
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: read-api-secret
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref AppSecret
+
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub oopsly-api-${Environment}
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub oopsly-api-${Environment}
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Cpu: "1024"
+      Memory: "2048"
+      ExecutionRoleArn: !GetAtt ExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: oopsly-api
+          Image: !Sub "${ApiRepository.RepositoryUri}:${ImageTag}"
+          Essential: true
+          PortMappings:
+            - ContainerPort: 9009
+              Protocol: tcp
+          Environment:
+            - Name: DB_HOST
+              Value: !GetAtt ApiDatabase.Endpoint.Address
+            - Name: DB_PORT
+              Value: "5432"
+            - Name: DB_NAME
+              Value: oopsly
+            - Name: DB_USERNAME
+              Value: oopsly
+            - Name: REDIS_HOST
+              Value: !GetAtt Redis.RedisEndpoint.Address
+            - Name: REDIS_PORT
+              Value: !Sub
+                - "${Port}"
+                - Port: !GetAtt Redis.RedisEndpoint.Port
+            - Name: ALLOWED_ORIGINS
+              Value: !Ref AllowedOrigins
+          Secrets:
+            - Name: DB_PASSWORD
+              ValueFrom: !Sub "${AppSecret}:DB_PASSWORD::"
+            - Name: JWT_SECRET
+              ValueFrom: !Sub "${AppSecret}:JWT_SECRET::"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub oopsly-api-${Environment}
+      Type: application
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref AlbSecurityGroup
+      Subnets:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub oopsly-api-${Environment}
+      VpcId: !Ref Vpc
+      Port: 9009
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckPath: /api/oopsly/actuator/health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: "200"
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: "30"
+
+  HttpListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  Service:
+    Type: AWS::ECS::Service
+    DependsOn: HttpListener
+    Properties:
+      ServiceName: oopsly-api
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinition
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      HealthCheckGracePeriodSeconds: 180
+      DeploymentConfiguration:
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref TaskSecurityGroup
+          Subnets:
+            - !Ref PublicSubnetA
+            - !Ref PublicSubnetB
+      LoadBalancers:
+        - ContainerName: oopsly-api
+          ContainerPort: 9009
+          TargetGroupArn: !Ref TargetGroup
+
+Outputs:
+  ApiUrl:
+    Description: Base URL for the Java API. Routes start at /api/oopsly.
+    Value: !Sub http://${LoadBalancer.DNSName}
+
+  EcrRepository:
+    Description: Push the API image here.
+    Value: !GetAtt ApiRepository.RepositoryUri

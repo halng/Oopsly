@@ -1,0 +1,158 @@
+name: Deploy API to Fargate
+
+on:
+  workflow_call:
+    inputs:
+      git_hash:
+        required: false
+        description: Git hash to deploy. Provide this or git_tag, not both.
+        type: string
+      git_tag:
+        required: false
+        description: Git tag to deploy. Provide this or git_hash, not both.
+        type: string
+      env:
+        required: true
+        type: string
+        description: Stack environment, for example stg.
+      aws_region:
+        required: false
+        type: string
+        default: ap-southeast-1
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
+      JWT_SECRET:
+        required: true
+  workflow_dispatch:
+    inputs:
+      git_hash:
+        required: false
+        type: string
+      git_tag:
+        required: false
+        type: string
+      env:
+        required: true
+        type: string
+        description: Stack environment, for example stg.
+      aws_region:
+        required: false
+        type: string
+        default: ap-southeast-1
+
+concurrency:
+  group: deploy-api-fargate-${{ inputs.env }}
+  cancel-in-progress: false
+
+jobs:
+  validate-inputs:
+    runs-on: ubuntu-latest
+    outputs:
+      release-ref: ${{ steps.check.outputs.tag }}
+      environment: ${{ steps.check.outputs.environment }}
+      aws-region: ${{ steps.check.outputs.region }}
+    steps:
+      - name: Check deployment parameters
+        id: check
+        run: |
+          if [[ -z "${{ inputs.git_hash }}" && -z "${{ inputs.git_tag }}" ]]; then
+            echo "Error: Either git_hash or git_tag must be provided."
+            exit 1
+          fi
+          if [[ -n "${{ inputs.git_hash }}" && -n "${{ inputs.git_tag }}" ]]; then
+            echo "Error: Only one of git_hash or git_tag should be provided."
+            exit 1
+          fi
+          if [[ -n "${{ inputs.git_hash }}" ]]; then
+            echo "tag=${{ inputs.git_hash }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ inputs.git_tag }}" >> "$GITHUB_OUTPUT"
+          fi
+          echo "environment=$(echo '${{ inputs.env }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+          echo "region=${{ inputs.aws_region }}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    environment:
+      name: ${{ inputs.env }}_approval
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    needs: validate-inputs
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate-inputs.outputs.release-ref }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ needs.validate-inputs.outputs.aws-region }}
+
+      - name: Open an empty Fargate service so the image repository exists
+        working-directory: app/api
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ALLOWED_ORIGINS: ${{ vars.API_ALLOWED_ORIGINS }}
+        run: |
+          REPO="oopsly-api-${{ needs.validate-inputs.outputs.environment }}"
+          if aws ecr describe-repositories --repository-names "$REPO" >/dev/null 2>&1; then
+            exit 0
+          fi
+          aws cloudformation deploy \
+            --template-file template.yaml \
+            --stack-name "oopsly-api-${{ needs.validate-inputs.outputs.environment }}" \
+            --region "${{ needs.validate-inputs.outputs.aws-region }}" \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              "Environment=${{ needs.validate-inputs.outputs.environment }}" \
+              "JwtSecret=${JWT_SECRET}" \
+              "ImageTag=latest" \
+              "DesiredCount=0" \
+              "AllowedOrigins=${ALLOWED_ORIGINS:-http://localhost:3000}"
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Build the API image
+        working-directory: app/api
+        run: |
+          IMAGE="${{ steps.login-ecr.outputs.registry }}/oopsly-api-${{ needs.validate-inputs.outputs.environment }}:${{ needs.validate-inputs.outputs.release-ref }}"
+          ./gradlew bootBuildImage --imageName="$IMAGE"
+          docker tag "$IMAGE" "${{ steps.login-ecr.outputs.registry }}/oopsly-api-${{ needs.validate-inputs.outputs.environment }}:latest"
+          docker push "$IMAGE"
+          docker push "${{ steps.login-ecr.outputs.registry }}/oopsly-api-${{ needs.validate-inputs.outputs.environment }}:latest"
+
+      - name: Deploy the image to Fargate
+        working-directory: app/api
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ALLOWED_ORIGINS: ${{ vars.API_ALLOWED_ORIGINS }}
+        run: |
+          aws cloudformation deploy \
+            --template-file template.yaml \
+            --stack-name "oopsly-api-${{ needs.validate-inputs.outputs.environment }}" \
+            --region "${{ needs.validate-inputs.outputs.aws-region }}" \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              "Environment=${{ needs.validate-inputs.outputs.environment }}" \
+              "JwtSecret=${JWT_SECRET}" \
+              "ImageTag=${{ needs.validate-inputs.outputs.release-ref }}" \
+              "DesiredCount=1" \
+              "AllowedOrigins=${ALLOWED_ORIGINS:-http://localhost:3000}"

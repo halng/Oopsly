@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Grade } from '@/types';
+import { GameReward } from '@/services/gameApi';
 
 export interface ReviewSessionStats {
     totalReviewed: number;
@@ -9,6 +10,7 @@ export interface ReviewSessionStats {
     subjectTitle: string;
     subjectId: string;
     shelfId: string;
+    pouch?: GameReward | null;
 }
 
 export const useStudySessionStore = create<{

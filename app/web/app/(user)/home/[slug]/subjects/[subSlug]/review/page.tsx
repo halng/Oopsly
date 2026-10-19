@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Card, Grade } from '@/types';
 import { ApiService } from '@/services/api';
+import { GameService } from '@/services/gameApi';
 import { formatInterval, scheduleCard } from '@/utils/fsrs';
 import {
     applyGrade,
@@ -200,8 +201,23 @@ export default function ReviewPage() {
     }, [isAutoTTS, current, isFlipped]);
 
     const finishSession = useCallback(
-        (xpEarned: number, counts: Record<Grade, number>) => {
+        async (xpEarned: number, counts: Record<Grade, number>) => {
             if (!shelf || !subject) return;
+            const cardsReviewed =
+                (counts[1] || 0) +
+                (counts[2] || 0) +
+                (counts[3] || 0) +
+                (counts[4] || 0);
+            const reward =
+                cardsReviewed > 0
+                    ? await GameService.claimReview({
+                          cardsReviewed,
+                          again: counts[1] || 0,
+                          hard: counts[2] || 0,
+                          good: counts[3] || 0,
+                          easy: counts[4] || 0,
+                      })
+                    : null;
             setLastReview({
                 totalReviewed: sessionSize,
                 xpEarned,
@@ -212,6 +228,7 @@ export default function ReviewPage() {
                 subjectTitle: subject.name,
                 subjectId: subject.id,
                 shelfId: shelf.id,
+                pouch: reward?.isSuccess ? reward.data : null,
             });
             router.push(`${baseUrl}/review/complete`);
         },

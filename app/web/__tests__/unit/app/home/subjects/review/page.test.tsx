@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ReviewPage from '@/app/(user)/home/[slug]/subjects/[subSlug]/review/page';
 import { ApiService } from '@/services/api';
+import { GameService } from '@/services/gameApi';
 import { card, subjectContext } from '@/__tests__/unit/helpers/studyFixtures';
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
@@ -20,6 +21,11 @@ vi.mock('@/services/api', () => ({
         getDueCards: vi.fn(),
         getSubjectCards: vi.fn(),
         gradeCard: vi.fn(),
+    },
+}));
+vi.mock('@/services/gameApi', () => ({
+    GameService: {
+        claimReview: vi.fn(),
     },
 }));
 
@@ -49,6 +55,22 @@ describe('ReviewPage', () => {
             statusCode: 200,
             timestamp: '',
         });
+        vi.mocked(GameService.claimReview).mockResolvedValue({
+            isSuccess: true,
+            data: {
+                species: 'wildflower_meadow',
+                rarity: 'Common',
+                dewDropsGained: 1,
+                sunlightOrbsGained: 0,
+                forestCoinsGained: 1,
+                growthPointsGained: 2,
+                xpGained: 0,
+                garden: {} as never,
+            },
+            message: '',
+            statusCode: 200,
+            timestamp: '',
+        });
     });
 
     it('loads a due card and grades it Easy', async () => {
@@ -70,6 +92,15 @@ describe('ReviewPage', () => {
                 'c1',
                 4
             )
+        );
+        await waitFor(() =>
+            expect(GameService.claimReview).toHaveBeenCalledWith({
+                cardsReviewed: 1,
+                again: 0,
+                hard: 0,
+                good: 0,
+                easy: 1,
+            })
         );
     });
 

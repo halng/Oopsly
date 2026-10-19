@@ -13,7 +13,12 @@ import {
 import { useStudySessionStore } from '@/store';
 import { useSubjectContext } from '@/hooks/useSubjectContext';
 import { useStudyFx } from '@/hooks/useStudyFx';
+import dynamic from 'next/dynamic';
 import { StudyConfetti, StudyShell } from '@/components/study';
+
+const PouchReveal = dynamic(() => import('@/components/garden/PouchReveal'), {
+    ssr: false,
+});
 
 export default function ReviewCompletePage() {
     const router = useRouter();
@@ -123,6 +128,12 @@ export default function ReviewCompletePage() {
                     <div className="text-[9px]">Easy</div>
                 </div>
             </div>
+            {stats.pouch ? (
+                <PouchReveal
+                    species={stats.pouch.species}
+                    rarity={stats.pouch.rarity}
+                />
+            ) : null}
             <div className="flex flex-col sm:flex-row gap-2.5">
                 <button
                     type="button"
