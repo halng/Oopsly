@@ -16,6 +16,23 @@ def _token(**claims):
     return jwt.encode(payload, signing_key(), algorithm="HS256")
 
 
+def test_java_hs384_access_token_verifies():
+    token = jwt.encode(
+        {
+            "id": "user-9",
+            "sub": "test@oopsly.com",
+            "role": "USER",
+            "exp": int(time.time()) + 60,
+        },
+        signing_key(),
+        algorithm="HS384",
+    )
+    result = verify_access_token(token)
+    assert result.user_id == "user-9"
+    assert result.email == "test@oopsly.com"
+    assert result.role == "USER"
+
+
 def test_verify_returns_id_email_and_role():
     result = verify_access_token(
         _token(id="user-9", sub="learner@oopsly.app", role="USER")

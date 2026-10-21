@@ -2,6 +2,7 @@ import random
 from datetime import datetime, timezone
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models import Garden, Plot, Tree
@@ -95,8 +96,12 @@ def to_state(garden: Garden) -> GardenState:
     )
 
 
+def _load_garden(db: Session, user_id: str) -> Garden | None:
+    return db.scalar(select(Garden).where(Garden.user_id == user_id))
+
+
 def get_or_create_garden(db: Session, user_id: str) -> Garden:
-    garden = db.scalar(select(Garden).where(Garden.user_id == user_id))
+    garden = _load_garden(db, user_id)
     if garden is not None:
         return garden
     inventory = {species: 0 for species in SPECIES}
@@ -108,20 +113,28 @@ def get_or_create_garden(db: Session, user_id: str) -> Garden:
         forest_level=1,
         active_weather="sunny",
     )
-    db.add(garden)
-    db.flush()
-    for index in range(PLOT_COUNT):
-        db.add(
-            Plot(
-                garden_id=garden.id,
-                plot_index=index,
-                is_unlocked=index < FREE_PLOTS,
-                unlock_cost=unlock_cost(index),
-            )
-        )
-    db.commit()
-    db.refresh(garden)
-    return garden
+    try:
+        with db.begin_nested():
+            db.add(garden)
+            db.flush()
+            for index in range(PLOT_COUNT):
+                db.add(
+                    Plot(
+                        garden_id=garden.id,
+                        plot_index=index,
+                        is_unlocked=index < FREE_PLOTS,
+                        unlock_cost=unlock_cost(index),
+                    )
+                )
+        db.commit()
+        db.refresh(garden)
+        return garden
+    except IntegrityError:
+        db.rollback()
+        garden = _load_garden(db, user_id)
+        if garden is None:
+            raise
+        return garden
 
 
 def _plot(garden: Garden, plot_index: int) -> Plot:

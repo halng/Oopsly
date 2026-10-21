@@ -3,6 +3,27 @@ from sqlalchemy import select
 from app.models import Garden, Tree
 
 
+def test_creating_a_garden_that_already_exists_returns_it(session_factory):
+    from app.service import get_or_create_garden
+
+    db = session_factory()
+    created = get_or_create_garden(db, "user-1")
+    real_scalar = db.scalar
+
+    def miss_once(statement):
+        miss_once.calls += 1
+        if miss_once.calls == 1:
+            return None
+        return real_scalar(statement)
+
+    miss_once.calls = 0
+    db.scalar = miss_once
+    again = get_or_create_garden(db, "user-1")
+    assert again.id == created.id
+    assert len(again.plots) == 9
+    db.close()
+
+
 def test_repeat_fetch_returns_the_same_garden(client):
     first = client.get("/v1/game/garden").json()["data"]
     second = client.get("/v1/game/garden").json()["data"]

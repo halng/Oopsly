@@ -3,9 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.logging_config import request_id, request_platform, setup_logging
 from app.routes import router
 from app.service import GameError
 from app.socket import socket_router
+
+setup_logging()
 
 app = FastAPI(title="Oopsly Game", version="0.1.0")
 app.add_middleware(
@@ -17,6 +20,17 @@ app.add_middleware(
 )
 app.include_router(router)
 app.include_router(socket_router)
+
+
+@app.middleware("http")
+async def bind_request_context(request: Request, call_next):
+    platform = request_platform.set(request.headers.get("x-platform", ""))
+    identifier = request_id.set(request.headers.get("x-request-id", ""))
+    try:
+        return await call_next(request)
+    finally:
+        request_platform.reset(platform)
+        request_id.reset(identifier)
 
 
 @app.exception_handler(GameError)

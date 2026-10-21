@@ -6,6 +6,7 @@ describe('useAuthStore', () => {
     const initialState = useAuthStore.getState();
 
     beforeEach(() => {
+        localStorage.clear();
         // Reset the store to its initial state before every single test
         // The 'true' flag tells Zustand to replace the entire state object
         useAuthStore.setState(initialState, true);
@@ -69,5 +70,29 @@ describe('useAuthStore', () => {
         expect(state.userEmail).toBe('');
         expect(state.accessToken).toBe('');
         expect(state.refreshToken).toBe('');
+    });
+
+    it('restores the saved session after a page refresh', async () => {
+        useAuthStore
+            .getState()
+            .setCredentials('hello@oopsly.app', 'token-a', 'token-b');
+        const saved = localStorage.getItem('oopsly-auth');
+        useAuthStore.setState({
+            isAuthenticated: false,
+            userEmail: '',
+            accessToken: '',
+            refreshToken: '',
+            hasHydrated: false,
+        });
+        localStorage.setItem('oopsly-auth', saved ?? '');
+
+        await useAuthStore.persist.rehydrate();
+
+        const state = useAuthStore.getState();
+        expect(state.hasHydrated).toBe(true);
+        expect(state.isAuthenticated).toBe(true);
+        expect(state.userEmail).toBe('hello@oopsly.app');
+        expect(state.accessToken).toBe('token-a');
+        expect(state.refreshToken).toBe('token-b');
     });
 });

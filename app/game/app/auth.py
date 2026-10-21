@@ -28,11 +28,15 @@ def signing_key() -> bytes:
 
 
 def verification_material() -> tuple[bytes | str, list[str]]:
-    """Public key when configured, otherwise the shared HMAC secret."""
+    """Public key when configured, otherwise the shared HMAC secret.
+
+    jjwt picks HS256, HS384, or HS512 from the key length. The default
+    Oopsly secret is 48 bytes, so access tokens are HS384.
+    """
     public_key = (settings.jwt_public_key or "").strip()
     if public_key:
         return public_key, ["RS256"]
-    return signing_key(), ["HS256"]
+    return signing_key(), ["HS256", "HS384", "HS512"]
 
 
 def verify_access_token(token: str) -> AuthResult:

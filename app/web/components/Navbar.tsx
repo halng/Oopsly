@@ -31,6 +31,11 @@ const Navbar = () => {
     const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
     const [reviewedToday, setReviewedToday] = React.useState(0);
     const userProfile = useUserProfileStore().profile;
+    const [syncReady, setSyncReady] = React.useState(false);
+
+    React.useEffect(() => {
+        setSyncReady(true);
+    }, []);
 
     React.useEffect(() => {
         ApiService.getStats().then((res) => {
@@ -161,7 +166,8 @@ const Navbar = () => {
                     {/* Gamification Counters & Theme / User Actions */}
                     <div className="flex items-center gap-1.5 sm:gap-2.5">
                         {/* Online / Offline Sync Indicator */}
-                        {(!isOnline || isSyncing || pendingCount > 0) && (
+                        {syncReady &&
+                            (!isOnline || isSyncing || pendingCount > 0) && (
                             <button
                                 id="nav-sync-status-btn"
                                 data-testid="btn-sync-status"

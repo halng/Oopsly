@@ -28,7 +28,13 @@ import { offlineDb } from './offlineDb';
 import { syncManager } from './syncManager';
 import { ulid } from 'ulid';
 import slugify from 'slugify';
-import { CardRes, mapCardList, mapCardRes } from '@/utils/cardMapper';
+import {
+    CardRes,
+    mapCardList,
+    mapCardRes,
+    mapPracticeCard,
+    PracticeCardRes,
+} from '@/utils/cardMapper';
 
 export const GRADE_LEVELS: Record<Grade, 'AGAIN' | 'HARD' | 'GOOD' | 'EASY'> = {
     1: 'AGAIN',
@@ -436,6 +442,16 @@ export const ApiService = {
                 data: cachedDue,
                 timestamp: new Date().toISOString(),
             };
+        }
+        return res;
+    },
+
+    getDuePracticeCards: async (): Promise<ApiResponse<Card[]>> => {
+        const res = await fetchJson<PracticeCardRes[]>(`/v1/cards/due`);
+        if (res.isSuccess && res.data) {
+            const cards = res.data.map(mapPracticeCard);
+            await offlineDb.cacheCards(cards);
+            return { ...res, data: cards };
         }
         return res;
     },

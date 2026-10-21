@@ -19,6 +19,7 @@ package com.app.oopsly.api.card;
 import com.app.oopsly.api.card.vm.CardItemReq;
 import com.app.oopsly.api.card.vm.CardReq;
 import com.app.oopsly.api.card.vm.CardRes;
+import com.app.oopsly.api.card.vm.PracticeCardRes;
 import com.app.oopsly.api.card.vm.ReviewResultRes;
 import com.app.oopsly.api.card.vm.UpdateDifficultyReq;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
@@ -303,6 +304,23 @@ public class CardServiceImpl implements CardService {
         return ApiRes.success(ApiMessages.FETCHED, result);
     }
 
+    @Override
+    @CircuitBreaker(
+            name = "cardServiceCircuitBreaker",
+            fallbackMethod = "getDueCardsForCurrentUserFallback")
+    public ApiRes getDueCardsForCurrentUser() {
+        User currentUser = userService.getCurrentUser();
+        List<PracticeCardRes> cards =
+                cardRepository.findDueForUser(currentUser, Instant.now()).stream()
+                        .map(this::toPracticeCardRes)
+                        .collect(Collectors.toList());
+        log.info(
+                "Retrieved {} due cards across all subjects for user {}",
+                cards.size(),
+                currentUser.getId());
+        return ApiRes.success(ApiMessages.FETCHED, cards);
+    }
+
     /** Persists one review log per graded card and returns the total XP earned. */
     private int recordReviewLogs(Subject subject, List<Card> cards) {
         UUID userId = userService.getCurrentUser().getId();
@@ -386,6 +404,26 @@ public class CardServiceImpl implements CardService {
         card.setSubject(subject);
         card.setNextPracticeTime(Instant.now());
         return card;
+    }
+
+    private PracticeCardRes toPracticeCardRes(Card entity) {
+        Subject subject = entity.getSubject();
+        return new PracticeCardRes(
+                entity.getId(),
+                subject.getShelf().getId(),
+                subject.getId(),
+                subject.getName(),
+                entity.getFront(),
+                entity.getBack(),
+                entity.getHint(),
+                entity.getDifficultyLevel(),
+                entity.getNextPracticeTime(),
+                entity.getNumberOfPractice(),
+                entity.getFsrsStability(),
+                entity.getFsrsDifficulty(),
+                entity.getFsrsIntervalDays(),
+                entity.getFsrsRepetitions(),
+                entity.getLastReviewedAt());
     }
 
     private CardRes toCardRes(Card entity) {
@@ -493,6 +531,12 @@ public class CardServiceImpl implements CardService {
                 shelfId,
                 subjectId,
                 cardId);
+        throw unwrapCardException(t);
+    }
+
+    public ApiRes getDueCardsForCurrentUserFallback(Throwable t) {
+        log.error(
+                "Card service unavailable during getDueCardsForCurrentUser: {}", t.getMessage());
         throw unwrapCardException(t);
     }
 

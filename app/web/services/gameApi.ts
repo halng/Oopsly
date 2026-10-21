@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { ulid } from 'ulid';
 import { useAuthStore } from '@/store';
 import { ApiResponse, GardenState, PlantSpecies, PlantStage } from '@/types';
 
@@ -15,6 +16,8 @@ gameClient.interceptors.request.use((config) => {
             config.headers.Authorization = `Bearer ${accessToken}`;
         }
     }
+    config.headers['X-Request-ID'] = ulid();
+    config.headers['X-Platform'] = 'WEB';
     return config;
 });
 
