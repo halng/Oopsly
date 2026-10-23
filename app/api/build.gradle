@@ -136,7 +136,7 @@ tasks.register('integrationTest', Test) {
 	}
 }
 
-def composeFile = 'src/main/resources/docker-compose.yml'
+def composeFile = '../docker-compose.yml'
 
 tasks.register('composeUp', Exec) {
 	group = 'docker'

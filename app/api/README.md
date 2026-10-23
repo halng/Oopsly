@@ -5,7 +5,7 @@ Spring Boot 3.5.8 / Java 21 REST API for Oopsly.
 ## Run locally
 
 ```bash
-./gradlew composeUp          # Postgres + Redis
+./gradlew composeUp          # Postgres + Redis + auth (app/docker-compose.yml)
 ./gradlew bootRun -Pprofile=test   # loads api/.env.test if present; NoOp email
 # or: ./gradlew bootRun      # loads api/.env (profile default "prod" for env file name)
 ```
