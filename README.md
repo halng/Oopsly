@@ -291,6 +291,10 @@ app
 │   ├── src/main/java/... (Spring Boot backend)
 │   ├── src/test/java/... (unit + integration tests)
 │   └── build.gradle
+├── auth
+│   ├── cmd/auth/ (Go entrypoint)
+│   ├── internal/ (config, jwt, otp, store, handlers, middleware)
+│   └── go.mod
 ├── web
 │   ├── app/ (Next.js frontend)   
 │   ├── component/ (React components)
@@ -303,7 +307,18 @@ app
 ```
 
 Note: the backend folder with path `app/api` contains the Spring Boot backend. The backend is organized as a modern spring boot project with DDD (Domain Driven Design) structure.
+The auth folder with path `app/auth` is a separate Go service. It owns authentication (email OTP), authorization (roles), subscriptions, user profiles and settings, and it issues the JWT access/refresh tokens. `app/api` (and `app/game`) only validate those tokens with the shared `JWT_SECRET`, and keep a plain `user_id` column instead of a foreign key to the user.
 The frontend folder with path `app/web` contains the Next.js frontend.
+
+### Auth service
+
+```bash
+cd app
+docker compose up -d --build   # postgres + redis + auth
+```
+
+- Base URL: `http://localhost:9010/api/auth`
+- Web reads it from `NEXT_PUBLIC_AUTH_URL` (the API stays on `NEXT_PUBLIC_API_URL`)
 
 ### Infrastructure + API
 
@@ -329,6 +344,12 @@ pnpm dev
 ```bash
 # API
 cd app/api && ./gradlew spotlessApply test
+
+# Auth
+cd app/auth && go vet ./... && go test -race ./...
+
+# Game
+cd app/game && ruff check . && ruff format --check . && python -m pytest -q
 
 # UI
 cd app/web && pnpm lint && pnpm format
