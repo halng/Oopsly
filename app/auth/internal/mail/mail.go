@@ -5,6 +5,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"html"
 	"log/slog"
 	"net/smtp"
 	"strings"
@@ -32,7 +33,9 @@ type SMTP struct{ Host, Port, Username, Password string }
 // RenderOTP fills the HTML template.
 func RenderOTP(to, code string) string {
 	user := strings.SplitN(to, "@", 2)[0]
-	return strings.NewReplacer("{{OTP_CODE}}", code, "{{USER_NAME}}", user).Replace(otpTemplate)
+	escapedUser := html.EscapeString(user)
+	escapedCode := html.EscapeString(code)
+	return strings.NewReplacer("{{OTP_CODE}}", escapedCode, "{{USER_NAME}}", escapedUser).Replace(otpTemplate)
 }
 
 func (s SMTP) SendOTP(_ context.Context, to, code string) error {
