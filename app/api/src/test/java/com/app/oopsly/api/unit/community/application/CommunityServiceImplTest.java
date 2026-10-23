@@ -18,6 +18,7 @@ package com.app.oopsly.api.unit.community.application;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.community.application.CommunityServiceImpl;
@@ -26,17 +27,20 @@ import com.app.oopsly.api.community.domain.*;
 import com.app.oopsly.api.community.infrastructure.CommunityJoinRequestRepository;
 import com.app.oopsly.api.community.infrastructure.CommunityMemberRepository;
 import com.app.oopsly.api.community.infrastructure.CommunityRepository;
+import com.app.oopsly.api.progress.UserProgress;
+import com.app.oopsly.api.progress.UserProgressRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shared.client.AuthClient;
+import com.app.oopsly.api.shared.client.AuthProfile;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
-import com.app.oopsly.api.user.Setting;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserRepository;
-import com.app.oopsly.api.user.UserService;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,31 +58,60 @@ class CommunityServiceImplTest {
     @Mock private CommunityRepository communityRepository;
     @Mock private CommunityMemberRepository memberRepository;
     @Mock private CommunityJoinRequestRepository joinRequestRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private UserService userService;
+    @Mock private UserProgressRepository progressRepository;
+    @Mock private AuthClient authClient;
+    @Mock private CurrentUser currentUser;
 
     @InjectMocks private CommunityServiceImpl communityService;
 
-    private User currentUser;
+    private record Person(UUID id, String email) {}
+
+    private final Map<UUID, AuthProfile> profiles = new HashMap<>();
+    private final Map<UUID, UserProgress> progresses = new HashMap<>();
+    private Person me;
     private CommunityEntity community;
 
     @BeforeEach
     void setUp() {
-        currentUser = user("owner@test.dev", "Owner", "Owner display", 500);
+        me = user("owner@test.dev", "Owner", "Owner display", 500);
+        lenient().when(currentUser.id()).thenReturn(me.id());
+        lenient()
+                .when(authClient.lookup(any(UUID.class)))
+                .thenAnswer(
+                        inv -> {
+                            UUID id = inv.getArgument(0);
+                            return profiles.getOrDefault(id, AuthProfile.unknown(id));
+                        });
+        lenient()
+                .when(authClient.lookup(anyCollection()))
+                .thenAnswer(
+                        inv -> {
+                            Map<UUID, AuthProfile> result = new HashMap<>();
+                            for (UUID id : (java.util.Collection<UUID>) inv.getArgument(0)) {
+                                result.put(id, profiles.getOrDefault(id, AuthProfile.unknown(id)));
+                            }
+                            return result;
+                        });
+        lenient()
+                .when(progressRepository.findByUserId(any()))
+                .thenAnswer(inv -> Optional.ofNullable(progresses.get(inv.<UUID>getArgument(0))));
+        lenient()
+                .when(progressRepository.findAllByUserIdIn(anyCollection()))
+                .thenAnswer(
+                        inv ->
+                                ((java.util.Collection<UUID>) inv.getArgument(0))
+                                        .stream()
+                                                .filter(progresses::containsKey)
+                                                .map(progresses::get)
+                                                .toList());
         community = community(false);
     }
 
-    private User user(String email, String name, String displayName, Integer xp) {
-        User user = new User();
-        user.setId(UUID.randomUUID());
-        user.setEmail(email);
-        user.setName(name);
-        user.setDisplayName(displayName);
-        user.setPictureUrl("https://cdn/pic.png");
-        Setting setting = new Setting();
-        setting.setTotalXp(xp);
-        user.setSetting(setting);
-        return user;
+    private Person user(String email, String name, String displayName, Integer xp) {
+        UUID id = UUID.randomUUID();
+        profiles.put(id, new AuthProfile(id, name, displayName, "https://cdn/pic.png", 20));
+        progresses.put(id, UserProgress.builder().userId(id).totalXp(xp).build());
+        return new Person(id, email);
     }
 
     private CommunityEntity community(boolean isPrivate) {
@@ -90,17 +123,17 @@ class CommunityServiceImplTest {
                         .color("#8BC34A")
                         .isPrivate(isPrivate)
                         .tags(new ArrayList<>(List.of("focus")))
-                        .owner(currentUser)
+                        .ownerId(me.id())
                         .build();
         entity.setId(UUID.randomUUID());
         return entity;
     }
 
-    private CommunityMemberEntity member(User user, CommunityRole role) {
+    private CommunityMemberEntity member(Person user, CommunityRole role) {
         CommunityMemberEntity entity =
                 CommunityMemberEntity.builder()
                         .community(community)
-                        .user(user)
+                        .userId(user.id())
                         .role(role)
                         .cardsStudiedThisWeek(4)
                         .build();
@@ -108,11 +141,11 @@ class CommunityServiceImplTest {
         return entity;
     }
 
-    private CommunityJoinRequestEntity joinRequest(User user, JoinRequestStatus status) {
+    private CommunityJoinRequestEntity joinRequest(Person user, JoinRequestStatus status) {
         CommunityJoinRequestEntity entity =
                 CommunityJoinRequestEntity.builder()
                         .community(community)
-                        .user(user)
+                        .userId(user.id())
                         .message("let me in")
                         .status(status)
                         .build();
@@ -139,10 +172,9 @@ class CommunityServiceImplTest {
 
     @Test
     void getAll_mapsRoleForMemberships() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findAllByDeletedFalse()).thenReturn(List.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.OWNER)));
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.OWNER)));
         when(memberRepository.countByCommunityId(community.getId())).thenReturn(12L);
 
         ApiRes response = communityService.getAll();
@@ -157,13 +189,12 @@ class CommunityServiceImplTest {
 
     @Test
     void getAll_marksPendingRequestsAsPendingRole() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findAllByDeletedFalse()).thenReturn(List.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
                 .thenReturn(Optional.empty());
         when(joinRequestRepository.findByCommunityIdAndUserIdAndStatus(
-                        community.getId(), currentUser.getId(), JoinRequestStatus.PENDING))
-                .thenReturn(Optional.of(joinRequest(currentUser, JoinRequestStatus.PENDING)));
+                        community.getId(), me.id(), JoinRequestStatus.PENDING))
+                .thenReturn(Optional.of(joinRequest(me, JoinRequestStatus.PENDING)));
 
         List<CommunityRes> result = dataOf(communityService.getAll());
 
@@ -172,12 +203,11 @@ class CommunityServiceImplTest {
 
     @Test
     void getAll_fallsBackToNoneRoleForStrangers() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findAllByDeletedFalse()).thenReturn(List.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
                 .thenReturn(Optional.empty());
         when(joinRequestRepository.findByCommunityIdAndUserIdAndStatus(
-                        community.getId(), currentUser.getId(), JoinRequestStatus.PENDING))
+                        community.getId(), me.id(), JoinRequestStatus.PENDING))
                 .thenReturn(Optional.empty());
 
         List<CommunityRes> result = dataOf(communityService.getAll());
@@ -187,7 +217,6 @@ class CommunityServiceImplTest {
 
     @Test
     void getAll_withNoCommunitiesReturnsEmptyList() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findAllByDeletedFalse()).thenReturn(List.of());
 
         assertTrue(this.<List<CommunityRes>>dataOf(communityService.getAll()).isEmpty());
@@ -195,24 +224,22 @@ class CommunityServiceImplTest {
 
     @Test
     void getMyCommunities_returnsJoinedCommunitiesOnly() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(memberRepository.findAllByUserId(currentUser.getId()))
-                .thenReturn(List.of(member(currentUser, CommunityRole.MEMBER)));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.MEMBER)));
+        when(memberRepository.findAllByUserId(me.id()))
+                .thenReturn(List.of(member(me, CommunityRole.MEMBER)));
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.MEMBER)));
 
         List<CommunityRes> result = dataOf(communityService.getMyCommunities());
 
         assertEquals(1, result.size());
         assertEquals(CommunityRole.MEMBER, result.get(0).userRole());
-        verify(memberRepository).findAllByUserId(currentUser.getId());
+        verify(memberRepository).findAllByUserId(me.id());
     }
 
     // ---------------------------------------------------------------- create
 
     @Test
     void create_registersCallerAsOwner() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.saveAndFlush(any(CommunityEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -232,7 +259,7 @@ class CommunityServiceImplTest {
         verify(communityRepository).saveAndFlush(captor.capture());
         assertEquals("Focus Club", captor.getValue().getName());
         assertTrue(captor.getValue().getIsPrivate());
-        assertEquals(currentUser, captor.getValue().getOwner());
+        assertEquals(me.id(), captor.getValue().getOwnerId());
 
         ArgumentCaptor<CommunityMemberEntity> memberCaptor =
                 ArgumentCaptor.forClass(CommunityMemberEntity.class);
@@ -242,7 +269,6 @@ class CommunityServiceImplTest {
 
     @Test
     void create_appliesDefaultIconColorAndTags() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.saveAndFlush(any(CommunityEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -275,9 +301,8 @@ class CommunityServiceImplTest {
 
     @Test
     void join_openCommunityAddsMemberImmediately() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
                 .thenReturn(Optional.empty());
         when(memberRepository.saveAndFlush(any(CommunityMemberEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -294,12 +319,11 @@ class CommunityServiceImplTest {
     @Test
     void join_privateCommunityCreatesPendingRequest() {
         community = community(true);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
                 .thenReturn(Optional.empty());
         when(joinRequestRepository.findByCommunityIdAndUserIdAndStatus(
-                        community.getId(), currentUser.getId(), JoinRequestStatus.PENDING))
+                        community.getId(), me.id(), JoinRequestStatus.PENDING))
                 .thenReturn(Optional.empty());
         when(joinRequestRepository.saveAndFlush(any(CommunityJoinRequestEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -316,12 +340,11 @@ class CommunityServiceImplTest {
     @Test
     void join_privateCommunityWithoutMessageUsesDefaultMessage() {
         community = community(true);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
                 .thenReturn(Optional.empty());
         when(joinRequestRepository.findByCommunityIdAndUserIdAndStatus(
-                        community.getId(), currentUser.getId(), JoinRequestStatus.PENDING))
+                        community.getId(), me.id(), JoinRequestStatus.PENDING))
                 .thenReturn(Optional.empty());
         when(joinRequestRepository.saveAndFlush(any(CommunityJoinRequestEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -333,10 +356,9 @@ class CommunityServiceImplTest {
 
     @Test
     void join_existingMemberIsRejected() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.MEMBER)));
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.MEMBER)));
 
         UUID id = community.getId();
         assertThrows(ValidationException.class, () -> communityService.join(id, null));
@@ -345,13 +367,12 @@ class CommunityServiceImplTest {
     @Test
     void join_duplicatePendingRequestIsRejected() {
         community = community(true);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
                 .thenReturn(Optional.empty());
         when(joinRequestRepository.findByCommunityIdAndUserIdAndStatus(
-                        community.getId(), currentUser.getId(), JoinRequestStatus.PENDING))
-                .thenReturn(Optional.of(joinRequest(currentUser, JoinRequestStatus.PENDING)));
+                        community.getId(), me.id(), JoinRequestStatus.PENDING))
+                .thenReturn(Optional.of(joinRequest(me, JoinRequestStatus.PENDING)));
 
         UUID id = community.getId();
         assertThrows(ValidationException.class, () -> communityService.join(id, null));
@@ -360,7 +381,6 @@ class CommunityServiceImplTest {
     @Test
     void join_unknownCommunityThrowsNotFound() {
         UUID unknown = UUID.randomUUID();
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(unknown)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> communityService.join(unknown, null));
@@ -370,20 +390,17 @@ class CommunityServiceImplTest {
 
     @Test
     void leave_removesMembership() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
 
         ApiRes response = communityService.leave(community.getId());
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(memberRepository)
-                .deleteByCommunityIdAndUserId(community.getId(), currentUser.getId());
+        verify(memberRepository).deleteByCommunityIdAndUserId(community.getId(), me.id());
     }
 
     @Test
     void leave_unknownCommunityThrowsNotFound() {
         UUID unknown = UUID.randomUUID();
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(unknown)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> communityService.leave(unknown));
@@ -394,13 +411,11 @@ class CommunityServiceImplTest {
 
     @Test
     void invite_asOwnerAddsExistingUser() {
-        User invited = user("friend@test.dev", "Friend", null, 100);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
+        Person invited = user("friend@test.dev", "Friend", null, 100);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.OWNER)));
-        when(userRepository.findByEmail("friend@test.dev")).thenReturn(Optional.of(invited));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), invited.getId()))
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.OWNER)));
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), invited.id()))
                 .thenReturn(Optional.empty());
         when(memberRepository.saveAndFlush(any(CommunityMemberEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -408,29 +423,28 @@ class CommunityServiceImplTest {
         CommunityMemberRes result =
                 dataOf(
                         communityService.invite(
-                                community.getId(), new InviteMemberReq("  friend@test.dev  ")));
+                                community.getId(),
+                                new InviteMemberReq("  " + invited.id() + "  ")));
 
         assertEquals(CommunityRole.MEMBER, result.role());
         assertEquals("Friend", result.displayName());
-        assertEquals(invited.getId(), result.userId());
+        assertEquals(invited.id(), result.userId());
     }
 
     @Test
     void invite_alreadyMemberIsIdempotent() {
-        User invited = user("friend@test.dev", "Friend", null, 100);
+        Person invited = user("friend@test.dev", "Friend", null, 100);
         CommunityMemberEntity existing = member(invited, CommunityRole.ADMIN);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.ADMIN)));
-        when(userRepository.findByEmail("friend@test.dev")).thenReturn(Optional.of(invited));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), invited.getId()))
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.ADMIN)));
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), invited.id()))
                 .thenReturn(Optional.of(existing));
 
         CommunityMemberRes result =
                 dataOf(
                         communityService.invite(
-                                community.getId(), new InviteMemberReq("friend@test.dev")));
+                                community.getId(), new InviteMemberReq(invited.id().toString())));
 
         assertEquals(CommunityRole.ADMIN, result.role());
         verify(memberRepository, never()).saveAndFlush(any());
@@ -438,39 +452,35 @@ class CommunityServiceImplTest {
 
     @Test
     void invite_byPlainMemberIsForbidden() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.MEMBER)));
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.MEMBER)));
 
         UUID id = community.getId();
-        InviteMemberReq request = new InviteMemberReq("friend@test.dev");
+        InviteMemberReq request = new InviteMemberReq(UUID.randomUUID().toString());
         assertThrows(ValidationException.class, () -> communityService.invite(id, request));
-        verifyNoInteractions(userRepository);
+        verifyNoInteractions(authClient);
     }
 
     @Test
     void invite_byNonMemberIsForbidden() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
                 .thenReturn(Optional.empty());
 
         UUID id = community.getId();
-        InviteMemberReq request = new InviteMemberReq("friend@test.dev");
+        InviteMemberReq request = new InviteMemberReq(UUID.randomUUID().toString());
         assertThrows(ValidationException.class, () -> communityService.invite(id, request));
     }
 
     @Test
     void invite_unknownUserThrowsNotFound() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.OWNER)));
-        when(userRepository.findByEmail("ghost@test.dev")).thenReturn(Optional.empty());
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.OWNER)));
 
         UUID id = community.getId();
-        InviteMemberReq request = new InviteMemberReq("ghost@test.dev");
+        InviteMemberReq request = new InviteMemberReq(UUID.randomUUID().toString());
         assertThrows(NotFoundException.class, () -> communityService.invite(id, request));
     }
 
@@ -478,11 +488,10 @@ class CommunityServiceImplTest {
 
     @Test
     void getJoinRequests_returnsPendingRequestsForManagers() {
-        User applicant = user("apply@test.dev", "Applicant", "App", 10);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
+        Person applicant = user("apply@test.dev", "Applicant", "App", 10);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.OWNER)));
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.OWNER)));
         when(joinRequestRepository.findAllByCommunityIdAndStatus(
                         community.getId(), JoinRequestStatus.PENDING))
                 .thenReturn(List.of(joinRequest(applicant, JoinRequestStatus.PENDING)));
@@ -491,16 +500,15 @@ class CommunityServiceImplTest {
 
         assertEquals(1, result.size());
         assertEquals("App", result.get(0).displayName());
-        assertEquals("apply@test.dev", result.get(0).userEmail());
+        assertNull(result.get(0).userEmail());
         assertEquals("Study Hall", result.get(0).communityName());
     }
 
     @Test
     void getJoinRequests_requiresManagerRole() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.MEMBER)));
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.MEMBER)));
 
         UUID id = community.getId();
         assertThrows(ValidationException.class, () -> communityService.getJoinRequests(id));
@@ -508,16 +516,15 @@ class CommunityServiceImplTest {
 
     @Test
     void approveJoinRequest_promotesApplicantToMember() {
-        User applicant = user("apply@test.dev", "Applicant", null, 10);
+        Person applicant = user("apply@test.dev", "Applicant", null, 10);
         CommunityJoinRequestEntity request = joinRequest(applicant, JoinRequestStatus.PENDING);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.OWNER)));
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.OWNER)));
         when(joinRequestRepository.findByIdAndCommunityId(request.getId(), community.getId()))
                 .thenReturn(Optional.of(request));
         when(joinRequestRepository.saveAndFlush(request)).thenReturn(request);
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), applicant.getId()))
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), applicant.id()))
                 .thenReturn(Optional.empty());
         when(memberRepository.saveAndFlush(any(CommunityMemberEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -531,16 +538,15 @@ class CommunityServiceImplTest {
 
     @Test
     void approveJoinRequest_whenAlreadyMemberDoesNotDuplicate() {
-        User applicant = user("apply@test.dev", "Applicant", null, 10);
+        Person applicant = user("apply@test.dev", "Applicant", null, 10);
         CommunityJoinRequestEntity request = joinRequest(applicant, JoinRequestStatus.PENDING);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.OWNER)));
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.OWNER)));
         when(joinRequestRepository.findByIdAndCommunityId(request.getId(), community.getId()))
                 .thenReturn(Optional.of(request));
         when(joinRequestRepository.saveAndFlush(request)).thenReturn(request);
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), applicant.getId()))
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), applicant.id()))
                 .thenReturn(Optional.of(member(applicant, CommunityRole.MEMBER)));
 
         communityService.approveJoinRequest(community.getId(), request.getId());
@@ -551,10 +557,9 @@ class CommunityServiceImplTest {
     @Test
     void approveJoinRequest_unknownRequestThrowsNotFound() {
         UUID requestId = UUID.randomUUID();
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.OWNER)));
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.OWNER)));
         when(joinRequestRepository.findByIdAndCommunityId(requestId, community.getId()))
                 .thenReturn(Optional.empty());
 
@@ -565,12 +570,11 @@ class CommunityServiceImplTest {
 
     @Test
     void rejectJoinRequest_marksRequestRejected() {
-        User applicant = user("apply@test.dev", "Applicant", null, 10);
+        Person applicant = user("apply@test.dev", "Applicant", null, 10);
         CommunityJoinRequestEntity request = joinRequest(applicant, JoinRequestStatus.PENDING);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.ADMIN)));
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.ADMIN)));
         when(joinRequestRepository.findByIdAndCommunityId(request.getId(), community.getId()))
                 .thenReturn(Optional.of(request));
         when(joinRequestRepository.saveAndFlush(request)).thenReturn(request);
@@ -585,9 +589,8 @@ class CommunityServiceImplTest {
     @Test
     void rejectJoinRequest_requiresManagerRole() {
         UUID requestId = UUID.randomUUID();
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
                 .thenReturn(Optional.empty());
 
         UUID id = community.getId();
@@ -599,10 +602,9 @@ class CommunityServiceImplTest {
 
     @Test
     void getLeaderboard_ranksMembersByXpDescending() {
-        User low = user("low@test.dev", "Low", null, 10);
-        User high = user("high@test.dev", "High", null, 900);
-        User none = user("none@test.dev", "None", null, null);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
+        Person low = user("low@test.dev", "Low", null, 10);
+        Person high = user("high@test.dev", "High", null, 900);
+        Person none = user("none@test.dev", "None", null, null);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
         when(memberRepository.findAllByCommunityId(community.getId()))
                 .thenReturn(
@@ -611,8 +613,8 @@ class CommunityServiceImplTest {
                                         member(low, CommunityRole.MEMBER),
                                         member(high, CommunityRole.OWNER),
                                         member(none, CommunityRole.MEMBER))));
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
-                .thenReturn(Optional.of(member(currentUser, CommunityRole.OWNER)));
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
+                .thenReturn(Optional.of(member(me, CommunityRole.OWNER)));
 
         CommunityLeaderboardRes result = dataOf(communityService.getLeaderboard(community.getId()));
 
@@ -630,14 +632,13 @@ class CommunityServiceImplTest {
 
     @Test
     void getLeaderboard_emptyCommunityReturnsNoRows() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
         when(communityRepository.findById(community.getId())).thenReturn(Optional.of(community));
         when(memberRepository.findAllByCommunityId(community.getId()))
                 .thenReturn(new ArrayList<>());
-        when(memberRepository.findByCommunityIdAndUserId(community.getId(), currentUser.getId()))
+        when(memberRepository.findByCommunityIdAndUserId(community.getId(), me.id()))
                 .thenReturn(Optional.empty());
         when(joinRequestRepository.findByCommunityIdAndUserIdAndStatus(
-                        community.getId(), currentUser.getId(), JoinRequestStatus.PENDING))
+                        community.getId(), me.id(), JoinRequestStatus.PENDING))
                 .thenReturn(Optional.empty());
 
         CommunityLeaderboardRes result = dataOf(communityService.getLeaderboard(community.getId()));

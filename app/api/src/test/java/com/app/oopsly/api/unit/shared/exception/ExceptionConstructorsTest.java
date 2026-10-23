@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.app.oopsly.api.shared.exception.AuthProviderException;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
-import com.app.oopsly.api.shared.exception.SendEmailException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
 import org.junit.jupiter.api.Test;
@@ -38,6 +37,5 @@ class ExceptionConstructorsTest {
         assertEquals("f", new UnauthenticatedException("f", new RuntimeException()).getMessage());
         assertEquals("g", new ValidationException("g").getMessage());
         assertEquals("h", new NotFoundException("h").getMessage());
-        assertEquals("i", new SendEmailException("i").getMessage());
     }
 }

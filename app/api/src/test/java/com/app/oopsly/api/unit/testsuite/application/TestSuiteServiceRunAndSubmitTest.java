@@ -25,10 +25,13 @@ import static org.mockito.Mockito.*;
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
 import com.app.oopsly.api.card.DifficultyLevel;
+import com.app.oopsly.api.progress.UserProgress;
+import com.app.oopsly.api.progress.UserProgressService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shared.util.GamificationRules;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
@@ -49,9 +52,6 @@ import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.domain.TestSuiteSelectionPayload;
 import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.Setting;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -77,11 +77,13 @@ class TestSuiteServiceRunAndSubmitTest {
     @Mock private SubjectRepository subjectRepository;
     @Mock private CardRepository cardRepository;
     @Mock private QuestionRepository questionRepository;
-    @Mock private UserService userService;
+    @Mock private CurrentUser currentUser;
+    @Mock private UserProgressService userProgressService;
 
     private TestSuiteServiceImpl service;
 
-    private User currentUser;
+    private UUID currentUserId;
+    private UserProgress progress;
     private Shelf shelve;
     private Subject subject;
     private TestSuiteEntity suite;
@@ -98,22 +100,19 @@ class TestSuiteServiceRunAndSubmitTest {
                         cardRepository,
                         questionRepository,
                         new QuestionMetadataMapper(new ObjectMapper()),
-                        userService);
+                        currentUser,
+                        userProgressService);
 
-        Setting setting = new Setting();
-        setting.setTotalXp(120);
-        setting.setDailyStreak(3);
-        currentUser = new User();
-        currentUser.setId(UUID.randomUUID());
-        currentUser.setEmail("learner@test.dev");
-        currentUser.setSetting(setting);
+        currentUserId = UUID.randomUUID();
+        progress = UserProgress.builder().userId(currentUserId).totalXp(120).dailyStreak(3).build();
+        lenient().when(userProgressService.updateUserProgress(anyInt())).thenReturn(progress);
 
         shelveId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
 
         shelve = new Shelf();
         shelve.setId(shelveId);
-        shelve.setUser(currentUser);
+        shelve.setUserId(currentUserId);
 
         subject = new Subject();
         subject.setId(UUID.randomUUID());
@@ -126,8 +125,8 @@ class TestSuiteServiceRunAndSubmitTest {
     }
 
     private void currentUserOwnsShelve() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
     }
 
@@ -300,8 +299,9 @@ class TestSuiteServiceRunAndSubmitTest {
 
     @Test
     void run_shelveOfAnotherUserThrowsNotFound() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
+                .thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> service.run(shelveId, testSuiteId));
         verifyNoInteractions(testSuiteRepository);
@@ -390,7 +390,7 @@ class TestSuiteServiceRunAndSubmitTest {
         assertFalse(breakdown.get(1).correct());
         assertNull(breakdown.get(1).explanation());
 
-        verify(userService).updateUserProgress(result.xpGained());
+        verify(userProgressService).updateUserProgress(result.xpGained());
         assertEquals(50, suite.getHighestScore());
         verify(testSuiteRepository).save(suite);
     }
@@ -513,7 +513,7 @@ class TestSuiteServiceRunAndSubmitTest {
         TestSubmissionReq request = new TestSubmissionReq(null, null, null, null);
         assertThrows(
                 ValidationException.class, () -> service.submit(shelveId, testSuiteId, request));
-        verify(userService, never()).updateUserProgress(anyInt());
+        verify(userProgressService, never()).updateUserProgress(anyInt());
     }
 
     @Test
@@ -533,7 +533,7 @@ class TestSuiteServiceRunAndSubmitTest {
 
     @Test
     void submit_withoutStoredXp_reportsGainedXp() {
-        currentUser.setSetting(null);
+        progress.setTotalXp(null);
         QuestionEntity question = question("q", "{\"correctOptionIndex\":0}");
         currentUserOwnsShelve();
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))

@@ -22,18 +22,20 @@ import com.app.oopsly.api.card.vm.CardRes;
 import com.app.oopsly.api.card.vm.PracticeCardRes;
 import com.app.oopsly.api.card.vm.ReviewResultRes;
 import com.app.oopsly.api.card.vm.UpdateDifficultyReq;
+import com.app.oopsly.api.progress.UserProgress;
+import com.app.oopsly.api.progress.UserProgressService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.application.vm.PagingRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shared.util.ApiMessages;
 import com.app.oopsly.api.shared.util.CardState;
 import com.app.oopsly.api.shared.util.FsrsAlgorithm;
 import com.app.oopsly.api.shared.util.GamificationRules;
 import com.app.oopsly.api.shared.util.ScheduleResult;
-import com.app.oopsly.api.shared.util.StringUtils;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.stats.domain.ReviewLogEntity;
@@ -42,8 +44,6 @@ import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -68,7 +68,8 @@ public class CardServiceImpl implements CardService {
     private final SubjectRepository subjectRepository;
     private final ShelfRepository shelfRepository;
     private final TestSuiteRepository testSuiteRepository;
-    private final UserService userService;
+    private final CurrentUser currentUser;
+    private final UserProgressService userProgressService;
     private final ReviewLogRepository reviewLogRepository;
 
     @Override
@@ -169,8 +170,7 @@ public class CardServiceImpl implements CardService {
         if (testSuite.getDeleted() != null && testSuite.getDeleted()) {
             throw new NotFoundException("Test suite not found with id: " + testSuiteId);
         }
-        User currentUser = userService.getCurrentUser();
-        if (!testSuite.getShelf().getUser().getId().equals(currentUser.getId())) {
+        if (!testSuite.getShelf().getUserId().equals(currentUser.id())) {
             throw new NotFoundException("Test suite not found with id: " + testSuiteId);
         }
         List<Card> allCards = new ArrayList<>();
@@ -254,7 +254,7 @@ public class CardServiceImpl implements CardService {
         cardRepository.saveAll(updatedList);
 
         int xpGained = recordReviewLogs(subject, updatedList);
-        userService.updateUserProgress(xpGained);
+        UserProgress progress = userProgressService.updateUserProgress(xpGained);
         log.info(
                 "Successfully updated difficulty for all cards in subject: {}, XP gained: {}",
                 subjectId,
@@ -262,9 +262,7 @@ public class CardServiceImpl implements CardService {
 
         List<CardRes> cards =
                 updatedList.stream().map(this::toCardRes).collect(Collectors.toList());
-        User refreshed = userService.getCurrentUser();
-        Integer storedXp =
-                refreshed.getSetting() == null ? null : refreshed.getSetting().getTotalXp();
+        Integer storedXp = progress.getTotalXp();
         int totalXp = storedXp == null ? xpGained : storedXp;
 
         return ApiRes.success(
@@ -309,21 +307,18 @@ public class CardServiceImpl implements CardService {
             name = "cardServiceCircuitBreaker",
             fallbackMethod = "getDueCardsForCurrentUserFallback")
     public ApiRes getDueCardsForCurrentUser() {
-        User currentUser = userService.getCurrentUser();
+        UUID userId = currentUser.id();
         List<PracticeCardRes> cards =
-                cardRepository.findDueForUser(currentUser, Instant.now()).stream()
+                cardRepository.findDueForUser(userId, Instant.now()).stream()
                         .map(this::toPracticeCardRes)
                         .collect(Collectors.toList());
-        log.info(
-                "Retrieved {} due cards across all subjects for user {}",
-                cards.size(),
-                currentUser.getId());
+        log.info("Retrieved {} due cards across all subjects for user {}", cards.size(), userId);
         return ApiRes.success(ApiMessages.FETCHED, cards);
     }
 
     /** Persists one review log per graded card and returns the total XP earned. */
     private int recordReviewLogs(Subject subject, List<Card> cards) {
-        UUID userId = userService.getCurrentUser().getId();
+        UUID userId = currentUser.id();
         Instant now = Instant.now();
         int totalXp = 0;
 
@@ -451,13 +446,9 @@ public class CardServiceImpl implements CardService {
     }
 
     private Shelf getShelveForCurrentUser(UUID shelfId) {
-        User currentUser = userService.getCurrentUser();
-        log.debug(
-                "Getting shelve: {} for user: {}",
-                shelfId,
-                StringUtils.masked(currentUser.getEmail()));
+        log.debug("Getting shelve: {} for user: {}", shelfId, currentUser.id());
         return shelfRepository
-                .findByIdAndUser(shelfId, currentUser)
+                .findByIdAndUserId(shelfId, currentUser.id())
                 .orElseThrow(() -> new NotFoundException("Shelve not found with id: " + shelfId));
     }
 

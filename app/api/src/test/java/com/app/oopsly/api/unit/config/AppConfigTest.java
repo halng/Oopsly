@@ -17,17 +17,10 @@
 package com.app.oopsly.api.unit.config;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 import com.app.oopsly.api.config.AppConfig;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
 class AppConfigTest {
 
     @Test
@@ -35,117 +28,39 @@ class AppConfigTest {
         AppConfig config = new AppConfig();
 
         assertNotNull(config.getJwt(), "jwt should be initialized by default");
-        assertNotNull(config.getGoogle(), "google should be initialized by default");
-        assertNotNull(config.getFeatures(), "features should be initialized by default");
+        assertNotNull(config.getAuth(), "auth should be initialized by default");
 
-        // defaults
         assertNull(config.getJwt().getSecret(), "default jwt.secret should be null");
-        assertEquals(
-                0L, config.getJwt().getExpirationInMs(), "default jwt.expirationInMs should be 0");
-        assertNull(config.getGoogle().getClientId(), "default google.clientId should be null");
-        assertFalse(
-                config.getFeatures().isAuthWithGoogle(), "default authWithGoogle should be false");
-        assertFalse(config.getFeatures().isAuthWithJwt(), "default authWithJwt should be false");
+        assertEquals("http://localhost:9010/api/auth", config.getAuth().getBaseUrl());
+        assertEquals("", config.getAuth().getInternalKey());
     }
 
     @Test
     void givenAppconfig_withJwtSet_thenGettersReturnValues() {
         AppConfig config = new AppConfig();
-        AppConfig.Jwt jwt = config.getJwt();
 
-        jwt.setSecret("super-secret");
-        jwt.setExpirationInMs(3600000L);
+        config.getJwt().setSecret("super-secret");
 
         assertEquals("super-secret", config.getJwt().getSecret());
-        assertEquals(3600000L, config.getJwt().getExpirationInMs());
     }
 
     @Test
-    void givenAppconfig_withJwtEmptyAndNegativeExpiration_thenValuesStored() {
-        AppConfig config = new AppConfig();
-        AppConfig.Jwt jwt = config.getJwt();
-
-        jwt.setSecret("");
-        jwt.setExpirationInMs(-1L);
-
-        assertEquals("", config.getJwt().getSecret());
-        assertEquals(-1L, config.getJwt().getExpirationInMs());
-    }
-
-    @Test
-    void givenAppconfig_withGoogleAndFeaturesSet_thenGettersReturnValues() {
+    void givenAppconfig_withAuthSet_thenGettersReturnValues() {
         AppConfig config = new AppConfig();
 
-        config.getGoogle().setClientId("client-123");
-        config.getFeatures().setAuthWithGoogle(true);
-        config.getFeatures().setAuthWithJwt(true);
+        config.getAuth().setBaseUrl("http://auth:9010/api/auth");
+        config.getAuth().setInternalKey("key");
 
-        assertEquals("client-123", config.getGoogle().getClientId());
-        assertTrue(config.getFeatures().isAuthWithGoogle());
-        assertTrue(config.getFeatures().isAuthWithJwt());
+        assertEquals("http://auth:9010/api/auth", config.getAuth().getBaseUrl());
+        assertEquals("key", config.getAuth().getInternalKey());
     }
 
     @Test
-    void givenAppconfig_withGetJsonFactoryCalledTwice_thenNewInstanceEachCall() {
-        AppConfig config = new AppConfig();
-
-        GsonFactory first = config.getJsonFactory();
-        GsonFactory second = config.getJsonFactory();
-
-        assertNotNull(first);
-        assertNotNull(second);
-        assertNotSame(first, second, "getJsonFactory should return a new instance on each call");
-        assertEquals(GsonFactory.class, first.getClass());
-    }
-
-    @Test
-    void givenAppconfig_withGetHttpTransportCalledTwice_thenNewInstanceEachCall() {
-        AppConfig config = new AppConfig();
-
-        NetHttpTransport first = config.getHttpTransport();
-        NetHttpTransport second = config.getHttpTransport();
-
-        assertNotNull(first);
-        assertNotNull(second);
-        assertNotSame(first, second, "getHttpTransport should return a new instance on each call");
-        assertEquals(NetHttpTransport.class, first.getClass());
-    }
-
-    @Test
-    void givenAppconfig_withJwtSetToNull_thenJwtIsNullAndOtherMethodsUnaffected() {
+    void givenAppconfig_withJwtSetToNull_thenJwtIsNull() {
         AppConfig config = new AppConfig();
 
         config.setJwt(null);
+
         assertNull(config.getJwt(), "jwt should be allowed to be set to null");
-
-        // Ensure other methods unaffected
-        assertNotNull(config.getJsonFactory());
-        assertNotNull(config.getHttpTransport());
-    }
-
-    @Test
-    void givenSpiedAppconfig_withGetJsonFactoryAndGetHttpTransportCalled_thenInvocationsVerified() {
-        AppConfig spyConfig = spy(new AppConfig());
-
-        spyConfig.getJsonFactory();
-        spyConfig.getHttpTransport();
-
-        verify(spyConfig).getJsonFactory();
-        verify(spyConfig).getHttpTransport();
-    }
-
-    @Test
-    void isTestEmail_nullList_returnsFalse() {
-        AppConfig config = new AppConfig();
-        config.setTestEmails(null);
-        assertFalse(config.isTestEmail("a@b.com"));
-    }
-
-    @Test
-    void isTestEmail_matchesIgnoreCase() {
-        AppConfig config = new AppConfig();
-        config.setTestEmails(new String[] {"Test@Oopsly.com"});
-        assertTrue(config.isTestEmail("test@oopsly.com"));
-        assertFalse(config.isTestEmail("other@oopsly.com"));
     }
 }

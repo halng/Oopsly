@@ -28,6 +28,7 @@ import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.application.vm.PagingRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfCount;
 import com.app.oopsly.api.shelf.ShelfRepository;
@@ -38,8 +39,6 @@ import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -67,12 +66,12 @@ class ShelfServiceImplTest {
 
     @Mock private TestSuiteRepository testSuiteRepository;
 
-    @Mock private UserService userService;
+    @Mock private CurrentUser currentUser;
 
     @InjectMocks private ShelfServiceImpl shelveService;
 
     private ShelfReq shelfReq;
-    private User currentUser;
+    private UUID currentUserId;
     private UUID shelveId;
 
     @BeforeEach
@@ -85,8 +84,7 @@ class ShelfServiceImplTest {
                         "color",
                         "A shelve for testing purposes with sufficient description length to meet"
                                 + " validation");
-        currentUser = new User();
-        currentUser.setEmail("test@example.com");
+        currentUserId = UUID.randomUUID();
         shelveId = UUID.randomUUID();
     }
 
@@ -96,9 +94,9 @@ class ShelfServiceImplTest {
         savedShelve.setId(shelveId);
         savedShelve.setName(shelfReq.name());
         savedShelve.setDescription(shelfReq.description());
-        savedShelve.setUser(currentUser);
+        savedShelve.setUserId(currentUserId);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(currentUser.id()).thenReturn(currentUserId);
         when(shelfRepository.save(any(Shelf.class))).thenReturn(savedShelve);
 
         ApiRes result = shelveService.create(shelfReq);
@@ -113,24 +111,25 @@ class ShelfServiceImplTest {
         existingShelve.setId(shelveId);
         existingShelve.setName("Old Name");
         existingShelve.setDescription("Old Description with sufficient length");
-        existingShelve.setUser(currentUser);
+        existingShelve.setUserId(currentUserId);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(existingShelve));
         when(shelfRepository.save(any(Shelf.class))).thenReturn(existingShelve);
 
         ApiRes result = shelveService.update(shelfReq, shelveId);
 
         assertNotNull(result);
-        verify(shelfRepository, times(1)).findByIdAndUser(shelveId, currentUser);
+        verify(shelfRepository, times(1)).findByIdAndUserId(shelveId, currentUserId);
         verify(shelfRepository, times(1)).save(any(Shelf.class));
     }
 
     @Test
     void update_throwsNotFoundException_whenShelveNotFound() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
+                .thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> shelveService.update(shelfReq, shelveId));
         verify(shelfRepository, never()).save(any(Shelf.class));
@@ -141,10 +140,10 @@ class ShelfServiceImplTest {
         Shelf existingShelve = new Shelf();
         existingShelve.setId(shelveId);
         existingShelve.setDeleted(false);
-        existingShelve.setUser(currentUser);
+        existingShelve.setUserId(currentUserId);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(existingShelve));
 
         // Mock cascade delete operations
@@ -165,8 +164,9 @@ class ShelfServiceImplTest {
 
     @Test
     void delete_throwsNotFoundException_whenShelveNotFound() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
+                .thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> shelveService.delete(shelveId));
     }
@@ -175,24 +175,25 @@ class ShelfServiceImplTest {
     void getById_returnsShelve() {
         Shelf existingShelve = new Shelf();
         existingShelve.setId(shelveId);
-        existingShelve.setUser(currentUser);
+        existingShelve.setUserId(currentUserId);
         existingShelve.setName(shelfReq.name());
         existingShelve.setDescription(shelfReq.description());
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(existingShelve));
 
         ApiRes result = shelveService.getById(shelveId);
 
         assertNotNull(result);
-        verify(shelfRepository, times(1)).findByIdAndUser(shelveId, currentUser);
+        verify(shelfRepository, times(1)).findByIdAndUserId(shelveId, currentUserId);
     }
 
     @Test
     void getById_throwsNotFoundException_whenShelveNotFound() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
+                .thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> shelveService.getById(shelveId));
     }
@@ -203,9 +204,9 @@ class ShelfServiceImplTest {
         savedShelve.setId(UUID.randomUUID());
         savedShelve.setName(shelfReq.name());
         savedShelve.setDescription(shelfReq.description());
-        savedShelve.setUser(currentUser);
+        savedShelve.setUserId(currentUserId);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(currentUser.id()).thenReturn(currentUserId);
         when(shelfRepository.save(any(Shelf.class))).thenReturn(savedShelve);
 
         // Create multiple shelves
@@ -223,10 +224,10 @@ class ShelfServiceImplTest {
         existingShelve.setId(shelveId);
         existingShelve.setName(shelfReq.name());
         existingShelve.setDescription(shelfReq.description());
-        existingShelve.setUser(currentUser);
+        existingShelve.setUserId(currentUserId);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(existingShelve));
         when(shelfRepository.save(any(Shelf.class))).thenReturn(existingShelve);
 
@@ -241,10 +242,10 @@ class ShelfServiceImplTest {
         Shelf existingShelve = new Shelf();
         existingShelve.setId(shelveId);
         existingShelve.setDeleted(true); // Already deleted
-        existingShelve.setUser(currentUser);
+        existingShelve.setUserId(currentUserId);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(existingShelve));
 
         // Mock cascade delete operations
@@ -276,8 +277,9 @@ class ShelfServiceImplTest {
         }
 
         Page<Shelf> page = new PageImpl<>(shelves, PageRequest.of(1, 10), 3);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findAllByUser(eq(currentUser), any(Pageable.class))).thenReturn(page);
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findAllByUserId(eq(currentUserId), any(Pageable.class)))
+                .thenReturn(page);
         when(subjectRepository.countByShelves(anyList()))
                 .thenReturn(List.of(new ShelfCount(shelves.get(0).getId(), 2)));
         when(cardRepository.countByShelves(anyList()))
@@ -294,7 +296,7 @@ class ShelfServiceImplTest {
         assertEquals(5, paging.entities().get(0).stats().get("totalCards"));
         assertEquals(1, paging.entities().get(0).stats().get("totalDue"));
         assertEquals(0, paging.entities().get(1).stats().get("totalDue"));
-        verify(shelfRepository, times(1)).findAllByUser(eq(currentUser), any(Pageable.class));
+        verify(shelfRepository, times(1)).findAllByUserId(eq(currentUserId), any(Pageable.class));
         verify(subjectRepository, times(1)).countByShelves(anyList());
         verify(cardRepository, times(1)).countByShelves(anyList());
         verify(cardRepository, times(1)).countDueByShelves(anyList());
@@ -440,7 +442,7 @@ class ShelfServiceImplTest {
         Shelf existingShelve = new Shelf();
         existingShelve.setId(shelveId);
         existingShelve.setDeleted(false);
-        existingShelve.setUser(currentUser);
+        existingShelve.setUserId(currentUserId);
 
         Subject subject = new Subject();
         subject.setId(UUID.randomUUID());
@@ -451,8 +453,8 @@ class ShelfServiceImplTest {
         suite.setId(UUID.randomUUID());
         suite.setDeleted(false);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(existingShelve));
         when(subjectRepository.findAllByShelve(eq(existingShelve), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(subject)));
@@ -484,14 +486,14 @@ class ShelfServiceImplTest {
 
         Shelf existingShelve = new Shelf();
         existingShelve.setId(shelveId);
-        existingShelve.setUser(currentUser);
+        existingShelve.setUserId(currentUserId);
         existingShelve.setName(shelfReq.name());
         existingShelve.setDescription(shelfReq.description());
         existingShelve.setIcon(shelfReq.icon());
         existingShelve.setSubjects(List.of(subject));
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(existingShelve));
         when(subjectRepository.countByShelves(anyList()))
                 .thenReturn(List.of(new ShelfCount(shelveId, 1)));

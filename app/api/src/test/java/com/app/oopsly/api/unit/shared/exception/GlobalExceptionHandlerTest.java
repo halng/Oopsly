@@ -24,7 +24,6 @@ import com.app.oopsly.api.shared.exception.AuthProviderException;
 import com.app.oopsly.api.shared.exception.GlobalExceptionHandler;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
-import com.app.oopsly.api.shared.exception.SendEmailException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -85,16 +84,6 @@ class GlobalExceptionHandlerTest {
 
         assertNotNull(result);
         assertEquals(401, result.getStatusCode().value());
-    }
-
-    @Test
-    void handleSendEmailException_returnsInternalError() {
-        SendEmailException ex = new SendEmailException("Email failed");
-
-        ApiRes result = globalExceptionHandler.handleSendEmailException(ex);
-
-        assertNotNull(result);
-        assertEquals(500, result.getStatusCode().value());
     }
 
     @Test

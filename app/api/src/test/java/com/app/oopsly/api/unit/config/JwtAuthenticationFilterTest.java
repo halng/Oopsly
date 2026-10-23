@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.config.JwtAuthenticationFilter;
-import com.app.oopsly.api.shared.util.JwtUtils;
+import com.app.oopsly.api.shared.security.JwtVerifier;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -42,7 +42,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
 
-    @Mock private JwtUtils jwtUtils;
+    @Mock private JwtVerifier jwtVerifier;
 
     @Mock private ObjectMapper objectMapper;
 
@@ -78,7 +78,7 @@ class JwtAuthenticationFilterTest {
 
         // Assert
         verify(filterChain).doFilter(request, response);
-        verifyNoInteractions(jwtUtils); // Should not try to parse anything
+        verifyNoInteractions(jwtVerifier); // Should not try to parse anything
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
@@ -93,7 +93,7 @@ class JwtAuthenticationFilterTest {
 
         // Assert
         verify(filterChain).doFilter(request, response);
-        verifyNoInteractions(jwtUtils);
+        verifyNoInteractions(jwtVerifier);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
@@ -106,8 +106,8 @@ class JwtAuthenticationFilterTest {
         String role = "ROLE_USER";
 
         when(request.getHeader("authorization")).thenReturn("Bearer " + token);
-        when(jwtUtils.extractUserId(token)).thenReturn(userId);
-        when(jwtUtils.extractUserRole(token)).thenReturn(role);
+        when(jwtVerifier.extractUserId(token)).thenReturn(userId);
+        when(jwtVerifier.extractUserRole(token)).thenReturn(role);
 
         // Act
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
@@ -132,8 +132,8 @@ class JwtAuthenticationFilterTest {
         String role = "ROLE_USER";
 
         when(request.getHeader("authorization")).thenReturn("Bearer " + token);
-        when(jwtUtils.extractUserId(token)).thenReturn(userId);
-        when(jwtUtils.extractUserRole(token)).thenReturn(role);
+        when(jwtVerifier.extractUserId(token)).thenReturn(userId);
+        when(jwtVerifier.extractUserRole(token)).thenReturn(role);
 
         // Simulate existing login
         Authentication existingAuth = mock(Authentication.class);
@@ -143,9 +143,9 @@ class JwtAuthenticationFilterTest {
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
         // Assert
-        // We expect jwtUtils to be called to get the token parts...
+        // We expect jwtVerifier to be called to get the token parts...
         // BUT strictly speaking, your code extracts ID/Role BEFORE checking context.
-        // So jwtUtils verify is okay.
+        // So jwtVerifier verify is okay.
 
         // Critical check: Ensure the context STILL holds the old auth, not a new one
         assertSame(existingAuth, SecurityContextHolder.getContext().getAuthentication());
@@ -159,7 +159,7 @@ class JwtAuthenticationFilterTest {
         // Arrange
         String token = "invalid.token";
         when(request.getHeader("authorization")).thenReturn("Bearer " + token);
-        when(jwtUtils.extractUserId(token)).thenReturn(null); // Simulate extraction fail
+        when(jwtVerifier.extractUserId(token)).thenReturn(null); // Simulate extraction fail
 
         // Act
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
@@ -193,7 +193,7 @@ class JwtAuthenticationFilterTest {
                         "Bearer "
                                 + tokenWithLeadingSpace); // Results in "Bearer  token" with double
         // space
-        when(jwtUtils.extractUserId(tokenWithLeadingSpace))
+        when(jwtVerifier.extractUserId(tokenWithLeadingSpace))
                 .thenThrow(new RuntimeException("Invalid token"));
 
         // Mock the response writer for error handling
@@ -217,8 +217,8 @@ class JwtAuthenticationFilterTest {
         String userId = "user123";
 
         when(request.getHeader("authorization")).thenReturn("Bearer " + token);
-        when(jwtUtils.extractUserId(token)).thenReturn(userId);
-        when(jwtUtils.extractUserRole(token)).thenReturn(null);
+        when(jwtVerifier.extractUserId(token)).thenReturn(userId);
+        when(jwtVerifier.extractUserRole(token)).thenReturn(null);
 
         // Act
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
@@ -254,14 +254,14 @@ class JwtAuthenticationFilterTest {
 
         // Assert - Should not process lowercase bearer
         verify(filterChain).doFilter(request, response);
-        verifyNoInteractions(jwtUtils);
+        verifyNoInteractions(jwtVerifier);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
     void doFilterInternal_skipsErrorWriteWhenResponseCommitted() throws Exception {
         when(request.getHeader("authorization")).thenReturn("Bearer bad");
-        when(jwtUtils.extractUserId("bad")).thenThrow(new RuntimeException("invalid"));
+        when(jwtVerifier.extractUserId("bad")).thenThrow(new RuntimeException("invalid"));
         when(response.isCommitted()).thenReturn(true);
 
         jwtAuthenticationFilter.doFilter(request, response, filterChain);

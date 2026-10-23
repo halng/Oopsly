@@ -14,39 +14,35 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.user;
+package com.app.oopsly.api.progress;
 
 import com.app.oopsly.api.shared.domain.Audit;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.time.Instant;
-import lombok.*;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+/** Learning progress of one user (XP, streak, league). Profile data lives in the auth service. */
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "settings")
-@Entity(name = "settings")
-public class Setting extends Audit {
+@Table(name = "user_progress")
+@Entity
+public class UserProgress extends Audit {
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private Theme theme;
+    @Column(name = "user_id", nullable = false, unique = true)
+    private UUID userId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Language language;
-
-    @Builder.Default private Integer dailyGoal = 20;
-    @Builder.Default private Double targetRetentionRate = 0.8;
-    @Builder.Default private Boolean soundEffectsEnabled = true;
-    @Builder.Default private Boolean hapticFeedbackEnabled = true;
-    @Builder.Default private Boolean autoPlayAudio = false;
-    @Builder.Default private Boolean allowReminders = true;
-    @Builder.Default private Boolean isNewComer = true;
-    @Builder.Default private Integer dailyStreak = 0;
     @Builder.Default private Integer totalXp = 0;
+    @Builder.Default private Integer dailyStreak = 0;
 
     private Instant lastReviewedAt;
 
@@ -57,8 +53,4 @@ public class Setting extends Audit {
     @Builder.Default private Double retentionRate = 0.0;
     @Builder.Default private Integer totalReviews = 0;
     @Builder.Default private Integer totalCardsStudied = 0;
-
-    @OneToOne
-    @JoinColumn(name = "user_id", unique = true, nullable = false)
-    private User user;
 }

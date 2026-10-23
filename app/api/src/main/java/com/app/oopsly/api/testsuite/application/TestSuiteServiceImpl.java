@@ -18,11 +18,13 @@ package com.app.oopsly.api.testsuite.application;
 
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.progress.UserProgressService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shared.util.AnswerMatcher;
 import com.app.oopsly.api.shared.util.ApiMessages;
 import com.app.oopsly.api.shared.util.GamificationRules;
@@ -46,8 +48,6 @@ import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.domain.TestSuiteSelectionPayload;
 import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
@@ -84,7 +84,8 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     private final CardRepository cardRepository;
     private final QuestionRepository questionRepository;
     private final QuestionMetadataMapper metadataMapper;
-    private final UserService userService;
+    private final CurrentUser currentUser;
+    private final UserProgressService userProgressService;
 
     @Override
     @CacheEvict(value = "testSuites", key = "#deckId + ':all'")
@@ -303,11 +304,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
             suite.setHighestScore(percentage);
             testSuiteRepository.save(suite);
         }
-        userService.updateUserProgress(xpGained);
-
-        User refreshed = userService.getCurrentUser();
-        Integer storedXp =
-                refreshed.getSetting() == null ? null : refreshed.getSetting().getTotalXp();
+        Integer storedXp = userProgressService.updateUserProgress(xpGained).getTotalXp();
         int totalXp = storedXp == null ? xpGained : storedXp;
 
         log.info(
@@ -482,9 +479,8 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     private Shelf findShelveByIdAndUser(UUID deckId) {
-        User currentUser = userService.getCurrentUser();
         return shelfRepository
-                .findByIdAndUser(deckId, currentUser)
+                .findByIdAndUserId(deckId, currentUser.id())
                 .orElseThrow(() -> new NotFoundException("Shelve not found with id: " + deckId));
     }
 

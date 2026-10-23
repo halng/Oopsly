@@ -30,16 +30,17 @@ import com.app.oopsly.api.quiz.domain.QuizState;
 import com.app.oopsly.api.quiz.infrastructure.QuizLiveStateStore;
 import com.app.oopsly.api.quiz.infrastructure.QuizPlayerRepository;
 import com.app.oopsly.api.quiz.infrastructure.QuizSessionRepository;
+import com.app.oopsly.api.shared.client.AuthClient;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shared.util.ApiMessages;
 import com.app.oopsly.api.shared.util.GamificationRules;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -55,19 +56,20 @@ public class QuizServiceImpl implements QuizService {
     private final QuizSessionRepository sessionRepository;
     private final QuizPlayerRepository playerRepository;
     private final QuizLiveStateStore liveStateStore;
-    private final UserService userService;
+    private final CurrentUser currentUser;
+    private final AuthClient authClient;
 
     @Override
     @Transactional
     public QuizStateView createRoom(CreateQuizReq request, String hostSessionKey) {
-        User host = userService.getCurrentUser();
+        UUID hostId = currentUser.id();
         String roomCode = generateRoomCode();
 
         QuizSessionEntity session =
                 sessionRepository.saveAndFlush(
                         QuizSessionEntity.builder()
                                 .roomCode(roomCode)
-                                .host(host)
+                                .hostId(hostId)
                                 .subjectId(request.subjectId())
                                 .subjectTitle(request.subjectTitle())
                                 .state(QuizState.LOBBY)
@@ -75,7 +77,7 @@ public class QuizServiceImpl implements QuizService {
                                 .build());
 
         liveStateStore.saveCards(roomCode, request.cards());
-        log.info("Quiz room {} created by host {}", roomCode, host.getId());
+        log.info("Quiz room {} created by host {}", roomCode, hostId);
         return toStateView(session);
     }
 
@@ -218,8 +220,7 @@ public class QuizServiceImpl implements QuizService {
     }
 
     private void requireHost(QuizSessionEntity session) {
-        User currentUser = userService.getCurrentUser();
-        if (!session.getHost().getId().equals(currentUser.getId())) {
+        if (!session.getHostId().equals(currentUser.id())) {
             throw new ValidationException(ApiMessages.QUIZ_NOT_HOST);
         }
     }
@@ -256,10 +257,8 @@ public class QuizServiceImpl implements QuizService {
 
         return new QuizStateView(
                 session.getRoomCode(),
-                session.getHost().getId(),
-                session.getHost().getDisplayName() != null
-                        ? session.getHost().getDisplayName()
-                        : session.getHost().getName(),
+                session.getHostId(),
+                authClient.lookup(session.getHostId()).label(),
                 session.getSubjectId(),
                 session.getSubjectTitle(),
                 session.getState(),

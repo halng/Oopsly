@@ -14,9 +14,10 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.user;
+package com.app.oopsly.api.progress;
 
 import jakarta.persistence.LockModeType;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,13 +29,16 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, UUID> {
-    Optional<User> findByEmail(String email);
+public interface UserProgressRepository extends JpaRepository<UserProgress, UUID> {
+
+    Optional<UserProgress> findByUserId(UUID userId);
+
+    List<UserProgress> findAllByUserIdIn(Collection<UUID> userIds);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT u FROM users u WHERE u.id = :id")
-    Optional<User> findByIdWithLock(@Param("id") UUID id);
+    @Query("SELECT p FROM UserProgress p WHERE p.userId = :userId")
+    Optional<UserProgress> findByUserIdWithLock(@Param("userId") UUID userId);
 
-    @Query("SELECT u FROM users u JOIN u.setting s WHERE u.deleted = false ORDER BY s.totalXp DESC")
-    List<User> findTopByXp(Pageable pageable);
+    @Query("SELECT p FROM UserProgress p WHERE p.deleted = false ORDER BY p.totalXp DESC")
+    List<UserProgress> findTopByXp(Pageable pageable);
 }

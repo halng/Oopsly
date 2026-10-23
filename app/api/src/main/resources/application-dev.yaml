@@ -1,17 +1,4 @@
-app:
-  test-emails:
-    - test@oopsly.com
-    - user1@oopsly.com
-    - user2@oopsly.com
-    - integration@oopsly.com
 spring:
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
   flyway:
     baseline-version: -1
     locations: classpath:db/migration
-management:
-  health:
-    mail:
-      enabled: false

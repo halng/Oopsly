@@ -48,12 +48,9 @@ ext {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
-	// TODO: consider to use a platform for sending mail or custom ourself
-	 implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
-	implementation("com.github.java-json-tools:json-patch:1.13")
 //	implementation 'org.springframework.ai:spring-ai-pdf-document-reader'
 //	implementation 'org.springframework.ai:spring-ai-starter-model-vertex-ai-embedding'
 //	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
@@ -164,9 +161,7 @@ tasks.register('composeDown', Exec) {
 
 def jacocoExcludes = [
 		'**/ApiApplication**',
-		'**/Constant**',
 		'**/viewmodel/**',
-		'**/NoOpIEmailSender**',
 		// Spring Security DSL lambdas are not unit-testable without full filter-chain boot
 		'**/SecurityConfig**',
 ]
