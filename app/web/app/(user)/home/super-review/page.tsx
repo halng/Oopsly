@@ -18,7 +18,7 @@ export default function SuperReviewPage() {
             card.id,
             grade
         );
-        return res.data;
+        return res.data ?? undefined;
     }, []);
 
     return (

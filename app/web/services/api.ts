@@ -453,7 +453,7 @@ export const ApiService = {
             await offlineDb.cacheCards(cards);
             return { ...res, data: cards };
         }
-        return res;
+        return { ...res, data: res.data?.map(mapPracticeCard) ?? null };
     },
 
     createCards: async (

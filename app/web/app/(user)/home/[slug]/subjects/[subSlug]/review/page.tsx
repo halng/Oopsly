@@ -54,7 +54,7 @@ export default function ReviewPage() {
                 card.id,
                 grade
             );
-            return res.data;
+            return res.data ?? undefined;
         },
         [shelf, subject]
     );
