@@ -1,0 +1,98 @@
+<!--
+  ~    Copyright 2025 Hao Nguyen Tan
+  ~
+  ~    Licensed under the Apache License, Version 2.0 (the "License");
+  ~    you may not use this file except in compliance with the License.
+  ~    You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~    Unless required by applicable law or agreed to in writing, software
+  ~    distributed under the License is distributed on an "AS IS" BASIS,
+  ~    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~    See the License for the specific language governing permissions and
+  ~    limitations under the License.
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Here is your verification code 👋</title>
+    <style type="text/css">
+        /* RESET STYLES */
+        body { margin: 0; padding: 0; min-width: 100%; width: 100% !important; height: 100% !important; }
+        body, table, td, div, p, a { -webkit-font-smoothing: antialiased; text-size-adjust: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; line-height: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse !important; border-spacing: 0; }
+        img { border: 0; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+
+        /* GENERAL STYLES */
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f2f4f6; color: #333333; }
+
+        /* MOBILE RESPONSIVENESS */
+        @media screen and (max-width: 480px) {
+            .mobile-padding { padding: 20px !important; }
+            .mobile-text { font-size: 16px !important; line-height: 24px !important; }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f2f4f6;">
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f2f4f6;">
+    <tr>
+        <td align="center" style="padding: 40px 0;">
+
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
+
+                <tr>
+                    <td align="center" style="padding: 40px 40px 20px 40px; border-bottom: 3px solid #4A90E2;">
+                        <h2 style="margin: 0; font-size: 24px; color: #333333; font-weight: 700; letter-spacing: -0.5px;">Oopsly</h2>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="mobile-padding" style="padding: 40px;">
+
+                        <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 16px; line-height: 26px; color: #666666;">
+                            Hello <strong> {{USER_NAME}}</strong>, <br> <br>
+                            Please use the verification code below to sign in. This code works for the next 5 minutes.
+                        </p>
+
+                        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                                <td align="center" style="padding: 20px 0;">
+                                    <table border="0" cellpadding="0" cellspacing="0">
+                                        <tr>
+                                            <td align="center" style="background-color: #f4f6f8; border-radius: 8px; border: 1px solid #e1e4e8; padding: 20px 40px;">
+                                                    <span style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 700; color: #333333; letter-spacing: 8px;">
+                                                        {{OTP_CODE}}
+                                                    </span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                        <p class="mobile-text" style="margin: 30px 0 0 0; font-size: 14px; line-height: 22px; color: #999999;">
+                            If you didn't request this code, you can safely ignore this email. Someone might have typed your email address by mistake.
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="background-color: #fafbfc; padding: 24px; border-top: 1px solid #e1e4e8; text-align: center;">
+                        <p style="margin: 0; font-size: 12px; color: #999999; line-height: 18px;">
+                            &copy; 2025-2026 Oopsly. All rights reserved.<br>
+                            123 Street Address, City, Country
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>
