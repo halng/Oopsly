@@ -22,7 +22,10 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
 		return err
 	}
 	defer conn.Release()
+	return runMigrations(ctx, conn)
+}
 
+func runMigrations(ctx context.Context, conn DB) error {
 	if _, err := conn.Exec(ctx, "SELECT pg_advisory_lock($1)", advisoryLockID); err != nil {
 		return err
 	}

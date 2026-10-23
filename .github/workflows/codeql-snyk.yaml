@@ -41,6 +41,10 @@ jobs:
             build-mode: none
           - language: javascript-typescript
             build-mode: none
+          - language: go
+            build-mode: none
+          - language: python
+            build-mode: none
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -109,3 +113,53 @@ jobs:
       - name: Skip Snyk (Web) — token not configured
         if: env.SNYK_TOKEN == ''
         run: echo "SNYK_TOKEN not set; skipping Web Snyk scan."
+  snyk-game:
+    name: Snyk (Game)
+    runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Snyk Code is SAST on source — no pnpm install needed.
+      - name: Snyk code test (Game)
+        if: env.SNYK_TOKEN != ''
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        with:
+          command: code test
+          args: >-
+            ./app/game
+            --org=a8c77c31-638a-4516-ab03-0e14eb961631
+            --report
+            --project-name=OOPSLY-GAME
+
+      - name: Skip Snyk (Game) — token not configured
+        if: env.SNYK_TOKEN == ''
+        run: echo "SNYK_TOKEN not set; skipping Game Snyk scan."
+  snyk-auth:
+    name: Snyk (Auth)
+    runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Snyk Code is SAST on source — no pnpm install needed.
+      - name: Snyk code test (Auth)
+        if: env.SNYK_TOKEN != ''
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        with:
+          command: code test
+          args: >-
+            ./app/auth
+            --org=a8c77c31-638a-4516-ab03-0e14eb961631
+            --report
+            --project-name=OOPSLY-AUTH
+
+      - name: Skip Snyk (Auth) — token not configured
+        if: env.SNYK_TOKEN == ''
+        run: echo "SNYK_TOKEN not set; skipping Auth Snyk scan."

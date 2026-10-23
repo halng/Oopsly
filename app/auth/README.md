@@ -15,6 +15,7 @@ docker compose up -d --build     # postgres + redis + auth (app/docker-compose.y
 # or, with Postgres/Redis already running:
 cd auth && go run ./cmd/auth
 go vet ./... && go test -race ./...
+./scripts/coverage.sh            # tests + coverage.out for Sonar; fails below 95% (COVERAGE_MIN)
 ```
 
 ## Endpoints (`/api/auth`)

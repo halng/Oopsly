@@ -138,3 +138,12 @@ func TestParseRejects(t *testing.T) {
 		})
 	}
 }
+
+func TestNewManagerRejectsBadSecrets(t *testing.T) {
+	if _, err := NewManager("***not-base64***", time.Hour, time.Hour); err == nil {
+		t.Fatal("non-base64 secret must be rejected")
+	}
+	if _, err := NewManager(base64.StdEncoding.EncodeToString(make([]byte, 16)), time.Hour, time.Hour); err == nil {
+		t.Fatal("secret under 256 bits must be rejected")
+	}
+}

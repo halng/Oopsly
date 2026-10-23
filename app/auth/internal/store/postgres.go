@@ -6,10 +6,18 @@ import (
 
 	"github.com/halng/Oopsly/app/auth/internal/domain"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
-type Postgres struct{ Pool *pgxpool.Pool }
+// DB is the subset of pgx used here; *pgxpool.Pool, *pgxpool.Conn and pgxmock satisfy it.
+type DB interface {
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	Begin(ctx context.Context) (pgx.Tx, error)
+}
+
+type Postgres struct{ Pool DB }
 
 const userCols = `id::text, email, COALESCE(name,''), COALESCE(display_name,''), COALESCE(picture_url,''), COALESCE(bio,''), age, role`
 
