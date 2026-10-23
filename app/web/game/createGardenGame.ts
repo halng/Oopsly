@@ -94,15 +94,19 @@ class GardenScene extends Phaser.Scene {
             soil.setInteractive({ useHandCursor: true });
             soil.on('pointerdown', () => {
                 const onPlot = this.game.registry.get('onPlot') as
-                    | ((index: number) => void)
-                    | undefined;
+                    ((index: number) => void) | undefined;
                 onPlot?.(plot.index);
             });
             const info = tree ? PLANT_SPECIES_CATALOG[tree.species] : null;
             const glyph = this.add
-                .text(0, -6, info ? info.symbol : plot.isUnlocked ? '+' : '🔒', {
-                    fontSize: '40px',
-                })
+                .text(
+                    0,
+                    -6,
+                    info ? info.symbol : plot.isUnlocked ? '+' : '🔒',
+                    {
+                        fontSize: '40px',
+                    }
+                )
                 .setOrigin(0.5);
             const caption = this.add
                 .text(

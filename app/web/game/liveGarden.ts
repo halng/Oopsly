@@ -2,7 +2,13 @@ import { GardenState, PlantSpecies, PlantStage } from '@/types';
 import { PLANT_SPECIES_CATALOG } from '@/utils/gardenData';
 import { GameReward } from '@/services/gameApi';
 
-const STAGES: PlantStage[] = ['seed', 'sprout', 'sapling', 'blooming', 'ancient'];
+const STAGES: PlantStage[] = [
+    'seed',
+    'sprout',
+    'sapling',
+    'blooming',
+    'ancient',
+];
 const WATER_DEW_COST = 5;
 const WATER_LEVEL_GAIN = 25;
 const WATER_GROWTH_GAIN = 10;
@@ -19,7 +25,10 @@ function grow(stage: PlantStage, progress: number, growth: number) {
     return { stage: nextStage, growthProgress: nextProgress };
 }
 
-export function pourTree(garden: GardenState, treeId: string): GardenState | null {
+export function pourTree(
+    garden: GardenState,
+    treeId: string
+): GardenState | null {
     const tree = garden.plantedTrees.find((item) => item.id === treeId);
     if (!tree || garden.dewDrops < WATER_DEW_COST) return null;
     const grown = grow(tree.stage, tree.growthProgress, WATER_GROWTH_GAIN);
@@ -30,7 +39,10 @@ export function pourTree(garden: GardenState, treeId: string): GardenState | nul
             item.id === treeId
                 ? {
                       ...item,
-                      waterLevel: Math.min(100, item.waterLevel + WATER_LEVEL_GAIN),
+                      waterLevel: Math.min(
+                          100,
+                          item.waterLevel + WATER_LEVEL_GAIN
+                      ),
                       totalWaters: item.totalWaters + 1,
                       stage: grown.stage,
                       growthProgress: grown.growthProgress,
@@ -113,7 +125,10 @@ export function sowSeed(
     };
 }
 
-export function openPlot(garden: GardenState, plotIndex: number): GardenState | null {
+export function openPlot(
+    garden: GardenState,
+    plotIndex: number
+): GardenState | null {
     const plot = garden.plots.find((item) => item.index === plotIndex);
     if (!plot || plot.isUnlocked) return garden;
     if (garden.forestCoins < plot.unlockCost) return null;

@@ -51,7 +51,13 @@ const SPECIES: PlantSpecies[] = [
     'golden_ginkgo',
 ];
 
-const STAGES: PlantStage[] = ['seed', 'sprout', 'sapling', 'blooming', 'ancient'];
+const STAGES: PlantStage[] = [
+    'seed',
+    'sprout',
+    'sapling',
+    'blooming',
+    'ancient',
+];
 
 function asSpecies(value: string): PlantSpecies {
     const key = value.toLowerCase() as PlantSpecies;
@@ -68,9 +74,7 @@ export function normalizeGarden(garden: GardenState): GardenState {
     for (const species of SPECIES) {
         const raw = garden.seedInventory as Record<string, number>;
         inventory[species] =
-            raw?.[species] ??
-            raw?.[species.toUpperCase()] ??
-            0;
+            raw?.[species] ?? raw?.[species.toUpperCase()] ?? 0;
     }
     return {
         ...garden,
@@ -145,9 +149,13 @@ export const GameService = {
     },
 
     water: async (treeId: string): Promise<ApiResponse<GardenState>> => {
-        const res = await request<GardenState>('/v1/game/plants/water', 'POST', {
-            treeId,
-        });
+        const res = await request<GardenState>(
+            '/v1/game/plants/water',
+            'POST',
+            {
+                treeId,
+            }
+        );
         if (res.isSuccess && res.data) {
             return { ...res, data: normalizeGarden(res.data) };
         }
@@ -155,9 +163,13 @@ export const GameService = {
     },
 
     unlock: async (plotIndex: number): Promise<ApiResponse<GardenState>> => {
-        const res = await request<GardenState>('/v1/game/plots/unlock', 'POST', {
-            plotIndex,
-        });
+        const res = await request<GardenState>(
+            '/v1/game/plots/unlock',
+            'POST',
+            {
+                plotIndex,
+            }
+        );
         if (res.isSuccess && res.data) {
             return { ...res, data: normalizeGarden(res.data) };
         }
@@ -165,19 +177,29 @@ export const GameService = {
     },
 
     harvest: async (treeId: string): Promise<ApiResponse<GameReward>> => {
-        const res = await request<GameReward>('/v1/game/plants/harvest', 'POST', {
-            treeId,
-        });
+        const res = await request<GameReward>(
+            '/v1/game/plants/harvest',
+            'POST',
+            {
+                treeId,
+            }
+        );
         if (res.isSuccess && res.data) {
             return { ...res, data: normalizeReward(res.data) };
         }
         return res;
     },
 
-    claimFocus: async (focusMinutes: number): Promise<ApiResponse<GameReward>> => {
-        const res = await request<GameReward>('/v1/game/rewards/focus', 'POST', {
-            focusMinutes,
-        });
+    claimFocus: async (
+        focusMinutes: number
+    ): Promise<ApiResponse<GameReward>> => {
+        const res = await request<GameReward>(
+            '/v1/game/rewards/focus',
+            'POST',
+            {
+                focusMinutes,
+            }
+        );
         if (res.isSuccess && res.data) {
             return { ...res, data: normalizeReward(res.data) };
         }
@@ -187,7 +209,11 @@ export const GameService = {
     claimReview: async (
         input: ReviewRewardInput
     ): Promise<ApiResponse<GameReward>> => {
-        const res = await request<GameReward>('/v1/game/rewards/review', 'POST', input);
+        const res = await request<GameReward>(
+            '/v1/game/rewards/review',
+            'POST',
+            input
+        );
         if (res.isSuccess && res.data) {
             return { ...res, data: normalizeReward(res.data) };
         }

@@ -17,7 +17,8 @@ export default function GardenCanvas({
     const parentRef = useRef<HTMLDivElement>(null);
     const gameRef = useRef<Phaser.Game | null>(null);
     const onPlotRef = useRef(onPlotSelect);
-    onPlotRef.current = onPlotSelect;
+    // error  Error: Cannot access refs during render
+    // onPlotRef.current = onPlotSelect;
 
     useEffect(() => {
         if (!parentRef.current) return;

@@ -1,7 +1,11 @@
 import { ulid } from 'ulid';
 import { useAuthStore } from '@/store';
 import { GardenState } from '@/types';
-import { GameReward, normalizeGarden, normalizeReward } from '@/services/gameApi';
+import {
+    GameReward,
+    normalizeGarden,
+    normalizeReward,
+} from '@/services/gameApi';
 
 export type GardenAction =
     | { action: 'water'; requestId: string; treeId: string }
@@ -41,7 +45,8 @@ let listener: Listener | null = null;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
 function socketUrl(token: string) {
-    const http = process.env.NEXT_PUBLIC_GAME_API_URL || 'http://localhost:8000';
+    const http =
+        process.env.NEXT_PUBLIC_GAME_API_URL || 'http://localhost:8000';
     const base = http.replace(/^http/, 'ws').replace(/\/$/, '');
     const requestId = ulid();
     return `${base}/v1/game/ws?token=${encodeURIComponent(token)}&platform=WEB&requestId=${requestId}`;

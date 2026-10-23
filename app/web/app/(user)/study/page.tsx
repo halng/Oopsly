@@ -240,11 +240,16 @@ export default function StudyPage() {
                             {garden?.forestLevel ?? 1}
                         </p>
                         {message ? (
-                            <p className="text-xs mt-2 text-stone-600">{message}</p>
+                            <p className="text-xs mt-2 text-stone-600">
+                                {message}
+                            </p>
                         ) : null}
                     </div>
                     {reward ? (
-                        <PouchReveal species={reward.species} rarity={reward.rarity} />
+                        <PouchReveal
+                            species={reward.species}
+                            rarity={reward.rarity}
+                        />
                     ) : null}
                     {garden ? (
                         <GardenCanvas
@@ -252,7 +257,9 @@ export default function StudyPage() {
                             onPlotSelect={setSelectedPlot}
                         />
                     ) : (
-                        <p className="text-sm text-stone-500">Loading garden...</p>
+                        <p className="text-sm text-stone-500">
+                            Loading garden...
+                        </p>
                     )}
                     {selectedPlotState ? (
                         <div
@@ -272,19 +279,24 @@ export default function StudyPage() {
                                         const requestId = crypto.randomUUID();
                                         play(
                                             requestId,
-                                            openPlot(current, selectedPlotState.index),
+                                            openPlot(
+                                                current,
+                                                selectedPlotState.index
+                                            ),
                                             'Plot unlocked.',
                                             () =>
                                                 sendGardenAction({
                                                     action: 'unlock',
                                                     requestId,
-                                                    plotIndex: selectedPlotState.index,
+                                                    plotIndex:
+                                                        selectedPlotState.index,
                                                 })
                                         );
                                     }}
                                     className="px-4 py-2 rounded-xl bg-stone-900 text-white text-xs font-bold cursor-pointer"
                                 >
-                                    Unlock for {selectedPlotState.unlockCost} coins
+                                    Unlock for {selectedPlotState.unlockCost}{' '}
+                                    coins
                                 </button>
                             ) : null}
                             {selectedPlotState.isUnlocked && !selectedTree ? (
@@ -301,9 +313,11 @@ export default function StudyPage() {
                                                 type="button"
                                                 data-testid={`btn-plant-${species}`}
                                                 onClick={() => {
-                                                    const current = gardenRef.current;
+                                                    const current =
+                                                        gardenRef.current;
                                                     if (!current) return;
-                                                    const requestId = crypto.randomUUID();
+                                                    const requestId =
+                                                        crypto.randomUUID();
                                                     play(
                                                         requestId,
                                                         sowSeed(
@@ -325,8 +339,16 @@ export default function StudyPage() {
                                                 }}
                                                 className="px-3 py-2 rounded-xl bg-emerald-50 text-xs font-bold cursor-pointer"
                                             >
-                                                {PLANT_SPECIES_CATALOG[species].symbol}{' '}
-                                                {PLANT_SPECIES_CATALOG[species].name}{' '}
+                                                {
+                                                    PLANT_SPECIES_CATALOG[
+                                                        species
+                                                    ].symbol
+                                                }{' '}
+                                                {
+                                                    PLANT_SPECIES_CATALOG[
+                                                        species
+                                                    ].name
+                                                }{' '}
                                                 ({count})
                                             </button>
                                         ))}
@@ -340,10 +362,14 @@ export default function StudyPage() {
                                         onClick={() => {
                                             const current = gardenRef.current;
                                             if (!current) return;
-                                            const requestId = crypto.randomUUID();
+                                            const requestId =
+                                                crypto.randomUUID();
                                             play(
                                                 requestId,
-                                                pourTree(current, selectedTree.id),
+                                                pourTree(
+                                                    current,
+                                                    selectedTree.id
+                                                ),
                                                 'Pouring.',
                                                 () =>
                                                     sendGardenAction({
@@ -363,9 +389,11 @@ export default function StudyPage() {
                                             type="button"
                                             data-testid="btn-harvest-tree"
                                             onClick={() => {
-                                                const current = gardenRef.current;
+                                                const current =
+                                                    gardenRef.current;
                                                 if (!current) return;
-                                                const requestId = crypto.randomUUID();
+                                                const requestId =
+                                                    crypto.randomUUID();
                                                 const gathered = gatherTree(
                                                     current,
                                                     selectedTree.id
@@ -387,7 +415,8 @@ export default function StudyPage() {
                                                             treeId: selectedTree.id,
                                                         })
                                                 );
-                                                if (sent) setReward(gathered.reward);
+                                                if (sent)
+                                                    setReward(gathered.reward);
                                             }}
                                             className="px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold cursor-pointer"
                                         >

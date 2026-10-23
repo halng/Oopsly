@@ -244,7 +244,10 @@ export default function TakeTestPage() {
                 />
                 {pouch ? (
                     <div className="mb-4">
-                        <PouchReveal species={pouch.species} rarity={pouch.rarity} />
+                        <PouchReveal
+                            species={pouch.species}
+                            rarity={pouch.rarity}
+                        />
                     </div>
                 ) : null}
                 <StudyResultCard

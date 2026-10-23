@@ -119,7 +119,9 @@ const ok = <T,>(data: T) => ({
 describe('StudyPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        useAuthStore.getState().setCredentials('learner@oopsly.app', 'token', 'refresh');
+        useAuthStore
+            .getState()
+            .setCredentials('learner@oopsly.app', 'token', 'refresh');
         vi.mocked(GameService.getGarden).mockResolvedValue(ok(garden));
         vi.mocked(GameService.plant).mockResolvedValue(ok(garden));
         vi.mocked(GameService.water).mockResolvedValue(ok(garden));
@@ -169,7 +171,9 @@ describe('StudyPage', () => {
         render(<StudyPage />);
         fireEvent.click(screen.getByTestId('btn-tab-garden'));
         fireEvent.click(await screen.findByTestId('garden-plot-1'));
-        fireEvent.click(await screen.findByTestId('btn-plant-wildflower_meadow'));
+        fireEvent.click(
+            await screen.findByTestId('btn-plant-wildflower_meadow')
+        );
         expect(sendGardenAction).toHaveBeenCalledWith(
             expect.objectContaining({
                 action: 'plant',
