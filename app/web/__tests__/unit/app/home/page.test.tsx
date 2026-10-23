@@ -101,6 +101,8 @@ describe('HomePage', () => {
         expect(
             screen.getByText('4 Total Cards Due for Daily FSRS Review')
         ).toBeInTheDocument();
+        fireEvent.click(screen.getByTestId('btn-practise-now'));
+        expect(push).toHaveBeenCalledWith('/home/super-review');
     });
 
     it('shows the empty shelf state when the API returns no shelves', async () => {

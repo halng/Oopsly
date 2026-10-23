@@ -50,4 +50,7 @@ public interface CardService {
      * newLimit}, defaulting to the subject's {@code newCardsPerDay}).
      */
     ApiRes getDueCards(UUID shelfId, UUID subjectId, int limit, Integer newLimit);
+
+    /** Every card currently due for the signed-in user, across all shelves. */
+    ApiRes getDueCardsForCurrentUser();
 }

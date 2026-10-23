@@ -20,6 +20,7 @@ import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfCount;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectCount;
+import com.app.oopsly.api.user.User;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +55,13 @@ public interface CardRepository extends JpaRepository<Card, UUID> {
                     + "c.nextPracticeTime <= :now")
     List<Card> findDueBySubjects(
             @Param("subjects") List<Subject> subjects, @Param("now") Instant now);
+
+    @Query(
+            "SELECT c FROM cards c JOIN FETCH c.subject s JOIN FETCH s.shelf shelf"
+                    + " WHERE c.deleted = false AND s.deleted = false AND shelf.deleted = false"
+                    + " AND shelf.user = :user AND c.nextPracticeTime IS NOT NULL"
+                    + " AND c.nextPracticeTime <= :now ORDER BY c.nextPracticeTime ASC")
+    List<Card> findDueForUser(@Param("user") User user, @Param("now") Instant now);
 
     @Query(
             "SELECT c FROM cards c WHERE c.subject = :subject AND c.deleted = false AND"

@@ -1,7 +1,9 @@
+import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TakeTestPage from '@/app/(user)/home/[slug]/tests/[testSlug]/take/page';
 import { ApiService } from '@/services/api';
+import { GameService } from '@/services/gameApi';
 import { testSuiteContext } from '@/__tests__/unit/helpers/studyFixtures';
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
@@ -12,11 +14,35 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/hooks/useTestSuiteContext', () => ({
     useTestSuiteContext: () => testSuiteContext,
 }));
+vi.mock('next/dynamic', () => ({
+    default: (importer: () => Promise<{ default: React.ComponentType }>) => {
+        const Lazy = React.lazy(importer);
+        return function DynamicComponent(props: Record<string, unknown>) {
+            return (
+                <React.Suspense fallback={null}>
+                    <Lazy {...props} />
+                </React.Suspense>
+            );
+        };
+    },
+}));
 vi.mock('@/services/api', () => ({
     ApiService: {
         getTestAttempt: vi.fn(),
         submitTestSuite: vi.fn(),
     },
+}));
+vi.mock('@/services/gameApi', () => ({
+    GameService: {
+        claimTest: vi.fn(),
+    },
+}));
+vi.mock('@/components/garden/PouchReveal', () => ({
+    default: ({ species, rarity }: { species: string; rarity: string }) => (
+        <div data-testid="seed-pouch">
+            {species} {rarity}
+        </div>
+    ),
 }));
 
 describe('TakeTestPage', () => {
@@ -36,6 +62,22 @@ describe('TakeTestPage', () => {
                         options: ['3', '4'],
                     },
                 ],
+            },
+            message: '',
+            statusCode: 200,
+            timestamp: '',
+        });
+        vi.mocked(GameService.claimTest).mockResolvedValue({
+            isSuccess: true,
+            data: {
+                species: 'camphor_tree',
+                rarity: 'Legendary',
+                dewDropsGained: 10,
+                sunlightOrbsGained: 5,
+                forestCoinsGained: 10,
+                growthPointsGained: 20,
+                xpGained: 0,
+                garden: {} as never,
             },
             message: '',
             statusCode: 200,
@@ -86,5 +128,11 @@ describe('TakeTestPage', () => {
             expect(ApiService.submitTestSuite).toHaveBeenCalled()
         );
         expect(screen.getByTestId('test-breakdown')).toBeInTheDocument();
+        await waitFor(() =>
+            expect(GameService.claimTest).toHaveBeenCalledWith(100)
+        );
+        expect(await screen.findByTestId('seed-pouch')).toHaveTextContent(
+            'camphor_tree'
+        );
     });
 });

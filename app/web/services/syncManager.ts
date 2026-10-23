@@ -17,7 +17,7 @@ type SyncListener = (status: SyncStatus) => void;
 class SyncManager {
     private listeners: Set<SyncListener> = new Set();
     private status: SyncStatus = {
-        isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+        isOnline: true,
         isSyncing: false,
         pendingCount: 0,
         lastSyncTime: null,
@@ -32,9 +32,15 @@ class SyncManager {
         // Singleton
     }
 
+    public captureBrowserOnline() {
+        if (typeof navigator === 'undefined') return;
+        this.status.isOnline = navigator.onLine;
+    }
+
     public init() {
         if (this.isInitialized || typeof window === 'undefined') return;
         this.isInitialized = true;
+        this.captureBrowserOnline();
 
         // Listen to browser online/offline events
         window.addEventListener('online', () => this.handleNetworkChange(true));

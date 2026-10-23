@@ -23,6 +23,7 @@ vi.mock('@/services/syncManager', () => ({
             return vi.fn();
         }),
         syncNow: vi.fn().mockResolvedValue({ success: 1, failed: 0 }),
+        captureBrowserOnline: vi.fn(),
     },
 }));
 

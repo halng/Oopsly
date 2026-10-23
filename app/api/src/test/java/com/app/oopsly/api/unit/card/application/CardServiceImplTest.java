@@ -29,6 +29,7 @@ import com.app.oopsly.api.card.CardServiceImpl;
 import com.app.oopsly.api.card.DifficultyLevel;
 import com.app.oopsly.api.card.vm.CardItemReq;
 import com.app.oopsly.api.card.vm.CardReq;
+import com.app.oopsly.api.card.vm.PracticeCardRes;
 import com.app.oopsly.api.card.vm.UpdateDifficultyReq;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
@@ -747,6 +748,58 @@ class CardServiceImplTest {
 
         ApiRes result = cardService.getCardsByTestSuite(suiteId);
         assertEquals(0, ((List<?>) result.getBody().data()).size());
+    }
+
+    @Test
+    void getDueCardsForCurrentUser_returnsCardsFromEverySubject() {
+        Shelf shelf = new Shelf();
+        shelf.setId(shelveId);
+        Subject owned = new Subject();
+        owned.setId(subjectId);
+        owned.setName("Biology");
+        owned.setShelf(shelf);
+        Card card = new Card();
+        card.setId(cardId);
+        card.setFront("Q");
+        card.setBack("A");
+        card.setSubject(owned);
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(cardRepository.findDueForUser(eq(currentUser), any(Instant.class)))
+                .thenReturn(List.of(card));
+
+        ApiRes result = cardService.getDueCardsForCurrentUser();
+
+        assertTrue(result.getBody().isSuccess());
+        List<?> data = (List<?>) result.getBody().data();
+        assertEquals(1, data.size());
+        PracticeCardRes row = (PracticeCardRes) data.get(0);
+        assertEquals(cardId, row.id());
+        assertEquals(shelveId, row.shelfId());
+        assertEquals(subjectId, row.subjectId());
+        assertEquals("Biology", row.subjectName());
+        assertEquals("Q", row.front());
+    }
+
+    @Test
+    void getDueCardsForCurrentUser_returnsEmptyWhenNothingIsDue() {
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(cardRepository.findDueForUser(eq(currentUser), any(Instant.class)))
+                .thenReturn(List.of());
+
+        ApiRes result = cardService.getDueCardsForCurrentUser();
+
+        assertTrue(result.getBody().isSuccess());
+        assertEquals(0, ((List<?>) result.getBody().data()).size());
+    }
+
+    @Test
+    void getDueCardsForCurrentUserFallback_throwsRuntimeException() {
+        Throwable cause = new Throwable("down");
+        RetryLaterException exception =
+                assertThrows(
+                        RetryLaterException.class,
+                        () -> cardService.getDueCardsForCurrentUserFallback(cause));
+        assertTrue(exception.getMessage().contains("currently unavailable"));
     }
 
     @Test

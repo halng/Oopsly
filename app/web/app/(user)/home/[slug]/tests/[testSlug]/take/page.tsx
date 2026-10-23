@@ -11,8 +11,14 @@ import {
     Trophy,
     XCircle,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { TestAttempt, TestQuestionBreakdown, TestSubmissionRes } from '@/types';
 import { ApiService } from '@/services/api';
+import { GameReward, GameService } from '@/services/gameApi';
+
+const PouchReveal = dynamic(() => import('@/components/garden/PouchReveal'), {
+    ssr: false,
+});
 import { useTestSuiteContext } from '@/hooks/useTestSuiteContext';
 import { useStudyFx } from '@/hooks/useStudyFx';
 import {
@@ -76,6 +82,7 @@ export default function TakeTestPage() {
     const [current, setCurrent] = useState(0);
     const [remaining, setRemaining] = useState<number | null>(null);
     const [result, setResult] = useState<TestSubmissionRes | null>(null);
+    const [pouch, setPouch] = useState<GameReward | null>(null);
     const startedAtRef = useRef(0);
 
     const shelfId = shelf?.id;
@@ -99,6 +106,7 @@ export default function TakeTestPage() {
         setAnswers({});
         setCurrent(0);
         setResult(null);
+        setPouch(null);
         setRemaining(res.data.timeLimitSeconds ?? null);
         startedAtRef.current = Date.now();
         setPhase('taking');
@@ -130,6 +138,8 @@ export default function TakeTestPage() {
         setPhase('results');
         play(res.data.percentage >= 70 ? 'complete' : 'incorrect');
         void refresh();
+        const reward = await GameService.claimTest(res.data.percentage);
+        if (reward.isSuccess && reward.data) setPouch(reward.data);
     }, [answers, attempt, play, refresh, shelfId, suiteId]);
 
     const submitRef = useRef(submit);
@@ -232,6 +242,14 @@ export default function TakeTestPage() {
                     onClose={exit}
                     closeTestId="btn-take-test-close"
                 />
+                {pouch ? (
+                    <div className="mb-4">
+                        <PouchReveal
+                            species={pouch.species}
+                            rarity={pouch.rarity}
+                        />
+                    </div>
+                ) : null}
                 <StudyResultCard
                     testId="test-results-summary"
                     icon={

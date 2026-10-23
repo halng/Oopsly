@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store';
 
@@ -10,18 +10,26 @@ interface AuthGuardProps {
 const AuthGuard = ({ children }: AuthGuardProps) => {
     const router = useRouter();
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const hasHydrated = useAuthStore((state) => state.hasHydrated);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        if (!isAuthenticated) {
-            router.replace('/login');
-        }
-    }, [isAuthenticated, router]);
+        void useAuthStore.persist.rehydrate();
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted || !hasHydrated || isAuthenticated) return;
+        router.replace('/login');
+    }, [mounted, hasHydrated, isAuthenticated, router]);
+
+    const showApp = mounted && hasHydrated && isAuthenticated;
 
     // Always keep `children` mounted. Next.js App Router needs the page slot
     // in the tree or RSC hydration fails with enqueueModel.
     return (
         <>
-            {!isAuthenticated && (
+            {!showApp && (
                 <div
                     className="min-h-screen bg-[#FDFBF7] flex items-center justify-center"
                     data-testid="auth-guard-loading"
@@ -35,8 +43,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
                 </div>
             )}
             <div
-                className={isAuthenticated ? undefined : 'hidden'}
-                aria-hidden={!isAuthenticated}
+                className={showApp ? undefined : 'hidden'}
+                aria-hidden={!showApp}
             >
                 {children}
             </div>

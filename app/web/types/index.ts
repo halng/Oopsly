@@ -161,6 +161,8 @@ export interface Card {
     intervalDays: number;
     repetitions: number;
     dueDate: string; // ISO date string
+    shelfId?: string;
+    subjectName?: string;
     lastReviewedAt?: string;
     isDeleted: boolean;
     createdAt: string;

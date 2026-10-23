@@ -9,7 +9,7 @@ interface AuthenticatedShellProps {
     children: React.ReactNode;
 }
 
-const SESSION_PATH_PATTERN = /\/(review|learn|match|tests?)(\/|$)/;
+const SESSION_PATH_PATTERN = /\/(super-review|review|learn|match|tests?)(\/|$)/;
 
 const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
     const pathname = usePathname() || '';

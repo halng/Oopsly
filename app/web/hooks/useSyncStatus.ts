@@ -2,13 +2,20 @@
 import { useState, useEffect } from 'react';
 import { syncManager, SyncStatus } from '../services/syncManager';
 
+const idleStatus: SyncStatus = {
+    isOnline: true,
+    isSyncing: false,
+    pendingCount: 0,
+    lastSyncTime: null,
+    lastError: null,
+    syncedCountInLastRun: 0,
+};
+
 export function useSyncStatus() {
-    const [status, setStatus] = useState<SyncStatus>(() =>
-        syncManager.getStatus()
-    );
+    const [status, setStatus] = useState<SyncStatus>(idleStatus);
 
     useEffect(() => {
-        // Subscribe to syncManager updates
+        syncManager.captureBrowserOnline();
         const unsubscribe = syncManager.subscribe((newStatus) => {
             setStatus(newStatus);
         });

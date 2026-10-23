@@ -11,6 +11,7 @@ import {
     CheckCircle2,
     Target,
     Gamepad2,
+    Play,
     Trash2,
     Gift,
     Film,
@@ -306,10 +307,19 @@ export const HomePage: React.FC = () => {
                 </div>
 
                 {totalDue > 0 && (
-                    <div className="bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-[color-mix(in_srgb,var(--theme-accent)_15%,transparent)] border border-[color-mix(in_srgb,var(--theme-accent)_40%,transparent)] rounded-2xl p-4">
+                    <div className="bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-[color-mix(in_srgb,var(--theme-accent)_15%,transparent)] border border-[color-mix(in_srgb,var(--theme-accent)_40%,transparent)] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
                             {totalDue} Total Cards Due for Daily FSRS Review
                         </h3>
+                        <button
+                            type="button"
+                            data-testid="btn-practise-now"
+                            onClick={() => router.push('/home/super-review')}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-xs font-bold shadow-xs cursor-pointer shrink-0"
+                        >
+                            <Play className="w-4 h-4" />
+                            Practise now
+                        </button>
                     </div>
                 )}
 

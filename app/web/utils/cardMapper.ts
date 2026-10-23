@@ -53,6 +53,20 @@ export function mapCardRes(res: CardRes | Card, subjectId: string): Card {
     };
 }
 
+export interface PracticeCardRes extends CardRes {
+    shelfId: string;
+    subjectId: string;
+    subjectName?: string | null;
+}
+
+export function mapPracticeCard(res: PracticeCardRes): Card {
+    return {
+        ...mapCardRes(res, res.subjectId),
+        shelfId: res.shelfId,
+        subjectName: res.subjectName ?? undefined,
+    };
+}
+
 export function mapCardList(
     list: Array<CardRes | Card> | null | undefined,
     subjectId: string
