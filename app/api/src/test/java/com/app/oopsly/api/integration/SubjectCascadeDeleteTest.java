@@ -25,8 +25,6 @@ import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.subject.SubjectService;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserRepository;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,30 +52,25 @@ class SubjectCascadeDeleteTest {
 
     @Autowired private CardRepository cardRepository;
 
-    @Autowired private UserRepository userRepository;
-
-    private User testUser;
+    private UUID testUserId;
     private Shelf testShelve;
     private Subject testSubject;
     private Card testCard;
 
     @BeforeEach
     void setUp() {
-        // Create and save test user
-        testUser = new User();
-        testUser.setEmail("test-integration@example.com");
-        testUser.setName("Test User");
-        testUser = userRepository.save(testUser);
+        testUserId = UUID.randomUUID();
 
         // Set security context with test user
         SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken(testUser, null, null));
+                .setAuthentication(
+                        new UsernamePasswordAuthenticationToken(testUserId.toString(), null, null));
 
         // Create and save test shelve
         testShelve = new Shelf();
         testShelve.setName("Test Shelve");
         testShelve.setDescription("Test Shelve Description");
-        testShelve.setUser(testUser);
+        testShelve.setUserId(testUserId);
         testShelve = shelfRepository.save(testShelve);
 
         // Create and save test subject

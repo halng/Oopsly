@@ -22,9 +22,12 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.progress.UserProgress;
+import com.app.oopsly.api.progress.UserProgressService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.study.application.StudySessionServiceImpl;
@@ -35,9 +38,6 @@ import com.app.oopsly.api.study.domain.StudySessionEntity;
 import com.app.oopsly.api.study.infrastructure.StudySessionRepository;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
-import com.app.oopsly.api.user.Setting;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,22 +56,21 @@ class StudySessionServiceImplTest {
     @Mock private ShelfRepository shelfRepository;
     @Mock private SubjectRepository subjectRepository;
     @Mock private CardRepository cardRepository;
-    @Mock private UserService userService;
+    @Mock private CurrentUser currentUser;
+    @Mock private UserProgressService userProgressService;
     @InjectMocks private StudySessionServiceImpl service;
 
     private final UUID shelfId = UUID.randomUUID();
     private final UUID subjectId = UUID.randomUUID();
-    private User user;
+    private UUID userId;
+    private UserProgress progress;
     private Shelf shelf;
     private Subject subject;
 
     @BeforeEach
     void setUp() {
-        user = new User();
-        user.setId(UUID.randomUUID());
-        Setting setting = new Setting();
-        setting.setTotalXp(100);
-        user.setSetting(setting);
+        userId = UUID.randomUUID();
+        progress = UserProgress.builder().userId(userId).totalXp(100).build();
         shelf = new Shelf();
         shelf.setId(shelfId);
         subject = new Subject();
@@ -79,8 +78,10 @@ class StudySessionServiceImplTest {
     }
 
     private void stubOwnership() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
+        when(currentUser.id()).thenReturn(userId);
+        lenient().when(userProgressService.updateUserProgress(anyInt())).thenReturn(progress);
+        lenient().when(userProgressService.getCurrent()).thenReturn(progress);
+        when(shelfRepository.findByIdAndUserId(shelfId, userId)).thenReturn(Optional.of(shelf));
         when(subjectRepository.findByIdAndShelve(subjectId, shelf))
                 .thenReturn(Optional.of(subject));
         when(studySessionRepository.save(any(StudySessionEntity.class)))
@@ -105,7 +106,7 @@ class StudySessionServiceImplTest {
         StudySessionRes data = (StudySessionRes) res.getBody().data();
         assertEquals(4 * 5 + 25, data.xpGained());
         assertEquals(100, data.totalXp());
-        verify(userService).updateUserProgress(45);
+        verify(userProgressService).updateUserProgress(45);
 
         ArgumentCaptor<StudySessionEntity> captor =
                 ArgumentCaptor.forClass(StudySessionEntity.class);
@@ -115,7 +116,7 @@ class StudySessionServiceImplTest {
         assertEquals(4, saved.getCorrectCount());
         assertEquals(3, saved.getMistakes());
         assertEquals(200, saved.getDurationSeconds());
-        assertEquals(user.getId(), saved.getUserId());
+        assertEquals(userId, saved.getUserId());
     }
 
     @Test
@@ -145,7 +146,7 @@ class StudySessionServiceImplTest {
     @Test
     void emptySubject_awardsNoXp_andNullsDefaultToZero() {
         stubOwnership();
-        user.setSetting(null);
+        progress.setTotalXp(0);
         when(cardRepository.countBySubjectAndDeletedFalse(subject)).thenReturn(0L);
 
         ApiRes res =
@@ -157,7 +158,7 @@ class StudySessionServiceImplTest {
         StudySessionRes data = (StudySessionRes) res.getBody().data();
         assertEquals(0, data.xpGained());
         assertEquals(0, data.totalXp());
-        verify(userService, never()).updateUserProgress(anyInt());
+        verify(userProgressService, never()).updateUserProgress(anyInt());
     }
 
     @Test
@@ -169,8 +170,8 @@ class StudySessionServiceImplTest {
 
     @Test
     void unknownShelf_throwsNotFound() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.empty());
+        when(currentUser.id()).thenReturn(userId);
+        when(shelfRepository.findByIdAndUserId(shelfId, userId)).thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class,
@@ -183,8 +184,8 @@ class StudySessionServiceImplTest {
 
     @Test
     void unknownSubject_throwsNotFound() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
+        when(currentUser.id()).thenReturn(userId);
+        when(shelfRepository.findByIdAndUserId(shelfId, userId)).thenReturn(Optional.of(shelf));
         when(subjectRepository.findByIdAndShelve(subjectId, shelf)).thenReturn(Optional.empty());
 
         assertThrows(

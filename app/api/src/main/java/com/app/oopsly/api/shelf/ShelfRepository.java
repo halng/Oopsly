@@ -16,7 +16,6 @@
 
 package com.app.oopsly.api.shelf;
 
-import com.app.oopsly.api.user.User;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -27,9 +26,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ShelfRepository extends JpaRepository<Shelf, UUID> {
-    @Query("SELECT e FROM Shelf e WHERE e.id = ?1 AND e.user = ?2 AND e.deleted = false")
-    Optional<Shelf> findByIdAndUser(UUID id, User user);
+    @Query("SELECT e FROM Shelf e WHERE e.id = ?1 AND e.userId = ?2 AND e.deleted = false")
+    Optional<Shelf> findByIdAndUserId(UUID id, UUID userId);
 
-    @Query("SELECT e FROM Shelf e WHERE e.user = ?1 AND e.deleted = false")
-    Page<Shelf> findAllByUser(User user, Pageable pageable);
+    @Query("SELECT e FROM Shelf e WHERE e.userId = ?1 AND e.deleted = false")
+    Page<Shelf> findAllByUserId(UUID userId, Pageable pageable);
 }

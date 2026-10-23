@@ -17,7 +17,7 @@
 package com.app.oopsly.api.config;
 
 import com.app.oopsly.api.shared.application.vm.ApiRes;
-import com.app.oopsly.api.shared.util.JwtUtils;
+import com.app.oopsly.api.shared.security.JwtVerifier;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -40,7 +40,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
-    private final JwtUtils jwtUtils;
+    private final JwtVerifier jwtVerifier;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -65,8 +65,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String jwt = authHeader.substring(7);
         try {
             LOGGER.info("Attempting to authenticate using jwt");
-            String userId = jwtUtils.extractUserId(jwt);
-            String userRole = jwtUtils.extractUserRole(jwt);
+            String userId = jwtVerifier.extractUserId(jwt);
+            String userRole = jwtVerifier.extractUserRole(jwt);
 
             if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 

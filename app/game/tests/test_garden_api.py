@@ -103,7 +103,9 @@ def test_plant_water_and_harvest(client, session_factory):
 
 
 def test_ancient_harvest_pays_double(client, session_factory):
-    planted = client.post("/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 1})
+    planted = client.post(
+        "/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 1}
+    )
     tree_id = planted.json()["data"]["plantedTrees"][0]["id"]
     db = session_factory()
     stored = db.scalar(select(Tree).where(Tree.id == tree_id))
@@ -138,7 +140,9 @@ def test_locked_plot_needs_coins(client, session_factory):
 
 
 def test_socket_waters_and_rejects_a_second_pour_without_dew(client):
-    planted = client.post("/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 0})
+    planted = client.post(
+        "/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 0}
+    )
     tree_id = planted.json()["data"]["plantedTrees"][0]["id"]
     token = jwt.encode(
         {"id": "user-1", "sub": "learner@oopsly.app", "exp": int(time.time()) + 60},

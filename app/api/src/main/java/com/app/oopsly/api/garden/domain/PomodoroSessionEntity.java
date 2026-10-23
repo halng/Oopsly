@@ -17,7 +17,6 @@
 package com.app.oopsly.api.garden.domain;
 
 import com.app.oopsly.api.shared.domain.Audit;
-import com.app.oopsly.api.user.User;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
@@ -33,9 +32,8 @@ import lombok.*;
 @Entity
 public class PomodoroSessionEntity extends Audit {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     @Column(name = "subject_id")
     private UUID subjectId;

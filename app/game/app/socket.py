@@ -14,10 +14,14 @@ logger = logging.getLogger("app.socket")
 @socket_router.websocket("/v1/game/ws")
 async def game_socket(websocket: WebSocket):
     platform = request_platform.set(
-        websocket.headers.get("x-platform") or websocket.query_params.get("platform") or ""
+        websocket.headers.get("x-platform")
+        or websocket.query_params.get("platform")
+        or ""
     )
     identifier = request_id.set(
-        websocket.headers.get("x-request-id") or websocket.query_params.get("requestId") or ""
+        websocket.headers.get("x-request-id")
+        or websocket.query_params.get("requestId")
+        or ""
     )
     token = websocket.query_params.get("token")
     await websocket.accept()

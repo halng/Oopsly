@@ -16,7 +16,6 @@
 
 package com.app.oopsly.api.tag;
 
-import com.app.oopsly.api.user.User;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,9 +24,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TagRepository extends JpaRepository<Tag, UUID> {
-    List<Tag> findAllByUser(User user);
+    List<Tag> findAllByUserId(UUID userId);
 
-    Optional<Tag> findByIdAndUser(UUID id, User user);
+    Optional<Tag> findByIdAndUserId(UUID id, UUID userId);
 
-    boolean existsByNameAndUser(String name, User user);
+    boolean existsByNameAndUserId(String name, UUID userId);
 }

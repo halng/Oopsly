@@ -16,19 +16,21 @@
 
 package com.app.oopsly.api.integration.support;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -46,7 +48,9 @@ public abstract class AbstractControllerTest {
 
     protected static final String EMAIL = "integration@oopsly.com";
     protected static final String EMAIL_2 = "integration2@oopsly.com";
-    protected static final String TEST_OTP = "000000";
+
+    @Value("${app.jwt.secret}")
+    private String jwtSecret;
 
     @Autowired protected MockMvc mockMvc;
     @Autowired protected ObjectMapper objectMapper;
@@ -59,27 +63,20 @@ public abstract class AbstractControllerTest {
         registry.add("EMBEDDED_REDIS_PORT", () -> port);
     }
 
-    protected AuthSession authenticate(String email) throws Exception {
-        mockMvc.perform(post("/v1/otp").param("email", email)).andExpect(status().isOk());
-
-        MvcResult result =
-                mockMvc.perform(
-                                post("/v1/otp/validate")
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(
-                                                """
-                                                {"email":"%s","otp":"%s"}
-                                                """
-                                                        .formatted(email, TEST_OTP)))
-                        .andExpect(status().isOk())
-                        .andExpect(jsonPath("$.isSuccess").value(true))
-                        .andExpect(jsonPath("$.data.access_token").isNotEmpty())
-                        .andReturn();
-
-        JsonNode data =
-                objectMapper.readTree(result.getResponse().getContentAsString()).get("data");
-        return new AuthSession(
-                data.get("access_token").asText(), data.get("refresh_token").asText(), email);
+    /**
+     * Stands in for the auth service: signs a token the same way it does (HS384, shared secret).
+     */
+    protected AuthSession authenticate(String email) {
+        UUID userId = UUID.nameUUIDFromBytes(email.getBytes(StandardCharsets.UTF_8));
+        String token =
+                Jwts.builder()
+                        .claims(Map.of("id", userId.toString(), "role", "USER", "plan", "FREE"))
+                        .subject(email)
+                        .issuedAt(new Date())
+                        .expiration(new Date(System.currentTimeMillis() + 3_600_000))
+                        .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret)))
+                        .compact();
+        return new AuthSession(token, userId, email);
     }
 
     protected RequestPostProcessor bearer(String accessToken) {
@@ -110,5 +107,5 @@ public abstract class AbstractControllerTest {
         return objectMapper.readTree(result.getResponse().getContentAsString()).get("data");
     }
 
-    protected record AuthSession(String accessToken, String refreshToken, String email) {}
+    protected record AuthSession(String accessToken, UUID userId, String email) {}
 }

@@ -20,7 +20,6 @@ import com.app.oopsly.api.card.CardRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.subject.SubjectRepository;
-import com.app.oopsly.api.user.UserService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +33,6 @@ public class MediaServiceImpl implements MediaService {
     private final CardRepository cardRepository;
     private final ShelfRepository shelfRepository;
     private final SubjectRepository subjectRepository;
-    private final UserService userService;
 
     @Override
     public ApiRes getUploadUrl(

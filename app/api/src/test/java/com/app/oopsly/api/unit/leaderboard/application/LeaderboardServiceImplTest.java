@@ -18,20 +18,24 @@ package com.app.oopsly.api.unit.leaderboard.application;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.leaderboard.application.LeaderboardServiceImpl;
 import com.app.oopsly.api.leaderboard.application.vm.LeaderboardUserRes;
+import com.app.oopsly.api.progress.UserProgress;
+import com.app.oopsly.api.progress.UserProgressRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shared.client.AuthClient;
+import com.app.oopsly.api.shared.client.AuthProfile;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
-import com.app.oopsly.api.user.Setting;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserRepository;
-import com.app.oopsly.api.user.UserService;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,29 +50,27 @@ import org.springframework.http.HttpStatus;
 @ExtendWith(MockitoExtension.class)
 class LeaderboardServiceImplTest {
 
-    @Mock private UserRepository userRepository;
-    @Mock private UserService userService;
+    @Mock private UserProgressRepository progressRepository;
+    @Mock private AuthClient authClient;
+    @Mock private CurrentUser currentUser;
 
     @InjectMocks private LeaderboardServiceImpl leaderboardService;
 
-    private User currentUser;
+    private final Map<UUID, AuthProfile> profiles = new HashMap<>();
+    private UserProgress me;
 
     @BeforeEach
     void setUp() {
-        currentUser = user("Me", "Me display", 5000, 12);
+        me = user("Me", "Me display", 5000, 12);
+        lenient().when(currentUser.id()).thenReturn(me.getUserId());
+        lenient().when(authClient.lookup(anyCollection())).thenAnswer(inv -> profiles);
     }
 
-    private User user(String name, String displayName, Integer xp, Integer streak) {
-        User user = new User();
-        user.setId(UUID.randomUUID());
-        user.setName(name);
-        user.setDisplayName(displayName);
-        user.setPictureUrl("https://cdn/" + name + ".png");
-        Setting setting = new Setting();
-        setting.setTotalXp(xp);
-        setting.setDailyStreak(streak);
-        user.setSetting(setting);
-        return user;
+    private UserProgress user(String name, String displayName, Integer xp, Integer streak) {
+        UUID id = UUID.randomUUID();
+        profiles.put(
+                id, new AuthProfile(id, name, displayName, "https://cdn/" + name + ".png", 20));
+        return UserProgress.builder().userId(id).totalXp(xp).dailyStreak(streak).build();
     }
 
     @SuppressWarnings("unchecked")
@@ -90,11 +92,10 @@ class LeaderboardServiceImplTest {
 
     @Test
     void getGlobalLeaderboard_ranksUsersAndFlagsCurrentUser() {
-        User top = user("Top", "Top display", 12000, 40);
-        User other = user("Other", null, 800, 1);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(userRepository.findTopByXp(any(PageRequest.class)))
-                .thenReturn(List.of(top, currentUser, other));
+        UserProgress top = user("Top", "Top display", 12000, 40);
+        UserProgress other = user("Other", null, 800, 1);
+        when(progressRepository.findTopByXp(any(PageRequest.class)))
+                .thenReturn(List.of(top, me, other));
 
         ApiRes response = leaderboardService.getGlobalLeaderboard(50);
 
@@ -119,21 +120,19 @@ class LeaderboardServiceImplTest {
 
     @Test
     void getGlobalLeaderboard_usesRequestedLimitForPagination() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(userRepository.findTopByXp(any(PageRequest.class))).thenReturn(List.of());
+        when(progressRepository.findTopByXp(any(PageRequest.class))).thenReturn(List.of());
 
         leaderboardService.getGlobalLeaderboard(7);
 
         ArgumentCaptor<PageRequest> captor = ArgumentCaptor.forClass(PageRequest.class);
-        verify(userRepository).findTopByXp(captor.capture());
+        verify(progressRepository).findTopByXp(captor.capture());
         assertEquals(0, captor.getValue().getPageNumber());
         assertEquals(7, captor.getValue().getPageSize());
     }
 
     @Test
     void getGlobalLeaderboard_withNoUsersReturnsEmptyList() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(userRepository.findTopByXp(any(PageRequest.class))).thenReturn(List.of());
+        when(progressRepository.findTopByXp(any(PageRequest.class))).thenReturn(List.of());
 
         ApiRes response = leaderboardService.getGlobalLeaderboard(50);
 
@@ -143,9 +142,8 @@ class LeaderboardServiceImplTest {
 
     @Test
     void getGlobalLeaderboard_handlesNullXpAndStreak() {
-        User rookie = user("Rookie", null, null, null);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(userRepository.findTopByXp(any(PageRequest.class))).thenReturn(List.of(rookie));
+        UserProgress rookie = user("Rookie", null, null, null);
+        when(progressRepository.findTopByXp(any(PageRequest.class))).thenReturn(List.of(rookie));
 
         List<LeaderboardUserRes> rows = rowsOf(leaderboardService.getGlobalLeaderboard(50));
 
@@ -156,7 +154,6 @@ class LeaderboardServiceImplTest {
 
     @Test
     void getGlobalLeaderboard_zeroLimitIsRejectedByPageRequest() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
 
         assertThrows(
                 IllegalArgumentException.class, () -> leaderboardService.getGlobalLeaderboard(0));

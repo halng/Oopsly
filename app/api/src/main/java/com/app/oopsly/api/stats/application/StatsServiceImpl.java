@@ -18,9 +18,13 @@ package com.app.oopsly.api.stats.application;
 
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.progress.UserProgress;
+import com.app.oopsly.api.progress.UserProgressService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shared.client.AuthClient;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shared.util.ApiMessages;
 import com.app.oopsly.api.shared.util.CircuitBreakerNames;
 import com.app.oopsly.api.stats.application.vm.DueForecast;
@@ -30,9 +34,6 @@ import com.app.oopsly.api.stats.application.vm.WeeklyActivity;
 import com.app.oopsly.api.stats.infrastructure.ReviewLogRepository;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
-import com.app.oopsly.api.user.Setting;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -42,6 +43,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -57,7 +59,9 @@ public class StatsServiceImpl implements StatsService {
     private static final double MASTERED_DIFFICULTY_LIMIT = 4.0;
     private static final double RELEARNING_DIFFICULTY_LIMIT = 7.0;
 
-    private final UserService userService;
+    private final CurrentUser currentUser;
+    private final UserProgressService userProgressService;
+    private final AuthClient authClient;
     private final SubjectRepository subjectRepository;
     private final CardRepository cardRepository;
     private final ReviewLogRepository reviewLogRepository;
@@ -65,10 +69,10 @@ public class StatsServiceImpl implements StatsService {
     @Override
     @CircuitBreaker(name = CircuitBreakerNames.STATS, fallbackMethod = "statsFallback")
     public ApiRes getUserStats() {
-        User currentUser = userService.getCurrentUser();
-        log.info("Fetching stats for user: {}", currentUser.getId());
+        UUID userId = currentUser.id();
+        log.info("Fetching stats for user: {}", userId);
 
-        List<Subject> subjects = findSubjects(currentUser);
+        List<Subject> subjects = findSubjects(userId);
         List<Card> cards =
                 subjects.isEmpty()
                         ? List.of()
@@ -86,35 +90,34 @@ public class StatsServiceImpl implements StatsService {
                         .count();
 
         long reviewedToday =
-                reviewLogRepository.countByUserIdAndReviewedAtBetween(
-                        currentUser.getId(), startOfDay, endOfDay);
+                reviewLogRepository.countByUserIdAndReviewedAtBetween(userId, startOfDay, endOfDay);
 
-        double retention = retentionOf(currentUser, totalCards, dueCards);
-        Setting setting = currentUser.getSetting();
+        UserProgress progress = userProgressService.getCurrent();
+        double retention = retentionOf(progress, totalCards, dueCards);
 
         StatsRes stats =
                 new StatsRes(
-                        safeInt(setting == null ? null : setting.getDailyStreak()),
-                        safeInt(setting == null ? null : setting.getTotalXp()),
+                        safeInt(progress.getDailyStreak()),
+                        safeInt(progress.getTotalXp()),
                         (int) reviewedToday,
                         (int) reviewedToday,
-                        dailyGoalOf(currentUser),
+                        authClient.lookup(userId).dailyGoalOrDefault(),
                         retention,
                         retention,
-                        safeInt(setting == null ? null : setting.getTotalReviews()),
+                        safeInt(progress.getTotalReviews()),
                         totalCards,
                         dueCards,
                         stateDistribution(cards),
                         dueForecast(cards),
-                        weeklyActivity(currentUser));
+                        weeklyActivity(userId));
 
         return ApiRes.success(ApiMessages.STATS_FETCHED, stats);
     }
 
     // ---------------------------------------------------------------- helpers
 
-    private List<Subject> findSubjects(User currentUser) {
-        List<Subject> subjects = subjectRepository.findAllByUser(currentUser);
+    private List<Subject> findSubjects(UUID userId) {
+        List<Subject> subjects = subjectRepository.findAllByUserId(userId);
         return subjects == null ? List.of() : subjects;
     }
 
@@ -180,7 +183,7 @@ public class StatsServiceImpl implements StatsService {
         return forecast;
     }
 
-    private List<WeeklyActivity> weeklyActivity(User currentUser) {
+    private List<WeeklyActivity> weeklyActivity(UUID userId) {
         List<WeeklyActivity> activity = new ArrayList<>();
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
 
@@ -189,9 +192,7 @@ public class StatsServiceImpl implements StatsService {
             Instant from = day.atStartOfDay(ZoneOffset.UTC).toInstant();
             Instant to = from.plus(1, ChronoUnit.DAYS);
 
-            var logs =
-                    reviewLogRepository.findAllByUserIdAndReviewedAtBetween(
-                            currentUser.getId(), from, to);
+            var logs = reviewLogRepository.findAllByUserIdAndReviewedAtBetween(userId, from, to);
             long reviewed = logs.size();
             double retention =
                     reviewed == 0
@@ -214,17 +215,9 @@ public class StatsServiceImpl implements StatsService {
         return activity;
     }
 
-    private static int dailyGoalOf(User user) {
-        return user.getSetting() != null && user.getSetting().getDailyGoal() != null
-                ? user.getSetting().getDailyGoal()
-                : 20;
-    }
-
-    private static double retentionOf(User user, long totalCards, long dueCards) {
-        if (user.getSetting() != null
-                && user.getSetting().getRetentionRate() != null
-                && user.getSetting().getRetentionRate() > 0) {
-            return user.getSetting().getRetentionRate();
+    private static double retentionOf(UserProgress progress, long totalCards, long dueCards) {
+        if (progress.getRetentionRate() != null && progress.getRetentionRate() > 0) {
+            return progress.getRetentionRate();
         }
         return totalCards == 0 ? 0.0 : 100.0 - (dueCards * 100.0) / totalCards;
     }

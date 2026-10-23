@@ -50,59 +50,68 @@ export interface GradeResult {
 }
 
 /**
- * Shared axios instance.
+ * Shared axios instances.
  *
- * Base URL is read from NEXT_PUBLIC_API_URL. When the variable is not set,
- * requests fall back to same-origin relative paths (e.g. the Next.js dev
- * server or an integrated backend).
+ * `apiClient` talks to the main API and reads its base URL from NEXT_PUBLIC_API_URL.
+ * `authClient` talks to the auth service (login, profile, settings) and reads
+ * NEXT_PUBLIC_AUTH_URL. When a variable is not set, requests fall back to
+ * same-origin relative paths (e.g. the Next.js dev server or a gateway).
  */
-export const apiClient = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || undefined,
-    timeout: 15000,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+function createClient(baseURL: string | undefined) {
+    const client = axios.create({
+        baseURL: baseURL || undefined,
+        timeout: 15000,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
 
-// Attach the access token (when authenticated) to every outgoing request.
-apiClient.interceptors.request.use((config) => {
-    if (typeof window !== 'undefined') {
-        const { accessToken } = useAuthStore.getState();
-        if (accessToken) {
-            config.headers.Authorization = `Bearer ${accessToken}`;
+    // Attach the access token (when authenticated) to every outgoing request.
+    client.interceptors.request.use((config) => {
+        if (typeof window !== 'undefined') {
+            const { accessToken } = useAuthStore.getState();
+            if (accessToken) {
+                config.headers.Authorization = `Bearer ${accessToken}`;
+            }
         }
-    }
 
-    config.headers['X-Request-ID'] = ulid();
-    config.headers['X-Platform'] = 'WEB';
-    return config;
-});
+        config.headers['X-Request-ID'] = ulid();
+        config.headers['X-Platform'] = 'WEB';
+        return config;
+    });
 
-// Normalize failures so callers always receive a consistent, readable error.
-apiClient.interceptors.response.use(
-    (response) => response,
-    (error: AxiosError<ApiResponse<unknown>>) => {
-        if (error.response) {
-            // The server answered with a non-2xx status — prefer the API's own message.
-            const message =
-                error.response.data?.message ||
-                `Request failed with status ${error.response.status}`;
-            return Promise.reject(new Error(message));
+    // Normalize failures so callers always receive a consistent, readable error.
+    client.interceptors.response.use(
+        (response) => response,
+        (error: AxiosError<ApiResponse<unknown>>) => {
+            if (error.response) {
+                // The server answered with a non-2xx status — prefer the API's own message.
+                const message =
+                    error.response.data?.message ||
+                    `Request failed with status ${error.response.status}`;
+                return Promise.reject(new Error(message));
+            }
+            if (error.request) {
+                // The request was sent but no response arrived (offline / network failure).
+                return Promise.reject(new Error('Network error occurred'));
+            }
+            return Promise.reject(new Error(error.message || 'Request failed'));
         }
-        if (error.request) {
-            // The request was sent but no response arrived (offline / network failure).
-            return Promise.reject(new Error('Network error occurred'));
-        }
-        return Promise.reject(new Error(error.message || 'Request failed'));
-    }
-);
+    );
+
+    return client;
+}
+
+export const apiClient = createClient(process.env.NEXT_PUBLIC_API_URL);
+export const authClient = createClient(process.env.NEXT_PUBLIC_AUTH_URL);
 
 async function fetchJson<T>(
     url: string,
-    options?: RequestInit
+    options?: RequestInit,
+    client: typeof apiClient = apiClient
 ): Promise<ApiResponse<T>> {
     try {
-        const res = await apiClient.request<ApiResponse<T>>({
+        const res = await client.request<ApiResponse<T>>({
             url,
             method: (options?.method ?? 'GET') as
                 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
@@ -154,23 +163,33 @@ export const ApiService = {
     },
     // Auth
     sendOtp: (email: string) =>
-        fetchJson<null>(`/v1/otp?email=${email}`, {
-            method: 'POST',
-        }),
+        fetchJson<null>(
+            `/v1/otp?email=${email}`,
+            { method: 'POST' },
+            authClient
+        ),
 
     verifyOtp: (email: string, otp: string, name: string) =>
         fetchJson<{
             access_token: string;
             refresh_token: string;
             type: string;
-        }>('/v1/otp/validate', {
-            method: 'POST',
-            body: JSON.stringify({ email, otp, name }),
-        }),
+        }>(
+            '/v1/otp/validate',
+            {
+                method: 'POST',
+                body: JSON.stringify({ email, otp, name }),
+            },
+            authClient
+        ),
 
     // User Profile
     getProfile: async (): Promise<ApiResponse<UserProfile>> => {
-        const res = await fetchJson<UserProfile>('/v1/user-profiles');
+        const res = await fetchJson<UserProfile>(
+            '/v1/user-profiles',
+            undefined,
+            authClient
+        );
         if (res.isSuccess && res.data) {
             await offlineDb.setMetadata('user_profile', res.data);
             return res;
@@ -193,22 +212,32 @@ export const ApiService = {
     },
 
     updateNewComer: () => {
-        fetchJson<void>('/v1/user-profiles/settings/newcomer', {
-            method: 'PATCH',
-        });
+        fetchJson<void>(
+            '/v1/user-profiles/settings/newcomer',
+            { method: 'PATCH' },
+            authClient
+        );
     },
 
     updateProfile: (profile: Partial<UserProfile>) =>
-        fetchJson<UserProfile>('/v1/user-profiles', {
-            method: 'PATCH',
-            body: JSON.stringify(profile),
-        }),
+        fetchJson<UserProfile>(
+            '/v1/user-profiles',
+            {
+                method: 'PATCH',
+                body: JSON.stringify(profile),
+            },
+            authClient
+        ),
 
     updateSettings: (settings: Partial<UserSettings>) =>
-        fetchJson<UserSettings>('/v1/user-settings', {
-            method: 'PATCH',
-            body: JSON.stringify(settings),
-        }),
+        fetchJson<UserSettings>(
+            '/v1/user-settings',
+            {
+                method: 'PATCH',
+                body: JSON.stringify(settings),
+            },
+            authClient
+        ),
 
     // Shelves
     getShelves: async (

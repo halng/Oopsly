@@ -17,7 +17,6 @@
 package com.app.oopsly.api.quiz.domain;
 
 import com.app.oopsly.api.shared.domain.Audit;
-import com.app.oopsly.api.user.User;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -38,9 +37,8 @@ public class QuizSessionEntity extends Audit {
     @Column(name = "room_code", nullable = false, unique = true, length = 6)
     private String roomCode;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "host_id", nullable = false)
-    private User host;
+    @Column(name = "host_id", nullable = false)
+    private UUID hostId;
 
     @Column(name = "subject_id")
     private UUID subjectId;

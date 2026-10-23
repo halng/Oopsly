@@ -13,7 +13,9 @@ setup_logging()
 app = FastAPI(title="Oopsly Game", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()],
+    allow_origins=[
+        origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

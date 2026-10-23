@@ -18,7 +18,7 @@ package com.app.oopsly.api.unit.shared;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.card.Card;
@@ -29,13 +29,11 @@ import com.app.oopsly.api.card.DifficultyLevel;
 import com.app.oopsly.api.card.vm.CardItemReq;
 import com.app.oopsly.api.card.vm.ReviewResultRes;
 import com.app.oopsly.api.card.vm.UpdateDifficultyReq;
+import com.app.oopsly.api.progress.UserProgress;
+import com.app.oopsly.api.progress.UserProgressService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
-import com.app.oopsly.api.shared.exception.RetryLaterException;
-import com.app.oopsly.api.shared.exception.SendEmailException;
-import com.app.oopsly.api.shared.exception.UnauthenticatedException;
-import com.app.oopsly.api.shared.exception.ValidationException;
-import com.app.oopsly.api.shared.messaging.IEmailSender;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.stats.infrastructure.ReviewLogRepository;
@@ -47,12 +45,6 @@ import com.app.oopsly.api.testsuite.application.TestSuiteService;
 import com.app.oopsly.api.testsuite.application.vm.TestSubmissionReq;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
 import com.app.oopsly.api.testsuite.interfaces.rest.TestSuiteController;
-import com.app.oopsly.api.user.*;
-import com.app.oopsly.api.user.vm.OTPReq;
-import com.app.oopsly.api.user.vm.RefreshTokenReq;
-import jakarta.mail.MessagingException;
-import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -64,48 +56,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
-/**
- * Targeted tests closing the last uncovered branches: not-found guards, null-safe XP totals,
- * asynchronous e-mail failure paths and the request/response view models.
- */
+/** Targeted tests closing the last uncovered branches: not-found guards and null-safe XP totals. */
 @DisplayName("Remaining branch coverage")
 class RemainingBranchCoverageTest {
-
-    @Nested
-    @DisplayName("OTPReq view model")
-    class ViewModelTest {
-
-        @Test
-        @DisplayName("equals should treat requests with identical fields as equal")
-        void equals_shouldTreatRequestsAsEqual_whenAllFieldsMatch() {
-            OTPReq first = new OTPReq("learner@test.dev", "123456", "unnamed");
-            OTPReq same = new OTPReq("learner@test.dev", "123456", "unnamed");
-            OTPReq other = new OTPReq("learner@test.dev", "654321", "unnamed");
-
-            assertEquals(first, same);
-            assertEquals(first.hashCode(), same.hashCode());
-            assertNotEquals(first, other);
-            assertNotEquals(first, null);
-            assertNotEquals(first, "not an OTPReq");
-            assertEquals("learner@test.dev", first.email());
-            assertEquals("123456", first.otp());
-            assertTrue(first.toString().contains("learner@test.dev"));
-        }
-
-        @Test
-        @DisplayName("accessors should return null without failing when fields are not provided")
-        void accessors_shouldReturnNull_whenFieldsAreNotProvided() {
-            OTPReq empty = new OTPReq(null, null, null);
-
-            assertNull(empty.email());
-            assertNull(empty.otp());
-            assertNull(empty.name());
-            assertEquals(new OTPReq(null, null, null), empty);
-        }
-    }
 
     @Nested
     @ExtendWith(MockitoExtension.class)
@@ -116,7 +70,8 @@ class RemainingBranchCoverageTest {
         @Mock private SubjectRepository subjectRepository;
         @Mock private ShelfRepository shelfRepository;
         @Mock private TestSuiteRepository testSuiteRepository;
-        @Mock private UserService userService;
+        @Mock private CurrentUser currentUser;
+        @Mock private UserProgressService userProgressService;
         @Mock private ReviewLogRepository reviewLogRepository;
 
         @InjectMocks private CardServiceImpl cardService;
@@ -126,24 +81,18 @@ class RemainingBranchCoverageTest {
         private final UUID cardId = UUID.randomUUID();
 
         private Subject resolveSubject() {
-            User user = new User();
-            user.setId(UUID.randomUUID());
-
-            Setting setting = new Setting();
-            setting.setTotalXp(15);
-            setting.setDailyStreak(3);
-            user.setSetting(setting);
+            UUID userId = UUID.randomUUID();
 
             Shelf shelf = new Shelf();
             shelf.setId(shelfId);
-            shelf.setUser(user);
+            shelf.setUserId(userId);
 
             Subject subject = new Subject();
             subject.setId(subjectId);
             subject.setShelf(shelf);
 
-            when(userService.getCurrentUser()).thenReturn(user);
-            when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
+            when(currentUser.id()).thenReturn(userId);
+            when(shelfRepository.findByIdAndUserId(shelfId, userId)).thenReturn(Optional.of(shelf));
             when(subjectRepository.findByIdAndShelve(subjectId, shelf))
                     .thenReturn(Optional.of(subject));
             return subject;
@@ -175,6 +124,8 @@ class RemainingBranchCoverageTest {
             card.setNumberOfPractice(0);
 
             when(cardRepository.findByIdAndSubject(cardId, subject)).thenReturn(Optional.of(card));
+            when(userProgressService.updateUserProgress(anyInt()))
+                    .thenReturn(UserProgress.builder().totalXp(null).build());
 
             ApiRes response =
                     cardService.updateDifficulty(
@@ -195,7 +146,7 @@ class RemainingBranchCoverageTest {
 
         @Mock private SubjectRepository subjectRepository;
         @Mock private ShelfRepository shelfRepository;
-        @Mock private UserService userService;
+        @Mock private CurrentUser currentUser;
         @Mock private CardService cardService;
         @Mock private CardRepository cardRepository;
 
@@ -207,14 +158,13 @@ class RemainingBranchCoverageTest {
             UUID shelfId = UUID.randomUUID();
             UUID subjectId = UUID.randomUUID();
 
-            User user = new User();
-            user.setId(UUID.randomUUID());
+            UUID userId = UUID.randomUUID();
             Shelf shelf = new Shelf();
             shelf.setId(shelfId);
-            shelf.setUser(user);
+            shelf.setUserId(userId);
 
-            when(userService.getCurrentUser()).thenReturn(user);
-            when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
+            when(currentUser.id()).thenReturn(userId);
+            when(shelfRepository.findByIdAndUserId(shelfId, userId)).thenReturn(Optional.of(shelf));
             when(subjectRepository.findByIdAndShelve(subjectId, shelf))
                     .thenReturn(Optional.empty());
 
@@ -223,128 +173,6 @@ class RemainingBranchCoverageTest {
                     NotFoundException.class,
                     () -> subjectService.updateSetting(shelfId, subjectId, request));
             verify(subjectRepository, never()).save(any());
-        }
-    }
-
-    @Nested
-    @ExtendWith(MockitoExtension.class)
-    @MockitoSettings(strictness = Strictness.LENIENT)
-    @DisplayName("UserServiceImpl refresh token fallback")
-    class UserServiceTest {
-
-        @InjectMocks private UserServiceImpl userService;
-
-        @Test
-        @DisplayName(
-                "refreshTokenFallback should rethrow the original error when it is a validation"
-                        + " failure")
-        void refreshTokenFallback_shouldRethrowOriginalError_whenCauseIsValidationException() {
-            RefreshTokenReq request = new RefreshTokenReq("learner@test.dev", "token");
-            ValidationException cause = new ValidationException("token is malformed");
-
-            assertSame(
-                    cause,
-                    assertThrows(
-                            ValidationException.class,
-                            () -> userService.refreshTokenFallback(request, cause)));
-        }
-
-        @Test
-        @DisplayName(
-                "refreshTokenFallback should rethrow the original error when the session expired")
-        void refreshTokenFallback_shouldRethrowOriginalError_whenCauseIsUnauthenticatedException() {
-            RefreshTokenReq request = new RefreshTokenReq("learner@test.dev", "token");
-            UnauthenticatedException cause = new UnauthenticatedException("session expired");
-
-            assertSame(
-                    cause,
-                    assertThrows(
-                            UnauthenticatedException.class,
-                            () -> userService.refreshTokenFallback(request, cause)));
-        }
-
-        @Test
-        @DisplayName(
-                "refreshTokenFallback should degrade to retry-later when the cause is an outage")
-        void refreshTokenFallback_shouldDegradeToRetryLater_whenCauseIsInfrastructureFailure() {
-            RefreshTokenReq request = new RefreshTokenReq("learner@test.dev", "token");
-
-            assertThrows(
-                    RetryLaterException.class,
-                    () ->
-                            userService.refreshTokenFallback(
-                                    request, new IllegalStateException("redis down")));
-        }
-    }
-
-    @Nested
-    @ExtendWith(MockitoExtension.class)
-    @DisplayName("OTPServiceImpl asynchronous e-mail delivery")
-    class OtpAsyncEmailTest {
-
-        @Mock private IEmailSender emailSender;
-        @Mock private UserRepository userRepository;
-
-        @Mock private org.springframework.data.redis.core.StringRedisTemplate stringRedisTemplate;
-
-        @Mock private com.app.oopsly.api.shared.util.JwtUtils jwtUtils;
-        @Mock private com.app.oopsly.api.config.AppConfig appConfig;
-
-        private OTPServiceImpl otpService;
-
-        private void invokeAsyncEmail(String email, String otp) throws Exception {
-            otpService =
-                    new OTPServiceImpl(
-                            emailSender, userRepository, stringRedisTemplate, jwtUtils, appConfig);
-            Method method =
-                    OTPServiceImpl.class.getDeclaredMethod(
-                            "sendAsyncEmail", String.class, String.class);
-            method.setAccessible(true);
-            method.invoke(otpService, email, otp);
-            // the async task runs on the common pool, give it a chance to complete
-            Thread.sleep(200);
-        }
-
-        @Test
-        @DisplayName("sendAsyncEmail should deliver the OTP when the mail provider is healthy")
-        void sendAsyncEmail_shouldDeliverTheOtp_whenMailProviderIsHealthy() throws Exception {
-            invokeAsyncEmail("learner@test.dev", "123456");
-
-            verify(emailSender, timeout(1000)).sendEmail("learner@test.dev", "123456");
-        }
-
-        @Test
-        @DisplayName("sendAsyncEmail should not propagate the error when SMTP delivery fails")
-        void sendAsyncEmail_shouldNotPropagateError_whenSmtpDeliveryFails() throws Exception {
-            doThrow(new MessagingException("smtp down"))
-                    .when(emailSender)
-                    .sendEmail(anyString(), anyString());
-
-            assertDoesNotThrow(() -> invokeAsyncEmail("learner@test.dev", "123456"));
-            verify(emailSender, timeout(1000)).sendEmail("learner@test.dev", "123456");
-        }
-
-        @Test
-        @DisplayName(
-                "sendAsyncEmail should not propagate the error when the template cannot be read")
-        void sendAsyncEmail_shouldNotPropagateError_whenIoFailureOccurs() throws Exception {
-            doThrow(new IOException("template missing"))
-                    .when(emailSender)
-                    .sendEmail(anyString(), anyString());
-
-            assertDoesNotThrow(() -> invokeAsyncEmail("learner@test.dev", "123456"));
-        }
-
-        @Test
-        @DisplayName(
-                "sendAsyncEmail should not propagate the error when the provider rejects the"
-                        + " message")
-        void sendAsyncEmail_shouldNotPropagateError_whenRuntimeFailureOccurs() throws Exception {
-            doThrow(new SendEmailException("provider rejected the message"))
-                    .when(emailSender)
-                    .sendEmail(anyString(), anyString());
-
-            assertDoesNotThrow(() -> invokeAsyncEmail("learner@test.dev", "123456"));
         }
     }
 

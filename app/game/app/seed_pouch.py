@@ -82,5 +82,7 @@ def roll(band: str, unit_roll: float) -> tuple[str, str]:
             index = min(len(species) - 1, int(position * len(species)))
             return species[index], rarity
         cursor += weight
-    rarity = next(name for name, weight in zip(RARITIES, weights) if weight)
+    rarity = next(
+        name for name, weight in zip(RARITIES, weights, strict=True) if weight
+    )
     return RARITY_SPECIES[rarity][0], rarity
