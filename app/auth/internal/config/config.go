@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const defaultJWTSecret = "057ba03d6c44104863dc7361fe4578965d1887360f90a0895882e58a6248fc86"
+const defaultJWTSecret = get("JWT_SECRET", "changeme")
 
 type Config struct {
 	Env            string
