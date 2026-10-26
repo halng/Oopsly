@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-const defaultJWTSecret = getenv("JWT_SECRET", "changeme")
-
 type Config struct {
 	Env            string
 	Port           string
@@ -42,12 +40,13 @@ func Load(getenv func(string) string) Config {
 	}
 	dbURL := "postgres://" + get("DB_USERNAME", "postgres") + ":" + urlEscape(get("DB_PASSWORD", "postgres")) +
 		"@" + get("DB_HOST", "localhost") + ":" + get("DB_PORT", "5432") + "/" + get("DB_NAME", "oopsly")
+
 	return Config{
 		Env:            get("APP_ENV", ""),
 		Port:           get("PORT", "9010"),
 		DBURL:          dbURL,
 		RedisAddr:      get("REDIS_HOST", "localhost") + ":" + get("REDIS_PORT", "6379"),
-		JWTSecret:      get("JWT_SECRET", defaultJWTSecret),
+		JWTSecret:      get("JWT_SECRET", "changeme"),
 		AccessTTL:      ms("JWT_EXPIRATION_MS", 86400000),
 		RefreshTTL:     ms("JWT_REFRESH_EXPIRATION_MS", 604800000),
 		TestEmails:     splitList(getenv("TEST_EMAILS")),
