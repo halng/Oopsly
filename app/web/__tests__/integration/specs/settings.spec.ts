@@ -1,6 +1,16 @@
+import type { Page } from '@playwright/test';
 import { expect, test } from '../support/fixtures';
 import { AUTH } from '../support/data';
 import { failure } from '../support/wiremock';
+
+/**
+ * The page re-fills the form when the profile response lands, which would
+ * overwrite anything typed earlier. Wait for it before editing.
+ */
+async function openLoadedSettings(page: Page) {
+    await page.goto('/settings');
+    await expect(page.getByTestId('input-display-name')).toHaveValue('Lena');
+}
 
 test.describe('Settings screen', () => {
     test('prefills the form from the profile API', async ({ page, mock }) => {
@@ -22,7 +32,7 @@ test.describe('Settings screen', () => {
         page,
         mock,
     }) => {
-        await page.goto('/settings');
+        await openLoadedSettings(page);
         await page.getByTestId('input-display-name').fill('Lena L.');
         await page.getByTestId('input-bio').fill('Studying cells');
         await page.getByTestId('input-daily-goal').fill('30');
@@ -44,7 +54,7 @@ test.describe('Settings screen', () => {
     });
 
     test('picking a theme is included in the save', async ({ page, mock }) => {
-        await page.goto('/settings');
+        await openLoadedSettings(page);
         await page.getByTestId('btn-open-theme').click();
         await expect(page.getByTestId('theme-modal')).toBeVisible();
         await page.getByTestId('theme-option-ghibli-night').click();
@@ -74,7 +84,7 @@ test.describe('Settings screen', () => {
             status: 500,
             body: failure('db down', 500),
         });
-        await page.goto('/settings');
+        await openLoadedSettings(page);
         await page.getByTestId('btn-save-settings').click();
         await expect(page.getByTestId('btn-save-settings')).not.toContainText(
             'Saved!'

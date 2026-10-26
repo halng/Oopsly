@@ -39,7 +39,9 @@ test.describe('Daily (super) review screen', () => {
             await page.getByTestId(`btn-grade-${grade}`).click();
         }
         await expect(page).toHaveURL(/\/home\/super-review\/complete$/);
-        await expect(page.getByText('Session Completed!')).toBeVisible();
+        await expect(
+            page.getByRole('heading', { name: 'Session Completed!' })
+        ).toBeVisible();
         const [claim] = await mock.requests(
             'POST',
             `${GAME}/v1/game/rewards/review`
@@ -67,6 +69,8 @@ test.describe('Daily (super) review screen', () => {
     }) => {
         await page.goto('/home/super-review/complete');
         await expect(page).toHaveURL(/\/home(\/super-review\/complete)?$/);
-        await expect(page.getByText('Session Completed!')).toHaveCount(0);
+        await expect(
+            page.getByRole('heading', { name: 'Session Completed!' })
+        ).toHaveCount(0);
     });
 });

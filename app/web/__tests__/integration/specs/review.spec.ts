@@ -63,7 +63,9 @@ test.describe('Review screen (spaced repetition)', () => {
         }
 
         await expect(page).toHaveURL(/\/review\/complete$/);
-        await expect(page.getByText('Session Completed!')).toBeVisible();
+        await expect(
+            page.getByRole('heading', { name: 'Session Completed!' })
+        ).toBeVisible();
         await expect(page.getByTestId('complete-xp')).toHaveText('+20');
         await expect(page.getByTestId('complete-accuracy')).toBeVisible();
 
