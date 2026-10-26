@@ -52,7 +52,7 @@ jobs:
         run: ruff format --check .
 
       - name: Test
-        run: python -m pytest -q
+        run: python -m pytest -q --cov=app --cov-report=xml --cov-report=term-missing
 
       - name: Cache SonarQube packages
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0

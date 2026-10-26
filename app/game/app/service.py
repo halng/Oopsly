@@ -104,7 +104,7 @@ def get_or_create_garden(db: Session, user_id: str) -> Garden:
     garden = _load_garden(db, user_id)
     if garden is not None:
         return garden
-    inventory = {species: 0 for species in SPECIES}
+    inventory = dict.fromkeys(SPECIES, 0)
     inventory["camphor_tree"] = 1
     garden = Garden(
         user_id=user_id,
@@ -208,8 +208,13 @@ def _reward(
     )
 
 
+_rng = random.SystemRandom()
+
+
 def _roll_unit() -> float:
-    return random.random()
+    # Loot rolls decide rare rewards, so draw from the OS CSPRNG, not the
+    # predictable Mersenne Twister behind random.random().
+    return _rng.random()
 
 
 def reward_focus(
