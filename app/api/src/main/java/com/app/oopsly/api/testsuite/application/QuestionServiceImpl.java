@@ -21,6 +21,7 @@ import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.testsuite.application.vm.QuestionReq;
@@ -31,7 +32,6 @@ import com.app.oopsly.api.testsuite.domain.QuestionValidator;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.List;
 import java.util.UUID;
@@ -52,7 +52,7 @@ public class QuestionServiceImpl implements QuestionService {
     private final TestSuiteRepository testSuiteRepository;
     private final ShelfRepository shelfRepository;
     private final QuestionMetadataMapper metadataMapper;
-    private final UserService userService;
+    private final CurrentUser currentUser;
 
     @Override
     @Caching(
@@ -183,7 +183,7 @@ public class QuestionServiceImpl implements QuestionService {
     private TestSuiteEntity findTestSuite(UUID shelveId, UUID testSuiteId) {
         Shelf shelve =
                 shelfRepository
-                        .findByIdAndUser(shelveId, userService.getCurrentUser())
+                        .findByIdAndUserId(shelveId, currentUser.id())
                         .orElseThrow(
                                 () ->
                                         new NotFoundException(

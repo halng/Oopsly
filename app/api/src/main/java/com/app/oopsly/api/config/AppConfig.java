@@ -16,8 +16,6 @@
 
 package com.app.oopsly.api.config;
 
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -30,57 +28,20 @@ import org.springframework.stereotype.Component;
 public class AppConfig {
 
     private String allowedOrigins;
-    private String[] testEmails;
-
-    public GsonFactory getJsonFactory() {
-        return new GsonFactory();
-    }
-
-    public NetHttpTransport getHttpTransport() {
-        return new NetHttpTransport();
-    }
 
     private Jwt jwt = new Jwt();
-    private Google google = new Google();
-    private Features features = new Features();
-    private Mailtrap mailtrap = new Mailtrap();
+    private Auth auth = new Auth();
 
     @Getter
     @Setter
-    public static class Mailtrap {
-        private String apiKey;
+    public static class Auth {
+        private String baseUrl = "http://localhost:9010/api/auth";
+        private String internalKey = "";
     }
 
     @Getter
     @Setter
     public static class Jwt {
         private String secret;
-        private long expirationInMs;
-        private long refreshExpirationInMs;
-    }
-
-    @Getter
-    @Setter
-    public static class Google {
-        private String clientId;
-    }
-
-    @Getter
-    @Setter
-    public static class Features {
-        private boolean authWithGoogle;
-        private boolean authWithJwt;
-    }
-
-    public boolean isTestEmail(String email) {
-        if (testEmails == null) {
-            return false;
-        }
-        for (String testEmail : testEmails) {
-            if (testEmail.equalsIgnoreCase(email)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

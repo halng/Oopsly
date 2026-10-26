@@ -28,6 +28,7 @@ import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.subject.Subject;
@@ -41,8 +42,6 @@ import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.domain.TestSuiteSelectionPayload;
 import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -63,7 +62,7 @@ class TestSuiteServiceImplTest {
 
     @Mock private SubjectRepository subjectRepository;
 
-    @Mock private UserService userService;
+    @Mock private CurrentUser currentUser;
 
     @Mock private CardRepository cardRepository;
 
@@ -74,7 +73,7 @@ class TestSuiteServiceImplTest {
     @InjectMocks private TestSuiteServiceImpl testSuiteService;
 
     private TestSuiteReq testSuiteReq;
-    private User currentUser;
+    private UUID currentUserId;
     private Shelf shelve;
     private UUID shelveId;
     private UUID testSuiteId;
@@ -82,8 +81,7 @@ class TestSuiteServiceImplTest {
     @BeforeEach
     void setUp() {
         testSuiteReq = new TestSuiteReq("Chapter 1 Review", null, null, true);
-        currentUser = new User();
-        currentUser.setEmail("test@example.com");
+        currentUserId = UUID.randomUUID();
         shelveId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
 
@@ -91,7 +89,7 @@ class TestSuiteServiceImplTest {
         shelve.setId(shelveId);
         shelve.setName("Test Shelve");
         shelve.setDescription("Test shelve description for testing purposes");
-        shelve.setUser(currentUser);
+        shelve.setUserId(currentUserId);
     }
 
     @Test
@@ -102,8 +100,8 @@ class TestSuiteServiceImplTest {
         savedTestSuite.setIsActive(testSuiteReq.isActive());
         savedTestSuite.setShelf(shelve);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(savedTestSuite);
 
@@ -115,8 +113,9 @@ class TestSuiteServiceImplTest {
 
     @Test
     void create_throwsNotFoundException_whenDeckNotFound() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser)).thenReturn(Optional.empty());
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
+                .thenReturn(Optional.empty());
 
         assertThrows(
                 NotFoundException.class, () -> testSuiteService.create(shelveId, testSuiteReq));
@@ -131,8 +130,8 @@ class TestSuiteServiceImplTest {
         existingTestSuite.setIsActive(false);
         existingTestSuite.setShelf(shelve);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.of(existingTestSuite));
@@ -146,8 +145,8 @@ class TestSuiteServiceImplTest {
 
     @Test
     void update_throwsNotFoundException_whenTestSuiteNotFound() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.empty());
@@ -165,8 +164,8 @@ class TestSuiteServiceImplTest {
         existingTestSuite.setDeleted(false);
         existingTestSuite.setShelf(shelve);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.of(existingTestSuite));
@@ -181,8 +180,8 @@ class TestSuiteServiceImplTest {
 
     @Test
     void delete_throwsNotFoundException_whenTestSuiteNotFound() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.empty());
@@ -198,8 +197,8 @@ class TestSuiteServiceImplTest {
         testSuite.setIsActive(testSuiteReq.isActive());
         testSuite.setShelf(shelve);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.of(testSuite));
@@ -212,8 +211,8 @@ class TestSuiteServiceImplTest {
 
     @Test
     void getById_throwsNotFoundException_whenTestSuiteNotFound() {
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.empty());
@@ -234,8 +233,8 @@ class TestSuiteServiceImplTest {
             testSuites.add(testSuite);
         }
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findAllByShelve(shelve)).thenReturn(testSuites);
 
@@ -254,8 +253,8 @@ class TestSuiteServiceImplTest {
         savedTestSuite.setIsActive(true);
         savedTestSuite.setShelf(shelve);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.save(any(TestSuiteEntity.class))).thenReturn(savedTestSuite);
 
@@ -358,8 +357,8 @@ class TestSuiteServiceImplTest {
         suite.setId(testSuiteId);
         suite.setSubjects(new ArrayList<>());
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
                 .thenReturn(Optional.of(suite));
@@ -385,8 +384,8 @@ class TestSuiteServiceImplTest {
         card.setId(UUID.randomUUID());
         card.setSubject(subject);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
                 .thenReturn(Optional.of(suite));
@@ -427,8 +426,8 @@ class TestSuiteServiceImplTest {
         card.setId(UUID.randomUUID());
         card.setSubject(subject);
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
                 .thenReturn(Optional.of(suite));
@@ -450,8 +449,8 @@ class TestSuiteServiceImplTest {
         suite.setSubjects(List.of(subject));
         suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.RANDOM, null, false));
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
                 .thenReturn(Optional.of(suite));
@@ -480,8 +479,8 @@ class TestSuiteServiceImplTest {
             cards.add(card);
         }
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
                 .thenReturn(Optional.of(suite));
@@ -499,8 +498,8 @@ class TestSuiteServiceImplTest {
         subject.setId(subjectId);
         subject.setName("Biology");
 
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(subjectRepository.findByIdAndShelve(subjectId, shelve))
                 .thenReturn(Optional.of(subject));
@@ -521,8 +520,8 @@ class TestSuiteServiceImplTest {
     @Test
     void create_generatesSlugFromTitle_andMapsNewFields() {
         TestSuiteReq req = new TestSuiteReq("  Chương 1: Cell Biology! ", "  intro ", 15, null);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findSlugsByShelfExcluding(eq(shelve), any()))
                 .thenReturn(List.of());
@@ -549,8 +548,8 @@ class TestSuiteServiceImplTest {
     @Test
     void create_suffixesSlug_whenTaken() {
         TestSuiteReq req = new TestSuiteReq("Final", null, null, true);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findSlugsByShelfExcluding(eq(shelve), any()))
                 .thenReturn(List.of("final", "final-2"));
@@ -565,8 +564,8 @@ class TestSuiteServiceImplTest {
     @Test
     void create_usesFallbackSlug_whenTitleHasNoLetters() {
         TestSuiteReq req = new TestSuiteReq("???", null, null, true);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.save(any(TestSuiteEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -582,8 +581,8 @@ class TestSuiteServiceImplTest {
         existing.setId(testSuiteId);
         existing.setTitle("Chapter 1 Review");
         existing.setSlug("chapter-1-review");
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.of(existing));
@@ -604,8 +603,8 @@ class TestSuiteServiceImplTest {
         existing.setId(testSuiteId);
         existing.setTitle("Old");
         existing.setSlug("old");
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelve))
                 .thenReturn(Optional.of(existing));
@@ -658,8 +657,8 @@ class TestSuiteServiceImplTest {
             card.setSubject(subject);
             cards.add(card);
         }
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
                 .thenReturn(Optional.of(suite));
@@ -682,8 +681,8 @@ class TestSuiteServiceImplTest {
         Card card = Card.builder().front("Q").back("A").numberOfPractice(0).build();
         card.setId(UUID.randomUUID());
         card.setSubject(subject);
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(shelfRepository.findByIdAndUser(shelveId, currentUser))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
         when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
                 .thenReturn(Optional.of(suite));

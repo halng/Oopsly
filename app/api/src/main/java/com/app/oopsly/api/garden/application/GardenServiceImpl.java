@@ -29,14 +29,14 @@ import com.app.oopsly.api.garden.domain.SessionMode;
 import com.app.oopsly.api.garden.domain.Soundscape;
 import com.app.oopsly.api.garden.infrastructure.GardenStateRepository;
 import com.app.oopsly.api.garden.infrastructure.PomodoroSessionRepository;
+import com.app.oopsly.api.progress.UserProgressService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shared.util.ApiMessages;
 import com.app.oopsly.api.shared.util.CircuitBreakerNames;
 import com.app.oopsly.api.shared.util.GamificationRules;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -45,6 +45,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -57,7 +58,8 @@ public class GardenServiceImpl implements GardenService {
 
     private final GardenStateRepository gardenStateRepository;
     private final PomodoroSessionRepository pomodoroSessionRepository;
-    private final UserService userService;
+    private final CurrentUser currentUser;
+    private final UserProgressService userProgressService;
 
     @Override
     @Transactional
@@ -162,7 +164,6 @@ public class GardenServiceImpl implements GardenService {
     @Transactional
     @CircuitBreaker(name = CircuitBreakerNames.GARDEN, fallbackMethod = "completeSessionFallback")
     public ApiRes completePomodoroSession(CompletePomodoroReq request) {
-        User currentUser = userService.getCurrentUser();
         GardenStateEntity garden = getOrCreateGarden();
 
         int minutes = request.focusDurationMinutes();
@@ -186,7 +187,7 @@ public class GardenServiceImpl implements GardenService {
 
         pomodoroSessionRepository.saveAndFlush(
                 PomodoroSessionEntity.builder()
-                        .user(currentUser)
+                        .userId(currentUser.id())
                         .subjectId(request.subjectId())
                         .focusDurationMinutes(minutes)
                         .breakDurationMinutes(
@@ -203,7 +204,7 @@ public class GardenServiceImpl implements GardenService {
                         .build());
 
         gardenStateRepository.saveAndFlush(garden);
-        userService.updateUserProgress(xpGained);
+        userProgressService.updateUserProgress(xpGained);
 
         log.info("Pomodoro session of {} minutes completed, {} XP granted", minutes, xpGained);
         return ApiRes.success(
@@ -221,16 +222,16 @@ public class GardenServiceImpl implements GardenService {
     // ---------------------------------------------------------------- domain
 
     private GardenStateEntity getOrCreateGarden() {
-        User currentUser = userService.getCurrentUser();
+        UUID userId = currentUser.id();
         return gardenStateRepository
-                .findByUserId(currentUser.getId())
-                .orElseGet(() -> gardenStateRepository.saveAndFlush(newGarden(currentUser)));
+                .findByUserId(userId)
+                .orElseGet(() -> gardenStateRepository.saveAndFlush(newGarden(userId)));
     }
 
-    private GardenStateEntity newGarden(User user) {
+    private GardenStateEntity newGarden(UUID userId) {
         GardenStateEntity garden =
                 GardenStateEntity.builder()
-                        .user(user)
+                        .userId(userId)
                         .seedInventory(defaultInventory())
                         .dewDrops(GamificationRules.GARDEN_DEW_PER_SESSION)
                         .build();

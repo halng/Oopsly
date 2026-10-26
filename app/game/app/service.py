@@ -1,5 +1,5 @@
 import random
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -27,9 +27,9 @@ from app.seed_pouch import (
     band_for_review,
     band_for_test,
     focus_gains,
+    gains_for_test,
     review_gains,
     roll,
-    gains_for_test,
 )
 
 
@@ -104,7 +104,7 @@ def get_or_create_garden(db: Session, user_id: str) -> Garden:
     garden = _load_garden(db, user_id)
     if garden is not None:
         return garden
-    inventory = {species: 0 for species in SPECIES}
+    inventory = dict.fromkeys(SPECIES, 0)
     inventory["camphor_tree"] = 1
     garden = Garden(
         user_id=user_id,
@@ -193,7 +193,9 @@ def _grant(garden: Garden, gains: dict[str, int], species: str) -> None:
     _share_growth(garden, gains["growth_points"])
 
 
-def _reward(garden: Garden, species: str, rarity: str, gains: dict[str, int], xp: int = 0) -> Reward:
+def _reward(
+    garden: Garden, species: str, rarity: str, gains: dict[str, int], xp: int = 0
+) -> Reward:
     return Reward(
         species=species,
         rarity=rarity,
@@ -206,13 +208,22 @@ def _reward(garden: Garden, species: str, rarity: str, gains: dict[str, int], xp
     )
 
 
+_rng = random.SystemRandom()
+
+
 def _roll_unit() -> float:
-    return random.random()
+    # Loot rolls decide rare rewards, so draw from the OS CSPRNG, not the
+    # predictable Mersenne Twister behind random.random().
+    return _rng.random()
 
 
-def reward_focus(db: Session, user_id: str, minutes: int, unit_roll: float | None = None) -> Reward:
+def reward_focus(
+    db: Session, user_id: str, minutes: int, unit_roll: float | None = None
+) -> Reward:
     garden = get_or_create_garden(db, user_id)
-    species, rarity = roll(band_for_focus(minutes), _roll_unit() if unit_roll is None else unit_roll)
+    species, rarity = roll(
+        band_for_focus(minutes), _roll_unit() if unit_roll is None else unit_roll
+    )
     gains = focus_gains(minutes)
     _grant(garden, gains, species)
     garden.total_focus_minutes += minutes
@@ -240,9 +251,13 @@ def reward_review(
     return _reward(garden, species, rarity, gains)
 
 
-def reward_test(db: Session, user_id: str, percentage: int, unit_roll: float | None = None) -> Reward:
+def reward_test(
+    db: Session, user_id: str, percentage: int, unit_roll: float | None = None
+) -> Reward:
     garden = get_or_create_garden(db, user_id)
-    species, rarity = roll(band_for_test(percentage), _roll_unit() if unit_roll is None else unit_roll)
+    species, rarity = roll(
+        band_for_test(percentage), _roll_unit() if unit_roll is None else unit_roll
+    )
     gains = gains_for_test(percentage)
     _grant(garden, gains, species)
     db.commit()
@@ -275,7 +290,7 @@ def plant_seed(
             water_level=50,
             growth_progress=0,
             nickname=nickname,
-            planted_at=datetime.now(timezone.utc),
+            planted_at=datetime.now(UTC),
         )
     )
     db.commit()
@@ -291,7 +306,7 @@ def water_tree(db: Session, user_id: str, tree_id: str) -> GardenState:
     garden.dew_drops -= WATER_DEW_COST
     tree.water_level = min(100, tree.water_level + WATER_LEVEL_GAIN)
     tree.total_waters += 1
-    tree.last_watered_at = datetime.now(timezone.utc)
+    tree.last_watered_at = datetime.now(UTC)
     apply_growth(tree, WATER_GROWTH_GAIN)
     db.commit()
     db.refresh(garden)

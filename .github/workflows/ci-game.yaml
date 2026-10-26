@@ -1,0 +1,69 @@
+name: CI Game
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+    branches:
+      - main
+    paths:
+      - "app/game/**"
+      - ".github/workflows/ci-game.yaml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "app/game/**"
+      - ".github/workflows/ci-game.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-game-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci-game:
+    name: CI Game
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/game
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: app/game/pyproject.toml
+
+      - name: Install dependencies
+        run: pip install ".[dev]"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Format
+        run: ruff format --check .
+
+      - name: Test
+        run: python -m pytest -q --cov=app --cov-report=xml --cov-report=term-missing
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_GAME }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectBaseDir: app/game

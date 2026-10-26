@@ -18,7 +18,7 @@ const catalogItem = {
     id: 'd1',
     title: 'Anatomy',
     description: 'Bones and muscles',
-    tags: ['science'],
+    tags: 'science,biology',
     color: '#8BC34A',
     cardsPreview: [],
 };
@@ -54,6 +54,11 @@ describe('DiscoverPage', () => {
         await waitFor(() =>
             expect(screen.getByTestId('discover-card-d1')).toBeInTheDocument()
         );
+        // Tags are a comma-separated string and are searchable.
+        fireEvent.change(screen.getByTestId('input-discover-search'), {
+            target: { value: 'biology' },
+        });
+        expect(screen.getByTestId('discover-card-d1')).toBeInTheDocument();
         fireEvent.change(screen.getByTestId('input-discover-search'), {
             target: { value: 'missing' },
         });

@@ -1,7 +1,15 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -12,7 +20,7 @@ def _uuid() -> str:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Garden(Base):
@@ -48,7 +56,9 @@ class Plot(Base):
     __table_args__ = (UniqueConstraint("garden_id", "plot_index", name="uk_game_plot"),)
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    garden_id: Mapped[str] = mapped_column(ForeignKey("game_gardens.id"), nullable=False)
+    garden_id: Mapped[str] = mapped_column(
+        ForeignKey("game_gardens.id"), nullable=False
+    )
     plot_index: Mapped[int] = mapped_column(Integer, nullable=False)
     is_unlocked: Mapped[bool] = mapped_column(Boolean, default=False)
     unlock_cost: Mapped[int] = mapped_column(Integer, default=0)
@@ -60,7 +70,9 @@ class Tree(Base):
     __tablename__ = "game_trees"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    garden_id: Mapped[str] = mapped_column(ForeignKey("game_gardens.id"), nullable=False)
+    garden_id: Mapped[str] = mapped_column(
+        ForeignKey("game_gardens.id"), nullable=False
+    )
     plot_index: Mapped[int] = mapped_column(Integer, nullable=False)
     species: Mapped[str] = mapped_column(String(40), nullable=False)
     stage: Mapped[str] = mapped_column(String(20), default="seed")

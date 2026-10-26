@@ -29,11 +29,12 @@ import com.app.oopsly.api.quiz.domain.QuizState;
 import com.app.oopsly.api.quiz.infrastructure.QuizLiveStateStore;
 import com.app.oopsly.api.quiz.infrastructure.QuizPlayerRepository;
 import com.app.oopsly.api.quiz.infrastructure.QuizSessionRepository;
+import com.app.oopsly.api.shared.client.AuthClient;
+import com.app.oopsly.api.shared.client.AuthProfile;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shared.util.GamificationRules;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,20 +56,21 @@ class QuizServiceImplTest {
     @Mock private QuizSessionRepository sessionRepository;
     @Mock private QuizPlayerRepository playerRepository;
     @Mock private QuizLiveStateStore liveStateStore;
-    @Mock private UserService userService;
+    @Mock private CurrentUser currentUser;
+    @Mock private AuthClient authClient;
 
     @InjectMocks private QuizServiceImpl quizService;
 
-    private User host;
+    private UUID hostId;
+    private AuthProfile hostProfile;
     private QuizSessionEntity session;
     private List<QuizCardView> cards;
 
     @BeforeEach
     void setUp() {
-        host = new User();
-        host.setId(UUID.randomUUID());
-        host.setName("Host");
-        host.setDisplayName("Host display");
+        hostId = UUID.randomUUID();
+        hostProfile = new AuthProfile(hostId, "Host", "Host display", null, 20);
+        lenient().when(authClient.lookup(any(UUID.class))).thenAnswer(inv -> hostProfile);
 
         cards =
                 List.of(
@@ -82,7 +84,7 @@ class QuizServiceImplTest {
         QuizSessionEntity entity =
                 QuizSessionEntity.builder()
                         .roomCode(ROOM)
-                        .host(host)
+                        .hostId(hostId)
                         .subjectId(UUID.randomUUID())
                         .subjectTitle("Maths")
                         .state(state)
@@ -109,7 +111,7 @@ class QuizServiceImplTest {
 
     @Test
     void createRoom_generatesUniqueRoomCodeAndCachesCards() {
-        when(userService.getCurrentUser()).thenReturn(host);
+        when(currentUser.id()).thenReturn(hostId);
         when(sessionRepository.existsByRoomCode(anyString())).thenReturn(true, false);
         when(sessionRepository.saveAndFlush(any(QuizSessionEntity.class)))
                 .thenAnswer(
@@ -129,7 +131,7 @@ class QuizServiceImplTest {
         assertEquals(-1, state.currentQuestionIndex());
         assertEquals(2, state.totalQuestions());
         assertNull(state.currentCard());
-        assertEquals(host.getId(), state.hostId());
+        assertEquals(hostId, state.hostId());
         assertEquals("Host display", state.hostName());
         assertEquals(6, state.roomCode().length());
         verify(sessionRepository, times(2)).existsByRoomCode(anyString());
@@ -138,8 +140,8 @@ class QuizServiceImplTest {
 
     @Test
     void createRoom_fallsBackToTechnicalNameWhenNoDisplayName() {
-        host.setDisplayName(null);
-        when(userService.getCurrentUser()).thenReturn(host);
+        hostProfile = new AuthProfile(hostId, "Host", null, null, 20);
+        when(currentUser.id()).thenReturn(hostId);
         when(sessionRepository.existsByRoomCode(anyString())).thenReturn(false);
         when(sessionRepository.saveAndFlush(any(QuizSessionEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -197,7 +199,7 @@ class QuizServiceImplTest {
     void start_movesRoomToFirstQuestionAndResetsAnswers() {
         QuizPlayerEntity playerA = player("Ana", "p1", 0, "stale");
         when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(userService.getCurrentUser()).thenReturn(host);
+        when(currentUser.id()).thenReturn(hostId);
         when(sessionRepository.saveAndFlush(session)).thenReturn(session);
         when(playerRepository.findAllBySessionId(session.getId())).thenReturn(List.of(playerA));
         when(liveStateStore.getCards(ROOM)).thenReturn(cards);
@@ -214,10 +216,9 @@ class QuizServiceImplTest {
 
     @Test
     void start_byNonHostIsRejected() {
-        User intruder = new User();
-        intruder.setId(UUID.randomUUID());
+        UUID intruder = UUID.randomUUID();
         when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(userService.getCurrentUser()).thenReturn(intruder);
+        when(currentUser.id()).thenReturn(intruder);
 
         assertThrows(ValidationException.class, () -> quizService.start(ROOM, "spoofed"));
         verify(sessionRepository, never()).saveAndFlush(any());
@@ -365,7 +366,7 @@ class QuizServiceImplTest {
         session = session(QuizState.LEADERBOARD, 0);
         QuizPlayerEntity playerA = player("Ana", "p1", 10, "4");
         when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(userService.getCurrentUser()).thenReturn(host);
+        when(currentUser.id()).thenReturn(hostId);
         when(liveStateStore.getCards(ROOM)).thenReturn(cards);
         when(playerRepository.findAllBySessionId(session.getId())).thenReturn(List.of(playerA));
         when(sessionRepository.saveAndFlush(session)).thenReturn(session);
@@ -382,7 +383,7 @@ class QuizServiceImplTest {
     void nextQuestion_afterLastCardFinishesTheQuizAndClearsCache() {
         session = session(QuizState.LEADERBOARD, 1);
         when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(userService.getCurrentUser()).thenReturn(host);
+        when(currentUser.id()).thenReturn(hostId);
         when(liveStateStore.getCards(ROOM)).thenReturn(cards);
         when(playerRepository.findAllBySessionId(session.getId())).thenReturn(List.of());
         when(sessionRepository.saveAndFlush(session)).thenReturn(session);
@@ -396,10 +397,9 @@ class QuizServiceImplTest {
 
     @Test
     void nextQuestion_byNonHostIsRejected() {
-        User intruder = new User();
-        intruder.setId(UUID.randomUUID());
+        UUID intruder = UUID.randomUUID();
         when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(userService.getCurrentUser()).thenReturn(intruder);
+        when(currentUser.id()).thenReturn(intruder);
 
         assertThrows(ValidationException.class, () -> quizService.nextQuestion(ROOM, "spoofed"));
     }
@@ -409,7 +409,7 @@ class QuizServiceImplTest {
         session = session(QuizState.LOBBY, -1);
         session.setCurrentQuestionIndex(null);
         when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(userService.getCurrentUser()).thenReturn(host);
+        when(currentUser.id()).thenReturn(hostId);
         when(liveStateStore.getCards(ROOM)).thenReturn(cards);
         when(playerRepository.findAllBySessionId(session.getId())).thenReturn(List.of());
         when(sessionRepository.saveAndFlush(session)).thenReturn(session);

@@ -25,6 +25,7 @@ import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.testsuite.application.QuestionMetadataMapper;
@@ -36,8 +37,6 @@ import com.app.oopsly.api.testsuite.domain.QuestionType;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -59,10 +58,10 @@ class QuestionServiceImplTest {
     @Mock private QuestionRepository questionRepository;
     @Mock private TestSuiteRepository testSuiteRepository;
     @Mock private ShelfRepository shelfRepository;
-    @Mock private UserService userService;
+    @Mock private CurrentUser currentUser;
 
     private QuestionServiceImpl questionService;
-    private User user;
+    private UUID userId;
     private Shelf shelf;
     private TestSuiteEntity testSuite;
     private UUID shelfId;
@@ -77,11 +76,11 @@ class QuestionServiceImplTest {
                         testSuiteRepository,
                         shelfRepository,
                         new QuestionMetadataMapper(objectMapper),
-                        userService);
+                        currentUser);
         shelfId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
         questionId = UUID.randomUUID();
-        user = new User();
+        userId = UUID.randomUUID();
         shelf = new Shelf();
         shelf.setId(shelfId);
         testSuite = new TestSuiteEntity();
@@ -90,8 +89,8 @@ class QuestionServiceImplTest {
     }
 
     private void ownsSuite() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
+        when(currentUser.id()).thenReturn(userId);
+        when(shelfRepository.findByIdAndUserId(shelfId, userId)).thenReturn(Optional.of(shelf));
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelf))
                 .thenReturn(Optional.of(testSuite));
     }
@@ -203,8 +202,8 @@ class QuestionServiceImplTest {
 
     @Test
     void create_shelfOfAnotherUser_throwsNotFound() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.empty());
+        when(currentUser.id()).thenReturn(userId);
+        when(shelfRepository.findByIdAndUserId(shelfId, userId)).thenReturn(Optional.empty());
 
         QuestionReq req = single("q", List.of("a", "b"), 0);
         assertThrows(
@@ -214,8 +213,8 @@ class QuestionServiceImplTest {
 
     @Test
     void create_suiteOutsideShelf_throwsNotFound() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(shelfRepository.findByIdAndUser(shelfId, user)).thenReturn(Optional.of(shelf));
+        when(currentUser.id()).thenReturn(userId);
+        when(shelfRepository.findByIdAndUserId(shelfId, userId)).thenReturn(Optional.of(shelf));
         when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelf))
                 .thenReturn(Optional.empty());
 

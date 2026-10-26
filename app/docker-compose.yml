@@ -1,0 +1,57 @@
+# Local dev infrastructure shared by app/api, app/auth and app/game.
+# Run from app/:  docker compose up -d --build
+# Or from app/api: ./gradlew composeUp
+services:
+  postgres:
+    image: postgres:15.4
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-oopsly}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  auth:
+    build: ./auth
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      APP_ENV: dev
+      PORT: "9010"
+      DB_HOST: postgres
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: ${POSTGRES_DB:-oopsly}
+      REDIS_HOST: redis
+      # Must match AUTH_INTERNAL_KEY used by app/api.
+      INTERNAL_API_KEY: ${AUTH_INTERNAL_KEY:-changeme}
+      TEST_EMAILS: ${TEST_EMAILS:-test@oopsly.dev}
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:8081
+    ports:
+      - "9010:9010"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge

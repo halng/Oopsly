@@ -67,12 +67,6 @@ public class GlobalExceptionHandler {
         return ApiRes.unauthorized("Authentication failed. Please try again.");
     }
 
-    @ExceptionHandler(SendEmailException.class)
-    public ApiRes handleSendEmailException(SendEmailException ex) {
-        log.error("Email sending failed: {}", ex.getMessage(), ex);
-        return ApiRes.internalError("Failed to send email. Please try again later.");
-    }
-
     @ExceptionHandler(ExpiredJwtException.class)
     public ApiRes handleExpiredJwt(ExpiredJwtException ex) {
         log.error("Expired JWT access attempt: {}", ex.getMessage());

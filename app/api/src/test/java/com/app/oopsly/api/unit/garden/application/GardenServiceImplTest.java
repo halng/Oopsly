@@ -25,12 +25,12 @@ import com.app.oopsly.api.garden.application.vm.*;
 import com.app.oopsly.api.garden.domain.*;
 import com.app.oopsly.api.garden.infrastructure.GardenStateRepository;
 import com.app.oopsly.api.garden.infrastructure.PomodoroSessionRepository;
+import com.app.oopsly.api.progress.UserProgressService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shared.util.GamificationRules;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Instant;
@@ -54,24 +54,23 @@ class GardenServiceImplTest {
 
     @Mock private GardenStateRepository gardenStateRepository;
     @Mock private PomodoroSessionRepository pomodoroSessionRepository;
-    @Mock private UserService userService;
+    @Mock private CurrentUser currentUser;
+    @Mock private UserProgressService userProgressService;
 
     @InjectMocks private GardenServiceImpl gardenService;
 
-    private User user;
+    private UUID userId;
     private GardenStateEntity garden;
 
     @BeforeEach
     void setUp() {
-        user = new User();
-        user.setId(UUID.randomUUID());
-        user.setName("Learner");
+        userId = UUID.randomUUID();
 
         garden = newGarden();
     }
 
     private GardenStateEntity newGarden() {
-        GardenStateEntity entity = GardenStateEntity.builder().user(user).build();
+        GardenStateEntity entity = GardenStateEntity.builder().userId(userId).build();
         entity.setId(UUID.randomUUID());
         entity.setPlots(new ArrayList<>());
         entity.setPlantedTrees(new ArrayList<>());
@@ -92,8 +91,8 @@ class GardenServiceImplTest {
     }
 
     private void currentUserOwnsGarden() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(gardenStateRepository.findByUserId(user.getId())).thenReturn(Optional.of(garden));
+        when(currentUser.id()).thenReturn(userId);
+        when(gardenStateRepository.findByUserId(userId)).thenReturn(Optional.of(garden));
     }
 
     private static GardenStateRes dataOf(ApiRes response) {
@@ -129,8 +128,8 @@ class GardenServiceImplTest {
 
     @Test
     void getGarden_firstAccessCreatesStarterGarden() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(gardenStateRepository.findByUserId(user.getId())).thenReturn(Optional.empty());
+        when(currentUser.id()).thenReturn(userId);
+        when(gardenStateRepository.findByUserId(userId)).thenReturn(Optional.empty());
         when(gardenStateRepository.saveAndFlush(any(GardenStateEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -156,7 +155,7 @@ class GardenServiceImplTest {
 
         gardenService.getGarden();
 
-        verify(gardenStateRepository).findByUserId(user.getId());
+        verify(gardenStateRepository).findByUserId(userId);
         verify(gardenStateRepository, never()).findAll();
     }
 
@@ -463,7 +462,7 @@ class GardenServiceImplTest {
         assertNotNull(reward.seedRewarded());
         assertEquals(25, reward.garden().totalFocusMinutes());
         assertEquals(1, reward.garden().completedSessionsCount());
-        verify(userService).updateUserProgress(75);
+        verify(userProgressService).updateUserProgress(75);
         verify(pomodoroSessionRepository).saveAndFlush(any(PomodoroSessionEntity.class));
     }
 
@@ -481,7 +480,7 @@ class GardenServiceImplTest {
         assertEquals(5, saved.getBreakDurationMinutes());
         assertEquals(SessionMode.FOCUS, saved.getMode());
         assertEquals(Soundscape.NONE, saved.getSoundscape());
-        assertEquals(user, saved.getUser());
+        assertEquals(userId, saved.getUserId());
         assertNull(saved.getSubjectId());
     }
 

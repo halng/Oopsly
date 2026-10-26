@@ -1,5 +1,7 @@
 """Pure seed-pouch roll. Tests pass a fixed unit roll in [0, 1]."""
 
+from itertools import accumulate
+
 from app.rules import BAND_WEIGHTS, BANDS, RARITY_SPECIES
 
 RARITIES = ("Common", "Rare", "Mythic", "Legendary")
@@ -72,15 +74,13 @@ def roll(band: str, unit_roll: float) -> tuple[str, str]:
     points = min(max(unit_roll, 0.0), 1.0) * 100
     if points >= 100:
         points = 99.999
-    cursor = 0
-    for rarity, weight in zip(RARITIES, weights, strict=True):
-        if weight <= 0:
-            continue
-        if points < cursor + weight or cursor + weight >= 100:
-            species = RARITY_SPECIES[rarity]
-            position = (points - cursor) / weight
-            index = min(len(species) - 1, int(position * len(species)))
-            return species[index], rarity
-        cursor += weight
-    rarity = next(name for name, weight in zip(RARITIES, weights) if weight)
-    return RARITY_SPECIES[rarity][0], rarity
+    edges = accumulate(weights)
+    rarity, weight, lower = next(
+        (name, weight, edge - weight)
+        for name, weight, edge in zip(RARITIES, weights, edges, strict=True)
+        if weight and points < edge
+    )
+    species = RARITY_SPECIES[rarity]
+    position = (points - lower) / weight
+    index = min(len(species) - 1, int(position * len(species)))
+    return species[index], rarity

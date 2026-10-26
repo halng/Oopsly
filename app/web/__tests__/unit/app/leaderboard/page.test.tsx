@@ -82,6 +82,8 @@ describe('LeaderboardPage', () => {
         await waitFor(() =>
             expect(screen.getByTestId('community-card-c1')).toBeInTheDocument()
         );
+        // The page no longer auto-selects a community; pick one to load its members.
+        fireEvent.click(screen.getByTestId('btn-select-community-c1'));
         await waitFor(() =>
             expect(screen.getByTestId('member-row-m1')).toBeInTheDocument()
         );

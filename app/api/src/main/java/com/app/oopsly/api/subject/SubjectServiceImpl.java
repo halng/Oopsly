@@ -24,14 +24,12 @@ import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
-import com.app.oopsly.api.shared.util.StringUtils;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.subject.vm.SubjectReq;
 import com.app.oopsly.api.subject.vm.SubjectRes;
 import com.app.oopsly.api.subject.vm.SubjectSettingReq;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
@@ -54,7 +52,7 @@ public class SubjectServiceImpl implements SubjectService {
 
     private final SubjectRepository subjectRepository;
     private final ShelfRepository shelfRepository;
-    private final UserService userService;
+    private final CurrentUser currentUser;
     private final CardRepository cardRepository;
 
     @Override
@@ -300,8 +298,7 @@ public class SubjectServiceImpl implements SubjectService {
     @Override
     @Transactional
     public ApiRes cloneDeck(UUID subjectId) {
-        User currentUser = userService.getCurrentUser();
-        log.info("Cloning public deck: {} for user: {}", subjectId, currentUser.getId());
+        log.info("Cloning public deck: {} for user: {}", subjectId, currentUser.id());
 
         Subject source =
                 subjectRepository
@@ -316,7 +313,9 @@ public class SubjectServiceImpl implements SubjectService {
                                                 "Public subject not found with id: " + subjectId));
 
         List<Shelf> shelves =
-                shelfRepository.findAllByUser(currentUser, PageRequest.of(0, 1)).getContent();
+                shelfRepository
+                        .findAllByUserId(currentUser.id(), PageRequest.of(0, 1))
+                        .getContent();
         if (shelves.isEmpty()) {
             return ApiRes.badRequest("No shelves found. Create a shelf first.");
         }
@@ -356,13 +355,9 @@ public class SubjectServiceImpl implements SubjectService {
     }
 
     private Shelf getShelfForCurrentUser(UUID shelfId) {
-        User currentUser = userService.getCurrentUser();
-        log.debug(
-                "Getting shelf: {} for user: {}",
-                shelfId,
-                StringUtils.masked(currentUser.getEmail()));
+        log.debug("Getting shelf: {} for user: {}", shelfId, currentUser.id());
         return shelfRepository
-                .findByIdAndUser(shelfId, currentUser)
+                .findByIdAndUserId(shelfId, currentUser.id())
                 .orElseThrow(() -> new NotFoundException("Shelve not found with id: " + shelfId));
     }
 

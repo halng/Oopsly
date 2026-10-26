@@ -68,9 +68,7 @@ BLOOM_REWARDS = {
 }
 
 SPECIES_RARITY = {
-    species: rarity
-    for rarity, names in RARITY_SPECIES.items()
-    for species in names
+    species: rarity for rarity, names in RARITY_SPECIES.items() for species in names
 }
 
 

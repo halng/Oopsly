@@ -17,12 +17,12 @@
 package com.app.oopsly.api.garden.domain;
 
 import com.app.oopsly.api.shared.domain.Audit;
-import com.app.oopsly.api.user.User;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -37,9 +37,8 @@ import org.hibernate.type.SqlTypes;
 @Entity
 public class GardenStateEntity extends Audit {
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
+    @Column(name = "user_id", nullable = false, unique = true)
+    private UUID userId;
 
     @Builder.Default private Integer dewDrops = 0;
     @Builder.Default private Integer sunlightOrbs = 0;

@@ -47,35 +47,29 @@ class Reward(BaseModel):
     garden: GardenState
 
 
-class PlantReq(BaseModel):
+class _Req(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
+
+class PlantReq(_Req):
     species: str
     plot_index: int = Field(alias="plotIndex")
     nickname: str | None = None
 
 
-class TreeReq(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
+class TreeReq(_Req):
     tree_id: str = Field(alias="treeId")
 
 
-class UnlockReq(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
+class UnlockReq(_Req):
     plot_index: int = Field(alias="plotIndex")
 
 
-class FocusReq(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
+class FocusReq(_Req):
     focus_minutes: int = Field(alias="focusMinutes", ge=1)
 
 
-class ReviewReq(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
+class ReviewReq(_Req):
     cards_reviewed: int = Field(alias="cardsReviewed", ge=1)
     again: int = Field(ge=0)
     hard: int = Field(ge=0)
@@ -83,7 +77,5 @@ class ReviewReq(BaseModel):
     easy: int = Field(ge=0)
 
 
-class TestReq(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
+class TestReq(_Req):
     percentage: int = Field(ge=0, le=100)

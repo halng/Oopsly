@@ -3,9 +3,9 @@ from app.seed_pouch import (
     band_for_review,
     band_for_test,
     focus_gains,
+    gains_for_test,
     review_gains,
     roll,
-    gains_for_test,
 )
 
 
