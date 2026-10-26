@@ -349,20 +349,44 @@
     }
 }
 
+/*
+ * Quizlet-style flip: the card turns on its Y axis inside a perspective
+ * scene. `scale` is animated separately from `transform`, so the depth dip
+ * (shrink toward the 90deg midpoint, grow back) never fights the rotation.
+ * Two identical keyframes let a second flip restart the dip.
+ */
 .study-flip-scene {
-    perspective: 1600px;
-    perspective-origin: 50% 45%;
+    perspective: 1400px;
+    perspective-origin: 50% 50%;
 }
 
 .study-flip-inner {
     display: grid;
     transform-style: preserve-3d;
     transform-origin: center center;
-    transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
 }
 
 .study-flip-inner.is-flipped {
-    transform: rotateX(180deg);
+    transform: rotateY(180deg);
+    animation: study-flip-depth-a 0.35s ease-in-out;
+}
+
+.study-flip-inner.is-unflipped {
+    animation: study-flip-depth-b 0.35s ease-in-out;
+}
+
+@keyframes study-flip-depth-a {
+    50% {
+        scale: 0.93;
+    }
+}
+
+@keyframes study-flip-depth-b {
+    50% {
+        scale: 0.93;
+    }
 }
 
 .study-flip-face {
@@ -375,7 +399,7 @@
 }
 
 .study-flip-back {
-    transform: rotateX(180deg);
+    transform: rotateY(180deg);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -394,6 +418,7 @@
 
     .study-flip-inner {
         transition: none !important;
+        animation: none !important;
     }
 
     .study-matched {

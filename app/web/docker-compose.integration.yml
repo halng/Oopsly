@@ -1,0 +1,22 @@
+# WireMock stands in for the api, auth and game backends during the
+# Playwright integration run:  pnpm test:integration
+services:
+    wiremock:
+        image: wiremock/wiremock:3.9.1
+        command:
+            [
+                '--enable-stub-cors',
+                '--disable-banner',
+                '--local-response-templating',
+            ]
+        ports:
+            - '9099:8080'
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'curl -sf http://localhost:8080/__admin/health || exit 1',
+                ]
+            interval: 2s
+            timeout: 2s
+            retries: 20

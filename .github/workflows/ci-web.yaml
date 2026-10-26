@@ -62,12 +62,14 @@ jobs:
 
       - name: Run Unit Tests with Coverage
         run: pnpm run test:coverage
-      
-      # - name: Install Playwright Browsers
-      #   run: pnpm exec playwright install --with-deps
-    
-      # - name: Run E2E tests (Playwright)
-      #   run: pnpm exec playwright test
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      # Starts WireMock through docker compose (global setup) and stops it after.
+      - name: Run integration tests (Playwright + WireMock)
+        run: pnpm run test:integration
+
       - name: Upload Testing report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
@@ -77,6 +79,7 @@ jobs:
             app/web/test-results/
             app/web/coverage/
             app/web/playwright-report/
+            app/web/playwright-report-integration/
           retention-days: 3
 
       - name: Run SonarCloud Scan

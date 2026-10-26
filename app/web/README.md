@@ -20,6 +20,25 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Integration tests (Playwright + WireMock)
+
+Every screen is driven in a real browser against the real Next.js app, while
+WireMock answers for the api, auth and game services.
+
+```bash
+pnpm exec playwright install chromium   # first time only
+pnpm test:integration                   # starts WireMock via docker compose, runs, stops it
+KEEP_WIREMOCK=1 pnpm test:integration   # leave WireMock up between runs
+```
+
+- Specs: `__tests__/integration/specs/<screen>.spec.ts`, one file per screen.
+- Default happy-path stubs for every endpoint: `__tests__/integration/support/data.ts`.
+- A test overrides one endpoint with `mock.override({...})` and asserts what the
+  UI sent with `mock.requests(method, path)`.
+- A request no stub answers fails the test (`requests without a WireMock stub`).
+- The garden WebSocket is faked in the browser, as WireMock speaks HTTP only.
+- `test.fail()` marks a known app bug; it turns red when the bug is fixed.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

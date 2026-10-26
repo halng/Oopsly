@@ -15,6 +15,8 @@
 
 # next.js
 /.next/
+/.next-integration/
+/playwright-report-integration/
 /out/
 
 # production

@@ -49,6 +49,46 @@ describe('study presentation components', () => {
         ).toHaveClass('is-flipped');
     });
 
+    it('plays the unflip dip only after a flip, and hides the unseen face', () => {
+        const { rerender } = render(
+            <StudyFlashcard
+                front="Q"
+                back="A"
+                flipped={false}
+                onFlip={vi.fn()}
+            />
+        );
+        const inner = () =>
+            screen
+                .getByTestId('flashcard-box')
+                .querySelector('.study-flip-inner');
+        expect(inner()).not.toHaveClass('is-flipped', 'is-unflipped');
+        expect(
+            screen
+                .getByTestId('flashcard-box')
+                .querySelector('.study-flip-back')
+        ).toHaveAttribute('aria-hidden', 'true');
+        rerender(
+            <StudyFlashcard front="Q" back="A" flipped onFlip={vi.fn()} />
+        );
+        expect(inner()).toHaveClass('is-flipped');
+        expect(
+            screen
+                .getByTestId('flashcard-box')
+                .querySelector('.study-flip-front')
+        ).toHaveAttribute('aria-hidden', 'true');
+        rerender(
+            <StudyFlashcard
+                front="Q"
+                back="A"
+                flipped={false}
+                onFlip={vi.fn()}
+            />
+        );
+        expect(inner()).toHaveClass('is-unflipped');
+        expect(inner()).not.toHaveClass('is-flipped');
+    });
+
     it('applies motion classes, shell chrome, header extras, and result stats', () => {
         const onClose = vi.fn();
         render(
