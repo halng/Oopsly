@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
         'out/**',
         'build/**',
         'next-env.d.ts',
+        // Integration run output.
+        '.next-integration/**',
+        'playwright-report-integration/**',
+        'coverage-integration/**',
     ]),
     {
         rules: {

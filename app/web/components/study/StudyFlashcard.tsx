@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import { FlipVertical2 } from 'lucide-react';
 
 interface StudyFlashcardProps {
@@ -21,6 +21,11 @@ export default function StudyFlashcard({
     frontExtra,
     testId = 'flashcard-box',
 }: Readonly<StudyFlashcardProps>) {
+    // The unflip animation must not play on first paint, only after a flip.
+    const [hasFlipped, setHasFlipped] = useState(flipped);
+    if (flipped && !hasFlipped) setHasFlipped(true);
+    const turn = flipped ? 'is-flipped' : hasFlipped ? 'is-unflipped' : '';
+
     return (
         <div className="relative">
             {toolbar && (
@@ -42,9 +47,12 @@ export default function StudyFlashcard({
                 className="study-flip-scene w-full cursor-pointer"
             >
                 <div
-                    className={`study-flip-inner min-h-[280px] sm:min-h-[320px] ${flipped ? 'is-flipped' : ''}`}
+                    className={`study-flip-inner min-h-[280px] sm:min-h-[320px] ${turn}`}
                 >
-                    <div className="study-flip-face study-flip-front rounded-3xl border border-[var(--theme-border)] bg-[var(--theme-subtle)] p-6 sm:p-8 text-center shadow-sm">
+                    <div
+                        aria-hidden={flipped}
+                        className="study-flip-face study-flip-front rounded-3xl border border-[var(--theme-border)] bg-[var(--theme-subtle)] p-6 sm:p-8 text-center shadow-sm"
+                    >
                         <span className="inline-flex items-center rounded-full bg-[var(--theme-card)] px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[var(--theme-text)]/45">
                             Prompt
                         </span>
@@ -60,7 +68,10 @@ export default function StudyFlashcard({
                             Tap or press Space to flip
                         </div>
                     </div>
-                    <div className="study-flip-face study-flip-back rounded-3xl border border-[var(--theme-accent)] bg-[color-mix(in_srgb,var(--theme-accent)_10%,var(--theme-card))] p-6 sm:p-8 text-center shadow-sm">
+                    <div
+                        aria-hidden={!flipped}
+                        className="study-flip-face study-flip-back rounded-3xl border border-[var(--theme-accent)] bg-[color-mix(in_srgb,var(--theme-accent)_10%,var(--theme-card))] p-6 sm:p-8 text-center shadow-sm"
+                    >
                         <span className="inline-flex items-center rounded-full bg-[var(--theme-card)] px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[var(--theme-accent)]">
                             Answer
                         </span>

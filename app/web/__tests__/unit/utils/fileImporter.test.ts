@@ -113,4 +113,68 @@ describe('file importer utilities', () => {
         expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test');
         click.mockRestore();
     });
+
+    it('wraps unreadable Excel files in a friendly error', async () => {
+        const file = new File([new Uint8Array([1, 2, 3])], 'broken.xlsx');
+        await expect(parseFileToTable(file)).rejects.toThrow(
+            /Failed to parse Excel file/
+        );
+    });
+
+    it('downloads the full CSV template with all four columns', async () => {
+        const click = vi
+            .spyOn(HTMLAnchorElement.prototype, 'click')
+            .mockImplementation(() => undefined);
+        downloadCsvTemplate();
+        const blob = (URL.createObjectURL as any).mock.calls[0][0] as Blob;
+        const text = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.readAsText(blob);
+        });
+        expect(text.startsWith('Front,Back,Hint,Tags')).toBe(true);
+        click.mockRestore();
+    });
+
+    it.each([
+        ['minimal', 4, 2],
+        ['full', 5, 4],
+    ] as const)(
+        'writes the %s Excel template to a file',
+        async (type, rowCount, colCount) => {
+            vi.unstubAllGlobals();
+            const toFile = vi.fn().mockResolvedValue(undefined);
+            const writeXlsxFile = vi.fn(() => ({ toFile }));
+            vi.resetModules();
+            vi.doMock('write-excel-file/browser', () => ({
+                default: writeXlsxFile,
+            }));
+            const mod = await import('@/utils/fileImporter');
+            await mod.downloadExcelTemplate(type);
+            const [sheet, options] =
+                (writeXlsxFile.mock.calls[0] as any[]) ?? [];
+            expect(sheet).toHaveLength(rowCount);
+            expect(sheet[0]).toHaveLength(colCount);
+            expect(sheet[0][0]).toMatchObject({ value: 'Front' });
+            expect(options).toEqual({ sheet: 'Flashcards' });
+            expect(toFile).toHaveBeenCalledWith(
+                'oopsly_flashcards_template.xlsx'
+            );
+            vi.doUnmock('write-excel-file/browser');
+        }
+    );
+
+    it('defaults the Excel template to the full layout', async () => {
+        vi.unstubAllGlobals();
+        const toFile = vi.fn().mockResolvedValue(undefined);
+        const writeXlsxFile = vi.fn(() => ({ toFile }));
+        vi.resetModules();
+        vi.doMock('write-excel-file/browser', () => ({
+            default: writeXlsxFile,
+        }));
+        const mod = await import('@/utils/fileImporter');
+        await mod.downloadExcelTemplate();
+        expect((writeXlsxFile.mock.calls[0] as any[])[0][0]).toHaveLength(4);
+        vi.doUnmock('write-excel-file/browser');
+    });
 });
