@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
         // Integration run output.
         '.next-integration/**',
         'playwright-report-integration/**',
+        'coverage-integration/**',
     ]),
     {
         rules: {

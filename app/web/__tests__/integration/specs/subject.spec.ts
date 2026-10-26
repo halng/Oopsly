@@ -165,4 +165,108 @@ test.describe('Subject details screen', () => {
         await page.goto('/home/biology/subjects/nope');
         await expect(page.getByTestId('subject-details-empty')).toBeVisible();
     });
+
+    test('imports cards from a CSV file end to end', async ({ page, mock }) => {
+        await page.goto('/home/biology/subjects/cell-biology');
+        await page.getByTestId('btn-import-cards').click();
+        const modal = page.getByTestId('import-cards-modal');
+        await expect(modal).toBeVisible();
+
+        await modal.locator('input[type="file"]').setInputFiles({
+            name: 'cards.csv',
+            mimeType: 'text/csv',
+            buffer: Buffer.from(
+                'front,back,hint\nMitosis,Cell division,Phases\nMeiosis,Gamete formation,Halving\n'
+            ),
+        });
+        await modal
+            .getByRole('button', { name: /Import 2 Flashcards/ })
+            .click();
+
+        await expect
+            .poll(async () => (await mock.requests('POST', CARDS)).length)
+            .toBe(1);
+        const [imported] = await mock.requests('POST', CARDS);
+        expect((imported.json as { cards: unknown[] }).cards).toMatchObject([
+            { front: 'Mitosis', back: 'Cell division', hint: 'Phases' },
+            { front: 'Meiosis', back: 'Gamete formation', hint: 'Halving' },
+        ]);
+        await expect(page.getByText('Imported 2 cards.')).toBeVisible();
+        await expect(modal).toHaveCount(0);
+    });
+
+    test('shows the server message when the import is rejected', async ({
+        page,
+        mock,
+    }) => {
+        await mock.override({
+            method: 'POST',
+            path: CARDS,
+            status: 400,
+            body: failure('Deck is full'),
+        });
+        await page.goto('/home/biology/subjects/cell-biology');
+        await page.getByTestId('btn-import-cards').click();
+        const modal = page.getByTestId('import-cards-modal');
+        await modal.locator('input[type="file"]').setInputFiles({
+            name: 'cards.csv',
+            mimeType: 'text/csv',
+            buffer: Buffer.from('front,back\nA,B\n'),
+        });
+        await modal.getByRole('button', { name: /Import 1 Flashcard/ }).click();
+        await expect(modal).toContainText('Deck is full');
+    });
+
+    test('saves a study schedule on the subject', async ({ page, mock }) => {
+        await page.goto('/home/biology/subjects/cell-biology');
+        await page.getByTestId('btn-subject-schedule').click();
+        await expect(page.getByTestId('subject-schedule-modal')).toBeVisible();
+        await page.getByTestId('btn-schedule-toggle').click();
+        await page.getByTestId('btn-schedule-day-1').click();
+        await page.getByTestId('input-schedule-time').fill('07:30');
+        await page.getByTestId('btn-schedule-save').click();
+
+        await expect
+            .poll(
+                async () =>
+                    (
+                        await mock.requests(
+                            'PATCH',
+                            `${API}/api/subjects/subject-1`
+                        )
+                    ).length
+            )
+            .toBe(1);
+        const [patch] = await mock.requests(
+            'PATCH',
+            `${API}/api/subjects/subject-1`
+        );
+        expect(patch.json).toMatchObject({ schedule: { time: '07:30' } });
+        await expect(page.getByTestId('subject-schedule-modal')).toHaveCount(0);
+    });
+
+    test('the host button opens the join-game dialog and it can be closed', async ({
+        page,
+    }) => {
+        await page.goto('/home/biology/subjects/cell-biology');
+        await page.getByTestId('btn-subject-host').click();
+        await expect(page.getByTestId('join-game-modal')).toBeVisible();
+        await page.getByTestId('btn-join-game-close').click();
+        await expect(page.getByTestId('join-game-modal')).toHaveCount(0);
+    });
+
+    test('cancelling an edit keeps the card unchanged', async ({
+        page,
+        mock,
+    }) => {
+        await page.goto('/home/biology/subjects/cell-biology');
+        await page.getByTestId('btn-edit-card-card-1').click();
+        const row = page.getByTestId('card-row-card-1');
+        await row.locator('textarea').first().fill('Changed');
+        await row.getByRole('button', { name: /cancel/i }).click();
+        await expect(row).toContainText('Question 1');
+        expect(
+            await mock.requests('PATCH', `${API}/api/cards/card-1`)
+        ).toHaveLength(0);
+    });
 });

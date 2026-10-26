@@ -1,4 +1,5 @@
 import { test as base, expect, type Page } from '@playwright/test';
+import { COVERAGE_ENABLED, coverageReport } from './coverage';
 import { defaultStubs } from './data';
 import { wiremock } from './wiremock';
 
@@ -27,7 +28,9 @@ interface Options {
     signedIn: boolean;
 }
 
-export const test = base.extend<Options & { mock: typeof wiremock }>({
+export const test = base.extend<
+    Options & { mock: typeof wiremock; coverage: void }
+>({
     signedIn: [true, { option: true }],
 
     mock: [
@@ -40,6 +43,18 @@ export const test = base.extend<Options & { mock: typeof wiremock }>({
                 await wiremock.unmatched(),
                 'requests without a WireMock stub'
             ).toEqual([]);
+        },
+        { auto: true },
+    ],
+
+    // Chromium V8 coverage of the app bundles, merged into one report at teardown.
+    coverage: [
+        async ({ page }, run) => {
+            if (!COVERAGE_ENABLED) return run();
+            await page.coverage.startJSCoverage({ resetOnNavigation: false });
+            await run();
+            const entries = await page.coverage.stopJSCoverage();
+            await coverageReport().add(entries);
         },
         { auto: true },
     ],

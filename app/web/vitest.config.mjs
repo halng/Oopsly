@@ -14,13 +14,9 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['html', 'lcov'],
-      threshold: {
-        statements: 90,
-        branches: 90,
-        functions: 90,
-        lines: 90,
-      },
-      include: ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'hooks/**/*.{ts,tsx}', 'utils/**/*.{ts,tsx}', 'store/**/*.{ts,tsx}'],
+      // No threshold here: the 90% gate is on unit + integration combined,
+      // see scripts/check-coverage.mjs (pnpm run coverage:check).
+      include: ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'hooks/**/*.{ts,tsx}', 'utils/**/*.{ts,tsx}', 'store/**/*.{ts,tsx}', 'services/**/*.{ts,tsx}', 'game/**/*.{ts,tsx}'],
       exclude: ['**/__tests__/**', '**/*.test.{ts,tsx}', '**/node_modules/**', '**/dist/**', '**/index.ts', '**/index.tsx', '**/types.ts', '**/types.tsx', '**/constants.ts', '**/constants.tsx'],
     },
     environment: 'jsdom',

@@ -39,6 +39,18 @@ KEEP_WIREMOCK=1 pnpm test:integration   # leave WireMock up between runs
 - The garden WebSocket is faked in the browser, as WireMock speaks HTTP only.
 - `test.fail()` marks a known app bug; it turns red when the bug is fixed.
 
+### Coverage gate (90%)
+
+```bash
+pnpm run test:coverage                 # unit tests  -> coverage/lcov.info
+COVERAGE=1 pnpm run test:integration   # browser run -> coverage-integration/lcov.info
+pnpm run coverage:check                # merge both; fails under 90% combined lines
+```
+
+A line counts as covered when either run hits it. The files measured are set by
+`coverage.include` in `vitest.config.mjs` (app, components, hooks, utils, store,
+services, game). CI runs the same three steps; Sonar reads both lcov files.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

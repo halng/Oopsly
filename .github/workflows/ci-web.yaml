@@ -69,6 +69,12 @@ jobs:
       # Starts WireMock through docker compose (global setup) and stops it after.
       - name: Run integration tests (Playwright + WireMock)
         run: pnpm run test:integration
+        env:
+          COVERAGE: '1' # writes coverage-integration/lcov.info for Sonar
+
+      # Unit + integration lines merged must reach 90% (scripts/check-coverage.mjs).
+      - name: Enforce 90% combined coverage
+        run: pnpm run coverage:check -- --top 10
 
       - name: Upload Testing report
         if: ${{ !cancelled() }}
@@ -78,16 +84,18 @@ jobs:
           path: |
             app/web/test-results/
             app/web/coverage/
+            app/web/coverage-integration/
             app/web/playwright-report/
             app/web/playwright-report-integration/
           retention-days: 3
 
+      # Also runs when a test step failed, so Sonar still gets the coverage files.
       - name: Run SonarCloud Scan
+        if: ${{ !cancelled() }}
         uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Provided automatically by GitHub
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_WEB }}
         with:
+          # Coverage report paths (unit + integration) live in app/web/sonar-project.properties.
           projectBaseDir: app/web
-          args: >
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
