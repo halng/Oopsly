@@ -4,6 +4,7 @@ import jwt
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.auth import verify_access_token
+from app.envelope import event
 from app.logging_config import request_id, request_platform
 from app.play import play_message
 
@@ -29,32 +30,34 @@ async def game_socket(websocket: WebSocket):
         try:
             auth = verify_access_token(token or "")
         except (jwt.PyJWTError, ValueError) as exc:
-            logger.warning(
-                "JWT authentication failed with exception %s and message: %s",
-                type(exc).__name__,
-                exc,
-            )
+            # The message can echo attacker-controlled token content, so log
+            # only the exception type.
+            logger.warning("JWT authentication failed: %s", type(exc).__name__)
             await websocket.send_json(
-                {
-                    "type": "error",
-                    "requestId": None,
-                    "isSuccess": False,
-                    "message": "You must be logged in",
-                    "data": None,
-                }
+                event(
+                    "error",
+                    None,
+                    {
+                        "isSuccess": False,
+                        "message": "You must be logged in",
+                        "data": None,
+                    },
+                )
             )
             await websocket.close(code=4401)
             return
 
-        logger.info("User %s authenticated with role %s", auth.user_id, auth.role)
+        logger.info("Garden socket authenticated")
         await websocket.send_json(
-            {
-                "type": "ready",
-                "requestId": None,
-                "isSuccess": True,
-                "message": "Garden socket open",
-                "data": auth.as_dict(),
-            }
+            event(
+                "ready",
+                None,
+                {
+                    "isSuccess": True,
+                    "message": "Garden socket open",
+                    "data": auth.as_dict(),
+                },
+            )
         )
         while True:
             message = await websocket.receive_json()

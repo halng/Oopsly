@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.envelope import failure, ok
 from app.logging_config import request_id, request_platform, setup_logging
 from app.routes import router
 from app.service import GameError
@@ -39,7 +40,7 @@ async def bind_request_context(request: Request, call_next):
 async def game_error_handler(_: Request, exc: GameError):
     return JSONResponse(
         status_code=400,
-        content={"isSuccess": False, "message": exc.message, "data": None},
+        content=failure(exc.message),
     )
 
 
@@ -48,10 +49,10 @@ async def http_error_handler(_: Request, exc: HTTPException):
     message = exc.detail if isinstance(exc.detail, str) else "Request failed"
     return JSONResponse(
         status_code=exc.status_code,
-        content={"isSuccess": False, "message": message, "data": None},
+        content=failure(message),
     )
 
 
 @app.get("/health")
 def health():
-    return {"isSuccess": True, "message": "ok", "data": None}
+    return ok("ok", None)

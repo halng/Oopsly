@@ -9,6 +9,10 @@ RUN pip install --no-cache-dir .
 COPY alembic ./alembic
 COPY alembic.ini .
 
+RUN useradd --system --no-create-home appuser \
+    && chown -R appuser /app
+USER appuser
+
 ENV PORT=8000
 EXPOSE 8000
 
