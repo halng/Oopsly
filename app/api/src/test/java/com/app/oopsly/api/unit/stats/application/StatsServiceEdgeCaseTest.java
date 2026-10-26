@@ -23,7 +23,12 @@ import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.progress.UserProgress;
+import com.app.oopsly.api.progress.UserProgressService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shared.client.AuthClient;
+import com.app.oopsly.api.shared.client.AuthProfile;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.stats.application.StatsServiceImpl;
 import com.app.oopsly.api.stats.application.vm.StatsRes;
@@ -31,9 +36,6 @@ import com.app.oopsly.api.stats.domain.ReviewLogEntity;
 import com.app.oopsly.api.stats.infrastructure.ReviewLogRepository;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
-import com.app.oopsly.api.user.Setting;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -50,29 +52,31 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class StatsServiceEdgeCaseTest {
 
-    @Mock private UserService userService;
+    @Mock private CurrentUser currentUser;
+    @Mock private UserProgressService userProgressService;
+    @Mock private AuthClient authClient;
     @Mock private SubjectRepository subjectRepository;
     @Mock private CardRepository cardRepository;
     @Mock private ReviewLogRepository reviewLogRepository;
 
     @InjectMocks private StatsServiceImpl statsService;
 
-    private User user;
+    private UUID userId;
+    private UserProgress progress;
     private Shelf shelf;
     private Subject subject;
 
     @BeforeEach
     void setUp() {
-        user = new User();
-        user.setId(UUID.randomUUID());
-        Setting setting = new Setting();
-        setting.setTotalXp(120);
-        setting.setDailyStreak(3);
-        user.setSetting(setting);
+        userId = UUID.randomUUID();
+        userId = UUID.randomUUID();
+        progress = UserProgress.builder().userId(userId).totalXp(120).dailyStreak(3).build();
+        lenient().when(userProgressService.getCurrent()).thenReturn(progress);
+        lenient().when(authClient.lookup(userId)).thenReturn(AuthProfile.unknown(userId));
 
         shelf = new Shelf();
         shelf.setId(UUID.randomUUID());
-        shelf.setUser(user);
+        shelf.setUserId(userId);
 
         subject = new Subject();
         subject.setId(UUID.randomUUID());
@@ -92,15 +96,15 @@ class StatsServiceEdgeCaseTest {
     private ReviewLogEntity reviewLog(Integer grade) {
         ReviewLogEntity log = new ReviewLogEntity();
         log.setId(UUID.randomUUID());
-        log.setUserId(user.getId());
+        log.setUserId(userId);
         log.setGrade(grade);
         log.setReviewedAt(Instant.now());
         return log;
     }
 
     private void libraryOf(List<Card> cards) {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(subjectRepository.findAllByUser(user)).thenReturn(List.of(subject));
+        when(currentUser.id()).thenReturn(userId);
+        when(subjectRepository.findAllByUserId(userId)).thenReturn(List.of(subject));
         when(cardRepository.findAllBySubjectInAndDeletedFalse(List.of(subject))).thenReturn(cards);
     }
 
@@ -110,12 +114,11 @@ class StatsServiceEdgeCaseTest {
 
     @Test
     void getUserStats_withoutAnyShelfSkipsTheCardLookup() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(subjectRepository.findAllByUser(user)).thenReturn(List.of());
-        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(user.getId()), any(), any()))
+        when(currentUser.id()).thenReturn(userId);
+        when(subjectRepository.findAllByUserId(userId)).thenReturn(List.of());
+        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(0L);
-        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(
-                        eq(user.getId()), any(), any()))
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(List.of());
 
         StatsRes stats = statsOf(statsService.getUserStats());
@@ -129,14 +132,13 @@ class StatsServiceEdgeCaseTest {
 
     @Test
     void getUserStats_usesTheConfiguredDailyGoalAndStoredRetention() {
-        Setting setting = new Setting();
-        setting.setDailyGoal(42);
-        user.setSetting(setting);
+        lenient()
+                .when(authClient.lookup(userId))
+                .thenReturn(new AuthProfile(userId, "n", "n", null, 42));
         libraryOf(List.of(card(0, 0.0, Instant.now().minusSeconds(10))));
-        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(user.getId()), any(), any()))
+        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(3L);
-        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(
-                        eq(user.getId()), any(), any()))
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(List.of());
 
         StatsRes stats = statsOf(statsService.getUserStats());
@@ -148,10 +150,9 @@ class StatsServiceEdgeCaseTest {
     @Test
     void getUserStats_ignoresTheStoredRetentionWhenItIsNotPositive() {
         libraryOf(List.of(card(0, 0.0, Instant.now().minusSeconds(10))));
-        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(user.getId()), any(), any()))
+        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(0L);
-        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(
-                        eq(user.getId()), any(), any()))
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(List.of());
 
         // one card, all due -> computed retention drops to zero
@@ -168,10 +169,9 @@ class StatsServiceEdgeCaseTest {
                         card(6, 9.0, Instant.now().plusSeconds(3600)), // relearning
                         card(9, 2.0, Instant.now().plusSeconds(3600))); // mastered
         libraryOf(cards);
-        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(user.getId()), any(), any()))
+        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(0L);
-        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(
-                        eq(user.getId()), any(), any()))
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(List.of());
 
         StatsRes stats = statsOf(statsService.getUserStats());
@@ -188,10 +188,9 @@ class StatsServiceEdgeCaseTest {
     @Test
     void getUserStats_forecastsCardsDueToday() {
         libraryOf(List.of(card(1, 1.0, Instant.now()), card(1, 1.0, null)));
-        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(user.getId()), any(), any()))
+        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(0L);
-        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(
-                        eq(user.getId()), any(), any()))
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(List.of());
 
         StatsRes stats = statsOf(statsService.getUserStats());
@@ -203,10 +202,9 @@ class StatsServiceEdgeCaseTest {
     @Test
     void getUserStats_computesWeeklyRetentionFromReviewGrades() {
         libraryOf(List.of());
-        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(user.getId()), any(), any()))
+        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(4L);
-        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(
-                        eq(user.getId()), any(), any()))
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(
                         List.of(
                                 reviewLog(4), // successful

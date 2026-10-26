@@ -24,14 +24,13 @@ import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shelf.vm.ShelfReq;
 import com.app.oopsly.api.shelf.vm.ShelfRes;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
 import java.util.HashMap;
@@ -55,7 +54,7 @@ public class ShelfServiceImpl implements ShelfService {
     private final SubjectRepository subjectRepository;
     private final CardRepository cardRepository;
     private final TestSuiteRepository testSuiteRepository;
-    private final UserService userService;
+    private final CurrentUser currentUser;
 
     private static final String TOTAL_CARDS_COUNT = "totalCards";
     private static final String TOTAL_SUBJECTS_COUNT = "totalSubjects";
@@ -64,7 +63,7 @@ public class ShelfServiceImpl implements ShelfService {
     @Override
     //    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(ShelfReq request) {
-        log.info("Creating shelve for user {}", this.currentUser().getId());
+        log.info("Creating shelve for user {}", currentUser.id());
         Shelf savedEntity = shelfRepository.save(this.toEntity(request, null));
         return ApiRes.created("Created successfully", this.toViewModel(savedEntity, zeroStats()));
     }
@@ -72,10 +71,10 @@ public class ShelfServiceImpl implements ShelfService {
     @Override
     //    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(ShelfReq request, UUID id) {
-        log.info("Updating shelve {} for user {}", id, this.currentUser().getId());
+        log.info("Updating shelve {} for user {}", id, currentUser.id());
         Shelf existingEntity =
                 shelfRepository
-                        .findByIdAndUser(id, this.currentUser())
+                        .findByIdAndUserId(id, currentUser.id())
                         .orElseThrow(
                                 () -> new NotFoundException("Entity not found with id: " + id));
 
@@ -88,10 +87,10 @@ public class ShelfServiceImpl implements ShelfService {
     @Transactional
     //    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID id) {
-        log.info("Deleting shelve {} for user {}", id, this.currentUser().getId());
+        log.info("Deleting shelve {} for user {}", id, currentUser.id());
         Shelf existingEntity =
                 shelfRepository
-                        .findByIdAndUser(id, this.currentUser())
+                        .findByIdAndUserId(id, currentUser.id())
                         .orElseThrow(
                                 () -> new NotFoundException("Entity not found with id: " + id));
 
@@ -131,10 +130,10 @@ public class ShelfServiceImpl implements ShelfService {
     @Override
     @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID id) {
-        log.info("Fetching shelve {} for user {}", id, this.currentUser().getId());
+        log.info("Fetching shelve {} for user {}", id, currentUser.id());
         Shelf entity =
                 shelfRepository
-                        .findByIdAndUser(id, this.currentUser())
+                        .findByIdAndUserId(id, currentUser.id())
                         .orElseThrow(
                                 () -> new NotFoundException("Entity not found with id: " + id));
         return ApiRes.success(
@@ -146,17 +145,13 @@ public class ShelfServiceImpl implements ShelfService {
     @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "getAllFallback")
     public ApiRes getAll(int page, int size) {
 
-        log.info(
-                "Fetching shelves page {} size {} for user {}",
-                page,
-                size,
-                this.currentUser().getId());
+        log.info("Fetching shelves page {} size {} for user {}", page, size, currentUser.id());
         int querryPage = page - 1;
         if (querryPage < 0) {
             log.error("Invalid page number");
         }
         Pageable pageable = PageRequest.of(querryPage, size);
-        Page<Shelf> pageData = shelfRepository.findAllByUser(this.currentUser(), pageable);
+        Page<Shelf> pageData = shelfRepository.findAllByUserId(currentUser.id(), pageable);
         List<Shelf> shelves = pageData.getContent();
         Map<UUID, Map<String, Integer>> statsByShelf = shelfStats(shelves);
         List<ShelfRes> entities =
@@ -176,14 +171,13 @@ public class ShelfServiceImpl implements ShelfService {
 
     Shelf toEntity(@NonNull ShelfReq from, Shelf to) {
         if (to == null) {
-            User currentUser = this.currentUser();
             return Shelf.builder()
                     .icon(from.icon())
                     .name(from.name())
                     .color(from.color())
                     .slug(from.slug())
                     .description(from.description())
-                    .user(currentUser)
+                    .userId(currentUser.id())
                     .build();
         }
 
@@ -243,11 +237,6 @@ public class ShelfServiceImpl implements ShelfService {
         stats.put(TOTAL_DUE_CARDS_COUNT, 0);
         stats.put(TOTAL_CARDS_COUNT, 0);
         return stats;
-    }
-
-    User currentUser() {
-        log.info("Retrieving current user info from UserService");
-        return userService.getCurrentUser();
     }
 
     /** FALLBACK METHODS */

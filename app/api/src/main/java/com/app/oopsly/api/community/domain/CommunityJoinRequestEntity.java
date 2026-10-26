@@ -17,9 +17,9 @@
 package com.app.oopsly.api.community.domain;
 
 import com.app.oopsly.api.shared.domain.Audit;
-import com.app.oopsly.api.user.User;
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.UUID;
 import lombok.*;
 
 /** Request to join a private community. */
@@ -36,9 +36,8 @@ public class CommunityJoinRequestEntity extends Audit {
     @JoinColumn(name = "community_id", nullable = false)
     private CommunityEntity community;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     @Column(length = 500)
     private String message;

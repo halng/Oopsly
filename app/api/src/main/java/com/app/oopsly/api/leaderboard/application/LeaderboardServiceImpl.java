@@ -18,17 +18,21 @@ package com.app.oopsly.api.leaderboard.application;
 
 import com.app.oopsly.api.leaderboard.application.vm.LeaderboardUserRes;
 import com.app.oopsly.api.leaderboard.domain.League;
+import com.app.oopsly.api.progress.UserProgress;
+import com.app.oopsly.api.progress.UserProgressRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shared.client.AuthClient;
+import com.app.oopsly.api.shared.client.AuthProfile;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shared.util.ApiMessages;
 import com.app.oopsly.api.shared.util.CircuitBreakerNames;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserRepository;
-import com.app.oopsly.api.user.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -39,31 +43,33 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class LeaderboardServiceImpl implements LeaderboardService {
 
-    private final UserRepository userRepository;
-    private final UserService userService;
+    private final UserProgressRepository progressRepository;
+    private final AuthClient authClient;
+    private final CurrentUser currentUser;
 
     @Override
     @CircuitBreaker(name = CircuitBreakerNames.LEADERBOARD, fallbackMethod = "leaderboardFallback")
     public ApiRes getGlobalLeaderboard(int limit) {
-        User currentUser = userService.getCurrentUser();
-        List<User> topUsers = userRepository.findTopByXp(PageRequest.of(0, limit));
+        UUID currentUserId = currentUser.id();
+        List<UserProgress> top = progressRepository.findTopByXp(PageRequest.of(0, limit));
+        Map<UUID, AuthProfile> profiles =
+                authClient.lookup(top.stream().map(UserProgress::getUserId).toList());
 
         List<LeaderboardUserRes> rows = new ArrayList<>();
-        for (int i = 0; i < topUsers.size(); i++) {
-            User user = topUsers.get(i);
-            int xp = user.getSetting().getTotalXp() == null ? 0 : user.getSetting().getTotalXp();
+        for (int i = 0; i < top.size(); i++) {
+            UserProgress progress = top.get(i);
+            AuthProfile profile = profiles.get(progress.getUserId());
+            int xp = progress.getTotalXp() == null ? 0 : progress.getTotalXp();
             rows.add(
                     new LeaderboardUserRes(
-                            user.getId(),
-                            user.getDisplayName() != null ? user.getDisplayName() : user.getName(),
-                            user.getPictureUrl(),
+                            progress.getUserId(),
+                            profile.label(),
+                            profile.pictureUrl(),
                             xp,
-                            user.getSetting().getDailyStreak() == null
-                                    ? 0
-                                    : user.getSetting().getDailyStreak(),
+                            progress.getDailyStreak() == null ? 0 : progress.getDailyStreak(),
                             i + 1,
                             League.of(xp).name(),
-                            user.getId().equals(currentUser.getId())));
+                            progress.getUserId().equals(currentUserId)));
         }
 
         return ApiRes.success(ApiMessages.LEADERBOARD_FETCHED, rows);

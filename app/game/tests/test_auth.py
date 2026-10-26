@@ -123,16 +123,20 @@ def test_public_key_verifies_rs256_and_rejects_the_shared_secret(monkeypatch):
 
 
 def test_socket_rejects_a_missing_token(session_factory):
-    with TestClient(app) as client:
-        with client.websocket_connect("/v1/game/ws") as socket:
-            denied = socket.receive_json()
-            assert denied["type"] == "error"
-            assert denied["isSuccess"] is False
+    with (
+        TestClient(app) as client,
+        client.websocket_connect("/v1/game/ws") as socket,
+    ):
+        denied = socket.receive_json()
+        assert denied["type"] == "error"
+        assert denied["isSuccess"] is False
 
 
 def test_socket_rejects_a_bad_token(session_factory):
-    with TestClient(app) as client:
-        with client.websocket_connect("/v1/game/ws?token=not-a-token") as socket:
-            denied = socket.receive_json()
-            assert denied["type"] == "error"
-            assert denied["message"] == "You must be logged in"
+    with (
+        TestClient(app) as client,
+        client.websocket_connect("/v1/game/ws?token=not-a-token") as socket,
+    ):
+        denied = socket.receive_json()
+        assert denied["type"] == "error"
+        assert denied["message"] == "You must be logged in"

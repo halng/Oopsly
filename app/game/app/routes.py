@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import AuthResult, current_auth, current_user_id
 from app.db import get_db
+from app.envelope import ok
 from app.schemas import FocusReq, PlantReq, ReviewReq, TestReq, TreeReq, UnlockReq
 from app.service import (
     get_or_create_garden,
@@ -17,10 +18,6 @@ from app.service import (
 )
 
 router = APIRouter(prefix="/v1/game", tags=["game"])
-
-
-def ok(message: str, data):
-    return {"isSuccess": True, "message": message, "data": data}
 
 
 @router.get("/session")

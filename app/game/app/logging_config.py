@@ -24,10 +24,16 @@ _LEVEL_COLOR = {
 
 
 class OopslyFormatter(logging.Formatter):
-    """%d{ISO8601} %highlight(%-5level) [%blue(%t)] %yellow([%X{XP}:%X{XID}]) %green(%logger{36}) - %msg"""
+    """Mirror the Java logback pattern.
+
+    %d{ISO8601} %highlight(%-5level) [%blue(%t)] %yellow([%X{XP}:%X{XID}])
+    %green(%logger{36}) - %msg
+    """
 
     def format(self, record: logging.LogRecord) -> str:
-        stamp = datetime.fromtimestamp(record.created).strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
+        stamp = datetime.fromtimestamp(record.created).strftime("%Y-%m-%d %H:%M:%S,%f")[
+            :-3
+        ]
         level = f"{record.levelname:<5}"
         level_color = _LEVEL_COLOR.get(record.levelno, _RESET)
         thread = record.threadName

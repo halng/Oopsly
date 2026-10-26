@@ -17,9 +17,11 @@
 package com.app.oopsly.api.study.application;
 
 import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.progress.UserProgressService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shared.util.GamificationRules;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
@@ -29,8 +31,6 @@ import com.app.oopsly.api.study.domain.StudySessionEntity;
 import com.app.oopsly.api.study.infrastructure.StudySessionRepository;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.UUID;
@@ -47,7 +47,8 @@ public class StudySessionServiceImpl implements StudySessionService {
     private final ShelfRepository shelfRepository;
     private final SubjectRepository subjectRepository;
     private final CardRepository cardRepository;
-    private final UserService userService;
+    private final CurrentUser currentUser;
+    private final UserProgressService userProgressService;
 
     @Override
     @Transactional
@@ -55,10 +56,9 @@ public class StudySessionServiceImpl implements StudySessionService {
         if (request.mode() == null) {
             throw new ValidationException("Study mode is required");
         }
-        User currentUser = userService.getCurrentUser();
         Shelf shelf =
                 shelfRepository
-                        .findByIdAndUser(shelfId, currentUser)
+                        .findByIdAndUserId(shelfId, currentUser.id())
                         .orElseThrow(
                                 () ->
                                         new NotFoundException(
@@ -86,7 +86,7 @@ public class StudySessionServiceImpl implements StudySessionService {
         StudySessionEntity saved =
                 studySessionRepository.save(
                         StudySessionEntity.builder()
-                                .userId(currentUser.getId())
+                                .userId(currentUser.id())
                                 .subjectId(subject.getId())
                                 .mode(request.mode())
                                 .totalItems(totalItems)
@@ -97,13 +97,11 @@ public class StudySessionServiceImpl implements StudySessionService {
                                 .completedAt(Instant.now())
                                 .build());
 
-        if (xpGained > 0) {
-            userService.updateUserProgress(xpGained);
-        }
         Integer storedXp =
-                userService.getCurrentUser().getSetting() == null
-                        ? null
-                        : userService.getCurrentUser().getSetting().getTotalXp();
+                (xpGained > 0
+                                ? userProgressService.updateUserProgress(xpGained)
+                                : userProgressService.getCurrent())
+                        .getTotalXp();
         int totalXp = storedXp == null ? xpGained : storedXp;
 
         log.info(

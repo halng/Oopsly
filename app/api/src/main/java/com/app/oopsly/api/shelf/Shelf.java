@@ -19,10 +19,10 @@ package com.app.oopsly.api.shelf;
 import com.app.oopsly.api.shared.domain.Audit;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
-import com.app.oopsly.api.user.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
+import java.util.UUID;
 import lombok.*;
 
 @Getter
@@ -52,9 +52,8 @@ public class Shelf extends Audit {
     private String color = "#FFFFFF";
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     @JsonIgnore
     @OneToMany(mappedBy = "shelf", cascade = CascadeType.ALL, orphanRemoval = true)

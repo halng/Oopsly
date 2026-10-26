@@ -19,9 +19,8 @@ package com.app.oopsly.api.tag;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.tag.vm.TagRes;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -35,26 +34,25 @@ import org.springframework.stereotype.Service;
 public class TagServiceImpl implements TagService {
 
     private final TagRepository tagRepository;
-    private final UserService userService;
+    private final CurrentUser currentUser;
 
     @Override
     public ApiRes createTag(String name) {
-        User currentUser = userService.getCurrentUser();
-        if (tagRepository.existsByNameAndUser(name, currentUser)) {
+        UUID userId = currentUser.id();
+        if (tagRepository.existsByNameAndUserId(name, userId)) {
             throw new ValidationException("Tag with name '" + name + "' already exists");
         }
-        Tag tag = Tag.builder().name(name).user(currentUser).build();
+        Tag tag = Tag.builder().name(name).userId(userId).build();
         Tag saved = tagRepository.save(tag);
-        log.info("Created tag: {} for user: {}", saved.getId(), currentUser.getId());
+        log.info("Created tag: {} for user: {}", saved.getId(), userId);
         return ApiRes.created(
                 "Tag created successfully", new TagRes(saved.getId(), saved.getName()));
     }
 
     @Override
     public ApiRes getAllTags() {
-        User currentUser = userService.getCurrentUser();
         List<TagRes> tags =
-                tagRepository.findAllByUser(currentUser).stream()
+                tagRepository.findAllByUserId(currentUser.id()).stream()
                         .filter(t -> !Boolean.TRUE.equals(t.getDeleted()))
                         .map(t -> new TagRes(t.getId(), t.getName()))
                         .collect(Collectors.toList());
@@ -63,10 +61,9 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public ApiRes deleteTag(UUID tagId) {
-        User currentUser = userService.getCurrentUser();
         Tag tag =
                 tagRepository
-                        .findByIdAndUser(tagId, currentUser)
+                        .findByIdAndUserId(tagId, currentUser.id())
                         .orElseThrow(
                                 () -> new NotFoundException("Tag not found with id: " + tagId));
         tag.setDeleted(true);

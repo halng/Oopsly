@@ -32,8 +32,18 @@ export default function DiscoverPage() {
         });
     }, []);
 
+    // Subject.tags is a comma-separated string; tolerate arrays and missing values.
+    const tagsOf = (tags: unknown): string[] => {
+        const list = Array.isArray(tags)
+            ? tags
+            : typeof tags === 'string'
+              ? tags.split(',')
+              : [];
+        return list.map((t) => String(t).trim()).filter(Boolean);
+    };
+
     const allTags = Array.from(
-        new Set(catalog.flatMap((item) => item.tags || []))
+        new Set(catalog.flatMap((item) => tagsOf(item.tags)))
     );
     const filteredCatalog = catalog.filter((item) => {
         const q = searchQuery.toLowerCase();
@@ -45,8 +55,10 @@ export default function DiscoverPage() {
         const matchesSearch =
             title.includes(q) ||
             (item.description || '').toLowerCase().includes(q) ||
-            item.tags.toLowerCase().includes(q);
-        const matchesTag = selectedTag ? item.tags.includes(selectedTag) : true;
+            tagsOf(item.tags).some((t) => t.toLowerCase().includes(q));
+        const matchesTag = selectedTag
+            ? tagsOf(item.tags).includes(selectedTag)
+            : true;
         return matchesSearch && matchesTag;
     });
 

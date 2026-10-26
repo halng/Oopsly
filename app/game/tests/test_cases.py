@@ -28,29 +28,42 @@ def test_repeat_fetch_returns_the_same_garden(client):
     first = client.get("/v1/game/garden").json()["data"]
     second = client.get("/v1/game/garden").json()["data"]
     assert [plot["index"] for plot in second["plots"]] == list(range(9))
-    assert second["seedInventory"]["camphor_tree"] == first["seedInventory"]["camphor_tree"]
+    assert (
+        second["seedInventory"]["camphor_tree"]
+        == first["seedInventory"]["camphor_tree"]
+    )
     assert second["forestLevel"] == 1
 
 
 def test_plant_rejects_locked_occupied_missing_and_unknown_seeds(client):
-    locked = client.post("/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 8})
+    locked = client.post(
+        "/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 8}
+    )
     assert locked.status_code == 400
     assert locked.json()["message"] == "This land plot is still locked"
 
     client.post("/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 0})
-    occupied = client.post("/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 0})
+    occupied = client.post(
+        "/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 0}
+    )
     assert occupied.status_code == 400
     assert occupied.json()["message"] == "This land plot already has a plant"
 
-    missing = client.post("/v1/game/plants", json={"species": "citrus_grove", "plotIndex": 1})
+    missing = client.post(
+        "/v1/game/plants", json={"species": "citrus_grove", "plotIndex": 1}
+    )
     assert missing.status_code == 400
     assert missing.json()["message"] == "You do not have this seed in your inventory"
 
-    unknown = client.post("/v1/game/plants", json={"species": "moon_tree", "plotIndex": 1})
+    unknown = client.post(
+        "/v1/game/plants", json={"species": "moon_tree", "plotIndex": 1}
+    )
     assert unknown.status_code == 400
     assert unknown.json()["message"] == "Unknown seed"
 
-    absent = client.post("/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 20})
+    absent = client.post(
+        "/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 20}
+    )
     assert absent.status_code == 400
     assert absent.json()["message"] == "Land plot not found"
 
@@ -65,7 +78,9 @@ def test_water_and_harvest_reject_unknown_trees(client):
 
 
 def test_watering_advances_a_full_stage(client, session_factory):
-    planted = client.post("/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 0})
+    planted = client.post(
+        "/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 0}
+    )
     tree_id = planted.json()["data"]["plantedTrees"][0]["id"]
     db = session_factory()
     stored = db.scalar(select(Tree).where(Tree.id == tree_id))
@@ -155,7 +170,10 @@ def test_review_and_test_rewards_follow_their_bands(client, monkeypatch):
 
 
 def test_reward_payloads_are_validated(client):
-    assert client.post("/v1/game/rewards/focus", json={"focusMinutes": 0}).status_code == 422
+    assert (
+        client.post("/v1/game/rewards/focus", json={"focusMinutes": 0}).status_code
+        == 422
+    )
     assert (
         client.post(
             "/v1/game/rewards/review",
@@ -163,8 +181,13 @@ def test_reward_payloads_are_validated(client):
         ).status_code
         == 422
     )
-    assert client.post("/v1/game/rewards/test", json={"percentage": 101}).status_code == 422
-    assert client.post("/v1/game/rewards/test", json={"percentage": -1}).status_code == 422
+    assert (
+        client.post("/v1/game/rewards/test", json={"percentage": 101}).status_code
+        == 422
+    )
+    assert (
+        client.post("/v1/game/rewards/test", json={"percentage": -1}).status_code == 422
+    )
 
 
 def test_socket_plants_unlocks_and_harvests(client, session_factory):

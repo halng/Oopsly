@@ -23,15 +23,17 @@ import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
+import com.app.oopsly.api.progress.UserProgress;
+import com.app.oopsly.api.progress.UserProgressService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shared.client.AuthClient;
+import com.app.oopsly.api.shared.client.AuthProfile;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.stats.application.StatsServiceImpl;
 import com.app.oopsly.api.stats.application.vm.StatsRes;
 import com.app.oopsly.api.subject.Subject;
 import com.app.oopsly.api.subject.SubjectRepository;
-import com.app.oopsly.api.user.Setting;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +46,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class StatsServiceImplTest {
 
-    @Mock private UserService userService;
+    @Mock private CurrentUser currentUser;
+    @Mock private UserProgressService userProgressService;
+    @Mock private AuthClient authClient;
     @Mock private SubjectRepository subjectRepository;
     @Mock private CardRepository cardRepository;
 
@@ -52,21 +56,20 @@ class StatsServiceImplTest {
 
     @InjectMocks private StatsServiceImpl statsService;
 
-    private User user;
+    private UUID userId;
+    private UserProgress progress;
     private Shelf shelf;
     private Subject subject;
 
     @BeforeEach
     void setUp() {
-        Setting setting = new Setting();
-        setting.setTotalXp(120);
-        setting.setDailyStreak(3);
-        user = new User();
-        user.setSetting(setting);
-        user.setId(UUID.randomUUID());
+        userId = UUID.randomUUID();
+        progress = UserProgress.builder().userId(userId).totalXp(120).dailyStreak(3).build();
+        lenient().when(userProgressService.getCurrent()).thenReturn(progress);
+        lenient().when(authClient.lookup(userId)).thenReturn(AuthProfile.unknown(userId));
         shelf = new Shelf();
         shelf.setId(UUID.randomUUID());
-        shelf.setUser(user);
+        shelf.setUserId(userId);
 
         subject = new Subject();
         subject.setId(UUID.randomUUID());
@@ -89,14 +92,13 @@ class StatsServiceImplTest {
         futureCard.setFsrsRepetitions(5);
         futureCard.setFsrsDifficulty(2.0);
 
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(subjectRepository.findAllByUser(user)).thenReturn(List.of(subject));
+        when(currentUser.id()).thenReturn(userId);
+        when(subjectRepository.findAllByUserId(userId)).thenReturn(List.of(subject));
         when(cardRepository.findAllBySubjectInAndDeletedFalse(List.of(subject)))
                 .thenReturn(List.of(dueCard, futureCard));
-        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(user.getId()), any(), any()))
+        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(4L);
-        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(
-                        eq(user.getId()), any(), any()))
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(List.of());
 
         ApiRes result = statsService.getUserStats();
@@ -116,10 +118,9 @@ class StatsServiceImplTest {
 
     @Test
     void getUserStats_withNoCards_returnsZeroRetentionAndNullSafeXp() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(subjectRepository.findAllByUser(user)).thenReturn(List.of());
-        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(
-                        eq(user.getId()), any(), any()))
+        when(currentUser.id()).thenReturn(userId);
+        when(subjectRepository.findAllByUserId(userId)).thenReturn(List.of());
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(List.of());
 
         ApiRes result = statsService.getUserStats();
@@ -133,11 +134,11 @@ class StatsServiceImplTest {
 
     @Test
     void getUserStats_withNullSetting_returnsZeroXpAndStreak() {
-        user.setSetting(null);
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(subjectRepository.findAllByUser(user)).thenReturn(List.of());
-        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(
-                        eq(user.getId()), any(), any()))
+        progress.setTotalXp(0);
+        progress.setDailyStreak(0);
+        when(currentUser.id()).thenReturn(userId);
+        when(subjectRepository.findAllByUserId(userId)).thenReturn(List.of());
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
                 .thenReturn(List.of());
 
         StatsRes stats = (StatsRes) statsService.getUserStats().getBody().data();

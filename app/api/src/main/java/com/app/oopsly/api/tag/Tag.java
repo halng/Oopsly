@@ -18,10 +18,10 @@ package com.app.oopsly.api.tag;
 
 import com.app.oopsly.api.shared.domain.Audit;
 import com.app.oopsly.api.subject.Subject;
-import com.app.oopsly.api.user.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
+import java.util.UUID;
 import lombok.*;
 
 @Getter
@@ -37,9 +37,8 @@ public class Tag extends Audit {
     private String name;
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     @JsonIgnore
     @ManyToMany(mappedBy = "tags")

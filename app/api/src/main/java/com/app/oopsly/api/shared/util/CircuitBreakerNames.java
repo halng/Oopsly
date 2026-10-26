@@ -21,13 +21,12 @@ public final class CircuitBreakerNames {
 
     private CircuitBreakerNames() {}
 
-    public static final String USER = "userServiceCircuitBreaker";
     public static final String CARD = "cardServiceCircuitBreaker";
     public static final String SUBJECT = "subjectServiceCircuitBreaker";
     public static final String SHELF = "shelveServiceCircuitBreaker";
     public static final String TEST_SUITE = "testSuiteServiceCircuitBreaker";
     public static final String QUESTION = "questionServiceCircuitBreaker";
-    public static final String OTP = "otpServiceCircuitBreaker";
+    public static final String AUTH_CLIENT = "authClientCircuitBreaker";
     public static final String COMMUNITY = "communityServiceCircuitBreaker";
     public static final String LEADERBOARD = "leaderboardServiceCircuitBreaker";
     public static final String GARDEN = "gardenServiceCircuitBreaker";

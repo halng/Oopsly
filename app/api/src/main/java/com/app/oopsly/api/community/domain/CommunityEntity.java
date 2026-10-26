@@ -17,10 +17,10 @@
 package com.app.oopsly.api.community.domain;
 
 import com.app.oopsly.api.shared.domain.Audit;
-import com.app.oopsly.api.user.User;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -54,9 +54,8 @@ public class CommunityEntity extends Audit {
     @Builder.Default
     private List<String> tags = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
-    private User owner;
+    @Column(name = "owner_id", nullable = false)
+    private UUID ownerId;
 
     @Builder.Default
     @OneToMany(mappedBy = "community", cascade = CascadeType.ALL, orphanRemoval = true)

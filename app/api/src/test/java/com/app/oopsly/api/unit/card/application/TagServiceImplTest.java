@@ -25,6 +25,7 @@ import com.app.oopsly.api.card.CardRepository;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
+import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.subject.Subject;
@@ -33,8 +34,6 @@ import com.app.oopsly.api.tag.Tag;
 import com.app.oopsly.api.tag.TagRepository;
 import com.app.oopsly.api.tag.TagServiceImpl;
 import com.app.oopsly.api.tag.vm.TagRes;
-import com.app.oopsly.api.user.User;
-import com.app.oopsly.api.user.UserService;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -52,11 +51,11 @@ class TagServiceImplTest {
     @Mock private CardRepository cardRepository;
     @Mock private ShelfRepository shelfRepository;
     @Mock private SubjectRepository subjectRepository;
-    @Mock private UserService userService;
+    @Mock private CurrentUser currentUser;
 
     @InjectMocks private TagServiceImpl tagService;
 
-    private User user;
+    private UUID userId;
     private UUID shelfId;
     private UUID subjectId;
     private UUID cardId;
@@ -68,8 +67,7 @@ class TagServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        user = new User();
-        user.setId(UUID.randomUUID());
+        userId = UUID.randomUUID();
         shelfId = UUID.randomUUID();
         subjectId = UUID.randomUUID();
         cardId = UUID.randomUUID();
@@ -77,7 +75,7 @@ class TagServiceImplTest {
 
         shelf = new Shelf();
         shelf.setId(shelfId);
-        shelf.setUser(user);
+        shelf.setUserId(userId);
 
         subject = new Subject();
         subject.setId(subjectId);
@@ -89,15 +87,15 @@ class TagServiceImplTest {
         card.setBack("A");
         card.setSubject(subject);
 
-        tag = Tag.builder().name("vocab").user(user).build();
+        tag = Tag.builder().name("vocab").userId(userId).build();
         tag.setId(tagId);
         tag.setDeleted(false);
     }
 
     @Test
     void createTag_success() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(tagRepository.existsByNameAndUser("vocab", user)).thenReturn(false);
+        when(currentUser.id()).thenReturn(userId);
+        when(tagRepository.existsByNameAndUserId("vocab", userId)).thenReturn(false);
         when(tagRepository.save(any(Tag.class)))
                 .thenAnswer(
                         inv -> {
@@ -114,18 +112,18 @@ class TagServiceImplTest {
 
     @Test
     void createTag_duplicate_throws() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(tagRepository.existsByNameAndUser("vocab", user)).thenReturn(true);
+        when(currentUser.id()).thenReturn(userId);
+        when(tagRepository.existsByNameAndUserId("vocab", userId)).thenReturn(true);
         assertThrows(ValidationException.class, () -> tagService.createTag("vocab"));
     }
 
     @Test
     void getAllTags_filtersDeleted() {
-        Tag deleted = Tag.builder().name("old").user(user).build();
+        Tag deleted = Tag.builder().name("old").userId(userId).build();
         deleted.setId(UUID.randomUUID());
         deleted.setDeleted(true);
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(tagRepository.findAllByUser(user)).thenReturn(List.of(tag, deleted));
+        when(currentUser.id()).thenReturn(userId);
+        when(tagRepository.findAllByUserId(userId)).thenReturn(List.of(tag, deleted));
 
         ApiRes result = tagService.getAllTags();
         @SuppressWarnings("unchecked")
@@ -136,8 +134,8 @@ class TagServiceImplTest {
 
     @Test
     void deleteTag_softDeletes() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(tagRepository.findByIdAndUser(tagId, user)).thenReturn(Optional.of(tag));
+        when(currentUser.id()).thenReturn(userId);
+        when(tagRepository.findByIdAndUserId(tagId, userId)).thenReturn(Optional.of(tag));
         when(tagRepository.save(tag)).thenReturn(tag);
 
         ApiRes result = tagService.deleteTag(tagId);
@@ -147,8 +145,8 @@ class TagServiceImplTest {
 
     @Test
     void deleteTag_notFound() {
-        when(userService.getCurrentUser()).thenReturn(user);
-        when(tagRepository.findByIdAndUser(tagId, user)).thenReturn(Optional.empty());
+        when(currentUser.id()).thenReturn(userId);
+        when(tagRepository.findByIdAndUserId(tagId, userId)).thenReturn(Optional.empty());
         assertThrows(NotFoundException.class, () -> tagService.deleteTag(tagId));
     }
 }

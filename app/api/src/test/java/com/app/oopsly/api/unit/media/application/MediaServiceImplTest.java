@@ -23,7 +23,6 @@ import com.app.oopsly.api.media.application.MediaServiceImpl;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.subject.SubjectRepository;
-import com.app.oopsly.api.user.UserService;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +36,6 @@ class MediaServiceImplTest {
     @Mock private CardRepository cardRepository;
     @Mock private ShelfRepository shelfRepository;
     @Mock private SubjectRepository subjectRepository;
-    @Mock private UserService userService;
 
     @InjectMocks private MediaServiceImpl mediaService;
 
