@@ -295,6 +295,9 @@ app
 │   ├── cmd/auth/ (Go entrypoint)
 │   ├── internal/ (config, jwt, otp, store, handlers, middleware)
 │   └── go.mod
+├── perf
+│   ├── locustfile.py + oopsly_perf/ (Locust performance tests, smoke + regression)
+│   └── thresholds.json (per-endpoint limits)
 ├── web
 │   ├── app/ (Next.js frontend)   
 │   ├── component/ (React components)
@@ -350,6 +353,10 @@ cd app/auth && go vet ./... && go test -race ./...
 
 # Game
 cd app/game && ruff check . && ruff format --check . && python -m pytest -q
+
+# Performance (smoke needs a running API; see app/perf/README.md)
+cd app/perf && python -m pytest -q tests
+cd app/api && ./gradlew perfRegressionTest   # Testcontainers + Locust
 
 # UI
 cd app/web && pnpm lint && pnpm format

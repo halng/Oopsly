@@ -41,6 +41,8 @@ repositories {
 }
 
 ext {
+	// Docker Engine 29+ rejects the API version older Testcontainers releases speak.
+	set('testcontainers.version', '1.21.4')
 	set('springAiVersion', "1.1.0")
 	set('springCloudVersion', "2025.0.0")
 }
@@ -85,6 +87,8 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'com.github.fppt:jedis-mock:1.1.8'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testRuntimeOnly 'com.h2database:h2'
 }
@@ -133,6 +137,35 @@ tasks.register('integrationTest', Test) {
 	testLogging {
 		events 'passed', 'skipped', 'failed'
 		exceptionFormat 'full'
+	}
+}
+
+tasks.register('perfRegressionTest', Test) {
+	description = 'Runs the Locust regression profile (app/perf) against the real app with Postgres and Redis in Testcontainers'
+	group = 'verification'
+	useJUnitPlatform()
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	binaryResultsDirectory = layout.buildDirectory.dir('test-results/perfRegressionTest/binary')
+	reports {
+		junitXml.outputLocation = layout.buildDirectory.dir('test-results/perfRegressionTest')
+		html.outputLocation = layout.buildDirectory.dir('reports/tests/perfRegressionTest')
+	}
+	filter {
+		includeTestsMatching 'com.app.oopsly.api.perf.*'
+		setFailOnNoMatchingTests(true)
+	}
+	// Load shape, overridable from the environment (CI sets these).
+	systemProperty 'perf.users', System.getenv('PERF_USERS') ?: '10'
+	systemProperty 'perf.duration', System.getenv('PERF_DURATION') ?: '45s'
+	systemProperty 'perf.dir', file('../perf').absolutePath
+	systemProperty 'perf.report.dir', layout.buildDirectory.dir('reports/perf').get().asFile.absolutePath
+	// A load test is never "up to date".
+	outputs.upToDateWhen { false }
+	testLogging {
+		events 'passed', 'skipped', 'failed'
+		exceptionFormat 'full'
+		showStandardStreams = true
 	}
 }
 

@@ -656,7 +656,7 @@ class CommunityServiceImplTest {
 
         assertThrows(
                 ValidationException.class,
-                () -> invokePrivate("readFallback", new Class<?>[] {Throwable.class}, validation));
+                () -> invokePrivate("listFallback", new Class<?>[] {Throwable.class}, validation));
         assertThrows(
                 NotFoundException.class,
                 () ->
@@ -684,7 +684,7 @@ class CommunityServiceImplTest {
                 List.of(
                         (ApiRes)
                                 invokePrivate(
-                                        "readFallback", new Class<?>[] {Throwable.class}, cause),
+                                        "listFallback", new Class<?>[] {Throwable.class}, cause),
                         (ApiRes)
                                 invokePrivate(
                                         "readFallback",
@@ -741,7 +741,7 @@ class CommunityServiceImplTest {
         ApiRes response =
                 (ApiRes)
                         invokePrivate(
-                                "readFallback",
+                                "listFallback",
                                 new Class<?>[] {Throwable.class},
                                 new java.io.IOException("network"));
 
