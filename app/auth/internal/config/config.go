@@ -46,7 +46,7 @@ func Load(getenv func(string) string) Config {
 		Port:           get("PORT", "9010"),
 		DBURL:          dbURL,
 		RedisAddr:      get("REDIS_HOST", "localhost") + ":" + get("REDIS_PORT", "6379"),
-		JWTSecret:      get("JWT_SECRET", "changeme"),
+		JWTSecret:      get("JWT_SECRET", "3dbd414a023fdd13c298d9b370603d2f9a0039de297eef75de474dd72346d34c"),
 		AccessTTL:      ms("JWT_EXPIRATION_MS", 86400000),
 		RefreshTTL:     ms("JWT_REFRESH_EXPIRATION_MS", 604800000),
 		TestEmails:     splitList(getenv("TEST_EMAILS")),

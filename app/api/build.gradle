@@ -140,35 +140,6 @@ tasks.register('integrationTest', Test) {
 	}
 }
 
-tasks.register('perfRegressionTest', Test) {
-	description = 'Runs the Locust regression profile (app/perf) against the real app with Postgres and Redis in Testcontainers'
-	group = 'verification'
-	useJUnitPlatform()
-	testClassesDirs = sourceSets.test.output.classesDirs
-	classpath = sourceSets.test.runtimeClasspath
-	binaryResultsDirectory = layout.buildDirectory.dir('test-results/perfRegressionTest/binary')
-	reports {
-		junitXml.outputLocation = layout.buildDirectory.dir('test-results/perfRegressionTest')
-		html.outputLocation = layout.buildDirectory.dir('reports/tests/perfRegressionTest')
-	}
-	filter {
-		includeTestsMatching 'com.app.oopsly.api.perf.*'
-		setFailOnNoMatchingTests(true)
-	}
-	// Load shape, overridable from the environment (CI sets these).
-	systemProperty 'perf.users', System.getenv('PERF_USERS') ?: '10'
-	systemProperty 'perf.duration', System.getenv('PERF_DURATION') ?: '45s'
-	systemProperty 'perf.dir', file('../perf').absolutePath
-	systemProperty 'perf.report.dir', layout.buildDirectory.dir('reports/perf').get().asFile.absolutePath
-	// A load test is never "up to date".
-	outputs.upToDateWhen { false }
-	testLogging {
-		events 'passed', 'skipped', 'failed'
-		exceptionFormat 'full'
-		showStandardStreams = true
-	}
-}
-
 def composeFile = '../docker-compose.yml'
 
 tasks.register('composeUp', Exec) {

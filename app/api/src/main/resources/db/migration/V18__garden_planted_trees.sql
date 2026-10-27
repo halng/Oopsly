@@ -3,12 +3,12 @@
 
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS garden_planted_trees (
+CREATE TABLE IF NOT EXISTS cms.garden_planted_trees (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     deleted BOOLEAN DEFAULT FALSE,
-    garden_id UUID NOT NULL REFERENCES garden_states (id),
+    garden_id UUID NOT NULL REFERENCES cms.garden_states (id),
     plot_index INTEGER NOT NULL,
     species VARCHAR(50) NOT NULL,
     stage VARCHAR(20) NOT NULL,

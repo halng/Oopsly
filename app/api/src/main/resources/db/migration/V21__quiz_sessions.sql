@@ -3,13 +3,13 @@
 
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS quiz_sessions (
+CREATE TABLE IF NOT EXISTS cms.quiz_sessions (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     deleted BOOLEAN DEFAULT FALSE,
     room_code VARCHAR(6) NOT NULL UNIQUE,
-    host_id UUID NOT NULL REFERENCES users (id),
+    host_id UUID NOT NULL REFERENCES cms.users (id),
     subject_id UUID,
     subject_title VARCHAR(255),
     state VARCHAR(20) NOT NULL,

@@ -3,12 +3,12 @@
 
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS garden_states (
+CREATE TABLE IF NOT EXISTS cms.garden_states (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     deleted BOOLEAN DEFAULT FALSE,
-    user_id UUID NOT NULL UNIQUE REFERENCES users (id),
+    user_id UUID NOT NULL UNIQUE REFERENCES cms.users (id),
     dew_drops INTEGER DEFAULT 0,
     sunlight_orbs INTEGER DEFAULT 0,
     growth_points INTEGER DEFAULT 0,

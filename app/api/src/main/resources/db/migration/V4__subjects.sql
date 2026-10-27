@@ -3,7 +3,7 @@
 
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS subjects (
+CREATE TABLE IF NOT EXISTS cms.subjects (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS subjects (
     new_cards_per_day INTEGER DEFAULT 5,
     interval DOUBLE PRECISION DEFAULT 1.0,
     is_public BOOLEAN DEFAULT FALSE,
-    shelf_id UUID NOT NULL REFERENCES shelves (id)
+    shelf_id UUID NOT NULL REFERENCES cms.shelves (id)
 );
 
 COMMIT;

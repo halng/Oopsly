@@ -5,9 +5,9 @@
 
 BEGIN;
 
-ALTER TABLE test_suites ADD COLUMN IF NOT EXISTS slug VARCHAR(255);
-ALTER TABLE test_suites ADD COLUMN IF NOT EXISTS description TEXT;
-ALTER TABLE test_suites ADD COLUMN IF NOT EXISTS time_limit_minutes INTEGER;
+ALTER TABLE cms.test_suites ADD COLUMN IF NOT EXISTS slug VARCHAR(255);
+ALTER TABLE cms.test_suites ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE cms.test_suites ADD COLUMN IF NOT EXISTS time_limit_minutes INTEGER;
 
 WITH base AS (
     SELECT id,
@@ -18,7 +18,7 @@ WITH base AS (
                    TRIM(BOTH '-' FROM REGEXP_REPLACE(LOWER(COALESCE(title, '')), '[^a-z0-9]+', '-', 'g')),
                    ''),
                'test') AS base_slug
-    FROM test_suites
+    FROM cms.test_suites
     WHERE slug IS NULL OR slug = ''
 ),
 ranked AS (
@@ -27,7 +27,7 @@ ranked AS (
            ROW_NUMBER() OVER (PARTITION BY shelf_id, base_slug ORDER BY created_at, id) AS rn
     FROM base
 )
-UPDATE test_suites t
+UPDATE cms.test_suites t
 SET slug = CASE
                WHEN r.rn = 1 THEN r.base_slug
                ELSE r.base_slug || '-' || LEFT(t.id::text, 8)
@@ -36,11 +36,11 @@ FROM ranked r
 WHERE t.id = r.id;
 
 -- Order matters: free the MULTIPLE_CHOICE name before reusing it.
-UPDATE questions SET type = 'SINGLE_CHOICE' WHERE type = 'MULTIPLE_CHOICE';
-UPDATE questions SET type = 'MULTIPLE_CHOICE' WHERE type = 'MULTIPLE_RESPONSE';
+UPDATE cms.questions SET type = 'SINGLE_CHOICE' WHERE type = 'MULTIPLE_CHOICE';
+UPDATE cms.questions SET type = 'MULTIPLE_CHOICE' WHERE type = 'MULTIPLE_RESPONSE';
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_test_suites_shelf_slug
-    ON test_suites (shelf_id, slug)
+    ON cms.test_suites (shelf_id, slug)
     WHERE deleted = FALSE;
 
 COMMIT;

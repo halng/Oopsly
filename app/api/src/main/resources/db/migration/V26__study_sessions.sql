@@ -3,13 +3,13 @@
 
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS study_sessions (
+CREATE TABLE IF NOT EXISTS cms.study_sessions (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     deleted BOOLEAN DEFAULT FALSE,
-    user_id UUID NOT NULL REFERENCES users (id),
-    subject_id UUID NOT NULL REFERENCES subjects (id),
+    user_id UUID NOT NULL REFERENCES cms.users (id),
+    subject_id UUID NOT NULL REFERENCES cms.subjects (id),
     mode VARCHAR(20) NOT NULL,
     total_items INTEGER NOT NULL DEFAULT 0,
     correct_count INTEGER NOT NULL DEFAULT 0,
@@ -20,6 +20,6 @@ CREATE TABLE IF NOT EXISTS study_sessions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_study_sessions_user_completed
-    ON study_sessions (user_id, completed_at);
+    ON cms.study_sessions (user_id, completed_at);
 
 COMMIT;

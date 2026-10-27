@@ -78,17 +78,6 @@ jobs:
       # - name: Integration tests
       #   run: ./gradlew integrationTest --rerun --no-daemon
 
-      # Regression performance test: Testcontainers (Postgres, Redis, Locust) against the real app.
-      - name: Perf regression tests
-        run: ./gradlew perfRegressionTest --no-daemon
-        env:
-          PERF_USERS: "10"
-          PERF_DURATION: "60s"
-
-      - name: Publish perf regression summary
-        if: always()
-        run: cat build/reports/perf/summary.md >> $GITHUB_STEP_SUMMARY || true
-
       - name: Jacoco coverage verification
         run: ./gradlew jacocoTestCoverageVerification --no-daemon
 

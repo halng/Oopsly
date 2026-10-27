@@ -342,6 +342,21 @@ pnpm install
 pnpm dev
 ```
 
+### Game service
+
+Before running the game service, need to make sure provide it a correct signing key for JWT validation.
+You can set the signing key using the `JWT_SECRET` environment variable.
+
+Install dependencies and run the game service:
+
+```bash
+cd app/game
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e "[.dev]"
+uvicorn app.main:app --host 0.0.0.0 --port 9008
+```
+
 ## Development checks
 
 ```bash
