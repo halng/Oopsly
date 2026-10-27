@@ -113,4 +113,12 @@ public final class ApiMessages {
     public static final String QUIZ_NOT_IN_QUESTION = "There is no active question right now";
     public static final String QUIZ_PLAYER_NOT_FOUND = "You are not part of this quiz room";
     public static final String QUIZ_ALREADY_ANSWERED = "You already answered this question";
+    public static final String QUIZ_ROOM_FULL = "This room is full";
+    public static final String QUIZ_NAME_TAKEN = "That name is already taken in this room";
+    public static final String QUIZ_NEEDS_PLAYERS = "Wait for at least one player to join";
+    public static final String QUIZ_NO_QUESTIONS = "This test has no questions that can be hosted";
+    public static final String QUIZ_NOT_IN_REVEAL = "Finish the current question first";
+    public static final String QUIZ_TIME_UP = "Time is up for this question";
+    public static final String QUIZ_BAD_ANSWER = "That answer is not valid for this question";
+    public static final String QUIZ_FINISHED = "This quiz has ended";
 }

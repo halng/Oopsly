@@ -16,10 +16,15 @@
 
 package com.app.oopsly.api.quiz.application.vm;
 
+import com.app.oopsly.api.quiz.domain.QuizMode;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
 import java.util.UUID;
 
-/** Request to create a live quiz room. */
-public record CreateQuizReq(
-        @NotNull UUID subjectId, String subjectTitle, @NotNull List<QuizCardView> cards) {}
+/** Request to host a test suite as a live room. */
+public record CreateRoomReq(
+        @NotNull UUID shelfId,
+        @NotNull UUID testSuiteId,
+        QuizMode mode,
+        @Min(5) @Max(120) Integer questionSeconds) {}

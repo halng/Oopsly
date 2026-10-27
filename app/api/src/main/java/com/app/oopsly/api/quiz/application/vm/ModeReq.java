@@ -14,16 +14,10 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.quiz.infrastructure;
+package com.app.oopsly.api.quiz.application.vm;
 
-import com.app.oopsly.api.quiz.domain.QuizSessionEntity;
-import java.util.Optional;
-import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.app.oopsly.api.quiz.domain.QuizMode;
+import jakarta.validation.constraints.NotNull;
 
-public interface QuizSessionRepository extends JpaRepository<QuizSessionEntity, UUID> {
-
-    Optional<QuizSessionEntity> findByRoomCode(String roomCode);
-
-    boolean existsByRoomCode(String roomCode);
-}
+/** Host request to switch between manual and automatic progression. */
+public record ModeReq(@NotNull QuizMode mode) {}

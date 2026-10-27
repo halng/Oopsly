@@ -47,39 +47,23 @@ class GamificationRulesTest {
         assertEquals(expected, GamificationRules.reviewXpForGrade(grade));
     }
 
-    @Test
-    @DisplayName("quizPoints should award the maximum when the answer is instant")
-    void quizPoints_shouldAwardMaximum_whenAnswerIsInstant() {
-        assertEquals(GamificationRules.QUIZ_MAX_POINTS, GamificationRules.quizPoints(0L));
+    @ParameterizedTest
+    @DisplayName("quizPoints should fall from the maximum to half of it across the time limit")
+    @CsvSource({
+        "0,20000,1000",
+        "10000,20000,750",
+        "20000,20000,500",
+        "-500,20000,1000",
+        "90000,20000,500"
+    })
+    void quizPoints_shouldFallLinearlyToHalf(long elapsed, long limit, int expected) {
+        assertEquals(expected, GamificationRules.quizPoints(elapsed, limit));
     }
 
     @Test
-    @DisplayName("quizPoints should decay linearly when time elapses")
-    void quizPoints_shouldDecayLinearly_whenTimeElapses() {
-        assertEquals(900, GamificationRules.quizPoints(1_000L));
-        assertEquals(500, GamificationRules.quizPoints(5_000L));
-    }
-
-    @Test
-    @DisplayName("quizPoints should clamp to the minimum when the answer is very late")
-    void quizPoints_shouldClampToMinimum_whenAnswerIsVeryLate() {
-        assertEquals(GamificationRules.QUIZ_MIN_POINTS, GamificationRules.quizPoints(60_000L));
-        assertEquals(GamificationRules.QUIZ_MIN_POINTS, GamificationRules.quizPoints(10_000_000L));
-    }
-
-    @Test
-    @DisplayName("quizPoints should stay at the maximum when the elapsed time is negative")
-    void quizPoints_shouldStayAtMaximum_whenElapsedTimeIsNegative() {
-        assertTrue(GamificationRules.quizPoints(-1_000L) >= GamificationRules.QUIZ_MAX_POINTS);
-    }
-
-    @Test
-    @DisplayName("quizPoints should return the minimum when the elapsed time hits the boundary")
-    void quizPoints_shouldReturnMinimum_whenElapsedTimeHitsBoundary() {
-        long boundary =
-                (long) (GamificationRules.QUIZ_MAX_POINTS - GamificationRules.QUIZ_MIN_POINTS)
-                        * GamificationRules.QUIZ_TIME_PENALTY_DIVISOR;
-        assertEquals(GamificationRules.QUIZ_MIN_POINTS, GamificationRules.quizPoints(boundary));
+    @DisplayName("quizPoints should return the minimum when there is no time limit")
+    void quizPoints_shouldReturnMinimum_whenLimitIsMissing() {
+        assertEquals(GamificationRules.QUIZ_MIN_POINTS, GamificationRules.quizPoints(100L, 0L));
     }
 
     @ParameterizedTest

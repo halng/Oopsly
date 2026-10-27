@@ -16,8 +16,8 @@
 
 package com.app.oopsly.api.quiz.application.vm;
 
-import java.util.UUID;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-/** A player participating in a live quiz. */
-public record QuizPlayerView(
-        UUID id, UUID userId, String displayName, int score, boolean hasAnswered) {}
+/** Nickname a player picks when entering a room. */
+public record JoinRoomReq(@NotBlank @Size(max = 20) String name) {}

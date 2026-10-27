@@ -16,19 +16,9 @@
 
 package com.app.oopsly.api.quiz.application.vm;
 
-import com.app.oopsly.api.quiz.domain.QuizState;
+import jakarta.validation.constraints.Size;
 import java.util.List;
-import java.util.UUID;
 
-/** Broadcast state of a live quiz room. */
-public record QuizStateView(
-        String roomCode,
-        UUID hostId,
-        String hostName,
-        UUID subjectId,
-        String subjectTitle,
-        QuizState state,
-        int currentQuestionIndex,
-        int totalQuestions,
-        QuizCardView currentCard,
-        List<QuizPlayerView> players) {}
+/** A player's answer; which field is read depends on the question type. */
+public record AnswerReq(
+        Integer index, @Size(max = 6) List<Integer> indexes, @Size(max = 200) String text) {}

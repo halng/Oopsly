@@ -23,6 +23,8 @@ import {
     TestSubmission,
     TestSubmissionRes,
     TestSuiteInput,
+    CreateQuizRoomInput,
+    QuizRoomView,
 } from '../types';
 import { offlineDb } from './offlineDb';
 import { syncManager } from './syncManager';
@@ -759,6 +761,13 @@ export const ApiService = {
                 body: JSON.stringify(submission),
             }
         ),
+
+    // Live game rooms (host a test suite, Kahoot style)
+    createQuizRoom: (data: CreateQuizRoomInput) =>
+        fetchJson<QuizRoomView>('/v1/quiz/rooms', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        }),
 
     // Questions inside a test suite
     getQuestions: (shelfId: string, testSuiteId: string) =>

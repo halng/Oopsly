@@ -24,7 +24,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-/** Cleans up quiz players when their websocket session drops. */
+/** Marks a player offline (or drops them from a lobby) when their socket closes. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -39,6 +39,6 @@ public class QuizSessionDisconnectListener {
             return;
         }
         log.debug("Websocket session {} disconnected", sessionId);
-        quizService.handleDisconnect(sessionId);
+        quizService.disconnect(sessionId);
     }
 }

@@ -73,6 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 userId, null, List.of((GrantedAuthority) () -> userRole));
+                authToken.setDetails(jwtVerifier.extractPlan(jwt));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
                 LOGGER.info("User {} authenticated with role {}", userId, userRole);
             }

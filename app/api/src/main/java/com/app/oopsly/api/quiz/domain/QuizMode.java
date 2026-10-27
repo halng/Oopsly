@@ -14,19 +14,12 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.quiz.infrastructure;
+package com.app.oopsly.api.quiz.domain;
 
-import com.app.oopsly.api.quiz.domain.QuizPlayerEntity;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface QuizPlayerRepository extends JpaRepository<QuizPlayerEntity, UUID> {
-
-    List<QuizPlayerEntity> findAllBySessionId(UUID sessionId);
-
-    Optional<QuizPlayerEntity> findBySessionIdAndSessionKey(UUID sessionId, String sessionKey);
-
-    Optional<QuizPlayerEntity> findBySessionKey(String sessionKey);
+/** How the room moves from one question to the next. */
+public enum QuizMode {
+    /** The host presses next after every reveal. */
+    MANUAL,
+    /** The room advances on its own once the reveal timer elapses. */
+    AUTO
 }

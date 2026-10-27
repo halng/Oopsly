@@ -37,4 +37,13 @@ public class CurrentUser {
             throw new UnauthenticatedException("Invalid user id in token", e);
         }
     }
+
+    /** Subscription plan claim of the caller, or null when the token carries none. */
+    public String plan() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getDetails() instanceof String plan)) {
+            return null;
+        }
+        return plan;
+    }
 }

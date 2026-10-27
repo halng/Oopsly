@@ -14,7 +14,22 @@
  *    limitations under the License.
  */
 
-package com.app.oopsly.api.quiz.application.vm;
+package com.app.oopsly.api.quiz.interfaces.ws;
 
-/** Error payload pushed to a quiz participant. */
-public record QuizErrorView(String message) {}
+import com.app.oopsly.api.quiz.application.QuizService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+/** Closes questions and advances automatic rooms when their timers elapse. */
+@Component
+@RequiredArgsConstructor
+public class QuizTicker {
+
+    private final QuizService quizService;
+
+    @Scheduled(fixedDelayString = "${app.quiz.tick-millis:500}")
+    public void tick() {
+        quizService.tick();
+    }
+}

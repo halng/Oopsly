@@ -16,5 +16,6 @@
 
 package com.app.oopsly.api.quiz.application.vm;
 
-/** Feedback returned to a player after answering. */
-public record AnswerFeedback(boolean isCorrect, int pointsGained, int totalScore) {}
+/** What one player earned on the question that just closed. */
+public record PlayerResult(
+        boolean answered, boolean correct, int points, int score, int rank, int streak) {}

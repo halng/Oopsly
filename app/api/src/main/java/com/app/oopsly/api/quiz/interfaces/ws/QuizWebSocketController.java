@@ -17,14 +17,16 @@
 package com.app.oopsly.api.quiz.interfaces.ws;
 
 import com.app.oopsly.api.quiz.application.QuizService;
-import com.app.oopsly.api.quiz.application.vm.AnswerFeedback;
-import com.app.oopsly.api.quiz.application.vm.CreateQuizReq;
-import com.app.oopsly.api.quiz.application.vm.JoinQuizReq;
-import com.app.oopsly.api.quiz.application.vm.QuizErrorView;
-import com.app.oopsly.api.quiz.application.vm.QuizStateView;
-import com.app.oopsly.api.quiz.application.vm.SubmitAnswerReq;
+import com.app.oopsly.api.quiz.application.vm.AnswerReq;
+import com.app.oopsly.api.quiz.application.vm.JoinRoomReq;
+import com.app.oopsly.api.quiz.application.vm.ModeReq;
+import com.app.oopsly.api.quiz.application.vm.QuizUserEvent;
 import com.app.oopsly.api.quiz.domain.QuizChannels;
+import com.app.oopsly.api.shared.exception.NotFoundException;
+import com.app.oopsly.api.shared.exception.RetryLaterException;
+import com.app.oopsly.api.shared.exception.ValidationException;
 import jakarta.validation.Valid;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -32,17 +34,12 @@ import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 
 /**
- * Realtime quiz endpoints over STOMP.
- *
- * <p>Client sends to: {@code /app/quiz/create}, {@code /app/quiz/{roomCode}/join}, {@code
- * /app/quiz/{roomCode}/start}, {@code /app/quiz/{roomCode}/answer}, {@code
- * /app/quiz/{roomCode}/next}. Clients subscribe to {@code /topic/quiz/{roomCode}} for the shared
- * state and to {@code /user/queue/quiz} for private feedback and errors.
+ * Realtime room endpoints over STOMP. Clients send to {@code /app/quiz/{code}/...} and listen on
+ * {@code /topic/quiz/{code}} (shared state) and {@code /user/queue/quiz} (private events).
  */
 @Slf4j
 @Controller
@@ -50,70 +47,70 @@ import org.springframework.stereotype.Controller;
 public class QuizWebSocketController {
 
     private final QuizService quizService;
-    private final SimpMessagingTemplate messagingTemplate;
 
-    /** Creates a room and returns the initial state to the host only. */
-    @MessageMapping("/quiz/create")
-    @SendToUser(QuizChannels.USER_QUEUE_QUIZ)
-    public QuizStateView createRoom(
-            @Valid @Payload CreateQuizReq request, SimpMessageHeaderAccessor headerAccessor) {
-        QuizStateView state = quizService.createRoom(request, sessionKey(headerAccessor));
-        log.info("Quiz room {} created over STOMP", state.roomCode());
-        return state;
-    }
-
-    /** Joins a lobby and broadcasts the refreshed state to the room. */
-    @MessageMapping("/quiz/{roomCode}/join")
+    @MessageMapping("/quiz/{code}/join")
     public void join(
-            @DestinationVariable String roomCode,
-            @Valid @Payload JoinQuizReq request,
-            SimpMessageHeaderAccessor headerAccessor) {
-        QuizStateView state = quizService.join(roomCode, request, sessionKey(headerAccessor));
-        broadcast(roomCode, state);
+            @DestinationVariable String code,
+            @Valid @Payload JoinRoomReq request,
+            Principal principal,
+            SimpMessageHeaderAccessor headers) {
+        quizService.join(code, principal.getName(), headers.getSessionId(), request.name());
     }
 
-    /** Starts the quiz. Only the host of the room is allowed to trigger it. */
-    @MessageMapping("/quiz/{roomCode}/start")
-    public void start(
-            @DestinationVariable String roomCode, SimpMessageHeaderAccessor headerAccessor) {
-        broadcast(roomCode, quizService.start(roomCode, sessionKey(headerAccessor)));
+    @MessageMapping("/quiz/{code}/resume")
+    public void resume(
+            @DestinationVariable String code,
+            Principal principal,
+            SimpMessageHeaderAccessor headers) {
+        quizService.resume(code, principal.getName(), headers.getSessionId());
     }
 
-    /** Submits an answer, sends private feedback and broadcasts when everyone answered. */
-    @MessageMapping("/quiz/{roomCode}/answer")
+    @MessageMapping("/quiz/{code}/start")
+    public void start(@DestinationVariable String code, Principal principal) {
+        quizService.start(code, principal.getName());
+    }
+
+    @MessageMapping("/quiz/{code}/answer")
     public void answer(
-            @DestinationVariable String roomCode,
-            @Valid @Payload SubmitAnswerReq request,
-            SimpMessageHeaderAccessor headerAccessor) {
-        String sessionKey = sessionKey(headerAccessor);
-        AnswerFeedback feedback = quizService.submitAnswer(roomCode, request, sessionKey);
-        messagingTemplate.convertAndSendToUser(sessionKey, QuizChannels.USER_QUEUE_QUIZ, feedback);
-
-        if (quizService.allPlayersAnswered(roomCode)) {
-            broadcast(roomCode, quizService.getState(roomCode));
-        }
+            @DestinationVariable String code,
+            @Valid @Payload AnswerReq request,
+            Principal principal) {
+        quizService.answer(code, principal.getName(), request);
     }
 
-    /** Advances to the next question or finishes the quiz. Host only. */
-    @MessageMapping("/quiz/{roomCode}/next")
-    public void next(
-            @DestinationVariable String roomCode, SimpMessageHeaderAccessor headerAccessor) {
-        broadcast(roomCode, quizService.nextQuestion(roomCode, sessionKey(headerAccessor)));
+    @MessageMapping("/quiz/{code}/next")
+    public void next(@DestinationVariable String code, Principal principal) {
+        quizService.next(code, principal.getName());
     }
 
-    /** Returns any domain error as a friendly message on the private user queue. */
+    @MessageMapping("/quiz/{code}/mode")
+    public void mode(
+            @DestinationVariable String code,
+            @Valid @Payload ModeReq request,
+            Principal principal) {
+        quizService.setMode(code, principal.getName(), request.mode());
+    }
+
+    @MessageMapping("/quiz/{code}/end")
+    public void end(@DestinationVariable String code, Principal principal) {
+        quizService.end(code, principal.getName());
+    }
+
+    /** Domain problems reach the caller as a readable error on the private queue. */
+    @MessageExceptionHandler({
+        ValidationException.class,
+        NotFoundException.class,
+        RetryLaterException.class
+    })
+    @SendToUser(QuizChannels.USER_QUEUE_QUIZ)
+    public QuizUserEvent handleDomainError(RuntimeException exception) {
+        return QuizUserEvent.error(exception.getMessage());
+    }
+
     @MessageExceptionHandler(Exception.class)
     @SendToUser(QuizChannels.USER_QUEUE_QUIZ)
-    public QuizErrorView handleException(Exception exception) {
-        log.warn("Quiz socket error: {}", exception.getMessage());
-        return new QuizErrorView(exception.getMessage());
-    }
-
-    private void broadcast(String roomCode, QuizStateView state) {
-        messagingTemplate.convertAndSend(QuizChannels.roomTopic(roomCode), state);
-    }
-
-    private static String sessionKey(SimpMessageHeaderAccessor headerAccessor) {
-        return headerAccessor.getSessionId();
+    public QuizUserEvent handleUnexpected(Exception exception) {
+        log.warn("Quiz socket error", exception);
+        return QuizUserEvent.error("Something went wrong, please try again");
     }
 }
