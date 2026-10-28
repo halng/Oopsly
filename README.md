@@ -339,7 +339,7 @@ docker compose up -d --build   # postgres + redis + auth
 - JWKS: `http://localhost:9010/.well-known/pub.json` (the API and game read it from `JWKS_URL`; this is the default)
 - Swagger: `http://localhost:9010/api/auth/docs`
 - Email is not sent yet, so sign in with a test email: `test@oopsly.dev` with OTP `000000` (set by `TEST_EMAILS` in the compose file).
-- To run auth outside Docker (hot reload), keep postgres and redis up and:
+- To run auth outside Docker (hot reload), keep postgres and redis up and generate a internal API key in the `.env` file (set `INTERNAL_API_KEY`) for the auth service to validate internal requests.
 
 ```bash
 cd app/auth

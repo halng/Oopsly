@@ -74,6 +74,7 @@ function createClient(baseURL: string | undefined) {
         timeout: 15000,
         headers: {
             'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
         },
     });
 
