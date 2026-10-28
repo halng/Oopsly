@@ -142,17 +142,6 @@ tasks.register('integrationTest', Test) {
 
 def composeFile = '../docker-compose.yml'
 
-tasks.register('composeUp', Exec) {
-	group = 'docker'
-	description = "Start Docker Compose services using ${composeFile}"
-	workingDir = projectDir
-
-	commandLine 'docker', 'compose', '-f', composeFile, 'up', '-d', '--build'
-	doLast {
-		println "Docker Compose started using ${composeFile}"
-	}
-}
-
 tasks.register('composeDown', Exec) {
 	group = 'docker'
 	description = "Stop and remove Docker Compose services using ${composeFile}"
