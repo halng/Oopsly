@@ -41,8 +41,6 @@ jobs:
             build-mode: none
           - language: javascript-typescript
             build-mode: none
-          - language: go
-            build-mode: autobuild
           - language: python
             build-mode: none
     steps:
