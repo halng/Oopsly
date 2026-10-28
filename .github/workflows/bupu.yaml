@@ -212,6 +212,9 @@ jobs:
         run: |
           set -euo pipefail
 
+          git config --global user.email "haonguyentan2001@gmail.com"
+          git config --global user.name "halng"
+
           git fetch origin --tags
 
           # Find the closest reachable tag before the target commit.
