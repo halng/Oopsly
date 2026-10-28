@@ -22,8 +22,6 @@ on:
     secrets:
       AWS_ROLE_ARN:
         required: true
-      JWT_SECRET:
-        required: true
   workflow_dispatch:
     inputs:
       git_hash:
@@ -95,7 +93,7 @@ jobs:
       - name: Open an empty Fargate service so the image repository exists
         working-directory: app/game
         env:
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWKS_URL: ${{ vars.JWKS_URL }}
           CORS_ORIGINS: ${{ vars.GAME_CORS_ORIGINS }}
         run: |
           REPO="oopsly-game-${{ needs.validate-inputs.outputs.environment }}"
@@ -110,7 +108,7 @@ jobs:
             --no-fail-on-empty-changeset \
             --parameter-overrides \
               "Environment=${{ needs.validate-inputs.outputs.environment }}" \
-              "JwtSecret=${JWT_SECRET}" \
+              "JwksUrl=${JWKS_URL}" \
               "ImageTag=latest" \
               "DesiredCount=0" \
               "CorsOrigins=${CORS_ORIGINS:-http://localhost:3000}"
@@ -132,7 +130,7 @@ jobs:
       - name: Deploy the image to Fargate
         working-directory: app/game
         env:
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWKS_URL: ${{ vars.JWKS_URL }}
           CORS_ORIGINS: ${{ vars.GAME_CORS_ORIGINS }}
         run: |
           aws cloudformation deploy \
@@ -143,7 +141,7 @@ jobs:
             --no-fail-on-empty-changeset \
             --parameter-overrides \
               "Environment=${{ needs.validate-inputs.outputs.environment }}" \
-              "JwtSecret=${JWT_SECRET}" \
+              "JwksUrl=${JWKS_URL}" \
               "ImageTag=${{ needs.validate-inputs.outputs.release-ref }}" \
               "DesiredCount=1" \
               "CorsOrigins=${CORS_ORIGINS:-http://localhost:3000}"

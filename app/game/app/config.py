@@ -5,8 +5,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/oopsly"
-    jwt_secret: str = "057ba03d6c44104863dc7361fe4578965d1887360f90a0895882e58a6248fc86"
-    jwt_public_key: str = ""
+    jwks_url: str = "http://localhost:9010/.well-known/pub.json"
     cors_origins: str = "http://localhost:3000,http://localhost:8081"
 
     def database_url_normalized(self) -> str:

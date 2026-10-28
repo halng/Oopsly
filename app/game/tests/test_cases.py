@@ -190,8 +190,9 @@ def test_reward_payloads_are_validated(client):
     )
 
 
-def test_socket_plants_unlocks_and_harvests(client, session_factory):
-    with client.websocket_connect("/v1/game/ws?token=" + _token()) as socket:
+def test_socket_plants_unlocks_and_harvests(client, session_factory, make_token):
+    token = make_token(id="user-1", sub="learner@oopsly.app", role="USER")
+    with client.websocket_connect("/v1/game/ws?token=" + token) as socket:
         assert socket.receive_json()["type"] == "ready"
         socket.send_json(
             {
@@ -224,7 +225,7 @@ def test_socket_plants_unlocks_and_harvests(client, session_factory):
     db.commit()
     db.close()
 
-    with client.websocket_connect("/v1/game/ws?token=" + _token()) as socket:
+    with client.websocket_connect("/v1/game/ws?token=" + token) as socket:
         socket.receive_json()
         socket.send_json({"action": "unlock", "requestId": "land-2", "plotIndex": 3})
         opened = socket.receive_json()
@@ -235,22 +236,3 @@ def test_socket_plants_unlocks_and_harvests(client, session_factory):
         assert reward["type"] == "reward"
         assert reward["data"]["xpGained"] == 240
         assert reward["data"]["garden"]["plantedTrees"] == []
-
-
-def _token() -> str:
-    import time
-
-    import jwt
-
-    from app.auth import signing_key
-
-    return jwt.encode(
-        {
-            "id": "user-1",
-            "sub": "learner@oopsly.app",
-            "role": "USER",
-            "exp": int(time.time()) + 60,
-        },
-        signing_key(),
-        algorithm="HS256",
-    )

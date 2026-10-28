@@ -1,4 +1,3 @@
-import base64
 from dataclasses import dataclass
 
 import jwt
@@ -6,8 +5,10 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import settings
+from app.jwks import JwksCache
 
 bearer = HTTPBearer(auto_error=False)
+jwks = JwksCache(settings.jwks_url)
 
 
 @dataclass(frozen=True)
@@ -20,28 +21,14 @@ class AuthResult:
         return {"userId": self.user_id, "email": self.email, "role": self.role}
 
 
-def signing_key() -> bytes:
-    """HMAC key shared with the Java API, which Base64-decodes JWT_SECRET."""
-    secret = settings.jwt_secret
-    padded = secret + "=" * (-len(secret) % 4)
-    return base64.b64decode(padded)
-
-
-def verification_material() -> tuple[bytes | str, list[str]]:
-    """Public key when configured, otherwise the shared HMAC secret.
-
-    jjwt picks HS256, HS384, or HS512 from the key length. The default
-    Oopsly secret is 48 bytes, so access tokens are HS384.
-    """
-    public_key = (settings.jwt_public_key or "").strip()
-    if public_key:
-        return public_key, ["RS256"]
-    return signing_key(), ["HS256", "HS384", "HS512"]
-
-
 def verify_access_token(token: str) -> AuthResult:
-    key, algorithms = verification_material()
-    payload = jwt.decode(token, key, algorithms=algorithms)
+    kid = jwt.get_unverified_header(token).get("kid")
+    payload = jwt.decode(
+        token,
+        jwks.get_key(kid),
+        algorithms=["RS256"],
+        options={"require": ["exp"]},
+    )
     user_id = payload.get("id")
     if not user_id:
         raise jwt.InvalidTokenError("missing id")
