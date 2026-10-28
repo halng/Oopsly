@@ -7,7 +7,10 @@ interface AuthState {
     accessToken: string;
     refreshToken: string;
     hasHydrated: boolean;
+    /** Set when a refresh failed for good, so the login page can explain why. */
+    sessionExpired: boolean;
 
+    setSessionExpired: (expired: boolean) => void;
     setUserEmail: (email: string) => void;
     setIsAuthenticated: (auth: boolean) => void;
     setAuthTokens: (accessToken: string, refreshToken: string) => void;
@@ -27,6 +30,10 @@ export const useAuthStore = create<AuthState>()(
             accessToken: '',
             refreshToken: '',
             hasHydrated: false,
+            sessionExpired: false,
+
+            setSessionExpired: (expired: boolean) =>
+                set({ sessionExpired: expired }),
 
             setAuthTokens: (accessToken: string, refreshToken: string) => {
                 set({ accessToken, refreshToken, isAuthenticated: true });
@@ -42,6 +49,7 @@ export const useAuthStore = create<AuthState>()(
                     accessToken,
                     refreshToken,
                     isAuthenticated: true,
+                    sessionExpired: false,
                 });
             },
 

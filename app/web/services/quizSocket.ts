@@ -1,5 +1,5 @@
 import { Client, IMessage } from '@stomp/stompjs';
-import { useAuthStore } from '@/store';
+import { freshAccessToken, refreshSession } from './tokenRefresh';
 import {
     QuizAnswerInput,
     QuizMode,
@@ -57,14 +57,11 @@ function brokerUrl() {
 
 export function connectQuiz(options: ConnectOptions): QuizConnection {
     const { code, role, name, onView, onEvent, onStatus } = options;
-    const token = useAuthStore.getState().accessToken;
     const destination = (path: string) => `/app/quiz/${code}/${path}`;
 
     const client = new Client({
         brokerURL: brokerUrl(),
-        connectHeaders: token
-            ? { Authorization: `Bearer ${token}` }
-            : { 'guest-id': guestId() },
+        connectHeaders: {},
         reconnectDelay: 2000,
         heartbeatIncoming: 10000,
         heartbeatOutgoing: 10000,
@@ -88,12 +85,21 @@ export function connectQuiz(options: ConnectOptions): QuizConnection {
         }
         onStatus('open');
     };
+    // Runs before every (re)connect: a reconnect hours later must not reuse an
+    // expired token, and a signed-out player falls back to a guest id.
+    client.beforeConnect = async () => {
+        const token = await freshAccessToken();
+        client.connectHeaders = token
+            ? { Authorization: `Bearer ${token}` }
+            : { 'guest-id': guestId() };
+    };
     client.onWebSocketClose = () => onStatus('closed');
-    client.onStompError = (frame) =>
-        onEvent({
-            type: 'error',
-            message: frame.headers.message || 'Connection refused',
-        });
+    client.onStompError = (frame) => {
+        const message = frame.headers.message || 'Connection refused';
+        // The broker refused the token; renew it so the automatic reconnect succeeds.
+        if (/invalid access token/i.test(message)) void refreshSession();
+        onEvent({ type: 'error', message });
+    };
 
     onStatus('connecting');
     client.activate();

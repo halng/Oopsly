@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { ulid } from 'ulid';
-import { useAuthStore } from '@/store';
+import { installTokenRefresh } from './tokenRefresh';
 import { ApiResponse, GardenState, PlantSpecies, PlantStage } from '@/types';
 
 const gameClient = axios.create({
@@ -9,13 +9,9 @@ const gameClient = axios.create({
     headers: { 'Content-Type': 'application/json' },
 });
 
+installTokenRefresh(gameClient);
+
 gameClient.interceptors.request.use((config) => {
-    if (typeof window !== 'undefined') {
-        const { accessToken } = useAuthStore.getState();
-        if (accessToken) {
-            config.headers.Authorization = `Bearer ${accessToken}`;
-        }
-    }
     config.headers['X-Request-ID'] = ulid();
     config.headers['X-Platform'] = 'WEB';
     return config;

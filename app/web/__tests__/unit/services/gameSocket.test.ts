@@ -20,6 +20,12 @@ const garden = {
     plantedTrees: [{ id: 't', species: 'BAD', stage: 'SPROUT' }],
 };
 
+async function open(listener: (event: any) => void) {
+    const stop = openGameSocket(listener);
+    await vi.advanceTimersByTimeAsync(0);
+    return stop;
+}
+
 describe('gameSocket', () => {
     let cleanup: (() => void) | null = null;
     beforeEach(() => {
@@ -37,29 +43,29 @@ describe('gameSocket', () => {
         delete process.env.NEXT_PUBLIC_GAME_API_URL;
     });
 
-    it('does not connect without a token', () => {
+    it('does not connect without a token', async () => {
         useAuthStore.setState({ accessToken: '' } as never);
-        cleanup = openGameSocket(vi.fn());
+        cleanup = await open(vi.fn());
         expect(FakeSocket.instances).toHaveLength(0);
     });
 
-    it('connects with an encoded token and ws url', () => {
-        cleanup = openGameSocket(vi.fn());
+    it('connects with an encoded token and ws url', async () => {
+        cleanup = await open(vi.fn());
         const url = FakeSocket.instances[0].url;
         expect(url).toMatch(
             /^ws:\/\/game\.test\/v1\/game\/ws\?token=tok%20en&platform=WEB&requestId=/
         );
     });
 
-    it('falls back to localhost when env is unset', () => {
+    it('falls back to localhost when env is unset', async () => {
         delete process.env.NEXT_PUBLIC_GAME_API_URL;
-        cleanup = openGameSocket(vi.fn());
+        cleanup = await open(vi.fn());
         expect(FakeSocket.instances[0].url).toMatch(/^ws:\/\/localhost:8000\//);
     });
 
-    it('parses garden, reward, other and unreadable messages', () => {
+    it('parses garden, reward, other and unreadable messages', async () => {
         const fn = vi.fn();
-        cleanup = openGameSocket(fn);
+        cleanup = await open(fn);
         const s = FakeSocket.instances[0];
         s.onmessage!({
             data: JSON.stringify({ type: 'garden', data: garden }),
@@ -85,9 +91,9 @@ describe('gameSocket', () => {
         });
     });
 
-    it('ignores messages after cleanup', () => {
+    it('ignores messages after cleanup', async () => {
         const fn = vi.fn();
-        const stop = openGameSocket(fn);
+        const stop = await open(fn);
         const s = FakeSocket.instances[0];
         stop();
         s.onmessage!({ data: '{}' });
@@ -95,34 +101,34 @@ describe('gameSocket', () => {
         expect(s.close).toHaveBeenCalled();
     });
 
-    it('retries after close but not for code 4401', () => {
-        cleanup = openGameSocket(vi.fn());
+    it('retries after close but not for code 4401', async () => {
+        cleanup = await open(vi.fn());
         FakeSocket.instances[0].onclose!({ code: 1006 });
-        vi.advanceTimersByTime(1500);
+        await vi.advanceTimersByTimeAsync(1500);
         expect(FakeSocket.instances).toHaveLength(2);
         FakeSocket.instances[1].onclose!({ code: 4401 });
-        vi.advanceTimersByTime(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         expect(FakeSocket.instances).toHaveLength(2);
     });
 
-    it('does not retry after cleanup and clears pending retry', () => {
-        const stop = openGameSocket(vi.fn());
+    it('does not retry after cleanup and clears pending retry', async () => {
+        const stop = await open(vi.fn());
         FakeSocket.instances[0].onclose!({ code: 1006 });
         stop();
-        vi.advanceTimersByTime(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         expect(FakeSocket.instances).toHaveLength(1);
         const s = FakeSocket.instances[0];
         s.onclose!({ code: 1000 });
     });
 
-    it('sendGardenAction returns false when not open and true when open', () => {
+    it('sendGardenAction returns false when not open and true when open', async () => {
         const action = {
             action: 'water' as const,
             requestId: 'r',
             treeId: 't',
         };
         expect(sendGardenAction(action)).toBe(false);
-        cleanup = openGameSocket(vi.fn());
+        cleanup = await open(vi.fn());
         const s = FakeSocket.instances[0];
         s.readyState = 0;
         expect(sendGardenAction(action)).toBe(false);

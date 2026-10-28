@@ -3,21 +3,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AuthPage from '@/app/login/page';
 import { ApiService } from '@/services/api';
 
-const { push, setCredentials } = vi.hoisted(() => ({
+const { push, setCredentials, authState } = vi.hoisted(() => ({
     push: vi.fn(),
     setCredentials: vi.fn(),
+    authState: { sessionExpired: false },
 }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 vi.mock('@/services/api', () => ({
     ApiService: { sendOtp: vi.fn(), verifyOtp: vi.fn() },
 }));
 vi.mock('@/store', () => ({
-    useAuthStore: { getState: () => ({ setCredentials }) },
+    useAuthStore: Object.assign(
+        (select: (state: typeof authState) => unknown) => select(authState),
+        { getState: () => ({ setCredentials }) }
+    ),
 }));
 
 describe('AuthPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        authState.sessionExpired = false;
         vi.mocked(ApiService.sendOtp).mockResolvedValue({
             isSuccess: true,
             data: null,
@@ -172,5 +177,13 @@ describe('AuthPage', () => {
         ).toBeInTheDocument();
         expect(screen.getByPlaceholderText('Jane Doe')).toHaveValue('Learner');
         expect(screen.queryByPlaceholderText('123456')).not.toBeInTheDocument();
+    });
+
+    it('explains why the user is back on the login page after a failed refresh', () => {
+        authState.sessionExpired = true;
+        render(<AuthPage />);
+        expect(screen.getByRole('status').textContent).toMatch(
+            /session expired/i
+        );
     });
 });

@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Navbar } from '@/components';
 import { syncManager } from '@/services/syncManager';
+import { startTokenRefreshTimer } from '@/services/tokenRefresh';
 import AuthGuard from './AuthGuard';
 
 interface AuthenticatedShellProps {
@@ -18,6 +19,8 @@ const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
     useEffect(() => {
         // syncManager.init();
     }, []);
+
+    useEffect(() => startTokenRefreshTimer(), []);
 
     return (
         <AuthGuard>

@@ -1,5 +1,5 @@
 import { ulid } from 'ulid';
-import { useAuthStore } from '@/store';
+import { freshAccessToken, refreshSession } from './tokenRefresh';
 import { GardenState } from '@/types';
 import {
     GameReward,
@@ -43,6 +43,8 @@ type Listener = (event: GardenSocketEvent) => void;
 let socket: WebSocket | null = null;
 let listener: Listener | null = null;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
+/** One refresh-and-reconnect per rejection, so a bad token cannot loop. */
+let reauthTried = false;
 
 function socketUrl(token: string) {
     const http =
@@ -63,11 +65,13 @@ function parseEvent(raw: string): GardenSocketEvent | null {
     return body;
 }
 
-function connect() {
-    const token = useAuthStore.getState().accessToken;
-    if (!token || !listener) return;
+async function connect() {
+    // The token travels in the URL, so renew it before dialling, not after a failure.
+    const token = await freshAccessToken();
+    if (!token || !listener || socket) return;
     socket = new WebSocket(socketUrl(token));
     socket.onmessage = (message) => {
+        reauthTried = false;
         if (!listener) return;
         try {
             const event = parseEvent(String(message.data));
@@ -83,14 +87,23 @@ function connect() {
     };
     socket.onclose = (event) => {
         socket = null;
-        if (!listener || event.code === 4401) return;
-        retryTimer = setTimeout(connect, 1500);
+        if (!listener) return;
+        if (event.code === 4401) {
+            if (reauthTried) return;
+            reauthTried = true;
+            void refreshSession().then((ok) => {
+                if (ok && listener) void connect();
+            });
+            return;
+        }
+        retryTimer = setTimeout(() => void connect(), 1500);
     };
 }
 
 export function openGameSocket(onEvent: Listener) {
     listener = onEvent;
-    connect();
+    reauthTried = false;
+    void connect();
     return () => {
         listener = null;
         if (retryTimer) clearTimeout(retryTimer);
