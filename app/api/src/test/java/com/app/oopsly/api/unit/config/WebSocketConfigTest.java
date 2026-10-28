@@ -103,4 +103,24 @@ class WebSocketConfigTest {
 
         verify(stompEndpointRegistry).addEndpoint(QuizChannels.ENDPOINT);
     }
+
+    @Test
+    void registerStompEndpoints_trimsWhitespaceAndSkipsBlankEntries() {
+        ReflectionTestUtils.setField(
+                webSocketConfig,
+                "allowedOrigins",
+                "http://localhost:3000, http://localhost:8081 ,, ");
+        when(stompEndpointRegistry.addEndpoint(QuizChannels.ENDPOINT))
+                .thenReturn(endpointRegistration);
+        when(endpointRegistration.setAllowedOriginPatterns(any(String[].class)))
+                .thenReturn(endpointRegistration);
+        when(endpointRegistration.withSockJS()).thenReturn(sockJsServiceRegistration);
+
+        webSocketConfig.registerStompEndpoints(stompEndpointRegistry);
+
+        ArgumentCaptor<String[]> captor = ArgumentCaptor.forClass(String[].class);
+        verify(endpointRegistration).setAllowedOriginPatterns(captor.capture());
+        org.junit.jupiter.api.Assertions.assertArrayEquals(
+                new String[] {"http://localhost:3000", "http://localhost:8081"}, captor.getValue());
+    }
 }
