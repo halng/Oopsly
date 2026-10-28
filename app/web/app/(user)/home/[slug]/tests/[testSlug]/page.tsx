@@ -9,11 +9,13 @@ import {
     Plus,
     Search,
     Trash2,
+    Users,
 } from 'lucide-react';
 import { Question, QuestionInput } from '@/types';
 import { ApiService } from '@/services/api';
 import { useTestSuiteContext } from '@/hooks/useTestSuiteContext';
 import QuestionEditor from '@/components/tests/QuestionEditor';
+import { HostGameModal } from '@/components/shared';
 import {
     QUESTION_TYPE_LABELS,
     describeAnswer,
@@ -48,6 +50,7 @@ export default function TestSuiteDetailsPage() {
     const [search, setSearch] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [isHosting, setIsHosting] = useState(false);
 
     const shelfId = shelf?.id;
     const suiteId = testSuite?.id;
@@ -183,16 +186,28 @@ export default function TestSuiteDetailsPage() {
                         </p>
                     </div>
                 </div>
-                <button
-                    type="button"
-                    data-testid="btn-take-test"
-                    disabled={questions.length === 0}
-                    onClick={() => router.push(`${baseUrl}/take`)}
-                    className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                    <Play className="w-4 h-4 fill-white" />
-                    Take Test
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        data-testid="btn-take-test"
+                        disabled={questions.length === 0}
+                        onClick={() => router.push(`${baseUrl}/take`)}
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        <Play className="w-4 h-4 fill-white" />
+                        Take Test
+                    </button>
+                    <button
+                        type="button"
+                        data-testid="btn-host-test"
+                        disabled={questions.length === 0}
+                        onClick={() => setIsHosting(true)}
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        <Users className="w-4 h-4" />
+                        Quizzly
+                    </button>
+                </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
@@ -310,6 +325,16 @@ export default function TestSuiteDetailsPage() {
                         </li>
                     )}
                 </ol>
+            )}
+            {isHosting && shelf && (
+                <HostGameModal
+                    shelfId={shelf.id}
+                    testSuite={{
+                        ...testSuite,
+                        questionCount: questions.length,
+                    }}
+                    onClose={() => setIsHosting(false)}
+                />
             )}
         </div>
     );

@@ -13,6 +13,20 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/hooks/useTestSuiteContext', () => ({
     useTestSuiteContext: () => testSuiteContext,
 }));
+vi.mock('@/components/shared', () => ({
+    HostGameModal: ({
+        testSuite,
+        onClose,
+    }: {
+        testSuite: { questionCount: number };
+        onClose: () => void;
+    }) => (
+        <div data-testid="host-modal">
+            {testSuite.questionCount} questions
+            <button onClick={onClose}>close</button>
+        </div>
+    ),
+}));
 vi.mock('@/services/api', () => ({
     ApiService: {
         getQuestions: vi.fn(),
@@ -49,5 +63,18 @@ describe('TestSuiteDetailsPage', () => {
         );
         fireEvent.click(screen.getByTestId('btn-take-test'));
         expect(push).toHaveBeenCalledWith('/home/science/tests/midterm/take');
+    });
+
+    it('opens and closes the Quizzly host modal', async () => {
+        render(<TestSuiteDetailsPage />);
+        await waitFor(() =>
+            expect(screen.getByText('2+2?')).toBeInTheDocument()
+        );
+        fireEvent.click(screen.getByTestId('btn-host-test'));
+        expect(screen.getByTestId('host-modal')).toHaveTextContent(
+            '1 questions'
+        );
+        fireEvent.click(screen.getByText('close'));
+        expect(screen.queryByTestId('host-modal')).not.toBeInTheDocument();
     });
 });
