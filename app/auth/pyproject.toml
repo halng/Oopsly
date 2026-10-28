@@ -1,0 +1,52 @@
+[project]
+name = "oopsly-auth"
+version = "0.1.0"
+description = "Oopsly auth service: authentication, authorization, profiles, subscriptions and JWKS"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.32.0",
+    "sqlalchemy>=2.0.36",
+    "alembic>=1.14.0",
+    "psycopg[binary]>=3.2.0",
+    "pydantic-settings>=2.6.0",
+    "pyjwt[crypto]>=2.10.0",
+    "redis>=5.2.0",
+    "jsonpatch>=1.33",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-cov>=6.0.0",
+    "httpx>=0.28.0",
+    "ruff>=0.8.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.setuptools.package-data]
+app = ["*.html"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["app"]
+
+[tool.coverage.report]
+fail_under = 95
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI dependency injection puts Depends(...) in argument defaults.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body", "fastapi.Header"]

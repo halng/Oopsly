@@ -1,5 +1,9 @@
 .git
-bin
+.venv
+__pycache__
+.pytest_cache
+.ruff_cache
+tests
 *.md
 docker-compose.yml
 .env

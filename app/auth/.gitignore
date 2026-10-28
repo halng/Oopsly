@@ -1,6 +1,10 @@
-/bin/
-*.test
-*.out
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+coverage.xml
+.coverage
+*.egg-info/
 .env
 .DS_Store
-coverage.out
