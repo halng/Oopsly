@@ -18,6 +18,7 @@ package com.app.oopsly.api.config;
 
 import com.app.oopsly.api.quiz.domain.QuizChannels;
 import com.app.oopsly.api.quiz.interfaces.ws.QuizAuthChannelInterceptor;
+import com.app.oopsly.api.quiz.interfaces.ws.QuizLogContextInterceptor;
 import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final QuizAuthChannelInterceptor authInterceptor;
+    private final QuizLogContextInterceptor logContextInterceptor;
 
     @Value("${app.allowed-origins}")
     private String allowedOrigins;
@@ -48,7 +50,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(authInterceptor);
+        registration.interceptors(authInterceptor, logContextInterceptor);
     }
 
     @Override

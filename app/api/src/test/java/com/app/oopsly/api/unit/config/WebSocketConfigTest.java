@@ -22,6 +22,7 @@ import static org.mockito.Mockito.*;
 import com.app.oopsly.api.config.WebSocketConfig;
 import com.app.oopsly.api.quiz.domain.QuizChannels;
 import com.app.oopsly.api.quiz.interfaces.ws.QuizAuthChannelInterceptor;
+import com.app.oopsly.api.quiz.interfaces.ws.QuizLogContextInterceptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,11 +46,13 @@ class WebSocketConfigTest {
 
     @Mock private QuizAuthChannelInterceptor authInterceptor;
 
+    @Mock private QuizLogContextInterceptor logContextInterceptor;
+
     private WebSocketConfig webSocketConfig;
 
     @BeforeEach
     void setUp() {
-        webSocketConfig = new WebSocketConfig(authInterceptor);
+        webSocketConfig = new WebSocketConfig(authInterceptor, logContextInterceptor);
     }
 
     @Test
@@ -68,7 +71,7 @@ class WebSocketConfigTest {
 
         webSocketConfig.configureClientInboundChannel(registration);
 
-        verify(registration).interceptors(authInterceptor);
+        verify(registration).interceptors(authInterceptor, logContextInterceptor);
     }
 
     @Test

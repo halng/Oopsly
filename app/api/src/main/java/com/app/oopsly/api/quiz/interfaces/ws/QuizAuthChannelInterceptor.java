@@ -20,6 +20,7 @@ import com.app.oopsly.api.shared.security.JwtVerifier;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessagingException;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Component;
  * Names every socket user on CONNECT: the account id from a valid access token, or {@code
  * guest:<uuid>} for players who joined without an account.
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class QuizAuthChannelInterceptor implements ChannelInterceptor {
@@ -49,8 +51,13 @@ public class QuizAuthChannelInterceptor implements ChannelInterceptor {
         StompHeaderAccessor accessor =
                 MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
-            accessor.setUser(
-                    new UsernamePasswordAuthenticationToken(identify(accessor), null, List.of()));
+            String user = identify(accessor);
+            log.info(
+                    "Quiz socket connected | user={} type={} session={}",
+                    user,
+                    user.startsWith(GUEST_PREFIX) ? "guest" : "account",
+                    accessor.getSessionId());
+            accessor.setUser(new UsernamePasswordAuthenticationToken(user, null, List.of()));
         }
         return message;
     }
@@ -64,14 +71,17 @@ public class QuizAuthChannelInterceptor implements ChannelInterceptor {
                     return userId;
                 }
             } catch (RuntimeException ex) {
+                log.warn("Quiz socket refused | invalid access token: {}", ex.getMessage());
                 throw new MessagingException("Invalid access token");
             }
+            log.warn("Quiz socket refused | access token has no user id");
             throw new MessagingException("Invalid access token");
         }
         String guest = accessor.getFirstNativeHeader(GUEST_HEADER);
         try {
             return GUEST_PREFIX + UUID.fromString(guest);
         } catch (RuntimeException ex) {
+            log.warn("Quiz socket refused | no token and no valid guest id");
             throw new MessagingException("Sign in or provide a guest id to connect");
         }
     }
