@@ -30,7 +30,7 @@ class AppConfigTest {
         assertNotNull(config.getJwt(), "jwt should be initialized by default");
         assertNotNull(config.getAuth(), "auth should be initialized by default");
 
-        assertNull(config.getJwt().getSecret(), "default jwt.secret should be null");
+        assertEquals("http://localhost:9010/.well-known/pub.json", config.getJwt().getJwksUrl());
         assertEquals("http://localhost:9010/api/auth", config.getAuth().getBaseUrl());
         assertEquals("", config.getAuth().getInternalKey());
     }
@@ -39,9 +39,9 @@ class AppConfigTest {
     void givenAppconfig_withJwtSet_thenGettersReturnValues() {
         AppConfig config = new AppConfig();
 
-        config.getJwt().setSecret("super-secret");
+        config.getJwt().setJwksUrl("http://auth/jwks");
 
-        assertEquals("super-secret", config.getJwt().getSecret());
+        assertEquals("http://auth/jwks", config.getJwt().getJwksUrl());
     }
 
     @Test

@@ -19,17 +19,15 @@ package com.app.oopsly.api.integration.support;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -42,15 +40,13 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @ActiveProfiles("integration")
+@Import(TestJwtKeys.class)
 @Transactional
 @ExtendWith(EmbeddedRedisExtension.class)
 public abstract class AbstractControllerTest {
 
     protected static final String EMAIL = "integration@oopsly.com";
     protected static final String EMAIL_2 = "integration2@oopsly.com";
-
-    @Value("${app.jwt.secret}")
-    private String jwtSecret;
 
     @Autowired protected MockMvc mockMvc;
     @Autowired protected ObjectMapper objectMapper;
@@ -64,7 +60,8 @@ public abstract class AbstractControllerTest {
     }
 
     /**
-     * Stands in for the auth service: signs a token the same way it does (HS384, shared secret).
+     * Stands in for the auth service: signs a token the same way it does (RS256, key published by
+     * the test JWKS provider).
      */
     protected AuthSession authenticate(String email) {
         return authenticate(email, "FREE");
@@ -75,11 +72,14 @@ public abstract class AbstractControllerTest {
         UUID userId = UUID.nameUUIDFromBytes(email.getBytes(StandardCharsets.UTF_8));
         String token =
                 Jwts.builder()
+                        .header()
+                        .keyId(TestJwtKeys.KID)
+                        .and()
                         .claims(Map.of("id", userId.toString(), "role", "USER", "plan", plan))
                         .subject(email)
                         .issuedAt(new Date())
                         .expiration(new Date(System.currentTimeMillis() + 3_600_000))
-                        .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret)))
+                        .signWith(TestJwtKeys.KEY_PAIR.getPrivate(), Jwts.SIG.RS256)
                         .compact();
         return new AuthSession(token, userId, email);
     }

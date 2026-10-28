@@ -16,24 +16,37 @@
 
 package com.app.oopsly.api.shared.security;
 
-import com.app.oopsly.api.config.AppConfig;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.LocatorAdapter;
+import io.jsonwebtoken.UnsupportedJwtException;
+import java.security.Key;
 import java.util.function.Function;
-import javax.crypto.SecretKey;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Verifies access tokens issued by the auth service. The signing secret is shared; this service
+ * Verifies RS256 access tokens issued by the auth service against its published JWKS; this service
  * never issues tokens.
  */
 @Component
 @RequiredArgsConstructor
 public class JwtVerifier {
-    private final AppConfig appConfig;
+    private static final String ALGORITHM = "RS256";
+
+    private final JwksKeyProvider keyProvider;
+
+    private final LocatorAdapter<Key> keyLocator =
+            new LocatorAdapter<>() {
+                @Override
+                protected Key locate(JwsHeader header) {
+                    if (!ALGORITHM.equals(header.getAlgorithm())) {
+                        throw new UnsupportedJwtException("Only RS256 tokens are accepted");
+                    }
+                    return keyProvider.resolve(header.getKeyId());
+                }
+            };
 
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -58,15 +71,6 @@ public class JwtVerifier {
 
     /** Parses and verifies signature and expiry; throws a JwtException when invalid. */
     private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(getSignInKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
-
-    private SecretKey getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(appConfig.getJwt().getSecret());
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Jwts.parser().keyLocator(keyLocator).build().parseSignedClaims(token).getPayload();
     }
 }

@@ -4,10 +4,10 @@ server:
     context-path: /api/oopsly
 
 app:
-  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:8081}
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8081}
   jwt:
-    # Shared with the auth service, which issues the tokens; this service only verifies them.
-    secret: ${JWT_SECRET:3dbd414a023fdd13c298d9b370603d2f9a0039de297eef75de474dd72346d34c}
+    # The auth service signs tokens (RS256) and publishes its public keys here; this service only verifies them.
+    jwks-url: ${JWKS_URL:http://localhost:9010/.well-known/pub.json}
   auth:
     base-url: ${AUTH_BASE_URL:http://localhost:9010/api/auth}
     internal-key: ${AUTH_INTERNAL_KEY:changeme}

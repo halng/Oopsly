@@ -6,10 +6,10 @@ Parameters:
     Type: String
     Default: stg
     AllowedPattern: "[a-z0-9-]+"
-  JwtSecret:
+  JwksUrl:
     Type: String
-    NoEcho: true
-    Description: JWT_SECRET used to sign access tokens.
+    Default: http://localhost:9010/.well-known/pub.json
+    Description: Public JWKS endpoint of the auth service (/.well-known/pub.json).
   AllowedOrigins:
     Type: String
     Default: http://localhost:3000
@@ -201,9 +201,8 @@ Resources:
       Name: !Sub oopsly-api-${Environment}-app
       RecoveryWindowInDays: 0
       SecretString: !Sub
-        - '{"DB_PASSWORD":"${Password}","JWT_SECRET":"${Jwt}"}'
+        - '{"DB_PASSWORD":"${Password}"}'
         - Password: !Sub "{{resolve:secretsmanager:${DbSecret}:SecretString:password}}"
-          Jwt: !Ref JwtSecret
 
   ApiRepository:
     Type: AWS::ECR::Repository
@@ -283,11 +282,11 @@ Resources:
                 - Port: !GetAtt Redis.RedisEndpoint.Port
             - Name: ALLOWED_ORIGINS
               Value: !Ref AllowedOrigins
+            - Name: JWKS_URL
+              Value: !Ref JwksUrl
           Secrets:
             - Name: DB_PASSWORD
               ValueFrom: !Sub "${AppSecret}:DB_PASSWORD::"
-            - Name: JWT_SECRET
-              ValueFrom: !Sub "${AppSecret}:JWT_SECRET::"
           LogConfiguration:
             LogDriver: awslogs
             Options:
