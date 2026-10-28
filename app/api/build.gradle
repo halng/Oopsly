@@ -41,6 +41,8 @@ repositories {
 }
 
 ext {
+	// Docker Engine 29+ rejects the API version older Testcontainers releases speak.
+	set('testcontainers.version', '1.21.4')
 	set('springAiVersion', "1.1.0")
 	set('springCloudVersion', "2025.0.0")
 }
@@ -85,6 +87,8 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'com.github.fppt:jedis-mock:1.1.8'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testRuntimeOnly 'com.h2database:h2'
 }

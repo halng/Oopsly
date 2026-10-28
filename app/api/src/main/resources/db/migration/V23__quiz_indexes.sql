@@ -3,7 +3,7 @@
 
 BEGIN;
 
-CREATE INDEX IF NOT EXISTS idx_quiz_players_session ON quiz_players (session_id);
-CREATE INDEX IF NOT EXISTS idx_quiz_players_session_key ON quiz_players (session_key);
+CREATE INDEX IF NOT EXISTS idx_quiz_players_session ON cms.quiz_players (session_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_players_session_key ON cms.quiz_players (session_key);
 
 COMMIT;

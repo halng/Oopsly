@@ -3,12 +3,12 @@
 
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS pomodoro_sessions (
+CREATE TABLE IF NOT EXISTS cms.pomodoro_sessions (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     deleted BOOLEAN DEFAULT FALSE,
-    user_id UUID NOT NULL REFERENCES users (id),
+    user_id UUID NOT NULL REFERENCES cms.users (id),
     subject_id UUID,
     focus_duration_minutes INTEGER NOT NULL,
     break_duration_minutes INTEGER DEFAULT 5,

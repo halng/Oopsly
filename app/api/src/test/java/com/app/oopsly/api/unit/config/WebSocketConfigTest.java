@@ -21,12 +21,14 @@ import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.config.WebSocketConfig;
 import com.app.oopsly.api.quiz.domain.QuizChannels;
+import com.app.oopsly.api.quiz.interfaces.ws.QuizAuthChannelInterceptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.socket.config.annotation.SockJsServiceRegistration;
@@ -41,11 +43,13 @@ class WebSocketConfigTest {
     @Mock private StompWebSocketEndpointRegistration endpointRegistration;
     @Mock private SockJsServiceRegistration sockJsServiceRegistration;
 
+    @Mock private QuizAuthChannelInterceptor authInterceptor;
+
     private WebSocketConfig webSocketConfig;
 
     @BeforeEach
     void setUp() {
-        webSocketConfig = new WebSocketConfig();
+        webSocketConfig = new WebSocketConfig(authInterceptor);
     }
 
     @Test
@@ -56,6 +60,15 @@ class WebSocketConfigTest {
                 .enableSimpleBroker(QuizChannels.TOPIC_PREFIX, QuizChannels.QUEUE_PREFIX);
         verify(messageBrokerRegistry).setApplicationDestinationPrefixes(QuizChannels.APP_PREFIX);
         verify(messageBrokerRegistry).setUserDestinationPrefix(QuizChannels.USER_PREFIX);
+    }
+
+    @Test
+    void configureClientInboundChannel_registersTheAuthInterceptor() {
+        ChannelRegistration registration = mock(ChannelRegistration.class);
+
+        webSocketConfig.configureClientInboundChannel(registration);
+
+        verify(registration).interceptors(authInterceptor);
     }
 
     @Test

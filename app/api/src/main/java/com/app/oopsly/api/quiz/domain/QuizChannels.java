@@ -30,8 +30,8 @@ public final class QuizChannels {
     public static final String TOPIC_QUIZ = "/topic/quiz/";
     public static final String USER_QUEUE_QUIZ = "/queue/quiz";
 
-    public static final int ROOM_CODE_MIN = 100000;
-    public static final int ROOM_CODE_BOUND = 900000;
+    /** Redis pub/sub channel that fans room and private events out to every API instance. */
+    public static final String REDIS_CHANNEL = "quiz:events";
 
     public static String roomTopic(String roomCode) {
         return TOPIC_QUIZ + roomCode;

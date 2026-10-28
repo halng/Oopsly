@@ -3,7 +3,7 @@
 
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS cards (
+CREATE TABLE IF NOT EXISTS cms.cards (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS cards (
     fsrs_interval_days INTEGER DEFAULT 0,
     fsrs_repetitions INTEGER DEFAULT 0,
     last_reviewed_at TIMESTAMPTZ,
-    subject_id UUID NOT NULL REFERENCES subjects (id)
+    subject_id UUID NOT NULL REFERENCES cms.subjects (id)
     );
 
 COMMIT;

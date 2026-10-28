@@ -21,14 +21,17 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.ServletException;
+import jakarta.validation.ConstraintViolationException;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @Slf4j
 @RestControllerAdvice
@@ -97,6 +100,11 @@ public class GlobalExceptionHandler {
         ServletException.class,
         IllegalArgumentException.class,
         HandlerMethodValidationException.class,
+        // Thrown by controllers annotated with @Validated (bean validation through a proxy).
+        ConstraintViolationException.class,
+        // Unreadable JSON, unknown enum values, and ids or numbers of the wrong type.
+        HttpMessageNotReadableException.class,
+        MethodArgumentTypeMismatchException.class,
         MethodArgumentNotValidException.class
     })
     public ApiRes handleServletException(Exception ex) {

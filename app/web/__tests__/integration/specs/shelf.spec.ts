@@ -282,6 +282,16 @@ test.describe('Shelf screen', () => {
             .toBe(1);
     });
 
+    test('the Quizzly button opens the host dialog for that suite and it can be closed', async ({
+        page,
+    }) => {
+        await page.goto('/home/biology');
+        await page.getByTestId('btn-host-test-suite-suite-1').click();
+        await expect(page.getByTestId('host-game-modal')).toBeVisible();
+        await page.getByTestId('btn-host-game-close').click();
+        await expect(page.getByTestId('host-game-modal')).toHaveCount(0);
+    });
+
     test('take opens the attempt, and an empty list offers to create a suite', async ({
         page,
         mock,

@@ -138,6 +138,35 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handleUnreadableBodyAndTypeMismatch_returnBadRequest() {
+        var unreadable =
+                new org.springframework.http.converter.HttpMessageNotReadableException(
+                        "bad json",
+                        new org.springframework.mock.http.MockHttpInputMessage(new byte[0]));
+        var mismatch =
+                new org.springframework.web.method.annotation.MethodArgumentTypeMismatchException(
+                        "abc", java.util.UUID.class, "id", null, new IllegalArgumentException());
+
+        assertEquals(
+                400,
+                globalExceptionHandler.handleServletException(unreadable).getStatusCode().value());
+        assertEquals(
+                400,
+                globalExceptionHandler.handleServletException(mismatch).getStatusCode().value());
+    }
+
+    @Test
+    void handleConstraintViolation_returnsBadRequest() {
+        jakarta.validation.ConstraintViolationException ex =
+                new jakarta.validation.ConstraintViolationException(
+                        "limit must be >= 1", java.util.Set.of());
+
+        ApiRes result = globalExceptionHandler.handleServletException(ex);
+
+        assertEquals(400, result.getStatusCode().value());
+    }
+
+    @Test
     void handleIllegalArgumentException_returnsBadRequest() {
         IllegalArgumentException ex = new IllegalArgumentException("Invalid argument");
 

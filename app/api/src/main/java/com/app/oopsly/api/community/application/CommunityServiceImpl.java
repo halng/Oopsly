@@ -64,7 +64,7 @@ public class CommunityServiceImpl implements CommunityService {
     private final CurrentUser currentUser;
 
     @Override
-    @CircuitBreaker(name = CircuitBreakerNames.COMMUNITY, fallbackMethod = "readFallback")
+    @CircuitBreaker(name = CircuitBreakerNames.COMMUNITY, fallbackMethod = "listFallback")
     public ApiRes getAll() {
         UUID userId = currentUser.id();
         List<CommunityRes> result =
@@ -75,7 +75,7 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
-    @CircuitBreaker(name = CircuitBreakerNames.COMMUNITY, fallbackMethod = "readFallback")
+    @CircuitBreaker(name = CircuitBreakerNames.COMMUNITY, fallbackMethod = "listFallback")
     public ApiRes getMyCommunities() {
         UUID userId = currentUser.id();
         List<CommunityRes> result =
@@ -420,7 +420,7 @@ public class CommunityServiceImpl implements CommunityService {
     // -------------------------------------------------------------- fallbacks
 
     @SuppressWarnings("unused")
-    private ApiRes readFallback(Throwable throwable) {
+    private ApiRes listFallback(Throwable throwable) {
         return communityFallback(throwable);
     }
 

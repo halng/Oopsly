@@ -1,13 +1,23 @@
 'use client';
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Gamepad2, X } from 'lucide-react';
+import { useUserProfileStore } from '@/store';
 
 interface JoinGameModalProps {
     onClose: () => void;
 }
 
+const CODE_LENGTH = 6;
+
 export default function JoinGameModal({ onClose }: JoinGameModalProps) {
+    const router = useRouter();
+    const profile = useUserProfileStore((s) => s.profile);
     const [roomCode, setRoomCode] = useState('');
+    const [name, setName] = useState('');
+
+    const nickname = name.trim() || profile?.displayName?.trim() || '';
+    const canJoin = roomCode.length === CODE_LENGTH;
 
     return (
         <div
@@ -26,7 +36,7 @@ export default function JoinGameModal({ onClose }: JoinGameModalProps) {
                                 Join Multiplayer Game
                             </h2>
                             <p className="text-xs text-stone-500 dark:text-stone-400">
-                                Enter a room code from a host
+                                Enter the game PIN shown by the host
                             </p>
                         </div>
                     </div>
@@ -44,22 +54,43 @@ export default function JoinGameModal({ onClose }: JoinGameModalProps) {
                     className="pt-5 space-y-4"
                     onSubmit={(e) => {
                         e.preventDefault();
+                        if (!canJoin) return;
+                        const query = nickname
+                            ? `?name=${encodeURIComponent(nickname)}`
+                            : '';
+                        onClose();
+                        router.push(`/game/${roomCode}${query}`);
                     }}
                 >
                     <input
                         data-testid="join-game-code-input"
                         type="text"
+                        inputMode="numeric"
+                        autoComplete="off"
                         value={roomCode}
                         onChange={(e) =>
-                            setRoomCode(e.target.value.toUpperCase())
+                            setRoomCode(
+                                e.target.value
+                                    .replace(/\D/g, '')
+                                    .slice(0, CODE_LENGTH)
+                            )
                         }
-                        placeholder="ROOM CODE"
-                        maxLength={8}
+                        placeholder="GAME PIN"
+                        maxLength={CODE_LENGTH}
                         className="w-full p-3 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-black tracking-[0.3em] text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-[var(--theme-accent)] focus:outline-none"
                     />
+                    <input
+                        data-testid="join-game-name-input"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder={profile?.displayName || 'Nickname'}
+                        maxLength={20}
+                        className="w-full p-3 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-[var(--theme-accent)] focus:outline-none"
+                    />
                     <p className="text-xs text-stone-500 dark:text-stone-400">
-                        Live multiplayer lobby migrates in a later phase. Your
-                        code is ready when hosting is available.
+                        Or scan the QR code on the host&apos;s screen. No
+                        account needed.
                     </p>
                     <div className="flex justify-end gap-2">
                         <button
@@ -72,7 +103,7 @@ export default function JoinGameModal({ onClose }: JoinGameModalProps) {
                         <button
                             type="submit"
                             data-testid="btn-join-game-submit"
-                            disabled={!roomCode.trim()}
+                            disabled={!canJoin}
                             className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl disabled:opacity-50 cursor-pointer"
                         >
                             Join Room

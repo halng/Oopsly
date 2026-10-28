@@ -3,7 +3,7 @@
 
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS settings (
+CREATE TABLE IF NOT EXISTS cms.settings (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS settings (
     retention_rate DOUBLE PRECISION DEFAULT 0.0,
     total_reviews INTEGER DEFAULT 0,
     total_cards_studied INTEGER DEFAULT 0,
-    user_id UUID NOT NULL UNIQUE REFERENCES users (id)
+    user_id UUID NOT NULL UNIQUE REFERENCES cms.users (id)
 );
 
 COMMIT;

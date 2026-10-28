@@ -3,7 +3,7 @@
 
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS shelves (
+CREATE TABLE IF NOT EXISTS cms.shelves (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS shelves (
     slug VARCHAR(225) NOT NULL DEFAULT '',
     description VARCHAR(1000),
     color VARCHAR(20) DEFAULT '#FFFFFF',
-    user_id UUID NOT NULL REFERENCES users (id)
+    user_id UUID NOT NULL REFERENCES cms.users (id)
 );
 
 COMMIT;

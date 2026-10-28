@@ -16,27 +16,40 @@
 
 package com.app.oopsly.api.quiz.application;
 
-import com.app.oopsly.api.quiz.application.vm.AnswerFeedback;
-import com.app.oopsly.api.quiz.application.vm.CreateQuizReq;
-import com.app.oopsly.api.quiz.application.vm.JoinQuizReq;
-import com.app.oopsly.api.quiz.application.vm.QuizStateView;
-import com.app.oopsly.api.quiz.application.vm.SubmitAnswerReq;
+import com.app.oopsly.api.quiz.application.vm.AnswerReq;
+import com.app.oopsly.api.quiz.application.vm.CreateRoomReq;
+import com.app.oopsly.api.quiz.application.vm.RoomView;
+import com.app.oopsly.api.quiz.domain.QuizMode;
 
+/**
+ * Live room use cases. {@code playerKey} is the private socket identity: a user id, or {@code
+ * guest:<uuid>} for players without an account.
+ */
 public interface QuizService {
 
-    QuizStateView createRoom(CreateQuizReq request, String hostSessionKey);
+    /** Creates a room for the signed-in host, capped by the host's subscription plan. */
+    RoomView createRoom(CreateRoomReq request);
 
-    QuizStateView join(String roomCode, JoinQuizReq request, String playerSessionKey);
+    /** Enters the room as a player; the same key re-attaches an existing player. */
+    void join(String code, String playerKey, String sessionId, String name);
 
-    QuizStateView start(String roomCode, String hostSessionKey);
+    /** Re-attaches the host or a player after a reconnect and pushes the current state. */
+    void resume(String code, String playerKey, String sessionId);
 
-    AnswerFeedback submitAnswer(String roomCode, SubmitAnswerReq request, String playerSessionKey);
+    void start(String code, String playerKey);
 
-    QuizStateView nextQuestion(String roomCode, String hostSessionKey);
+    void answer(String code, String playerKey, AnswerReq answer);
 
-    QuizStateView getState(String roomCode);
+    /** Closes the open question, or moves from the reveal to the next question. */
+    void next(String code, String playerKey);
 
-    boolean allPlayersAnswered(String roomCode);
+    void setMode(String code, String playerKey, QuizMode mode);
 
-    void handleDisconnect(String sessionKey);
+    /** Ends the game early and shows the final standings. */
+    void end(String code, String playerKey);
+
+    void disconnect(String sessionId);
+
+    /** Moves rooms whose timer elapsed forward; driven by the scheduler. */
+    void tick();
 }

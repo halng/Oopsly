@@ -67,10 +67,15 @@ public abstract class AbstractControllerTest {
      * Stands in for the auth service: signs a token the same way it does (HS384, shared secret).
      */
     protected AuthSession authenticate(String email) {
+        return authenticate(email, "FREE");
+    }
+
+    /** Same as {@link #authenticate(String)} with a specific subscription plan claim. */
+    protected AuthSession authenticate(String email, String plan) {
         UUID userId = UUID.nameUUIDFromBytes(email.getBytes(StandardCharsets.UTF_8));
         String token =
                 Jwts.builder()
-                        .claims(Map.of("id", userId.toString(), "role", "USER", "plan", "FREE"))
+                        .claims(Map.of("id", userId.toString(), "role", "USER", "plan", plan))
                         .subject(email)
                         .issuedAt(new Date())
                         .expiration(new Date(System.currentTimeMillis() + 3_600_000))

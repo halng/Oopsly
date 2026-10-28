@@ -16,6 +16,7 @@
 
 package com.app.oopsly.api.config;
 
+import com.app.oopsly.api.quiz.domain.QuizChannels;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
@@ -80,7 +81,9 @@ public class SecurityConfig {
                                 req.requestMatchers(
                                                 "/actuator/health",
                                                 "/swagger-ui/**",
-                                                "/api-docs/**")
+                                                "/api-docs/**",
+                                                // STOMP authenticates itself on CONNECT
+                                                QuizChannels.ENDPOINT + "/**")
                                         .permitAll()
                                         .requestMatchers(HttpMethod.OPTIONS, "/**")
                                         .permitAll() // Allow OPTIONS everywhere

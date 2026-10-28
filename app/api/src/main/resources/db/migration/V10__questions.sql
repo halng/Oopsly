@@ -3,7 +3,7 @@
 
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS questions (
+CREATE TABLE IF NOT EXISTS cms.questions (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS questions (
     text TEXT,
     type VARCHAR(50),
     metadata JSONB,
-    test_suite_id UUID NOT NULL REFERENCES test_suites (id)
+    test_suite_id UUID NOT NULL REFERENCES cms.test_suites (id)
 );
 
 COMMIT;

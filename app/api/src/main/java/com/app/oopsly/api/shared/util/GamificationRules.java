@@ -41,7 +41,8 @@ public final class GamificationRules {
     // Quiz (Kahoot style)
     public static final int QUIZ_MIN_POINTS = 10;
     public static final int QUIZ_MAX_POINTS = 1000;
-    public static final int QUIZ_TIME_PENALTY_DIVISOR = 10;
+    public static final int QUIZ_REVEAL_SECONDS = 8;
+    public static final int QUIZ_DEFAULT_QUESTION_SECONDS = 20;
 
     // Garden / Pomodoro
     public static final int GARDEN_DEFAULT_PLOTS = 9;
@@ -82,9 +83,13 @@ public final class GamificationRules {
         return XP_MATCH_BASE + (fast ? XP_MATCH_FAST_BONUS : 0);
     }
 
-    public static int quizPoints(long elapsedMillis) {
-        return Math.max(
-                QUIZ_MIN_POINTS,
-                (int) (QUIZ_MAX_POINTS - (elapsedMillis / QUIZ_TIME_PENALTY_DIVISOR)));
+    /** Full points for an instant answer, falling linearly to half of them at the time limit. */
+    public static int quizPoints(long elapsedMillis, long limitMillis) {
+        if (limitMillis <= 0) {
+            return QUIZ_MIN_POINTS;
+        }
+        long clamped = Math.min(Math.max(elapsedMillis, 0), limitMillis);
+        int points = (int) (QUIZ_MAX_POINTS - (QUIZ_MAX_POINTS / 2) * clamped / limitMillis);
+        return Math.max(QUIZ_MIN_POINTS, points);
     }
 }

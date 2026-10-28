@@ -414,3 +414,89 @@ export interface ApiResponse<T> {
     data: T | null;
     timestamp: string;
 }
+
+// Live game (Kahoot style) rooms
+export type QuizState = 'LOBBY' | 'QUESTION' | 'REVEAL' | 'FINISHED';
+export type QuizMode = 'MANUAL' | 'AUTO';
+
+export interface QuizQuestionView {
+    id: string;
+    text: string;
+    type: QuestionType;
+    options: string[];
+}
+
+export interface QuizPlayerView {
+    id: string;
+    name: string;
+    connected: boolean;
+    answered: boolean;
+}
+
+export interface QuizRankView {
+    id: string;
+    name: string;
+    score: number;
+    rank: number;
+    delta: number;
+    streak: number;
+}
+
+export interface QuizRevealView {
+    correctIndexes: number[];
+    correctText: string;
+    explanation: string | null;
+    distribution: number[];
+    correctCount: number;
+    answeredCount: number;
+    averageSeconds: number;
+}
+
+export interface QuizQuestionSummary {
+    text: string;
+    correct: number;
+    answered: number;
+}
+
+export interface QuizRoomView {
+    code: string;
+    state: QuizState;
+    mode: QuizMode;
+    title: string;
+    hostName: string;
+    maxPlayers: number;
+    questionSeconds: number;
+    totalQuestions: number;
+    questionIndex: number;
+    serverTime: number;
+    deadline: number;
+    question: QuizQuestionView | null;
+    answeredCount: number;
+    playerCount: number;
+    players: QuizPlayerView[];
+    reveal: QuizRevealView | null;
+    leaderboard: QuizRankView[];
+    summary: QuizQuestionSummary[];
+}
+
+export interface QuizPlayerResult {
+    answered: boolean;
+    correct: boolean;
+    points: number;
+    score: number;
+    rank: number;
+    streak: number;
+}
+
+export interface QuizAnswerInput {
+    index?: number;
+    indexes?: number[];
+    text?: string;
+}
+
+export interface CreateQuizRoomInput {
+    shelfId: string;
+    testSuiteId: string;
+    mode: QuizMode;
+    questionSeconds: number;
+}

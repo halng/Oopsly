@@ -6,7 +6,7 @@
 
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS user_progress (
+CREATE TABLE IF NOT EXISTS cms.user_progress (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
@@ -21,9 +21,9 @@ CREATE TABLE IF NOT EXISTS user_progress (
     total_cards_studied INTEGER DEFAULT 0
 );
 
-CREATE INDEX IF NOT EXISTS idx_user_progress_total_xp ON user_progress (total_xp DESC);
+CREATE INDEX IF NOT EXISTS idx_user_progress_total_xp ON cms.user_progress (total_xp DESC);
 
-INSERT INTO user_progress (
+INSERT INTO cms.user_progress (
     id, created_at, updated_at, deleted, user_id, total_xp, daily_streak,
     last_reviewed_at, league, retention_rate, total_reviews, total_cards_studied
 )
@@ -31,7 +31,7 @@ SELECT
     s.id, s.created_at, s.updated_at, COALESCE(s.deleted, FALSE), s.user_id, s.total_xp,
     s.daily_streak, s.last_reviewed_at, s.league, s.retention_rate, s.total_reviews,
     s.total_cards_studied
-FROM settings s
+FROM cms.settings s
 ON CONFLICT (user_id) DO NOTHING;
 
 -- Foreign keys were declared inline (unnamed), so find them through the catalog.
@@ -43,8 +43,8 @@ BEGIN
         SELECT conrelid::regclass AS table_name, conname
         FROM pg_constraint
         WHERE contype = 'f'
-          AND confrelid = 'public.users'::regclass
-          AND conrelid <> 'public.settings'::regclass
+          AND confrelid = 'cms.users'::regclass
+          AND conrelid <> 'cms.settings'::regclass
     LOOP
         EXECUTE format('ALTER TABLE %s DROP CONSTRAINT %I', fk.table_name, fk.conname);
     END LOOP;

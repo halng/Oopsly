@@ -8,12 +8,14 @@ on:
       - main
     paths:
       - "app/api/**"
+      - "app/perf/**"
       - ".github/workflows/ci-api.yaml"
   pull_request:
     branches:
       - main
     paths:
       - "app/api/**"
+      - "app/perf/**"
       - ".github/workflows/ci-api.yaml"
   workflow_dispatch:
 
@@ -93,5 +95,6 @@ jobs:
             app/api/build/reports/jacoco/
             app/api/build/reports/tests/
             app/api/build/reports/jacocoHtml/
+            app/api/build/reports/perf/
           if-no-files-found: warn
           retention-days: 3

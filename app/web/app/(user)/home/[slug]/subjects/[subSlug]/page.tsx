@@ -14,7 +14,6 @@ import {
     Layers,
     Check,
     FileSpreadsheet,
-    Users,
     Calendar as CalendarIcon,
 } from 'lucide-react';
 import { Card } from '@/types';
@@ -23,7 +22,6 @@ import { formatInterval } from '@/utils/fsrs';
 import {
     ImportCardsModal,
     SubjectScheduleModal,
-    JoinGameModal,
     CssProgressBar,
 } from '@/components/shared';
 import { useSubjectContext } from '@/hooks/useSubjectContext';
@@ -54,7 +52,6 @@ export default function SubjectDetailsPage() {
     );
     const [editingCard, setEditingCard] = useState<Card | null>(null);
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-    const [isJoinGameOpen, setIsJoinGameOpen] = useState(false);
 
     const subjectId = currentSubject?.id;
     const shelfId = currentShelf?.id;
@@ -297,15 +294,6 @@ export default function SubjectDetailsPage() {
                     >
                         <Gamepad2 className="w-4 h-4" />
                         Speed Match
-                    </button>
-                    <button
-                        type="button"
-                        data-testid="btn-subject-host"
-                        onClick={() => setIsJoinGameOpen(true)}
-                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-bold cursor-pointer"
-                    >
-                        <Users className="w-4 h-4" />
-                        Host Kahoot
                     </button>
                     <button
                         type="button"
@@ -615,9 +603,6 @@ export default function SubjectDetailsPage() {
                     onClose={() => setIsScheduleModalOpen(false)}
                     onUpdate={loadData}
                 />
-            )}
-            {isJoinGameOpen && (
-                <JoinGameModal onClose={() => setIsJoinGameOpen(false)} />
             )}
         </div>
     );

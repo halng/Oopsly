@@ -3,7 +3,7 @@
 
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS communities (
+CREATE TABLE IF NOT EXISTS cms.communities (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS communities (
     banner_url VARCHAR(500),
     is_private BOOLEAN NOT NULL DEFAULT FALSE,
     tags JSONB,
-    owner_id UUID NOT NULL REFERENCES users (id)
+    owner_id UUID NOT NULL REFERENCES cms.users (id)
 );
 
 COMMIT;

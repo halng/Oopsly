@@ -16,511 +16,517 @@
 
 package com.app.oopsly.api.unit.quiz.application;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import com.app.oopsly.api.quiz.application.QuizPublisher;
 import com.app.oopsly.api.quiz.application.QuizServiceImpl;
-import com.app.oopsly.api.quiz.application.vm.*;
-import com.app.oopsly.api.quiz.domain.QuizPlayerEntity;
-import com.app.oopsly.api.quiz.domain.QuizSessionEntity;
+import com.app.oopsly.api.quiz.application.QuizViewFactory;
+import com.app.oopsly.api.quiz.application.vm.AnswerReq;
+import com.app.oopsly.api.quiz.application.vm.CreateRoomReq;
+import com.app.oopsly.api.quiz.application.vm.QuizUserEvent;
+import com.app.oopsly.api.quiz.application.vm.RoomView;
+import com.app.oopsly.api.quiz.domain.QuizMode;
 import com.app.oopsly.api.quiz.domain.QuizState;
-import com.app.oopsly.api.quiz.infrastructure.QuizLiveStateStore;
-import com.app.oopsly.api.quiz.infrastructure.QuizPlayerRepository;
-import com.app.oopsly.api.quiz.infrastructure.QuizSessionRepository;
+import com.app.oopsly.api.quiz.domain.RoomState;
+import com.app.oopsly.api.quiz.domain.RoomState.Question;
+import com.app.oopsly.api.quiz.infrastructure.QuizRoomStore;
 import com.app.oopsly.api.shared.client.AuthClient;
 import com.app.oopsly.api.shared.client.AuthProfile;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.ValidationException;
 import com.app.oopsly.api.shared.security.CurrentUser;
-import com.app.oopsly.api.shared.util.GamificationRules;
+import com.app.oopsly.api.shelf.Shelf;
+import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.testsuite.application.QuestionMetadataMapper;
+import com.app.oopsly.api.testsuite.domain.QuestionEntity;
+import com.app.oopsly.api.testsuite.domain.QuestionType;
+import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
+import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
+import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Clock;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.invocation.InvocationOnMock;
 
-@ExtendWith(MockitoExtension.class)
+/** Drives a room through its life with an in-memory stand-in for the Redis store. */
 class QuizServiceImplTest {
 
-    private static final String ROOM = "123456";
+    private static final String HOST = UUID.randomUUID().toString();
+    private static final String ANA = "guest:" + UUID.randomUUID();
+    private static final String BEN = UUID.randomUUID().toString();
 
-    @Mock private QuizSessionRepository sessionRepository;
-    @Mock private QuizPlayerRepository playerRepository;
-    @Mock private QuizLiveStateStore liveStateStore;
-    @Mock private CurrentUser currentUser;
-    @Mock private AuthClient authClient;
+    private final QuizRoomStore store = mock(QuizRoomStore.class);
+    private final QuizPublisher publisher = mock(QuizPublisher.class);
+    private final CurrentUser currentUser = mock(CurrentUser.class);
+    private final AuthClient authClient = mock(AuthClient.class);
+    private final ShelfRepository shelfRepository = mock(ShelfRepository.class);
+    private final TestSuiteRepository suiteRepository = mock(TestSuiteRepository.class);
+    private final QuestionRepository questionRepository = mock(QuestionRepository.class);
+    private final MutableClock clock = new MutableClock();
 
-    @InjectMocks private QuizServiceImpl quizService;
-
-    private UUID hostId;
-    private AuthProfile hostProfile;
-    private QuizSessionEntity session;
-    private List<QuizCardView> cards;
+    private QuizServiceImpl service;
+    private RoomState room;
 
     @BeforeEach
     void setUp() {
-        hostId = UUID.randomUUID();
-        hostProfile = new AuthProfile(hostId, "Host", "Host display", null, 20);
-        lenient().when(authClient.lookup(any(UUID.class))).thenAnswer(inv -> hostProfile);
-
-        cards =
-                List.of(
-                        new QuizCardView(UUID.randomUUID(), "2 + 2", "4"),
-                        new QuizCardView(UUID.randomUUID(), "Capital of France", "Paris"));
-
-        session = session(QuizState.LOBBY, -1);
-    }
-
-    private QuizSessionEntity session(QuizState state, int index) {
-        QuizSessionEntity entity =
-                QuizSessionEntity.builder()
-                        .roomCode(ROOM)
-                        .hostId(hostId)
-                        .subjectId(UUID.randomUUID())
-                        .subjectTitle("Maths")
-                        .state(state)
-                        .currentQuestionIndex(index)
-                        .build();
-        entity.setId(UUID.randomUUID());
-        return entity;
-    }
-
-    private QuizPlayerEntity player(String name, String sessionKey, Integer score, String answer) {
-        QuizPlayerEntity entity =
-                QuizPlayerEntity.builder()
-                        .session(session)
-                        .displayName(name)
-                        .sessionKey(sessionKey)
-                        .score(score)
-                        .currentAnswer(answer)
-                        .build();
-        entity.setId(UUID.randomUUID());
-        return entity;
-    }
-
-    // ------------------------------------------------------------ createRoom
-
-    @Test
-    void createRoom_generatesUniqueRoomCodeAndCachesCards() {
-        when(currentUser.id()).thenReturn(hostId);
-        when(sessionRepository.existsByRoomCode(anyString())).thenReturn(true, false);
-        when(sessionRepository.saveAndFlush(any(QuizSessionEntity.class)))
+        room = lobby();
+        when(store.update(eq("123456"), any()))
                 .thenAnswer(
-                        inv -> {
-                            QuizSessionEntity saved = inv.getArgument(0);
-                            saved.setId(UUID.randomUUID());
-                            return saved;
-                        });
-        when(liveStateStore.getCards(anyString())).thenReturn(cards);
-        when(playerRepository.findAllBySessionId(any())).thenReturn(List.of());
-
-        QuizStateView state =
-                quizService.createRoom(
-                        new CreateQuizReq(UUID.randomUUID(), "Maths", cards), "host-key");
-
-        assertEquals(QuizState.LOBBY, state.state());
-        assertEquals(-1, state.currentQuestionIndex());
-        assertEquals(2, state.totalQuestions());
-        assertNull(state.currentCard());
-        assertEquals(hostId, state.hostId());
-        assertEquals("Host display", state.hostName());
-        assertEquals(6, state.roomCode().length());
-        verify(sessionRepository, times(2)).existsByRoomCode(anyString());
-        verify(liveStateStore).saveCards(state.roomCode(), cards);
+                        (InvocationOnMock call) ->
+                                call.<Function<RoomState, Object>>getArgument(1).apply(room));
+        when(store.find("123456")).thenAnswer(call -> Optional.of(room));
+        when(store.activeCodes()).thenReturn(Set.of("123456"));
+        service =
+                new QuizServiceImpl(
+                        store,
+                        publisher,
+                        new QuizViewFactory(clock),
+                        currentUser,
+                        authClient,
+                        shelfRepository,
+                        suiteRepository,
+                        questionRepository,
+                        new QuestionMetadataMapper(new ObjectMapper()),
+                        clock);
     }
 
     @Test
-    void createRoom_fallsBackToTechnicalNameWhenNoDisplayName() {
-        hostProfile = new AuthProfile(hostId, "Host", null, null, 20);
+    void createRoom_capsPlayersByPlanAndLoadsQuestions() {
+        UUID hostId = UUID.fromString(HOST);
+        Shelf shelf = new Shelf();
+        TestSuiteEntity suite = TestSuiteEntity.builder().title("Biology").build();
+        QuestionEntity single =
+                question(
+                        QuestionType.SINGLE_CHOICE,
+                        "{\"options\":[\"a\",\"b\"],\"correctOptionIndex\":1}");
+        QuestionEntity matching = question(QuestionType.MATCHING, "{}");
         when(currentUser.id()).thenReturn(hostId);
-        when(sessionRepository.existsByRoomCode(anyString())).thenReturn(false);
-        when(sessionRepository.saveAndFlush(any(QuizSessionEntity.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-        when(liveStateStore.getCards(anyString())).thenReturn(List.of());
-        when(playerRepository.findAllBySessionId(any())).thenReturn(List.of());
+        when(currentUser.plan()).thenReturn("PRO");
+        when(shelfRepository.findByIdAndUserId(any(), eq(hostId))).thenReturn(Optional.of(shelf));
+        when(suiteRepository.findByIdAndShelve(any(), eq(shelf))).thenReturn(Optional.of(suite));
+        when(questionRepository.findAllByTestSuite(suite)).thenReturn(List.of(single, matching));
+        when(authClient.lookup(hostId))
+                .thenReturn(new AuthProfile(hostId, "Host", "Host", null, 20));
 
-        QuizStateView state =
-                quizService.createRoom(new CreateQuizReq(UUID.randomUUID(), null, List.of()), "k");
+        RoomView view =
+                service.createRoom(
+                        new CreateRoomReq(UUID.randomUUID(), UUID.randomUUID(), null, null));
 
-        assertEquals("Host", state.hostName());
-        assertEquals(0, state.totalQuestions());
-    }
-
-    // ------------------------------------------------------------------ join
-
-    @Test
-    void join_addsPlayerToLobby() {
-        QuizPlayerEntity joined = player("Ana", "p1", 0, null);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(liveStateStore.getCards(ROOM)).thenReturn(cards);
-        when(playerRepository.findAllBySessionId(session.getId())).thenReturn(List.of(joined));
-
-        QuizStateView state = quizService.join(ROOM, new JoinQuizReq("Ana"), "p1");
-
-        assertEquals(1, state.players().size());
-        assertEquals("Ana", state.players().get(0).displayName());
-        assertFalse(state.players().get(0).hasAnswered());
-        ArgumentCaptor<QuizPlayerEntity> captor = ArgumentCaptor.forClass(QuizPlayerEntity.class);
-        verify(playerRepository).saveAndFlush(captor.capture());
-        assertEquals("p1", captor.getValue().getSessionKey());
-        assertEquals(0, captor.getValue().getScore());
+        assertEquals(50, view.maxPlayers());
+        assertEquals(1, view.totalQuestions());
+        assertEquals(QuizMode.MANUAL, view.mode());
+        assertEquals(20, view.questionSeconds());
+        assertEquals(QuizState.LOBBY, view.state());
+        verify(store).create(any(RoomState.class));
     }
 
     @Test
-    void join_afterStartIsRejected() {
-        session = session(QuizState.QUESTION, 0);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-
-        JoinQuizReq request = new JoinQuizReq("Late");
-        assertThrows(ValidationException.class, () -> quizService.join(ROOM, request, "p1"));
-        verify(playerRepository, never()).saveAndFlush(any());
-    }
-
-    @Test
-    void join_unknownRoomThrowsNotFound() {
-        when(sessionRepository.findByRoomCode("000000")).thenReturn(Optional.empty());
-
-        JoinQuizReq request = new JoinQuizReq("Ana");
-        assertThrows(NotFoundException.class, () -> quizService.join("000000", request, "p1"));
-    }
-
-    // ----------------------------------------------------------------- start
-
-    @Test
-    void start_movesRoomToFirstQuestionAndResetsAnswers() {
-        QuizPlayerEntity playerA = player("Ana", "p1", 0, "stale");
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
+    void createRoom_rejectsSuitesWithoutHostableQuestions() {
+        UUID hostId = UUID.fromString(HOST);
+        Shelf shelf = new Shelf();
+        TestSuiteEntity suite = TestSuiteEntity.builder().title("Empty").build();
         when(currentUser.id()).thenReturn(hostId);
-        when(sessionRepository.saveAndFlush(session)).thenReturn(session);
-        when(playerRepository.findAllBySessionId(session.getId())).thenReturn(List.of(playerA));
-        when(liveStateStore.getCards(ROOM)).thenReturn(cards);
+        when(shelfRepository.findByIdAndUserId(any(), eq(hostId))).thenReturn(Optional.of(shelf));
+        when(suiteRepository.findByIdAndShelve(any(), eq(shelf))).thenReturn(Optional.of(suite));
+        when(questionRepository.findAllByTestSuite(suite)).thenReturn(List.of());
 
-        QuizStateView state = quizService.start(ROOM, "host-key");
-
-        assertEquals(QuizState.QUESTION, state.state());
-        assertEquals(0, state.currentQuestionIndex());
-        assertEquals(cards.get(0), state.currentCard());
-        assertNull(playerA.getCurrentAnswer());
-        assertNotNull(session.getQuestionStartedAt());
-        verify(playerRepository).saveAll(List.of(playerA));
+        CreateRoomReq request = new CreateRoomReq(UUID.randomUUID(), UUID.randomUUID(), null, 30);
+        assertThrows(ValidationException.class, () -> service.createRoom(request));
     }
 
     @Test
-    void start_byNonHostIsRejected() {
-        UUID intruder = UUID.randomUUID();
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(currentUser.id()).thenReturn(intruder);
-
-        assertThrows(ValidationException.class, () -> quizService.start(ROOM, "spoofed"));
-        verify(sessionRepository, never()).saveAndFlush(any());
-    }
-
-    // ---------------------------------------------------------- submitAnswer
-
-    @Test
-    void submitAnswer_correctAnswerScoresPoints() {
-        session = session(QuizState.QUESTION, 0);
-        session.setQuestionStartedAt(Instant.now());
-        QuizPlayerEntity playerA = player("Ana", "p1", 0, null);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findBySessionIdAndSessionKey(session.getId(), "p1"))
-                .thenReturn(Optional.of(playerA));
-        when(liveStateStore.getCards(ROOM)).thenReturn(cards);
-
-        AnswerFeedback feedback = quizService.submitAnswer(ROOM, new SubmitAnswerReq("  4 "), "p1");
-
-        assertTrue(feedback.isCorrect());
-        assertTrue(feedback.pointsGained() >= GamificationRules.QUIZ_MIN_POINTS);
-        assertEquals(feedback.pointsGained(), feedback.totalScore());
-        assertEquals("  4 ", playerA.getCurrentAnswer());
+    void createRoom_requiresOwnedShelfAndSuite() {
+        when(currentUser.id()).thenReturn(UUID.fromString(HOST));
+        when(shelfRepository.findByIdAndUserId(any(), any())).thenReturn(Optional.empty());
+        CreateRoomReq request = new CreateRoomReq(UUID.randomUUID(), UUID.randomUUID(), null, 30);
+        assertThrows(NotFoundException.class, () -> service.createRoom(request));
     }
 
     @Test
-    void submitAnswer_isCaseInsensitive() {
-        session = session(QuizState.QUESTION, 1);
-        session.setQuestionStartedAt(Instant.now());
-        QuizPlayerEntity playerA = player("Ana", "p1", 100, null);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findBySessionIdAndSessionKey(session.getId(), "p1"))
-                .thenReturn(Optional.of(playerA));
-        when(liveStateStore.getCards(ROOM)).thenReturn(cards);
+    void join_addsPlayerAndRejectsDuplicatesFullRoomsAndLateJoiners() {
+        service.join("123456", ANA, "s1", " Ana ");
+        assertEquals("Ana", room.getPlayers().get(ANA).getName());
+        assertTrue(room.getPlayers().get(ANA).isGuest());
+        verify(store).bindSession("s1", "123456", ANA);
+        verify(publisher).publish(room);
 
-        AnswerFeedback feedback =
-                quizService.submitAnswer(ROOM, new SubmitAnswerReq("paris"), "p1");
+        assertThrows(ValidationException.class, () -> service.join("123456", BEN, "s2", "ana"));
 
-        assertTrue(feedback.isCorrect());
-        assertTrue(feedback.totalScore() > 100);
+        room.setMaxPlayers(1);
+        assertThrows(ValidationException.class, () -> service.join("123456", BEN, "s2", "Ben"));
+
+        room.setMaxPlayers(20);
+        service.join("123456", BEN, "s2", "Ben");
+        service.start("123456", HOST);
+        assertThrows(ValidationException.class, () -> service.join("123456", "x", "s3", "Late"));
     }
 
     @Test
-    void submitAnswer_wrongAnswerScoresNothing() {
-        session = session(QuizState.QUESTION, 0);
-        session.setQuestionStartedAt(Instant.now());
-        QuizPlayerEntity playerA = player("Ana", "p1", 50, null);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findBySessionIdAndSessionKey(session.getId(), "p1"))
-                .thenReturn(Optional.of(playerA));
-        when(liveStateStore.getCards(ROOM)).thenReturn(cards);
+    void join_sameKeyReattachesAfterStart() {
+        service.join("123456", ANA, "s1", "Ana");
+        service.start("123456", HOST);
+        room.getPlayers().get(ANA).setConnected(false);
 
-        AnswerFeedback feedback = quizService.submitAnswer(ROOM, new SubmitAnswerReq("5"), "p1");
+        service.join("123456", ANA, "s9", "Ana");
 
-        assertFalse(feedback.isCorrect());
-        assertEquals(0, feedback.pointsGained());
-        assertEquals(50, feedback.totalScore());
+        assertTrue(room.getPlayers().get(ANA).isConnected());
     }
 
     @Test
-    void submitAnswer_withoutQuestionStartedStillAwardsMaxPoints() {
-        session = session(QuizState.QUESTION, 0);
-        session.setQuestionStartedAt(null);
-        QuizPlayerEntity playerA = player("Ana", "p1", null, null);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findBySessionIdAndSessionKey(session.getId(), "p1"))
-                .thenReturn(Optional.of(playerA));
-        when(liveStateStore.getCards(ROOM)).thenReturn(cards);
+    void start_isHostOnlyAndNeedsPlayers() {
+        assertThrows(ValidationException.class, () -> service.start("123456", HOST));
+        service.join("123456", ANA, "s1", "Ana");
+        assertThrows(ValidationException.class, () -> service.start("123456", ANA));
 
-        AnswerFeedback feedback = quizService.submitAnswer(ROOM, new SubmitAnswerReq("4"), "p1");
+        service.start("123456", HOST);
 
-        assertTrue(feedback.pointsGained() >= GamificationRules.QUIZ_MAX_POINTS - 10);
-        assertEquals(feedback.pointsGained(), feedback.totalScore());
+        assertEquals(QuizState.QUESTION, room.getState());
+        assertEquals(0, room.getCurrentIndex());
+        assertEquals(clock.millis() + 20_000, room.getDeadline());
+        assertThrows(ValidationException.class, () -> service.start("123456", HOST));
     }
 
     @Test
-    void submitAnswer_withoutCachedCardsIsAlwaysWrong() {
-        session = session(QuizState.QUESTION, 0);
-        session.setQuestionStartedAt(Instant.now());
-        QuizPlayerEntity playerA = player("Ana", "p1", 0, null);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findBySessionIdAndSessionKey(session.getId(), "p1"))
-                .thenReturn(Optional.of(playerA));
-        when(liveStateStore.getCards(ROOM)).thenReturn(List.of());
+    void answer_scoresBySpeedAndRevealsWhenEveryoneAnswered() {
+        service.join("123456", ANA, "s1", "Ana");
+        service.join("123456", BEN, "s2", "Ben");
+        service.start("123456", HOST);
 
-        AnswerFeedback feedback = quizService.submitAnswer(ROOM, new SubmitAnswerReq("4"), "p1");
+        clock.advance(10_000);
+        service.answer("123456", ANA, new AnswerReq(1, null, null));
+        assertEquals(QuizState.QUESTION, room.getState());
+        assertEquals(750, room.getPlayers().get(ANA).getScore());
+        verify(publisher).sendTo(ANA, QuizUserEvent.accepted());
 
-        assertFalse(feedback.isCorrect());
-    }
-
-    @Test
-    void submitAnswer_whenCardHasNoBackIsWrong() {
-        session = session(QuizState.QUESTION, 0);
-        session.setQuestionStartedAt(Instant.now());
-        QuizPlayerEntity playerA = player("Ana", "p1", 0, null);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findBySessionIdAndSessionKey(session.getId(), "p1"))
-                .thenReturn(Optional.of(playerA));
-        when(liveStateStore.getCards(ROOM))
-                .thenReturn(List.of(new QuizCardView(UUID.randomUUID(), "front", null)));
-
-        assertFalse(quizService.submitAnswer(ROOM, new SubmitAnswerReq("x"), "p1").isCorrect());
-    }
-
-    @Test
-    void submitAnswer_outsideQuestionStateIsRejected() {
-        session = session(QuizState.LOBBY, -1);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-
-        SubmitAnswerReq request = new SubmitAnswerReq("4");
         assertThrows(
-                ValidationException.class, () -> quizService.submitAnswer(ROOM, request, "p1"));
+                ValidationException.class,
+                () -> service.answer("123456", ANA, new AnswerReq(1, null, null)));
+
+        service.answer("123456", BEN, new AnswerReq(0, null, null));
+
+        assertEquals(QuizState.REVEAL, room.getState());
+        assertEquals(0, room.getPlayers().get(BEN).getScore());
+        assertEquals(0, room.getPlayers().get(BEN).getStreak());
+        assertEquals(0, room.getDeadline());
     }
 
     @Test
-    void submitAnswer_unknownPlayerSessionIsRejected() {
-        session = session(QuizState.QUESTION, 0);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findBySessionIdAndSessionKey(session.getId(), "intruder"))
-                .thenReturn(Optional.empty());
+    void answer_gradesMultipleChoiceAndFillInTheBlank() {
+        service.join("123456", ANA, "s1", "Ana");
+        room.getQuestions().clear();
+        room.getQuestions().add(multi());
+        room.getQuestions().add(blank());
+        service.start("123456", HOST);
 
-        SubmitAnswerReq request = new SubmitAnswerReq("4");
+        service.answer("123456", ANA, new AnswerReq(null, List.of(2, 0), null));
+        assertEquals(1, room.getPlayers().get(ANA).getStreak());
+
+        service.next("123456", HOST);
+        service.answer("123456", ANA, new AnswerReq(null, null, "  PARIS "));
+        assertTrue(room.getPlayers().get(ANA).getAnswers().get(1).isCorrect());
+    }
+
+    @Test
+    void answer_rejectsInvalidInputAndLateAnswers() {
+        service.join("123456", ANA, "s1", "Ana");
         assertThrows(
-                NotFoundException.class, () -> quizService.submitAnswer(ROOM, request, "intruder"));
-    }
+                ValidationException.class,
+                () -> service.answer("123456", ANA, new AnswerReq(0, null, null)));
+        service.start("123456", HOST);
 
-    @Test
-    void submitAnswer_doubleSubmissionIsRejected() {
-        session = session(QuizState.QUESTION, 0);
-        QuizPlayerEntity playerA = player("Ana", "p1", 0, "4");
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findBySessionIdAndSessionKey(session.getId(), "p1"))
-                .thenReturn(Optional.of(playerA));
-
-        SubmitAnswerReq request = new SubmitAnswerReq("4");
         assertThrows(
-                ValidationException.class, () -> quizService.submitAnswer(ROOM, request, "p1"));
-        verify(playerRepository, never()).saveAndFlush(any());
-    }
+                ValidationException.class,
+                () -> service.answer("123456", ANA, new AnswerReq(9, null, null)));
+        assertThrows(
+                ValidationException.class,
+                () -> service.answer("123456", ANA, new AnswerReq(null, null, null)));
+        assertThrows(
+                NotFoundException.class,
+                () -> service.answer("123456", BEN, new AnswerReq(0, null, null)));
 
-    // ---------------------------------------------------------- nextQuestion
-
-    @Test
-    void nextQuestion_advancesToTheFollowingCard() {
-        session = session(QuizState.LEADERBOARD, 0);
-        QuizPlayerEntity playerA = player("Ana", "p1", 10, "4");
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(currentUser.id()).thenReturn(hostId);
-        when(liveStateStore.getCards(ROOM)).thenReturn(cards);
-        when(playerRepository.findAllBySessionId(session.getId())).thenReturn(List.of(playerA));
-        when(sessionRepository.saveAndFlush(session)).thenReturn(session);
-
-        QuizStateView state = quizService.nextQuestion(ROOM, "host-key");
-
-        assertEquals(QuizState.QUESTION, state.state());
-        assertEquals(1, state.currentQuestionIndex());
-        assertEquals(cards.get(1), state.currentCard());
-        assertNull(playerA.getCurrentAnswer());
+        clock.advance(25_000);
+        assertThrows(
+                ValidationException.class,
+                () -> service.answer("123456", ANA, new AnswerReq(1, null, null)));
     }
 
     @Test
-    void nextQuestion_afterLastCardFinishesTheQuizAndClearsCache() {
-        session = session(QuizState.LEADERBOARD, 1);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(currentUser.id()).thenReturn(hostId);
-        when(liveStateStore.getCards(ROOM)).thenReturn(cards);
-        when(playerRepository.findAllBySessionId(session.getId())).thenReturn(List.of());
-        when(sessionRepository.saveAndFlush(session)).thenReturn(session);
+    void answer_validatesMultiAndTextPayloads() {
+        service.join("123456", ANA, "s1", "Ana");
+        room.getQuestions().clear();
+        room.getQuestions().add(multi());
+        room.getQuestions().add(blank());
+        service.start("123456", HOST);
 
-        QuizStateView state = quizService.nextQuestion(ROOM, "host-key");
-
-        assertEquals(QuizState.FINISHED, state.state());
-        assertNotNull(session.getFinishedAt());
-        verify(liveStateStore).clear(ROOM);
+        assertThrows(
+                ValidationException.class,
+                () -> service.answer("123456", ANA, new AnswerReq(null, List.of(), null)));
+        assertThrows(
+                ValidationException.class,
+                () -> service.answer("123456", ANA, new AnswerReq(null, List.of(7), null)));
+        service.answer("123456", ANA, new AnswerReq(null, List.of(0), null));
+        service.next("123456", HOST);
+        assertThrows(
+                ValidationException.class,
+                () -> service.answer("123456", ANA, new AnswerReq(null, null, " ")));
     }
 
     @Test
-    void nextQuestion_byNonHostIsRejected() {
-        UUID intruder = UUID.randomUUID();
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(currentUser.id()).thenReturn(intruder);
+    void next_closesQuestionThenAdvancesAndFinishes() {
+        service.join("123456", ANA, "s1", "Ana");
+        service.start("123456", HOST);
 
-        assertThrows(ValidationException.class, () -> quizService.nextQuestion(ROOM, "spoofed"));
+        service.next("123456", HOST);
+        assertEquals(QuizState.REVEAL, room.getState());
+        service.next("123456", HOST);
+        assertEquals(QuizState.QUESTION, room.getState());
+        assertEquals(1, room.getCurrentIndex());
+        service.next("123456", HOST);
+        service.next("123456", HOST);
+
+        assertEquals(QuizState.FINISHED, room.getState());
+        assertThrows(ValidationException.class, () -> service.next("123456", HOST));
+        assertThrows(ValidationException.class, () -> service.next("123456", ANA));
     }
 
     @Test
-    void nextQuestion_withNullIndexStartsFromTheFirstCard() {
-        session = session(QuizState.LOBBY, -1);
-        session.setCurrentQuestionIndex(null);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(currentUser.id()).thenReturn(hostId);
-        when(liveStateStore.getCards(ROOM)).thenReturn(cards);
-        when(playerRepository.findAllBySessionId(session.getId())).thenReturn(List.of());
-        when(sessionRepository.saveAndFlush(session)).thenReturn(session);
+    void setMode_autoSchedulesRevealAndManualClearsIt() {
+        service.join("123456", ANA, "s1", "Ana");
+        service.start("123456", HOST);
+        service.next("123456", HOST);
 
-        assertEquals(1, quizService.nextQuestion(ROOM, "host-key").currentQuestionIndex());
-    }
-
-    // ----------------------------------------------------- allPlayersAnswered
-
-    @Test
-    void allPlayersAnswered_movesRoomToLeaderboardWhenEveryoneAnswered() {
-        session = session(QuizState.QUESTION, 0);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findAllBySessionId(session.getId()))
-                .thenReturn(List.of(player("Ana", "p1", 10, "4"), player("Bo", "p2", 5, "5")));
-
-        assertTrue(quizService.allPlayersAnswered(ROOM));
-        assertEquals(QuizState.LEADERBOARD, session.getState());
-        verify(sessionRepository).saveAndFlush(session);
+        service.setMode("123456", HOST, QuizMode.AUTO);
+        assertEquals(clock.millis() + 8_000, room.getDeadline());
+        service.setMode("123456", HOST, QuizMode.MANUAL);
+        assertEquals(0, room.getDeadline());
+        assertThrows(
+                ValidationException.class, () -> service.setMode("123456", ANA, QuizMode.AUTO));
     }
 
     @Test
-    void allPlayersAnswered_isFalseWhileSomeoneIsStillThinking() {
-        session = session(QuizState.QUESTION, 0);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findAllBySessionId(session.getId()))
-                .thenReturn(List.of(player("Ana", "p1", 10, "4"), player("Bo", "p2", 5, null)));
+    void end_finishesEarlyAndDeactivates() {
+        service.join("123456", ANA, "s1", "Ana");
+        service.start("123456", HOST);
 
-        assertFalse(quizService.allPlayersAnswered(ROOM));
-        assertEquals(QuizState.QUESTION, session.getState());
-        verify(sessionRepository, never()).saveAndFlush(any());
+        service.end("123456", HOST);
+
+        assertEquals(QuizState.FINISHED, room.getState());
+        verify(store).deactivate("123456");
     }
 
     @Test
-    void allPlayersAnswered_isFalseForEmptyRoom() {
-        session = session(QuizState.QUESTION, 0);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findAllBySessionId(session.getId())).thenReturn(List.of());
+    void tick_closesQuestionAndAutoAdvances() {
+        room.setMode(QuizMode.AUTO);
+        service.join("123456", ANA, "s1", "Ana");
+        service.start("123456", HOST);
 
-        assertFalse(quizService.allPlayersAnswered(ROOM));
+        service.tick();
+        assertEquals(QuizState.QUESTION, room.getState());
+
+        clock.advance(20_001);
+        service.tick();
+        assertEquals(QuizState.REVEAL, room.getState());
+        assertEquals(clock.millis() + 8_000, room.getDeadline());
+
+        clock.advance(8_001);
+        service.tick();
+        assertEquals(1, room.getCurrentIndex());
+        assertEquals(QuizState.QUESTION, room.getState());
+
+        clock.advance(20_001);
+        service.tick();
+        clock.advance(8_001);
+        service.tick();
+        assertEquals(QuizState.FINISHED, room.getState());
+        verify(store).deactivate("123456");
     }
 
     @Test
-    void allPlayersAnswered_doesNotChangeStateOutsideQuestionPhase() {
-        session = session(QuizState.LEADERBOARD, 0);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findAllBySessionId(session.getId()))
-                .thenReturn(List.of(player("Ana", "p1", 10, "4")));
+    void tick_manualRoomWaitsForHostAtReveal() {
+        service.join("123456", ANA, "s1", "Ana");
+        service.start("123456", HOST);
+        clock.advance(20_001);
+        service.tick();
+        clock.advance(600_000);
+        service.tick();
 
-        assertTrue(quizService.allPlayersAnswered(ROOM));
-        verify(sessionRepository, never()).saveAndFlush(any());
-    }
-
-    // -------------------------------------------------------------- getState
-
-    @Test
-    void getState_sortsPlayersByScoreDescending() {
-        session = session(QuizState.LEADERBOARD, 0);
-        List<QuizPlayerEntity> players =
-                new ArrayList<>(
-                        List.of(
-                                player("Low", "p1", 10, "a"),
-                                player("High", "p2", 900, "b"),
-                                player("Null", "p3", null, null)));
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findAllBySessionId(session.getId())).thenReturn(players);
-        when(liveStateStore.getCards(ROOM)).thenReturn(cards);
-
-        QuizStateView state = quizService.getState(ROOM);
-
-        assertEquals("High", state.players().get(0).displayName());
-        assertEquals("Low", state.players().get(1).displayName());
-        assertEquals(0, state.players().get(2).score());
-        assertTrue(state.players().get(0).hasAnswered());
-        assertFalse(state.players().get(2).hasAnswered());
+        assertEquals(QuizState.REVEAL, room.getState());
     }
 
     @Test
-    void getState_outOfRangeIndexYieldsNoCurrentCard() {
-        session = session(QuizState.FINISHED, 99);
-        when(sessionRepository.findByRoomCode(ROOM)).thenReturn(Optional.of(session));
-        when(playerRepository.findAllBySessionId(session.getId())).thenReturn(List.of());
-        when(liveStateStore.getCards(ROOM)).thenReturn(cards);
+    void tick_dropsMissingAndFinishedRooms() {
+        when(store.find("123456")).thenReturn(Optional.empty());
+        service.tick();
+        verify(store).deactivate("123456");
 
-        assertNull(quizService.getState(ROOM).currentCard());
+        room.setState(QuizState.FINISHED);
+        when(store.find("123456")).thenReturn(Optional.of(room));
+        service.tick();
+        verify(publisher, never()).publish(any());
     }
 
     @Test
-    void getState_unknownRoomThrowsNotFound() {
-        when(sessionRepository.findByRoomCode("999999")).thenReturn(Optional.empty());
+    void tick_survivesFailingRooms() {
+        service.join("123456", ANA, "s1", "Ana");
+        service.start("123456", HOST);
+        clock.advance(30_000);
+        when(store.find("123456")).thenThrow(new IllegalStateException("redis down"));
 
-        assertThrows(NotFoundException.class, () -> quizService.getState("999999"));
-    }
+        service.tick();
 
-    // ------------------------------------------------------- handleDisconnect
-
-    @Test
-    void handleDisconnect_removesThePlayer() {
-        QuizPlayerEntity playerA = player("Ana", "p1", 10, null);
-        when(playerRepository.findBySessionKey("p1")).thenReturn(Optional.of(playerA));
-
-        quizService.handleDisconnect("p1");
-
-        verify(playerRepository).delete(playerA);
+        assertEquals(QuizState.QUESTION, room.getState());
     }
 
     @Test
-    void handleDisconnect_ignoresUnknownSessions() {
-        when(playerRepository.findBySessionKey("ghost")).thenReturn(Optional.empty());
+    void resume_reattachesPlayersAndHostButNotStrangers() {
+        service.join("123456", ANA, "s1", "Ana");
+        room.getPlayers().get(ANA).setConnected(false);
 
-        assertDoesNotThrow(() -> quizService.handleDisconnect("ghost"));
-        verify(playerRepository, never()).delete(any());
+        service.resume("123456", ANA, "s5");
+        assertTrue(room.getPlayers().get(ANA).isConnected());
+
+        service.resume("123456", HOST, "s6");
+        verify(store).bindSession("s6", "123456", HOST);
+        assertThrows(NotFoundException.class, () -> service.resume("123456", BEN, "s7"));
+    }
+
+    @Test
+    void disconnect_removesLobbyPlayersAndMarksInGamePlayersOffline() {
+        service.join("123456", ANA, "s1", "Ana");
+        service.join("123456", BEN, "s2", "Ben");
+        when(store.unbindSession("s1")).thenReturn(Optional.of(new String[] {"123456", ANA}));
+
+        service.disconnect("s1");
+        assertEquals(1, room.getPlayers().size());
+
+        service.start("123456", HOST);
+        when(store.unbindSession("s2")).thenReturn(Optional.of(new String[] {"123456", BEN}));
+        service.disconnect("s2");
+
+        assertEquals(false, room.getPlayers().get(BEN).isConnected());
+    }
+
+    @Test
+    void disconnect_closesQuestionWhenTheLastWaitingPlayerLeaves() {
+        service.join("123456", ANA, "s1", "Ana");
+        service.join("123456", BEN, "s2", "Ben");
+        service.start("123456", HOST);
+        service.answer("123456", ANA, new AnswerReq(1, null, null));
+        when(store.unbindSession("s2")).thenReturn(Optional.of(new String[] {"123456", BEN}));
+
+        service.disconnect("s2");
+
+        assertEquals(QuizState.REVEAL, room.getState());
+    }
+
+    @Test
+    void disconnect_ignoresUnknownSessionsPlayersAndMissingRooms() {
+        when(store.unbindSession("none")).thenReturn(Optional.empty());
+        service.disconnect("none");
+
+        when(store.unbindSession("s1")).thenReturn(Optional.of(new String[] {"123456", BEN}));
+        service.disconnect("s1");
+
+        when(store.unbindSession("s3")).thenReturn(Optional.of(new String[] {"999999", BEN}));
+        when(store.update(eq("999999"), any())).thenThrow(new NotFoundException("gone"));
+        service.disconnect("s3");
+
+        verify(publisher, never()).publish(null);
+    }
+
+    // ---------------------------------------------------------------- fixtures
+
+    private RoomState lobby() {
+        RoomState state = new RoomState();
+        state.setCode("123456");
+        state.setHostId(HOST);
+        state.setHostName("Host");
+        state.setTitle("Biology");
+        state.setMaxPlayers(20);
+        state.setQuestionSeconds(20);
+        state.getQuestions().add(single());
+        state.getQuestions().add(single());
+        return state;
+    }
+
+    private static Question single() {
+        Question question = new Question();
+        question.setId("q");
+        question.setText("Pick b");
+        question.setType("SINGLE_CHOICE");
+        question.setOptions(List.of("a", "b"));
+        question.setCorrectIndex(1);
+        return question;
+    }
+
+    private static Question multi() {
+        Question question = new Question();
+        question.setId("m");
+        question.setText("Pick a and c");
+        question.setType("MULTIPLE_CHOICE");
+        question.setOptions(List.of("a", "b", "c"));
+        question.setCorrectIndexes(List.of(0, 2));
+        return question;
+    }
+
+    private static Question blank() {
+        Question question = new Question();
+        question.setId("b");
+        question.setText("Capital of France is ___");
+        question.setType("FILL_IN_THE_BLANK");
+        question.setAcceptedAnswers(List.of("Paris"));
+        return question;
+    }
+
+    private static QuestionEntity question(QuestionType type, String metadata) {
+        QuestionEntity entity =
+                QuestionEntity.builder().text("Q").type(type).metadata(metadata).build();
+        entity.setId(UUID.randomUUID());
+        return entity;
+    }
+
+    /** Clock the tests move by hand. */
+    private static final class MutableClock extends Clock {
+        private long now = 1_000_000L;
+
+        void advance(long millis) {
+            now += millis;
+        }
+
+        @Override
+        public java.time.ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(java.time.ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return Instant.ofEpochMilli(now);
+        }
+
+        @Override
+        public long millis() {
+            return now;
+        }
     }
 }
