@@ -25,6 +25,7 @@ import { ApiService } from '@/services/api';
 import {
     CloneSubjectModal,
     ImportCardsModal,
+    HostGameModal,
     ShelfModal,
     SubjectModal,
     TestSuiteModal,
@@ -70,6 +71,9 @@ export default function ShelfPage() {
         null
     );
     const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
+    const [hostingTestSuite, setHostingTestSuite] = useState<TestSuite | null>(
+        null
+    );
     const [isTestSuiteModalOpen, setIsTestSuiteModalOpen] = useState(false);
     const [editingTestSuite, setEditingTestSuite] = useState<TestSuite | null>(
         null
@@ -446,6 +450,7 @@ export default function ShelfPage() {
                 onTake={(suite) =>
                     router.push(`/home/${shelf.slug}/tests/${suite.slug}/take`)
                 }
+                onHost={setHostingTestSuite}
                 onEdit={(suite) => {
                     setEditingTestSuite(suite);
                     setIsTestSuiteModalOpen(true);
@@ -461,6 +466,13 @@ export default function ShelfPage() {
                         setEditingTestSuite(null);
                     }}
                     onSave={handleSaveTestSuite}
+                />
+            )}
+            {hostingTestSuite && (
+                <HostGameModal
+                    shelfId={shelf.id}
+                    testSuite={hostingTestSuite}
+                    onClose={() => setHostingTestSuite(null)}
                 />
             )}
             {isShelfModalOpen && (

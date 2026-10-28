@@ -8,6 +8,7 @@ import {
     Plus,
     Trash2,
     Trophy,
+    Users,
 } from 'lucide-react';
 import { TestSuite } from '@/types';
 
@@ -16,6 +17,7 @@ interface TestSuiteListProps {
     onCreate: () => void;
     onOpen: (suite: TestSuite) => void;
     onTake: (suite: TestSuite) => void;
+    onHost: (suite: TestSuite) => void;
     onEdit: (suite: TestSuite) => void;
     onDelete: (suite: TestSuite) => void;
 }
@@ -25,6 +27,7 @@ export default function TestSuiteList({
     onCreate,
     onOpen,
     onTake,
+    onHost,
     onEdit,
     onDelete,
 }: Readonly<TestSuiteListProps>) {
@@ -116,21 +119,38 @@ export default function TestSuiteList({
                                     </span>
                                 )}
                             </div>
-                            <button
-                                type="button"
-                                data-testid={`btn-take-test-suite-${suite.id}`}
-                                disabled={suite.questionCount === 0}
-                                onClick={() => onTake(suite)}
-                                title={
-                                    suite.questionCount === 0
-                                        ? 'Add questions first'
-                                        : undefined
-                                }
-                                className="mt-auto w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                                <Play className="w-3.5 h-3.5 fill-white" />
-                                Take test
-                            </button>
+                            <div className="mt-auto flex gap-2">
+                                <button
+                                    type="button"
+                                    data-testid={`btn-take-test-suite-${suite.id}`}
+                                    disabled={suite.questionCount === 0}
+                                    onClick={() => onTake(suite)}
+                                    title={
+                                        suite.questionCount === 0
+                                            ? 'Add questions first'
+                                            : undefined
+                                    }
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    <Play className="w-3.5 h-3.5 fill-white" />
+                                    Take test
+                                </button>
+                                <button
+                                    type="button"
+                                    data-testid={`btn-host-test-suite-${suite.id}`}
+                                    disabled={suite.questionCount === 0}
+                                    onClick={() => onHost(suite)}
+                                    title={
+                                        suite.questionCount === 0
+                                            ? 'Add questions first'
+                                            : undefined
+                                    }
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    <Users className="w-3.5 h-3.5" />
+                                    Quizzly
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>

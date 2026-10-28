@@ -1,12 +1,13 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Users, X } from 'lucide-react';
+import { Users, X } from 'lucide-react';
 import { ApiService } from '@/services/api';
 import { QuizMode, TestSuite } from '@/types';
 
 interface HostGameModalProps {
     shelfId: string;
+    testSuite: TestSuite;
     onClose: () => void;
 }
 
@@ -14,39 +15,21 @@ const SECONDS = [10, 20, 30, 60];
 
 export default function HostGameModal({
     shelfId,
+    testSuite,
     onClose,
 }: HostGameModalProps) {
     const router = useRouter();
-    const [suites, setSuites] = useState<TestSuite[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [suiteId, setSuiteId] = useState('');
     const [mode, setMode] = useState<QuizMode>('MANUAL');
     const [seconds, setSeconds] = useState(20);
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        let cancelled = false;
-        void ApiService.getTestSuites(shelfId).then((res) => {
-            if (cancelled) return;
-            const hostable = (res.isSuccess ? (res.data ?? []) : []).filter(
-                (s) => s.questionCount > 0
-            );
-            setSuites(hostable);
-            setSuiteId(hostable[0]?.id ?? '');
-            setIsLoading(false);
-        });
-        return () => {
-            cancelled = true;
-        };
-    }, [shelfId]);
 
     const host = async () => {
         setIsCreating(true);
         setError(null);
         const res = await ApiService.createQuizRoom({
             shelfId,
-            testSuiteId: suiteId,
+            testSuiteId: testSuite.id,
             mode,
             questionSeconds: seconds,
         });
@@ -72,10 +55,11 @@ export default function HostGameModal({
                         </div>
                         <div>
                             <h2 className="text-base font-bold text-stone-900 dark:text-stone-100">
-                                Host a Live Game
+                                Quizzly
                             </h2>
                             <p className="text-xs text-stone-500 dark:text-stone-400">
-                                Pick a test and let others join with a PIN or QR
+                                Host “{testSuite.title}” and let others join
+                                with a PIN or QR
                             </p>
                         </div>
                     </div>
@@ -90,96 +74,54 @@ export default function HostGameModal({
                 </div>
 
                 <div className="pt-5 space-y-5">
-                    {isLoading ? (
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-stone-400" />
-                    ) : suites.length === 0 ? (
-                        <p
-                            data-testid="host-game-empty"
-                            className="text-sm text-stone-500 text-center"
-                        >
-                            This deck has no tests with questions yet. Create a
-                            test first, then host it.
-                        </p>
-                    ) : (
-                        <>
-                            <fieldset className="space-y-2">
-                                <legend className="text-xs font-bold text-stone-500 mb-1">
-                                    Test
-                                </legend>
-                                <div className="max-h-44 overflow-y-auto space-y-2">
-                                    {suites.map((suite) => (
-                                        <label
-                                            key={suite.id}
-                                            className={`flex items-center justify-between gap-3 rounded-xl border p-3 text-sm font-bold cursor-pointer ${
-                                                suiteId === suite.id
-                                                    ? 'border-[var(--theme-accent)] bg-stone-50 dark:bg-stone-800'
-                                                    : 'border-stone-200 dark:border-stone-700'
-                                            }`}
-                                        >
-                                            <span className="truncate text-stone-900 dark:text-stone-100">
-                                                {suite.title}
-                                            </span>
-                                            <span className="text-xs text-stone-500 shrink-0">
-                                                {suite.questionCount} questions
-                                            </span>
-                                            <input
-                                                type="radio"
-                                                name="host-suite"
-                                                data-testid={`host-suite-${suite.id}`}
-                                                className="sr-only"
-                                                checked={suiteId === suite.id}
-                                                onChange={() =>
-                                                    setSuiteId(suite.id)
-                                                }
-                                            />
-                                        </label>
-                                    ))}
-                                </div>
-                            </fieldset>
+                    <div className="space-y-5">
+                        <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--theme-accent)] bg-stone-50 dark:bg-stone-800 p-3 text-sm font-bold">
+                            <span className="truncate text-stone-900 dark:text-stone-100">
+                                {testSuite.title}
+                            </span>
+                            <span className="text-xs text-stone-500 shrink-0">
+                                {testSuite.questionCount} questions
+                            </span>
+                        </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-xs font-bold text-stone-500 mb-1">
-                                        Progression
-                                    </p>
-                                    <select
-                                        data-testid="host-mode-select"
-                                        value={mode}
-                                        onChange={(e) =>
-                                            setMode(e.target.value as QuizMode)
-                                        }
-                                        className="w-full rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 p-2.5 text-sm font-bold text-stone-900 dark:text-stone-100"
-                                    >
-                                        <option value="MANUAL">
-                                            Manual next
-                                        </option>
-                                        <option value="AUTO">
-                                            Auto advance
-                                        </option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-stone-500 mb-1">
-                                        Time per question
-                                    </p>
-                                    <select
-                                        data-testid="host-seconds-select"
-                                        value={seconds}
-                                        onChange={(e) =>
-                                            setSeconds(Number(e.target.value))
-                                        }
-                                        className="w-full rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 p-2.5 text-sm font-bold text-stone-900 dark:text-stone-100"
-                                    >
-                                        {SECONDS.map((s) => (
-                                            <option key={s} value={s}>
-                                                {s} seconds
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-xs font-bold text-stone-500 mb-1">
+                                    Progression
+                                </p>
+                                <select
+                                    data-testid="host-mode-select"
+                                    value={mode}
+                                    onChange={(e) =>
+                                        setMode(e.target.value as QuizMode)
+                                    }
+                                    className="w-full rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 p-2.5 text-sm font-bold text-stone-900 dark:text-stone-100"
+                                >
+                                    <option value="MANUAL">Manual next</option>
+                                    <option value="AUTO">Auto advance</option>
+                                </select>
                             </div>
-                        </>
-                    )}
+                            <div>
+                                <p className="text-xs font-bold text-stone-500 mb-1">
+                                    Time per question
+                                </p>
+                                <select
+                                    data-testid="host-seconds-select"
+                                    value={seconds}
+                                    onChange={(e) =>
+                                        setSeconds(Number(e.target.value))
+                                    }
+                                    className="w-full rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 p-2.5 text-sm font-bold text-stone-900 dark:text-stone-100"
+                                >
+                                    {SECONDS.map((s) => (
+                                        <option key={s} value={s}>
+                                            {s} seconds
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
 
                     {error && (
                         <p
@@ -202,7 +144,7 @@ export default function HostGameModal({
                         <button
                             type="button"
                             data-testid="btn-host-game-submit"
-                            disabled={!suiteId || isCreating}
+                            disabled={isCreating}
                             onClick={host}
                             className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl disabled:opacity-50 cursor-pointer"
                         >

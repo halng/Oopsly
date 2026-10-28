@@ -245,16 +245,6 @@ test.describe('Subject details screen', () => {
         await expect(page.getByTestId('subject-schedule-modal')).toHaveCount(0);
     });
 
-    test('the host button opens the host-game dialog and it can be closed', async ({
-        page,
-    }) => {
-        await page.goto('/home/biology/subjects/cell-biology');
-        await page.getByTestId('btn-subject-host').click();
-        await expect(page.getByTestId('host-game-modal')).toBeVisible();
-        await page.getByTestId('btn-host-game-close').click();
-        await expect(page.getByTestId('host-game-modal')).toHaveCount(0);
-    });
-
     test('cancelling an edit keeps the card unchanged', async ({
         page,
         mock,

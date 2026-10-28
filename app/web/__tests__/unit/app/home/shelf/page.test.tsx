@@ -38,6 +38,11 @@ vi.mock('@/components/shared', () => ({
     TestSuiteModal: ({ onClose }: { onClose: () => void }) => (
         <button onClick={onClose}>Close test suite modal</button>
     ),
+    HostGameModal: ({ onClose }: { onClose: () => void }) => (
+        <div data-testid="host-game-modal">
+            <button data-testid="btn-host-game-close" onClick={onClose} />
+        </div>
+    ),
     ImportCardsModal: () => <div data-testid="import-cards-modal" />,
     CloneSubjectModal: ({ isOpen }: { isOpen: boolean }) =>
         isOpen ? <div data-testid="clone-subject-modal" /> : null,
@@ -93,6 +98,9 @@ describe('ShelfPage', () => {
         fireEvent.click(screen.getByTestId('btn-learn-sub1'));
         fireEvent.click(screen.getByTestId('btn-match-sub1'));
         fireEvent.click(screen.getByTestId('btn-take-test-suite-ts1'));
+        fireEvent.click(screen.getByTestId('btn-host-test-suite-ts1'));
+        expect(screen.getByTestId('host-game-modal')).toBeInTheDocument();
+        fireEvent.click(screen.getByTestId('btn-host-game-close'));
         fireEvent.click(screen.getByTestId('btn-back-to-shelves'));
         expect(push).toHaveBeenCalledWith(
             '/home/science/subjects/biology/review'
