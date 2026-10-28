@@ -13,7 +13,7 @@ RUN useradd --system --no-create-home appuser \
     && chown -R appuser /app
 USER appuser
 
-ENV PORT=8000
-EXPOSE 8000
+ENV PORT=9008
+EXPOSE 9008
 
 CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
