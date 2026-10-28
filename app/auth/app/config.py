@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     test_emails: str = ""
     internal_api_key: str = ""
 
-    allowed_origins: str = "http://localhost:3000,http://localhost:8081"
+    allowed_origins: str = "http://localhost:8080,http://localhost:8081"
 
     def database_url_normalized(self) -> str:
         url = self.database_url

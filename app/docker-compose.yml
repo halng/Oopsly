@@ -27,35 +27,8 @@ services:
       - app-network
     restart: unless-stopped
 
-  auth:
-    build: ./auth
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    environment:
-      APP_ENV: dev
-      PORT: "9010"
-      DB_HOST: postgres
-      DB_USERNAME: ${POSTGRES_USER:-postgres}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      DB_NAME: ${POSTGRES_DB:-oopsly}
-      REDIS_HOST: redis
-      # Must match AUTH_INTERNAL_KEY used by app/api.
-      INTERNAL_API_KEY: ${AUTH_INTERNAL_KEY:-changeme}
-      TEST_EMAILS: ${TEST_EMAILS:-test@oopsly.dev}
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:8081
-    ports:
-      - "9010:9010"
-    networks:
-      - app-network
-    restart: unless-stopped
-
   nginx:
     build: ./nginx
-    depends_on:
-      - auth
     ports:
       - "8080:80"
     extra_hosts:
