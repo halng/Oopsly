@@ -53,18 +53,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String requestPlatform = request.getHeader("X-Platform");
         MDC.put("XID", requestId);
         MDC.put("XP", requestPlatform);
-        LOGGER.info("Filtering request: {}", request.getRequestURI());
+        LOGGER.debug("Filtering request: {}", request.getRequestURI());
         final String authHeader = request.getHeader("authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            LOGGER.warn("Authorization header not present");
+            LOGGER.debug(
+                    "No bearer token on {} {}; continuing unauthenticated",
+                    request.getMethod(),
+                    request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
 
         String jwt = authHeader.substring(7);
         try {
-            LOGGER.info("Attempting to authenticate using jwt");
             String userId = jwtVerifier.extractUserId(jwt);
             String userRole = jwtVerifier.extractUserRole(jwt);
 
@@ -75,12 +77,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 userId, null, List.of((GrantedAuthority) () -> userRole));
                 authToken.setDetails(jwtVerifier.extractPlan(jwt));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                LOGGER.info("User {} authenticated with role {}", userId, userRole);
+                MDC.put("user", userId);
+                LOGGER.debug("Authenticated user {} with role {}", userId, userRole);
             }
             filterChain.doFilter(request, response);
         } catch (Exception e) {
-            LOGGER.error(
-                    "JWT authentication failed with exception {} and message: {}",
+            LOGGER.warn(
+                    "Rejected token on {} {} | {}: {}",
+                    request.getMethod(),
+                    request.getRequestURI(),
                     e.getClass().getSimpleName(),
                     e.getMessage());
             sendErrorResponse(response, "EXPIRED_OR_INVALID_JWT");
@@ -91,7 +96,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private void sendErrorResponse(HttpServletResponse response, String message)
             throws IOException {
-        LOGGER.info("Sending error response: {}", message);
+        LOGGER.debug("Sending error response: {}", message);
         if (response.isCommitted()) {
             LOGGER.warn("Response already committed; skipping error response write");
             return;

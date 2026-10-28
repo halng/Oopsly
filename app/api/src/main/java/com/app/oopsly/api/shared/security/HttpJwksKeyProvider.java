@@ -100,6 +100,7 @@ public class HttpJwksKeyProvider implements JwksKeyProvider {
         lastAttemptMs = now;
         try {
             keys = parse(fetcher.fetch());
+            LOGGER.info("Loaded {} JWKS signing key(s): {}", keys.size(), keys.keySet());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.warn("JWKS fetch interrupted; keeping cached keys");

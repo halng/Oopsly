@@ -148,7 +148,7 @@ public class ShelfServiceImpl implements ShelfService {
         log.info("Fetching shelves page {} size {} for user {}", page, size, currentUser.id());
         int querryPage = page - 1;
         if (querryPage < 0) {
-            log.error("Invalid page number");
+            log.warn("Invalid page number {} (pages start at 1); user {}", page, currentUser.id());
         }
         Pageable pageable = PageRequest.of(querryPage, size);
         Page<Shelf> pageData = shelfRepository.findAllByUserId(currentUser.id(), pageable);
@@ -250,26 +250,26 @@ public class ShelfServiceImpl implements ShelfService {
 
     // Fallback method for getAll
     public ApiRes getAllFallback(int page, int size, Throwable t) {
-        log.error("Shelve service unavailable during getAll: {}", t.getMessage());
+        log.error("Shelve service unavailable during getAll: {}", t.toString());
         throw new RetryLaterException(
                 "Shelve service is currently unavailable. Please try again later.", t);
     }
 
     // Fallback method for getById
     public ApiRes getByIdFallback(UUID id, Throwable t) {
-        log.error("Shelve service unavailable during getById: {}", t.getMessage());
+        log.error("Shelve service unavailable during getById: {}", t.toString());
         throw unwrapShelfException(t);
     }
 
     // Fallback method for delete
     public ApiRes deleteFallback(UUID id, Throwable t) {
-        log.error("Shelve service unavailable during delete: {}", t.getMessage());
+        log.error("Shelve service unavailable during delete: {}", t.toString());
         throw unwrapShelfException(t);
     }
 
     // Fallback method for update
     public ApiRes updateFallback(ShelfReq request, UUID id, Throwable t) {
-        log.error("Shelve service unavailable during update: {}", t.getMessage());
+        log.error("Shelve service unavailable during update: {}", t.toString());
         throw unwrapShelfException(t);
     }
 

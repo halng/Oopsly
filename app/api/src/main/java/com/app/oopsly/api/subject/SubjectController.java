@@ -72,7 +72,7 @@ public class SubjectController {
             @Parameter(description = "Subject creation request", required = true)
                     @Valid @RequestBody
                     SubjectReq requestBody) {
-        log.info("Creating subject for shelve: {}", shelfId);
+        log.debug("Creating subject for shelve: {}", shelfId);
         return subjectService.create(shelfId, requestBody);
     }
 
@@ -103,7 +103,7 @@ public class SubjectController {
             @Parameter(description = "Page size", required = true, example = "10")
                     @RequestParam
                     @Min(value = 1, message = "Size must be greater than 0") int size) {
-        log.info(
+        log.debug(
                 "Getting all subjects for shelf: {} with page: {} and size: {}",
                 shelfId,
                 page,
@@ -140,7 +140,7 @@ public class SubjectController {
                     UUID id,
             @Parameter(description = "Subject update request", required = true) @Valid @RequestBody
                     SubjectReq requestBody) {
-        log.info("Updating subject: {} in shelve: {}", id, shelfId);
+        log.debug("Updating subject: {} in shelve: {}", id, shelfId);
         return subjectService.update(shelfId, id, requestBody);
     }
 
@@ -161,7 +161,7 @@ public class SubjectController {
             @Parameter(description = "Subject Setting update request", required = true)
                     @Valid @RequestBody
                     SubjectSettingReq requestBody) {
-        log.info("Updating Setting for subject: {} in shelve: {}", id, shelfId);
+        log.debug("Updating Setting for subject: {} in shelve: {}", id, shelfId);
         return subjectService.updateSetting(shelfId, id, requestBody);
     }
 
@@ -191,7 +191,7 @@ public class SubjectController {
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
                     UUID id) {
-        log.info("Getting subject: {} from shelve: {}", id, shelfId);
+        log.debug("Getting subject: {} from shelve: {}", id, shelfId);
         return subjectService.getById(shelfId, id);
     }
 
@@ -221,7 +221,7 @@ public class SubjectController {
                             example = "123e4567-e89b-12d3-a456-426614174001")
                     @PathVariable
                     UUID id) {
-        log.info("Deleting subject: {} from shelve: {}", id, shelfId);
+        log.debug("Deleting subject: {} from shelve: {}", id, shelfId);
         return subjectService.delete(shelfId, id);
     }
 }

@@ -53,7 +53,7 @@ public class DuePracticeController {
             })
     @GetMapping("/due")
     public ApiRes getDueCards() {
-        log.info("Getting due cards across all subjects for the current user");
+        log.debug("Getting due cards across all subjects for the current user");
         return cardService.getDueCardsForCurrentUser();
     }
 }

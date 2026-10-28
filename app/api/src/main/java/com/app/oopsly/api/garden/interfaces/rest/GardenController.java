@@ -66,7 +66,7 @@ public class GardenController {
             })
     @GetMapping("")
     public ApiRes getGarden() {
-        log.info("Fetching garden of current user");
+        log.debug("Fetching garden of current user");
         return gardenService.getGarden();
     }
 
@@ -88,7 +88,7 @@ public class GardenController {
     public ApiRes plantSeed(
             @Parameter(description = "Plant seed request", required = true) @Valid @RequestBody
                     PlantSeedReq requestBody) {
-        log.info("Planting {} on plot {}", requestBody.species(), requestBody.plotIndex());
+        log.debug("Planting {} on plot {}", requestBody.species(), requestBody.plotIndex());
         return gardenService.plantSeed(requestBody);
     }
 
@@ -108,7 +108,7 @@ public class GardenController {
     public ApiRes waterTree(
             @Parameter(description = "Water plant request", required = true) @Valid @RequestBody
                     WaterTreeReq requestBody) {
-        log.info("Watering plant {}", requestBody.treeId());
+        log.debug("Watering plant {}", requestBody.treeId());
         return gardenService.waterTree(requestBody);
     }
 
@@ -126,7 +126,7 @@ public class GardenController {
     public ApiRes unlockPlot(
             @Parameter(description = "Unlock plot request", required = true) @Valid @RequestBody
                     UnlockPlotReq requestBody) {
-        log.info("Unlocking plot {}", requestBody.plotIndex());
+        log.debug("Unlocking plot {}", requestBody.plotIndex());
         return gardenService.unlockPlot(requestBody);
     }
 
@@ -146,7 +146,7 @@ public class GardenController {
             @Parameter(description = "Completed Pomodoro session", required = true)
                     @Valid @RequestBody
                     CompletePomodoroReq requestBody) {
-        log.info("Completing Pomodoro session of {} minutes", requestBody.focusDurationMinutes());
+        log.debug("Completing Pomodoro session of {} minutes", requestBody.focusDurationMinutes());
         return gardenService.completePomodoroSession(requestBody);
     }
 }
