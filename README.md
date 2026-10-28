@@ -358,7 +358,7 @@ cd app/api
 
 - Base URL: `http://localhost:9009/api/oopsly`
 - Swagger: `http://localhost:9009/api/oopsly/swagger-ui/index.html`
-- Allowed browser origins come from `ALLOWED_ORIGINS` (default `http://localhost:3000,http://localhost:8081`); the live quiz socket answers 403 for any other origin.
+- Allowed browser origins come from `ALLOWED_ORIGINS` (default `http://localhost:3000,http://localhost:8080,http://localhost:8081`); the live quiz socket answers 403 for any other origin.
 
 #### 3. Game service
 

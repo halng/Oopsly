@@ -6,7 +6,7 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/oopsly"
     jwks_url: str = "http://localhost:9010/.well-known/pub.json"
-    cors_origins: str = "http://localhost:3000,http://localhost:8081"
+    cors_origins: str = "http://localhost:3000,http://localhost:8080,http://localhost:8081"
 
     def database_url_normalized(self) -> str:
         url = self.database_url
