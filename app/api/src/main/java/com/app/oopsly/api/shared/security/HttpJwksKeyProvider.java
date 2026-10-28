@@ -17,6 +17,7 @@
 package com.app.oopsly.api.shared.security;
 
 import com.app.oopsly.api.config.AppConfig;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.JwtException;
@@ -26,6 +27,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.RSAPublicKeySpec;
@@ -101,12 +103,13 @@ public class HttpJwksKeyProvider implements JwksKeyProvider {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.warn("JWKS fetch interrupted; keeping cached keys");
-        } catch (Exception e) {
+        } catch (IOException | GeneralSecurityException | RuntimeException e) {
             LOGGER.warn("JWKS fetch failed; keeping cached keys: {}", e.getMessage());
         }
     }
 
-    private Map<String, RSAPublicKey> parse(String body) throws Exception {
+    private Map<String, RSAPublicKey> parse(String body)
+            throws JsonProcessingException, GeneralSecurityException {
         Map<String, RSAPublicKey> parsed = new HashMap<>();
         KeyFactory factory = KeyFactory.getInstance("RSA");
         Base64.Decoder decoder = Base64.getUrlDecoder();
