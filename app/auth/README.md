@@ -23,6 +23,9 @@ uvicorn app.main:app --port 9010
 ruff check . && ruff format --check . && python -m pytest -q --cov=app   # fails below 95% coverage
 ```
 
+`alembic upgrade head` creates the `auth` schema itself. If the application role cannot create schemas, run
+`psql "$DATABASE_URL" -v app_user=<role> -f scripts/create_schema.sql` once as a privileged role first.
+
 ## Endpoints (`/api/auth`)
 
 | Method | Path | Auth |

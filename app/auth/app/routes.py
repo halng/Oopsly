@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Body, Depends, Request
 from fastapi.responses import JSONResponse
 
@@ -25,6 +27,8 @@ JWKS_PATH = "/.well-known/pub.json"
 JWKS_MAX_AGE_SECONDS = 300
 MAX_PATCH_BYTES = 1 << 20
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix=CONTEXT_PATH)
 # Served at the root as well: verifiers are configured with a plain host.
 root_router = APIRouter()
@@ -42,8 +46,14 @@ router.add_api_route("/actuator/health", _health, tags=["health"])
 @router.get(JWKS_PATH, tags=["jwks"])
 def jwks(keys: KeyStore = Depends(get_key_store)):
     """Public keys of every signing key whose tokens may still be valid."""
+    document = keys.jwks()
+    logger.info(
+        "JWKS served: %d key(s) %s",
+        len(document["keys"]),
+        [k["kid"] for k in document["keys"]],
+    )
     return JSONResponse(
-        keys.jwks(),
+        document,
         headers={"Cache-Control": f"public, max-age={JWKS_MAX_AGE_SECONDS}"},
     )
 
