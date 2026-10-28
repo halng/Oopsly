@@ -1,10 +1,6 @@
-import time
-
-import jwt
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from app.auth import signing_key
 from app.main import app
 from app.models import Tree
 
@@ -15,12 +11,8 @@ def test_missing_token_is_rejected(session_factory):
     assert response.status_code == 401
 
 
-def test_valid_access_token_opens_a_starter_garden(session_factory):
-    token = jwt.encode(
-        {"id": "user-9", "sub": "learner@oopsly.app", "exp": int(time.time()) + 60},
-        signing_key(),
-        algorithm="HS256",
-    )
+def test_valid_access_token_opens_a_starter_garden(session_factory, make_token):
+    token = make_token(id="user-9", sub="learner@oopsly.app")
     with TestClient(app) as test_client:
         response = test_client.get(
             "/v1/game/garden",
@@ -139,16 +131,12 @@ def test_locked_plot_needs_coins(client, session_factory):
     assert opened.json()["data"]["forestCoins"] == 0
 
 
-def test_socket_waters_and_rejects_a_second_pour_without_dew(client):
+def test_socket_waters_and_rejects_a_second_pour_without_dew(client, make_token):
     planted = client.post(
         "/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 0}
     )
     tree_id = planted.json()["data"]["plantedTrees"][0]["id"]
-    token = jwt.encode(
-        {"id": "user-1", "sub": "learner@oopsly.app", "exp": int(time.time()) + 60},
-        signing_key(),
-        algorithm="HS256",
-    )
+    token = make_token(id="user-1", sub="learner@oopsly.app")
     with client.websocket_connect(f"/v1/game/ws?token={token}") as socket:
         ready = socket.receive_json()
         assert ready["type"] == "ready"

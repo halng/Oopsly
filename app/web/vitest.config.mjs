@@ -14,6 +14,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['html', 'lcov'],
+      // Sonar still needs lcov.info when a test fails (vitest skips the report by default).
+      reportOnFailure: true,
       // No threshold here: the 90% gate is on unit + integration combined,
       // see scripts/check-coverage.mjs (pnpm run coverage:check).
       include: ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'hooks/**/*.{ts,tsx}', 'utils/**/*.{ts,tsx}', 'store/**/*.{ts,tsx}', 'services/**/*.{ts,tsx}', 'game/**/*.{ts,tsx}'],

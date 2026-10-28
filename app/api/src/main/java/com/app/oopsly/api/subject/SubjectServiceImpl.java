@@ -364,31 +364,31 @@ public class SubjectServiceImpl implements SubjectService {
     // Fallback methods for Circuit Breaker
     // Fallback method for getAllByShelve
     public ApiRes getAllByShelveFallback(UUID shelfId, int page, int size, Throwable t) {
-        log.error("Subject service unavailable during getAllByShelve: {}", t.getMessage());
+        log.error("Subject service unavailable during getAllByShelve: {}", t.toString());
         throw unwrapSubjectException(t);
     }
 
     // Fallback method for getById
     public ApiRes getByIdFallback(UUID shelfId, UUID subjectId, Throwable t) {
-        log.error("Subject service unavailable during getById: {}", t.getMessage());
+        log.error("Subject service unavailable during getById: {}", t.toString());
         throw unwrapSubjectException(t);
     }
 
     // Fallback method for delete
     public ApiRes deleteFallback(UUID shelfId, UUID subjectId, Throwable t) {
-        log.error("Subject service unavailable during delete: {}", t.getMessage());
+        log.error("Subject service unavailable during delete: {}", t.toString());
         throw unwrapSubjectException(t);
     }
 
     // Fallback method for update
     public ApiRes updateFallback(UUID shelfId, UUID subjectId, SubjectReq request, Throwable t) {
-        log.error("Subject service unavailable during update: {}", t.getMessage());
+        log.error("Subject service unavailable during update: {}", t.toString());
         throw unwrapSubjectException(t);
     }
 
     // Fallback method for create
     public ApiRes createFallback(UUID shelfId, SubjectReq request, Throwable t) {
-        log.error("Subject service unavailable during create: {}", t.getMessage());
+        log.error("Subject service unavailable during create: {}", t.toString());
         throw unwrapSubjectException(t);
     }
 

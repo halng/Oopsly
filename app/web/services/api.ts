@@ -27,6 +27,7 @@ import {
     QuizRoomView,
 } from '../types';
 import { offlineDb } from './offlineDb';
+import { installTokenRefresh } from './tokenRefresh';
 import { syncManager } from './syncManager';
 import { ulid } from 'ulid';
 import slugify from 'slugify';
@@ -59,24 +60,28 @@ export interface GradeResult {
  * NEXT_PUBLIC_AUTH_URL. When a variable is not set, requests fall back to
  * same-origin relative paths (e.g. the Next.js dev server or a gateway).
  */
+const SESSION_EXPIRED_MESSAGE =
+    'Your session has expired. Please sign in again.';
+
+/** True once a failed refresh has signed the user out. */
+function isSessionGone() {
+    return useAuthStore.getState().sessionExpired;
+}
+
 function createClient(baseURL: string | undefined) {
     const client = axios.create({
         baseURL: baseURL || undefined,
         timeout: 15000,
         headers: {
             'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
         },
     });
 
-    // Attach the access token (when authenticated) to every outgoing request.
-    client.interceptors.request.use((config) => {
-        if (typeof window !== 'undefined') {
-            const { accessToken } = useAuthStore.getState();
-            if (accessToken) {
-                config.headers.Authorization = `Bearer ${accessToken}`;
-            }
-        }
+    // Attach the access token, refresh it before it expires and replay a 401 once.
+    installTokenRefresh(client);
 
+    client.interceptors.request.use((config) => {
         config.headers['X-Request-ID'] = ulid();
         config.headers['X-Platform'] = 'WEB';
         return config;
@@ -86,6 +91,9 @@ function createClient(baseURL: string | undefined) {
     client.interceptors.response.use(
         (response) => response,
         (error: AxiosError<ApiResponse<unknown>>) => {
+            if (error.response?.status === 401 && isSessionGone()) {
+                return Promise.reject(new Error(SESSION_EXPIRED_MESSAGE));
+            }
             if (error.response) {
                 // The server answered with a non-2xx status — prefer the API's own message.
                 const message =

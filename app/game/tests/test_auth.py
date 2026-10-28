@@ -2,72 +2,174 @@ import time
 
 import jwt
 import pytest
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 
-from app.auth import signing_key, verify_access_token
-from app.config import settings
+from app.auth import verify_access_token
+from app.jwks import JwksCache
 from app.main import app
+from tests.tokens import jwk_for, new_key, sign
 
 
-def _token(**claims):
-    payload = {"exp": int(time.time()) + 60, **claims}
-    return jwt.encode(payload, signing_key(), algorithm="HS256")
+class FakeJwks:
+    def __init__(self, *keys, fail=False):
+        self.keys = list(keys)
+        self.fail = fail
+        self.calls = 0
+
+    def __call__(self, url, timeout):
+        self.calls += 1
+        if self.fail:
+            raise RuntimeError("auth service down")
+        return {"keys": [jwk_for(key, kid) for kid, key in self.keys]}
 
 
-def test_java_hs384_access_token_verifies():
-    token = jwt.encode(
-        {
-            "id": "user-9",
-            "sub": "test@oopsly.com",
-            "role": "USER",
-            "exp": int(time.time()) + 60,
-        },
-        signing_key(),
-        algorithm="HS384",
-    )
-    result = verify_access_token(token)
-    assert result.user_id == "user-9"
-    assert result.email == "test@oopsly.com"
-    assert result.role == "USER"
+class Clock:
+    def __init__(self):
+        self.now = 1000.0
+
+    def __call__(self):
+        return self.now
 
 
-def test_verify_returns_id_email_and_role():
+def test_access_token_verifies(make_token):
     result = verify_access_token(
-        _token(id="user-9", sub="learner@oopsly.app", role="USER")
+        make_token(id="user-9", sub="test@oopsly.com", role="USER")
     )
     assert result.as_dict() == {
         "userId": "user-9",
-        "email": "learner@oopsly.app",
+        "email": "test@oopsly.com",
         "role": "USER",
     }
 
 
-def test_verify_rejects_expired_bad_signature_and_missing_id():
-    expired = jwt.encode(
-        {"id": "user-9", "sub": "learner@oopsly.app", "exp": int(time.time()) - 10},
-        signing_key(),
-        algorithm="HS256",
-    )
-    forged = jwt.encode(
-        {"id": "user-9", "exp": int(time.time()) + 60},
-        b"not-the-shared-secret-key-at-least-32b",
-        algorithm="HS256",
-    )
-    nameless = _token(sub="learner@oopsly.app")
+def test_verify_rejects_expired_forged_and_missing_id(rsa_key, make_token):
+    expired = sign(rsa_key, id="user-9", exp=int(time.time()) - 10)
+    forged = sign(new_key(), id="user-9")
     with pytest.raises(jwt.PyJWTError):
         verify_access_token(expired)
     with pytest.raises(jwt.PyJWTError):
         verify_access_token(forged)
     with pytest.raises(jwt.PyJWTError):
-        verify_access_token(nameless)
+        verify_access_token(make_token(sub="learner@oopsly.app"))
     with pytest.raises(jwt.PyJWTError):
         verify_access_token("not-a-token")
 
 
-def test_session_route_returns_the_verified_result(session_factory):
-    token = _token(id="user-9", sub="learner@oopsly.app", role="USER")
+def test_verify_requires_exp(rsa_key):
+    token = jwt.encode(
+        {"id": "user-9"}, rsa_key, algorithm="RS256", headers={"kid": "test-key"}
+    )
+    with pytest.raises(jwt.PyJWTError):
+        verify_access_token(token)
+
+
+def test_hmac_tokens_are_rejected(rsa_key):
+    public_pem = jwk_for(rsa_key)["n"]
+    hs = jwt.encode(
+        {"id": "user-9", "exp": int(time.time()) + 60},
+        public_pem * 4,
+        algorithm="HS256",
+        headers={"kid": "test-key"},
+    )
+    with pytest.raises(jwt.PyJWTError):
+        verify_access_token(hs)
+
+
+def test_alg_none_is_rejected():
+    token = jwt.encode(
+        {"id": "user-9", "exp": int(time.time()) + 60},
+        None,
+        algorithm="none",
+        headers={"kid": "test-key"},
+    )
+    with pytest.raises(jwt.PyJWTError):
+        verify_access_token(token)
+
+
+def test_token_without_kid_is_rejected(rsa_key):
+    token = jwt.encode(
+        {"id": "user-9", "exp": int(time.time()) + 60}, rsa_key, algorithm="RS256"
+    )
+    with pytest.raises(jwt.PyJWTError):
+        verify_access_token(token)
+
+
+def test_first_lookup_fetches_then_serves_from_memory():
+    key = new_key()
+    fetch = FakeJwks(("a", key))
+    cache = JwksCache("http://x", fetch=fetch)
+    assert fetch.calls == 0
+    cache.get_key("a")
+    cache.get_key("a")
+    assert fetch.calls == 1
+
+
+def test_unknown_kid_refetches_once_per_cooldown():
+    old, new = new_key(), new_key()
+    clock = Clock()
+    fetch = FakeJwks(("old", old))
+    cache = JwksCache("http://x", min_refetch_seconds=30, fetch=fetch, clock=clock)
+    cache.get_key("old")
+
+    fetch.keys = [("old", old), ("new", new)]
+    with pytest.raises(jwt.InvalidTokenError):
+        cache.get_key("new")
+    assert fetch.calls == 1
+
+    clock.now += 31
+    cache.get_key("new")
+    assert fetch.calls == 2
+
+    for _ in range(3):
+        with pytest.raises(jwt.InvalidTokenError):
+            cache.get_key("random")
+    assert fetch.calls == 2
+
+    clock.now += 31
+    with pytest.raises(jwt.InvalidTokenError):
+        cache.get_key("random")
+    assert fetch.calls == 3
+
+
+def test_refetch_after_rotation_picks_up_new_key():
+    old, new = new_key(), new_key()
+    clock = Clock()
+    fetch = FakeJwks(("old", old))
+    cache = JwksCache("http://x", min_refetch_seconds=30, fetch=fetch, clock=clock)
+    cache.get_key("old")
+    fetch.keys = [("new", new)]
+    clock.now += 60
+    cache.get_key("new")
+    assert fetch.calls == 2
+
+
+def test_failed_fetch_keeps_serving_stale_keys():
+    key = new_key()
+    clock = Clock()
+    fetch = FakeJwks(("a", key))
+    cache = JwksCache("http://x", min_refetch_seconds=30, fetch=fetch, clock=clock)
+    cache.get_key("a")
+    fetch.fail = True
+    clock.now += 60
+    with pytest.raises(jwt.InvalidTokenError):
+        cache.get_key("b")
+    assert cache.get_key("a") is not None
+
+
+def test_fetch_failure_on_empty_cache_rejects():
+    cache = JwksCache("http://x", fetch=FakeJwks(fail=True))
+    with pytest.raises(jwt.InvalidTokenError):
+        cache.get_key("a")
+
+
+def test_missing_kid_is_rejected():
+    cache = JwksCache("http://x", fetch=FakeJwks())
+    with pytest.raises(jwt.InvalidTokenError):
+        cache.get_key(None)
+
+
+def test_session_route_returns_the_verified_result(session_factory, make_token):
+    token = make_token(id="user-9", sub="learner@oopsly.app", role="USER")
     with TestClient(app) as client:
         missing = client.get("/v1/game/session")
         assert missing.status_code == 401
@@ -89,37 +191,6 @@ def test_session_route_returns_the_verified_result(session_factory):
         "email": "learner@oopsly.app",
         "role": "USER",
     }
-
-
-def test_public_key_verifies_rs256_and_rejects_the_shared_secret(monkeypatch):
-    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    public_pem = private_key.public_key().public_bytes(
-        serialization.Encoding.PEM,
-        serialization.PublicFormat.SubjectPublicKeyInfo,
-    )
-    private_pem = private_key.private_bytes(
-        serialization.Encoding.PEM,
-        serialization.PrivateFormat.PKCS8,
-        serialization.NoEncryption(),
-    )
-    monkeypatch.setattr(settings, "jwt_public_key", public_pem.decode())
-    signed = jwt.encode(
-        {
-            "id": "user-3",
-            "sub": "learner@oopsly.app",
-            "role": "USER",
-            "exp": int(time.time()) + 60,
-        },
-        private_pem,
-        algorithm="RS256",
-    )
-    result = verify_access_token(signed)
-    assert result.user_id == "user-3"
-    assert result.email == "learner@oopsly.app"
-
-    hmac_token = _token(id="user-3", sub="learner@oopsly.app", role="USER")
-    with pytest.raises(jwt.PyJWTError):
-        verify_access_token(hmac_token)
 
 
 def test_socket_rejects_a_missing_token(session_factory):

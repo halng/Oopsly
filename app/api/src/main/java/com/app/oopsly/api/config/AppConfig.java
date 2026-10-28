@@ -42,6 +42,6 @@ public class AppConfig {
     @Getter
     @Setter
     public static class Jwt {
-        private String secret;
+        private String jwksUrl = "http://localhost:9010/.well-known/pub.json";
     }
 }

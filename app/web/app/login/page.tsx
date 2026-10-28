@@ -22,6 +22,7 @@ const AuthPage = () => {
     const [name, setName] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const sessionExpired = useAuthStore((state) => state.sessionExpired);
 
     const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -147,6 +148,16 @@ const AuthPage = () => {
                                   : 'Start learning faster and remembering longer.'}
                         </p>
                     </div>
+
+                    {sessionExpired && !errorMessage && (
+                        <div
+                            role="status"
+                            className="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl font-medium"
+                        >
+                            Your session expired. Please sign in again to
+                            continue.
+                        </div>
+                    )}
 
                     {errorMessage && (
                         <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl font-medium">

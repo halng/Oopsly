@@ -22,8 +22,6 @@ on:
     secrets:
       AWS_ROLE_ARN:
         required: true
-      JWT_SECRET:
-        required: true
   workflow_dispatch:
     inputs:
       git_hash:
@@ -96,7 +94,7 @@ jobs:
       - name: Open an empty Fargate service so the image repository exists
         working-directory: app/api
         env:
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWKS_URL: ${{ vars.API_JWKS_URL }}
           ALLOWED_ORIGINS: ${{ vars.API_ALLOWED_ORIGINS }}
         run: |
           REPO="oopsly-api-${{ needs.validate-inputs.outputs.environment }}"
@@ -111,7 +109,7 @@ jobs:
             --no-fail-on-empty-changeset \
             --parameter-overrides \
               "Environment=${{ needs.validate-inputs.outputs.environment }}" \
-              "JwtSecret=${JWT_SECRET}" \
+              "JwksUrl=${JWKS_URL:-http://localhost:9010/.well-known/pub.json}" \
               "ImageTag=latest" \
               "DesiredCount=0" \
               "AllowedOrigins=${ALLOWED_ORIGINS:-http://localhost:3000}"
@@ -141,7 +139,7 @@ jobs:
       - name: Deploy the image to Fargate
         working-directory: app/api
         env:
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWKS_URL: ${{ vars.API_JWKS_URL }}
           ALLOWED_ORIGINS: ${{ vars.API_ALLOWED_ORIGINS }}
         run: |
           aws cloudformation deploy \
@@ -152,7 +150,7 @@ jobs:
             --no-fail-on-empty-changeset \
             --parameter-overrides \
               "Environment=${{ needs.validate-inputs.outputs.environment }}" \
-              "JwtSecret=${JWT_SECRET}" \
+              "JwksUrl=${JWKS_URL:-http://localhost:9010/.well-known/pub.json}" \
               "ImageTag=${{ needs.validate-inputs.outputs.release-ref }}" \
               "DesiredCount=1" \
               "AllowedOrigins=${ALLOWED_ORIGINS:-http://localhost:3000}"

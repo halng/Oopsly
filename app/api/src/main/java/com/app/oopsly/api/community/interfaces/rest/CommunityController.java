@@ -65,7 +65,7 @@ public class CommunityController {
             })
     @GetMapping("")
     public ApiRes getAll() {
-        log.info("Listing communities");
+        log.debug("Listing communities");
         return communityService.getAll();
     }
 
@@ -80,7 +80,7 @@ public class CommunityController {
             })
     @GetMapping("/my")
     public ApiRes getMyCommunities() {
-        log.info("Listing communities of current user");
+        log.debug("Listing communities of current user");
         return communityService.getMyCommunities();
     }
 
@@ -99,7 +99,7 @@ public class CommunityController {
             @Parameter(description = "Community creation request", required = true)
                     @Valid @RequestBody
                     CreateCommunityReq requestBody) {
-        log.info("Creating community {}", requestBody.name());
+        log.debug("Creating community {}", requestBody.name());
         return communityService.create(requestBody);
     }
 
@@ -121,7 +121,7 @@ public class CommunityController {
             @Parameter(description = "Optional message for community admins")
                     @RequestBody(required = false)
                     @Valid JoinCommunityReq requestBody) {
-        log.info("User joining community {}", id);
+        log.debug("User joining community {}", id);
         return communityService.join(id, requestBody);
     }
 
@@ -137,7 +137,7 @@ public class CommunityController {
     @PostMapping("/{id}/leave")
     public ApiRes leave(
             @Parameter(description = "Community ID", required = true) @PathVariable UUID id) {
-        log.info("User leaving community {}", id);
+        log.debug("User leaving community {}", id);
         return communityService.leave(id);
     }
 
@@ -158,7 +158,7 @@ public class CommunityController {
             @Parameter(description = "Community ID", required = true) @PathVariable UUID id,
             @Parameter(description = "Invite request", required = true) @Valid @RequestBody
                     InviteMemberReq requestBody) {
-        log.info("Inviting member to community {}", id);
+        log.debug("Inviting member to community {}", id);
         return communityService.invite(id, requestBody);
     }
 
@@ -177,7 +177,7 @@ public class CommunityController {
     @GetMapping("/{id}/requests")
     public ApiRes getJoinRequests(
             @Parameter(description = "Community ID", required = true) @PathVariable UUID id) {
-        log.info("Listing join requests of community {}", id);
+        log.debug("Listing join requests of community {}", id);
         return communityService.getJoinRequests(id);
     }
 
@@ -195,7 +195,7 @@ public class CommunityController {
             @Parameter(description = "Community ID", required = true) @PathVariable UUID id,
             @Parameter(description = "Join request ID", required = true) @PathVariable
                     UUID requestId) {
-        log.info("Approving join request {} of community {}", requestId, id);
+        log.debug("Approving join request {} of community {}", requestId, id);
         return communityService.approveJoinRequest(id, requestId);
     }
 
@@ -213,7 +213,7 @@ public class CommunityController {
             @Parameter(description = "Community ID", required = true) @PathVariable UUID id,
             @Parameter(description = "Join request ID", required = true) @PathVariable
                     UUID requestId) {
-        log.info("Rejecting join request {} of community {}", requestId, id);
+        log.debug("Rejecting join request {} of community {}", requestId, id);
         return communityService.rejectJoinRequest(id, requestId);
     }
 
@@ -231,7 +231,7 @@ public class CommunityController {
     @GetMapping("/{id}/leaderboard")
     public ApiRes getLeaderboard(
             @Parameter(description = "Community ID", required = true) @PathVariable UUID id) {
-        log.info("Fetching leaderboard of community {}", id);
+        log.debug("Fetching leaderboard of community {}", id);
         return communityService.getLeaderboard(id);
     }
 }

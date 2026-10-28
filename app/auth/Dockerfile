@@ -1,12 +1,19 @@
-FROM golang:1.23-alpine AS build
-WORKDIR /src
-COPY . .
-# go.sum is resolved here until it is committed; then this becomes a plain download step.
-RUN go mod tidy
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/auth ./cmd/auth
+FROM python:3.12-slim
 
-FROM gcr.io/distroless/static-debian12:nonroot
-COPY --from=build /out/auth /auth
-USER nonroot:nonroot
+WORKDIR /app
+
+COPY pyproject.toml .
+COPY app ./app
+RUN pip install --no-cache-dir .
+
+COPY alembic ./alembic
+COPY alembic.ini .
+
+RUN useradd --system --no-create-home appuser \
+    && chown -R appuser /app
+USER appuser
+
+ENV PORT=9010
 EXPOSE 9010
-ENTRYPOINT ["/auth"]
+
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]

@@ -18,6 +18,8 @@ package com.app.oopsly.api.config;
 
 import com.app.oopsly.api.quiz.domain.QuizChannels;
 import com.app.oopsly.api.quiz.interfaces.ws.QuizAuthChannelInterceptor;
+import com.app.oopsly.api.quiz.interfaces.ws.QuizLogContextInterceptor;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +36,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final QuizAuthChannelInterceptor authInterceptor;
+    private final QuizLogContextInterceptor logContextInterceptor;
 
     @Value("${app.allowed-origins}")
     private String allowedOrigins;
@@ -47,13 +50,24 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(authInterceptor);
+        registration.interceptors(authInterceptor, logContextInterceptor);
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint(QuizChannels.ENDPOINT)
-                .setAllowedOriginPatterns(allowedOrigins.split(","))
+                .setAllowedOriginPatterns(originPatterns())
                 .withSockJS();
+    }
+
+    /**
+     * A handshake from an origin outside this list is answered 403 (REST CORS is open, so the
+     * socket is the first thing a wrong list breaks). Entries are trimmed so "a, b" works.
+     */
+    private String[] originPatterns() {
+        return Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toArray(String[]::new);
     }
 }

@@ -1,12 +1,12 @@
-import base64
 import json
+import urllib.error
+import urllib.request
 
 import jwt
 import pytest
 
 from oopsly_perf import thresholds
-from oopsly_perf.auth import mint_token, user_id
-from oopsly_perf.config import DEFAULT_JWT_SECRET
+from oopsly_perf.auth import KID, generate_key, jwks, mint_token, serve_jwks, user_id
 
 RULES = {
     "default": {"p95_ms": 500, "max_failure_ratio": 0.0},
@@ -68,12 +68,28 @@ def test_shipped_profiles_only_override_required_endpoints_that_exist():
         assert set(rules["endpoints"]) <= set(rules["required_endpoints"])
 
 
-def test_minted_tokens_match_what_the_api_verifies():
-    token = mint_token("a@b.c", DEFAULT_JWT_SECRET, plan="PRO")
-    key = base64.b64decode(DEFAULT_JWT_SECRET)
-    claims = jwt.decode(token, key, algorithms=["HS384"])
+def test_minted_tokens_verify_against_the_published_jwks():
+    key = generate_key()
+    token = mint_token("a@b.c", key, plan="PRO")
+    assert jwt.get_unverified_header(token) == {"alg": "RS256", "typ": "JWT", "kid": KID}
+    jwk = jwks(key)["keys"][0]
+    public = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(jwk))
+    claims = jwt.decode(token, public, algorithms=["RS256"])
     assert claims["id"] == user_id("a@b.c")
     assert claims["plan"] == "PRO"
     assert claims["role"] == "USER"
     assert claims["sub"] == "a@b.c"
     assert user_id("a@b.c") != user_id("x@b.c")
+
+
+def test_jwks_server_serves_the_public_key():
+    key = generate_key()
+    server = serve_jwks(key, 0)
+    try:
+        port = server.server_address[1]
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/.well-known/pub.json") as res:
+            assert json.load(res) == jwks(key)
+        with pytest.raises(urllib.error.HTTPError):
+            urllib.request.urlopen(f"http://127.0.0.1:{port}/nope")
+    finally:
+        server.shutdown()

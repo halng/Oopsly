@@ -292,9 +292,10 @@ app
 │   ├── src/test/java/... (unit + integration tests)
 │   └── build.gradle
 ├── auth
-│   ├── cmd/auth/ (Go entrypoint)
-│   ├── internal/ (config, jwt, otp, store, handlers, middleware)
-│   └── go.mod
+│   ├── app/ (FastAPI: config, models, keys/JWKS, tokens, otp, service, routes)
+│   ├── alembic/ (migrations for the "auth" schema)
+│   ├── tests/
+│   └── pyproject.toml
 ├── perf
 │   ├── locustfile.py + oopsly_perf/ (Locust performance tests, smoke + regression)
 │   └── thresholds.json (per-endpoint limits)
@@ -310,31 +311,69 @@ app
 ```
 
 Note: the backend folder with path `app/api` contains the Spring Boot backend. The backend is organized as a modern spring boot project with DDD (Domain Driven Design) structure.
-The auth folder with path `app/auth` is a separate Go service. It owns authentication (email OTP), authorization (roles), subscriptions, user profiles and settings, and it issues the JWT access/refresh tokens. `app/api` (and `app/game`) only validate those tokens with the shared `JWT_SECRET`, and keep a plain `user_id` column instead of a foreign key to the user.
+The auth folder with path `app/auth` is a separate Python (FastAPI) service. It owns authentication (email OTP), authorization (roles), subscriptions, user profiles and settings, and it issues the RS256 JWT access/refresh tokens (keys rotate weekly). It publishes its public keys at `/.well-known/pub.json` (JWKS); `app/api` (and `app/game`) fetch that list into an in-memory cache, refetch it when a token's `kid` is unknown, and keep a plain `user_id` column instead of a foreign key to the user.
 The frontend folder with path `app/web` contains the Next.js frontend.
 
-### Auth service
+### Run locally
+
+Prerequisites: Docker, JDK 21, Node with pnpm, Python 3.12.
+
+| Service | Port | Base URL |
+|---|---|---|
+| Postgres / Redis | 5432 / 6379 | via `app/docker-compose.yml` |
+| Auth (FastAPI) | 9010 | `http://localhost:9010/api/auth` |
+| nginx gateway (`app/nginx`) | 8080 | `http://localhost:8080` routes `/api/auth`, `/.well-known`, `/api/oopsly`, `/v1/game` and `/` (web) to the services above |
+| API (Spring Boot) | 9009 | `http://localhost:9009/api/oopsly` |
+| Game (FastAPI) | 9008 | `http://localhost:9008` |
+| Web (Next.js) | 3000 | `http://localhost:3000` |
+
+Start them in this order: the API and game fetch the auth service's public keys (JWKS) to verify tokens, so auth comes first.
+
+#### 1. Postgres, Redis and Auth
 
 ```bash
 cd app
 docker compose up -d --build   # postgres + redis + auth
 ```
 
-- Base URL: `http://localhost:9010/api/auth`
-- Web reads it from `NEXT_PUBLIC_AUTH_URL` (the API stays on `NEXT_PUBLIC_API_URL`)
+- JWKS: `http://localhost:9010/.well-known/pub.json` (the API and game read it from `JWKS_URL`; this is the default)
+- Swagger: `http://localhost:9010/api/auth/docs`
+- Email is not sent yet, so sign in with a test email: `test@oopsly.dev` with OTP `000000` (set by `TEST_EMAILS` in the compose file).
+- To run auth outside Docker (hot reload), keep postgres and redis up and generate a internal API key in the `.env` file (set `INTERNAL_API_KEY`) for the auth service to validate internal requests.
 
-### Infrastructure + API
+```bash
+cd app/auth
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+alembic upgrade head
+uvicorn app.main:app --port 9010 --reload
+```
+
+#### 2. API
 
 ```bash
 cd app/api
-./gradlew composeUp
 ./gradlew bootRun -Pprofile=test
 ```
 
-- Base URL: `http://localhost:9009/api/v1/oopsly`
-- Swagger: `http://localhost:9009/api/v1/oopsly/swagger-ui/index.html`
+- Base URL: `http://localhost:9009/api/oopsly`
+- Swagger: `http://localhost:9009/api/oopsly/swagger-ui/index.html`
+- Allowed browser origins come from `ALLOWED_ORIGINS` (default `http://localhost:3000,http://localhost:8080,http://localhost:8081`); the live quiz socket answers 403 for any other origin.
 
-### UI
+#### 3. Game service
+
+```bash
+cd app/game
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+alembic upgrade head
+uvicorn app.main:app --host 0.0.0.0 --port 9008 --reload
+```
+
+Defaults: `DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/oopsly`,
+`JWKS_URL=http://localhost:9010/.well-known/pub.json`.
+
+#### 4. Web
 
 ```bash
 cd app/web
@@ -342,20 +381,21 @@ pnpm install
 pnpm dev
 ```
 
-### Game service
+`app/web/.env`:
 
-Before running the game service, need to make sure provide it a correct signing key for JWT validation.
-You can set the signing key using the `JWT_SECRET` environment variable.
-
-Install dependencies and run the game service:
-
-```bash
-cd app/game
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e "[.dev]"
-uvicorn app.main:app --host 0.0.0.0 --port 9008
 ```
+NEXT_PUBLIC_API_URL=http://localhost:9009/api/oopsly
+NEXT_PUBLIC_AUTH_URL=http://localhost:9010/api/auth
+NEXT_PUBLIC_GAME_API_URL=http://localhost:9008
+```
+
+The web app renews expired access tokens by itself (using the refresh token); if that fails you are sent back to the login page.
+
+#### Troubleshooting
+
+- `401 EXPIRED_OR_INVALID_JWT` from the API or game right after starting: they could not reach the JWKS. Check `curl http://localhost:9010/.well-known/pub.json`.
+- Tokens issued before the move to RS256 are rejected: sign in again.
+- Quiz socket `403`: the web origin is missing from the API's `ALLOWED_ORIGINS`.
 
 ## Development checks
 
@@ -364,7 +404,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 9008
 cd app/api && ./gradlew spotlessApply test
 
 # Auth
-cd app/auth && go vet ./... && go test -race ./...
+cd app/auth && ruff check . && ruff format --check . && python -m pytest -q --cov=app
 
 # Game
 cd app/game && ruff check . && ruff format --check . && python -m pytest -q

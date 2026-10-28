@@ -1,6 +1,6 @@
-# Local dev infrastructure shared by app/api, app/auth and app/game.
+# Local dev infrastructure shared by app/api, app/auth and app/game,
+# plus an nginx gateway (app/nginx) on http://localhost:8080.
 # Run from app/:  docker compose up -d --build
-# Or from app/api: ./gradlew composeUp
 services:
   postgres:
     image: postgres:15.4
@@ -27,27 +27,12 @@ services:
       - app-network
     restart: unless-stopped
 
-  auth:
-    build: ./auth
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    environment:
-      APP_ENV: dev
-      PORT: "9010"
-      DB_HOST: postgres
-      DB_USERNAME: ${POSTGRES_USER:-postgres}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      DB_NAME: ${POSTGRES_DB:-oopsly}
-      REDIS_HOST: redis
-      # Must match AUTH_INTERNAL_KEY used by app/api.
-      INTERNAL_API_KEY: ${AUTH_INTERNAL_KEY:-changeme}
-      TEST_EMAILS: ${TEST_EMAILS:-test@oopsly.dev}
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:8081
+  nginx:
+    build: ./nginx
     ports:
-      - "9010:9010"
+      - "8080:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - app-network
     restart: unless-stopped

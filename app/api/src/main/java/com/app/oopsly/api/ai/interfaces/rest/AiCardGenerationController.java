@@ -68,7 +68,7 @@ public class AiCardGenerationController {
     public ApiRes generateCards(
             @Parameter(description = "Generation request", required = true) @Valid @RequestBody
                     GenerateCardsReq requestBody) {
-        log.info("Generating flashcards for topic {}", requestBody.topic());
+        log.debug("Generating flashcards for topic {}", requestBody.topic());
         return aiCardGenerationService.generateCards(requestBody);
     }
 }

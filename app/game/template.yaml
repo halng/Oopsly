@@ -6,15 +6,9 @@ Parameters:
     Type: String
     Default: stg
     AllowedPattern: "[a-z0-9-]+"
-  JwtSecret:
+  JwksUrl:
     Type: String
-    NoEcho: true
-    Description: Same JWT_SECRET the Java API uses to sign access tokens.
-  JwtPublicKey:
-    Type: String
-    Default: ""
-    NoEcho: true
-    Description: Optional PEM. When set, tokens are verified as RS256.
+    Description: Auth service JWKS endpoint, for example https://auth.example.com/.well-known/pub.json.
   CorsOrigins:
     Type: String
     Default: http://localhost:3000
@@ -172,10 +166,9 @@ Resources:
       Name: !Sub oopsly-game-${Environment}-app
       RecoveryWindowInDays: 0
       SecretString: !Sub
-        - '{"DATABASE_URL":"postgresql+psycopg://oopsly:${Password}@${Host}:5432/oopsly","JWT_SECRET":"${Jwt}"}'
+        - '{"DATABASE_URL":"postgresql+psycopg://oopsly:${Password}@${Host}:5432/oopsly"}'
         - Password: !Sub "{{resolve:secretsmanager:${DbSecret}:SecretString:password}}"
           Host: !GetAtt GameDatabase.Endpoint.Address
-          Jwt: !Ref JwtSecret
 
   GameRepository:
     Type: AWS::ECR::Repository
@@ -243,13 +236,11 @@ Resources:
               Value: "8000"
             - Name: CORS_ORIGINS
               Value: !Ref CorsOrigins
-            - Name: JWT_PUBLIC_KEY
-              Value: !Ref JwtPublicKey
+            - Name: JWKS_URL
+              Value: !Ref JwksUrl
           Secrets:
             - Name: DATABASE_URL
               ValueFrom: !Sub "${AppSecret}:DATABASE_URL::"
-            - Name: JWT_SECRET
-              ValueFrom: !Sub "${AppSecret}:JWT_SECRET::"
           LogConfiguration:
             LogDriver: awslogs
             Options:

@@ -97,6 +97,8 @@ jobs:
         env:
           DB_HOST: localhost
           ALLOWED_ORIGINS: http://localhost:3000
+          # Locust signs the tokens and serves this JWKS (PERF_JWKS_PORT) instead of the auth service.
+          JWKS_URL: http://localhost:9099/.well-known/pub.json
         run: |
           JAR=$(ls build/libs/*.jar | grep -v plain)
           nohup java -jar "$JAR" > ../perf/api.log 2>&1 &

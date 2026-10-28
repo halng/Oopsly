@@ -76,7 +76,7 @@ public class CardController {
                     UUID subjectId,
             @Parameter(description = "Card creation request", required = true) @Valid @RequestBody
                     CardReq requestBody) {
-        log.info("Creating cards for subject: {} in shelve: {}", subjectId, shelveId);
+        log.debug("Creating cards for subject: {} in shelve: {}", subjectId, shelveId);
         return cardService.create(shelveId, subjectId, requestBody);
     }
 
@@ -115,7 +115,7 @@ public class CardController {
         if (page < 0 || size < 1) {
             return ApiRes.badRequest("Invalid pagination parameters");
         }
-        log.info(
+        log.debug(
                 "Getting all cards for subject: {} in shelve: {} with page: {} and size: {}",
                 subjectId,
                 shelveId,
@@ -159,7 +159,7 @@ public class CardController {
                     UUID id,
             @Parameter(description = "Card update request", required = true) @Valid @RequestBody
                     CardItemReq requestBody) {
-        log.info("Updating card: {} in subject: {} in shelve: {}", id, subjectId, shelveId);
+        log.debug("Updating card: {} in subject: {} in shelve: {}", id, subjectId, shelveId);
         return cardService.updateCard(shelveId, subjectId, id, requestBody);
     }
 
@@ -195,7 +195,7 @@ public class CardController {
                             example = "123e4567-e89b-12d3-a456-426614174002")
                     @PathVariable
                     UUID id) {
-        log.info("Getting card: {} from subject: {} in shelve: {}", id, subjectId, shelveId);
+        log.debug("Getting card: {} from subject: {} in shelve: {}", id, subjectId, shelveId);
         return cardService.getById(shelveId, subjectId, id);
     }
 
@@ -229,7 +229,8 @@ public class CardController {
             @Parameter(description = "List of difficulty update requests", required = true)
                     @Valid @RequestBody
                     List<UpdateDifficultyReq> requestBody) {
-        log.info("Updating difficulty for cards in subject: {} in shelve: {}", subjectId, shelveId);
+        log.debug(
+                "Updating difficulty for cards in subject: {} in shelve: {}", subjectId, shelveId);
         return cardService.updateDifficulty(shelveId, subjectId, requestBody);
     }
 
@@ -269,7 +270,7 @@ public class CardController {
                             example = "5")
                     @RequestParam(required = false)
                     Integer newLimit) {
-        log.info(
+        log.debug(
                 "Getting due cards for subject: {} in shelve: {} with limit: {}, newLimit: {}",
                 subjectId,
                 shelveId,
@@ -310,7 +311,7 @@ public class CardController {
                             example = "123e4567-e89b-12d3-a456-426614174002")
                     @PathVariable
                     UUID id) {
-        log.info("Deleting card: {} from collection: {} in deck: {}", id, subjectId, shelveId);
+        log.debug("Deleting card: {} from subject: {} in shelf: {}", id, subjectId, shelveId);
         return cardService.delete(shelveId, subjectId, id);
     }
 }

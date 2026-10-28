@@ -16,82 +16,116 @@
 
 package com.app.oopsly.api.unit.shared.security;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.app.oopsly.api.config.AppConfig;
+import com.app.oopsly.api.shared.security.JwksKeyProvider;
 import com.app.oopsly.api.shared.security.JwtVerifier;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Base64;
 import java.util.Date;
-import java.util.Map;
 import javax.crypto.SecretKey;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** Tokens are built the way the auth service builds them: HS384, base64 shared secret. */
 class JwtVerifierTest {
+    private final KeyPair pair = rsa();
+    private final JwksKeyProvider provider =
+            kid -> {
+                if (!"k1".equals(kid)) {
+                    throw new JwtException("Unknown signing key id");
+                }
+                return (RSAPublicKey) pair.getPublic();
+            };
+    private final JwtVerifier verifier = new JwtVerifier(provider);
 
-    private static final String SECRET =
-            "057ba03d6c44104863dc7361fe4578965d1887360f90a0895882e58a6248fc86";
-
-    private JwtVerifier verifier;
-    private SecretKey key;
-
-    @BeforeEach
-    void setUp() {
-        AppConfig config = new AppConfig();
-        config.getJwt().setSecret(SECRET);
-        verifier = new JwtVerifier(config);
-        key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET));
+    private static KeyPair rsa() {
+        try {
+            KeyPairGenerator g = KeyPairGenerator.getInstance("RSA");
+            g.initialize(2048);
+            return g.generateKeyPair();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
-    private String token(Map<String, Object> claims, long expiresInMs) {
-        return Jwts.builder()
-                .claims(claims)
-                .subject("learner@test.dev")
-                .issuedAt(new Date())
+    private String rs256(String kid, long expiresInMs) {
+        var builder = Jwts.builder();
+        if (kid != null) {
+            builder.header().keyId(kid);
+        }
+        return builder.subject("a@b.c")
+                .claim("id", "u-1")
+                .claim("role", "USER")
+                .claim("plan", "PRO")
                 .expiration(new Date(System.currentTimeMillis() + expiresInMs))
-                .signWith(key)
+                .signWith(pair.getPrivate(), Jwts.SIG.RS256)
                 .compact();
     }
 
     @Test
-    void extractsIdentityAndPlanClaims() {
-        String jwt = token(Map.of("id", "user-1", "role", "USER", "plan", "PRO"), 60_000);
+    void givenValidRs256Token_whenExtracting_thenClaimsAreReturned() {
+        String token = rs256("k1", 60_000);
 
-        assertEquals("user-1", verifier.extractUserId(jwt));
-        assertEquals("USER", verifier.extractUserRole(jwt));
-        assertEquals("PRO", verifier.extractPlan(jwt));
-        assertEquals("learner@test.dev", verifier.extractEmail(jwt));
+        assertEquals("a@b.c", verifier.extractEmail(token));
+        assertEquals("u-1", verifier.extractUserId(token));
+        assertEquals("USER", verifier.extractUserRole(token));
+        assertEquals("PRO", verifier.extractPlan(token));
     }
 
     @Test
-    void tokenWithoutPlanClaim_stillVerifies() {
-        String jwt = token(Map.of("id", "user-1", "role", "USER"), 60_000);
+    void givenExpiredToken_whenExtracting_thenRejected() {
+        String token = rs256("k1", -60_000);
 
-        assertEquals("user-1", verifier.extractUserId(jwt));
-        assertNull(verifier.extractPlan(jwt));
+        assertThrows(JwtException.class, () -> verifier.extractUserId(token));
     }
 
     @Test
-    void expiredToken_isRejected() {
-        String jwt = token(Map.of("id", "user-1"), -1_000);
-
-        assertThrows(JwtException.class, () -> verifier.extractUserId(jwt));
+    void givenUnknownKid_whenExtracting_thenRejected() {
+        assertThrows(JwtException.class, () -> verifier.extractUserId(rs256("other", 60_000)));
     }
 
     @Test
-    void tokenSignedWithAnotherSecret_isRejected() {
-        SecretKey other = Keys.hmacShaKeyFor(new byte[48]);
-        String jwt =
+    void givenMissingKid_whenExtracting_thenRejected() {
+        assertThrows(JwtException.class, () -> verifier.extractUserId(rs256(null, 60_000)));
+    }
+
+    @Test
+    void givenHmacToken_whenExtracting_thenRejected() {
+        SecretKey key = Keys.hmacShaKeyFor(new byte[48]);
+        String token =
                 Jwts.builder()
-                        .claims(Map.of("id", "user-1"))
-                        .expiration(new Date(System.currentTimeMillis() + 60_000))
-                        .signWith(other)
+                        .header()
+                        .keyId("k1")
+                        .and()
+                        .claim("id", "u-1")
+                        .signWith(key)
                         .compact();
 
-        assertThrows(JwtException.class, () -> verifier.extractUserId(jwt));
+        assertThrows(JwtException.class, () -> verifier.extractUserId(token));
+    }
+
+    @Test
+    void givenUnsignedToken_whenExtracting_thenRejected() {
+        String token = Jwts.builder().header().keyId("k1").and().claim("id", "u-1").compact();
+
+        assertThrows(JwtException.class, () -> verifier.extractUserId(token));
+    }
+
+    @Test
+    void givenTamperedPayload_whenExtracting_thenRejected() {
+        String[] parts = rs256("k1", 60_000).split("\\.");
+        String forged =
+                Base64.getUrlEncoder()
+                        .withoutPadding()
+                        .encodeToString("{\"id\":\"admin\"}".getBytes());
+
+        assertThrows(
+                JwtException.class,
+                () -> verifier.extractUserId(parts[0] + "." + forged + "." + parts[2]));
     }
 }

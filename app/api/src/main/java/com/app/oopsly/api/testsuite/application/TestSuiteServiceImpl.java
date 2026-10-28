@@ -517,43 +517,43 @@ public class TestSuiteServiceImpl implements TestSuiteService {
 
     // Fallback methods for Circuit Breaker
     public ApiRes createFallback(UUID deckId, TestSuiteReq request, Throwable t) {
-        log.error("Test suite service unavailable during create: {}", t.getMessage());
+        log.error("Test suite service unavailable during create: {}", t.toString());
         throw unwrapTestSuiteException(t);
     }
 
     public ApiRes updateFallback(UUID deckId, UUID testSuiteId, TestSuiteReq request, Throwable t) {
-        log.error("Test suite service unavailable during update: {}", t.getMessage());
+        log.error("Test suite service unavailable during update: {}", t.toString());
         throw unwrapTestSuiteException(t);
     }
 
     public ApiRes deleteFallback(UUID deckId, UUID testSuiteId, Throwable t) {
-        log.error("Test suite service unavailable during delete: {}", t.getMessage());
+        log.error("Test suite service unavailable during delete: {}", t.toString());
         throw unwrapTestSuiteException(t);
     }
 
     public ApiRes getByIdFallback(UUID deckId, UUID testSuiteId, Throwable t) {
-        log.error("Test suite service unavailable during getById: {}", t.getMessage());
+        log.error("Test suite service unavailable during getById: {}", t.toString());
         throw unwrapTestSuiteException(t);
     }
 
     public ApiRes getAllByShelveFallback(UUID shelveId, Throwable t) {
-        log.error("Test suite service unavailable during getAllByShelve: {}", t.getMessage());
+        log.error("Test suite service unavailable during getAllByShelve: {}", t.toString());
         throw unwrapTestSuiteException(t);
     }
 
     public ApiRes getAttemptFallback(UUID shelveId, UUID testSuiteId, Throwable t) {
-        log.error("Test suite service unavailable during getAttempt: {}", t.getMessage());
+        log.error("Test suite service unavailable during getAttempt: {}", t.toString());
         throw unwrapTestSuiteException(t);
     }
 
     public ApiRes runFallback(UUID shelveId, UUID testSuiteId, Throwable t) {
-        log.error("Test suite service unavailable during run: {}", t.getMessage());
+        log.error("Test suite service unavailable during run: {}", t.toString());
         throw unwrapTestSuiteException(t);
     }
 
     public ApiRes submitFallback(
             UUID shelveId, UUID testSuiteId, TestSubmissionReq request, Throwable t) {
-        log.error("Test suite service unavailable during submit: {}", t.getMessage());
+        log.error("Test suite service unavailable during submit: {}", t.toString());
         throw unwrapTestSuiteException(t);
     }
 

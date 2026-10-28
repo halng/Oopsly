@@ -11,11 +11,13 @@ vi.mock('axios', async (orig) => {
             create: vi.fn(() => ({
                 request: h.request,
                 interceptors: {
+                    // The last one registered is gameApi's own (token refresh is installed first).
                     request: {
                         use: (fn: unknown) => {
                             h.interceptor = fn;
                         },
                     },
+                    response: { use: vi.fn() },
                 },
             })),
         },
@@ -49,15 +51,10 @@ describe('gameApi', () => {
         vi.useRealTimers();
     });
 
-    it('request interceptor sets auth and platform headers', () => {
-        useAuthStore.setState({ accessToken: 'abc' } as never);
+    it('request interceptor sets the platform and request id headers', () => {
         const cfg = h.interceptor({ headers: {} });
-        expect(cfg.headers.Authorization).toBe('Bearer abc');
         expect(cfg.headers['X-Platform']).toBe('WEB');
         expect(cfg.headers['X-Request-ID']).toBeTruthy();
-        useAuthStore.setState({ accessToken: '' } as never);
-        const cfg2 = h.interceptor({ headers: {} });
-        expect(cfg2.headers.Authorization).toBeUndefined();
     });
 
     it('normalizeGarden maps inventory, species, stage and weather', () => {

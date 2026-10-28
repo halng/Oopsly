@@ -118,13 +118,23 @@ public class QuizServiceImpl implements QuizService {
                         : request.questionSeconds());
         room.setQuestions(new ArrayList<>(questions));
         store.create(room);
-        log.info("Quiz room {} created by host {}", room.getCode(), hostId);
+        log.info(
+                "Quiz room {} created | host={} title='{}' mode={} questions={} maxPlayers={}"
+                        + " questionSeconds={}",
+                room.getCode(),
+                hostId,
+                room.getTitle(),
+                room.getMode(),
+                room.getQuestions().size(),
+                room.getMaxPlayers(),
+                room.getQuestionSeconds());
         return viewFactory.roomView(room);
     }
 
     @Override
     public void join(String code, String playerKey, String sessionId, String name) {
         String cleanName = name.trim();
+        boolean[] rejoined = {false};
         RoomState room =
                 store.update(
                         code,
@@ -135,6 +145,7 @@ public class QuizServiceImpl implements QuizService {
                             Player existing = state.getPlayers().get(playerKey);
                             if (existing != null) {
                                 existing.setConnected(true);
+                                rejoined[0] = true;
                                 return state;
                             }
                             if (state.getState() != QuizState.LOBBY) {
@@ -163,6 +174,16 @@ public class QuizServiceImpl implements QuizService {
                             return state;
                         });
         store.bindSession(sessionId, code, playerKey);
+        log.info(
+                "Quiz room {} | user={} {} as '{}' | players={}/{} state={} session={}",
+                code,
+                playerKey,
+                rejoined[0] ? "rejoined" : "joined",
+                cleanName,
+                room.getPlayers().size(),
+                room.getMaxPlayers(),
+                room.getState(),
+                sessionId);
         publisher.sendTo(playerKey, QuizUserEvent.joined(room.getPlayers().get(playerKey).getId()));
         publisher.publish(room);
     }
@@ -182,6 +203,13 @@ public class QuizServiceImpl implements QuizService {
                             return state;
                         });
         store.bindSession(sessionId, code, playerKey);
+        log.info(
+                "Quiz room {} | user={} resumed ({}) | state={} session={}",
+                code,
+                playerKey,
+                isHost(room, playerKey) ? "host" : "player",
+                room.getState(),
+                sessionId);
         Player player = room.getPlayers().get(playerKey);
         if (player != null) {
             publisher.sendTo(playerKey, QuizUserEvent.joined(player.getId()));
@@ -205,6 +233,12 @@ public class QuizServiceImpl implements QuizService {
                             openQuestion(state, 0);
                             return state;
                         });
+        log.info(
+                "Quiz room {} | host={} started | players={} questions={}",
+                code,
+                playerKey,
+                room.getPlayers().size(),
+                room.getQuestions().size());
         publisher.publish(room);
     }
 
@@ -285,6 +319,11 @@ public class QuizServiceImpl implements QuizService {
                             finish(state);
                             return state;
                         });
+        log.info(
+                "Quiz room {} | host={} ended the game | players={}",
+                code,
+                playerKey,
+                room.getPlayers().size());
         publisher.publish(room);
         store.deactivate(code);
     }
@@ -299,6 +338,14 @@ public class QuizServiceImpl implements QuizService {
                                         store.update(
                                                 binding[0],
                                                 state -> markOffline(state, binding[1]));
+                                log.info(
+                                        "Quiz room {} | user={} disconnected | players={} state={}"
+                                                + " session={}",
+                                        binding[0],
+                                        binding[1],
+                                        room.getPlayers().size(),
+                                        room.getState(),
+                                        sessionId);
                                 publisher.publish(room);
                             } catch (NotFoundException ex) {
                                 log.debug("Room {} is gone, nothing to detach", binding[0]);
@@ -398,6 +445,11 @@ public class QuizServiceImpl implements QuizService {
     private void finish(RoomState state) {
         state.setState(QuizState.FINISHED);
         state.setDeadline(0);
+        log.info(
+                "Quiz room {} | finished | players={} questionsAsked={}",
+                state.getCode(),
+                state.getPlayers().size(),
+                state.getCurrentIndex() + 1);
     }
 
     private long revealDeadline() {

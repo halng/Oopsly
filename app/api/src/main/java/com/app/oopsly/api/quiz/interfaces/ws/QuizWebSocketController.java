@@ -104,6 +104,7 @@ public class QuizWebSocketController {
     })
     @SendToUser(QuizChannels.USER_QUEUE_QUIZ)
     public QuizUserEvent handleDomainError(RuntimeException exception) {
+        log.warn("Quiz request rejected: {}", exception.getMessage());
         return QuizUserEvent.error(exception.getMessage());
     }
 

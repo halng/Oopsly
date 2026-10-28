@@ -67,7 +67,7 @@ public class LeaderboardController {
             @Parameter(description = "Maximum number of rows to return", example = "50")
                     @RequestParam(defaultValue = "50")
                     @Min(1) @Max(200) int limit) {
-        log.info("Fetching global leaderboard with limit {}", limit);
+        log.debug("Fetching global leaderboard with limit {}", limit);
         return leaderboardService.getGlobalLeaderboard(limit);
     }
 }

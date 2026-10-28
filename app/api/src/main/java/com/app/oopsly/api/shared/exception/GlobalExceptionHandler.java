@@ -72,7 +72,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ExpiredJwtException.class)
     public ApiRes handleExpiredJwt(ExpiredJwtException ex) {
-        log.error("Expired JWT access attempt: {}", ex.getMessage());
+        log.warn("Expired JWT access attempt: {}", ex.getMessage());
         return ApiRes.unauthorized("Token has expired");
     }
 

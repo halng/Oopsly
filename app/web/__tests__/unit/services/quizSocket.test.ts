@@ -14,6 +14,8 @@ const { clients, FakeClient } = vi.hoisted(() => {
         published: { destination: string; body?: string }[] = [];
         activate = vi.fn();
         deactivate = vi.fn().mockResolvedValue(undefined);
+        connectHeaders: Record<string, string> = {};
+        beforeConnect: () => Promise<void> = async () => {};
         constructor(public config: Record<string, unknown>) {
             clients.push(this);
         }
@@ -65,14 +67,15 @@ describe('quizSocket', () => {
         expect(first).toMatch(/^[0-9a-f-]{36}$/);
     });
 
-    it('connects as a guest to the plain websocket endpoint and joins on connect', () => {
+    it('connects as a guest to the plain websocket endpoint and joins on connect', async () => {
         process.env.NEXT_PUBLIC_API_URL = 'https://api.test/api/oopsly/';
         const { client, onView, onEvent, onStatus } = setup('player');
 
         expect(client.config.brokerURL).toBe(
             'wss://api.test/api/oopsly/ws/websocket'
         );
-        expect(client.config.connectHeaders).toEqual({ 'guest-id': guestId() });
+        await client.beforeConnect();
+        expect(client.connectHeaders).toEqual({ 'guest-id': guestId() });
         expect(onStatus).toHaveBeenCalledWith('connecting');
         expect(client.activate).toHaveBeenCalled();
 
@@ -93,11 +96,12 @@ describe('quizSocket', () => {
         expect(onEvent).toHaveBeenCalledWith({ type: 'accepted' });
     });
 
-    it('authenticates with the access token and resumes as host', () => {
+    it('authenticates with the access token and resumes as host', async () => {
         useAuthStore.setState({ accessToken: 'jwt' } as never);
         const { client, onStatus } = setup('host');
 
-        expect(client.config.connectHeaders).toEqual({
+        await client.beforeConnect();
+        expect(client.connectHeaders).toEqual({
             Authorization: 'Bearer jwt',
         });
         client.onConnect();

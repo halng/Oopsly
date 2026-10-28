@@ -199,28 +199,28 @@ public class QuestionServiceImpl implements QuestionService {
     // Fallback methods for Circuit Breaker
     public ApiRes createFallback(
             UUID shelveId, UUID testSuiteId, QuestionReq request, Throwable t) {
-        log.error("Question service unavailable during create: {}", t.getMessage());
+        log.error("Question service unavailable during create: {}", t.toString());
         throw unwrapQuestionException(t);
     }
 
     public ApiRes updateFallback(
             UUID shelveId, UUID testSuiteId, UUID questionId, QuestionReq request, Throwable t) {
-        log.error("Question service unavailable during update: {}", t.getMessage());
+        log.error("Question service unavailable during update: {}", t.toString());
         throw unwrapQuestionException(t);
     }
 
     public ApiRes deleteFallback(UUID shelveId, UUID testSuiteId, UUID questionId, Throwable t) {
-        log.error("Question service unavailable during delete: {}", t.getMessage());
+        log.error("Question service unavailable during delete: {}", t.toString());
         throw unwrapQuestionException(t);
     }
 
     public ApiRes getByIdFallback(UUID shelveId, UUID testSuiteId, UUID questionId, Throwable t) {
-        log.error("Question service unavailable during getById: {}", t.getMessage());
+        log.error("Question service unavailable during getById: {}", t.toString());
         throw unwrapQuestionException(t);
     }
 
     public ApiRes getAllByTestSuiteFallback(UUID shelveId, UUID testSuiteId, Throwable t) {
-        log.error("Question service unavailable during getAllByTestSuite: {}", t.getMessage());
+        log.error("Question service unavailable during getAllByTestSuite: {}", t.toString());
         throw unwrapQuestionException(t);
     }
 

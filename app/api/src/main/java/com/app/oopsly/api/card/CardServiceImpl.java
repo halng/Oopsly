@@ -526,7 +526,7 @@ public class CardServiceImpl implements CardService {
     }
 
     public ApiRes getDueCardsForCurrentUserFallback(Throwable t) {
-        log.error("Card service unavailable during getDueCardsForCurrentUser: {}", t.getMessage());
+        log.error("Card service unavailable during getDueCardsForCurrentUser: {}", t.toString());
         throw unwrapCardException(t);
     }
 

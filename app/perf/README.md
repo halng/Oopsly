@@ -48,12 +48,14 @@ The report lands in `app/api/build/reports/perf/summary.md`.
 | :--- | :--- | :--- |
 | `PERF_HOST` | `http://localhost:9009/api/oopsly` | API base URL (`--host` also works) |
 | `PERF_PROFILE` | `smoke` | `smoke` or `regression` (selects the thresholds) |
-| `PERF_JWT_SECRET` | the dev secret | Base64 secret used to sign access tokens |
+| `PERF_JWKS_PORT` | `9099` | Port where Locust serves the JWKS the API verifies tokens with (`0` disables) |
 | `PERF_RESULTS_DIR` | `results` | Where `summary.md` is written |
 | `PERF_RUN_ID` | process id | Keeps seeded names unique between runs |
 
-Tokens are signed with the shared secret (HS384, same claims as the auth service), so the auth
-service does not need to run.
+Tokens are signed RS256 (same claims as the auth service) with a key generated per Locust process,
+and the matching JWKS is served on `PERF_JWKS_PORT`. The API's perf profile points `app.jwt.jwks-url`
+there, so the auth service does not need to run. Do not use `--processes` (each worker would generate
+a different key).
 
 ## Adding or tuning an endpoint
 

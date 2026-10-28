@@ -112,14 +112,14 @@ public class AuthClient {
 
     @SuppressWarnings("unused")
     private AuthProfile lookupFallback(UUID id, Throwable t) {
-        log.warn("Auth service unavailable, using placeholder profile: {}", t.getMessage());
+        log.warn("Auth service unavailable, using placeholder profile: {}", t.toString());
         AuthProfile cached = cache.getIfPresent(id);
         return cached != null ? cached : AuthProfile.unknown(id);
     }
 
     @SuppressWarnings("unused")
     private Map<UUID, AuthProfile> lookupFallback(Collection<UUID> ids, Throwable t) {
-        log.warn("Auth service unavailable, using placeholder profiles: {}", t.getMessage());
+        log.warn("Auth service unavailable, using placeholder profiles: {}", t.toString());
         Map<UUID, AuthProfile> result = new LinkedHashMap<>();
         for (UUID id : ids) {
             AuthProfile cached = cache.getIfPresent(id);

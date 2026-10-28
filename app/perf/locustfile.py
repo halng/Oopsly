@@ -16,12 +16,16 @@ from pathlib import Path
 from locust import HttpUser, between, events
 
 from oopsly_perf import config, thresholds
-from oopsly_perf.auth import mint_token
+from oopsly_perf.auth import generate_key, mint_token, serve_jwks
 from oopsly_perf.sweep import ApiSweep
 
 log = logging.getLogger("oopsly_perf")
 _user_numbers = itertools.count(1)
 _run_id = os.environ.get("PERF_RUN_ID", str(os.getpid()))
+# One key per Locust process, published as a JWKS for the API under test (run without --processes).
+_signing_key = generate_key()
+if config.jwks_port():
+    serve_jwks(_signing_key, config.jwks_port())
 
 
 class OopslyUser(HttpUser):
@@ -33,10 +37,9 @@ class OopslyUser(HttpUser):
         number = next(_user_numbers)
         self.counter = itertools.count(1)
         self.suffix = f"{_run_id}-{number}-{id(self) % 10_000}"
-        secret = config.jwt_secret()
 
         def token(role: str) -> str:
-            return mint_token(f"perf-{role}-{_run_id}-{number}@oopsly.dev", secret)
+            return mint_token(f"perf-{role}-{_run_id}-{number}@oopsly.dev", _signing_key)
 
         self.token = token("owner")
         self.other_token = token("member")
