@@ -19,11 +19,16 @@ package com.app.oopsly.api.unit.shared.security;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.app.oopsly.api.config.AppConfig;
 import com.app.oopsly.api.shared.security.HttpJwksKeyProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.net.httpserver.HttpServer;
 import io.jsonwebtoken.JwtException;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
@@ -124,6 +129,72 @@ class HttpJwksKeyProviderTest {
         body = "not json";
 
         assertThrows(JwtException.class, () -> provider.resolve("k1"));
+    }
+
+    @Test
+    void givenNonRsaAndKidlessKeys_whenResolving_thenSkipped() throws Exception {
+        body = "{\"keys\":[{\"kty\":\"EC\",\"kid\":\"ec\"},{\"kty\":\"RSA\"}," + jwk("k1") + "]}";
+
+        assertNotNull(provider.resolve("k1"));
+        assertThrows(JwtException.class, () -> provider.resolve("ec"));
+    }
+
+    @Test
+    void givenInterruptedFetch_whenResolving_thenRejectedAndInterruptFlagKept() {
+        HttpJwksKeyProvider interrupted =
+                new HttpJwksKeyProvider(
+                        () -> {
+                            throw new InterruptedException("stop");
+                        },
+                        new ObjectMapper(),
+                        now::get);
+
+        try {
+            assertThrows(JwtException.class, () -> interrupted.resolve("k1"));
+            assertTrue(Thread.currentThread().isInterrupted());
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void givenJwksEndpoint_whenResolvingThroughAppConfig_thenFetchesOverHttp() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        byte[] ok = body.getBytes(StandardCharsets.UTF_8);
+        server.createContext(
+                "/ok",
+                exchange -> {
+                    exchange.sendResponseHeaders(200, ok.length);
+                    exchange.getResponseBody().write(ok);
+                    exchange.close();
+                });
+        server.createContext(
+                "/down",
+                exchange -> {
+                    exchange.sendResponseHeaders(503, -1);
+                    exchange.close();
+                });
+        server.start();
+        try {
+            String base = "http://127.0.0.1:" + server.getAddress().getPort();
+
+            assertNotNull(
+                    new HttpJwksKeyProvider(config(base + "/ok"), new ObjectMapper())
+                            .resolve("k1"));
+            assertThrows(
+                    JwtException.class,
+                    () ->
+                            new HttpJwksKeyProvider(config(base + "/down"), new ObjectMapper())
+                                    .resolve("k1"));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    private static AppConfig config(String jwksUrl) {
+        AppConfig config = new AppConfig();
+        config.getJwt().setJwksUrl(jwksUrl);
+        return config;
     }
 
     private static long cooldown() {

@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.function.LongSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -61,6 +62,7 @@ public class HttpJwksKeyProvider implements JwksKeyProvider {
     private boolean attempted;
     private long lastAttemptMs;
 
+    @Autowired
     public HttpJwksKeyProvider(AppConfig appConfig, ObjectMapper objectMapper) {
         this(httpFetcher(appConfig.getJwt().getJwksUrl()), objectMapper, System::currentTimeMillis);
     }

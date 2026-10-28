@@ -266,6 +266,8 @@ jacocoTestCoverageVerification {
 
 tasks.jacocoTestCoverageVerification.finalizedBy('jacocoTestReport')
 tasks.test.finalizedBy('jacocoTestReport')
+// Sonar only reads the XML; make sure it is (re)generated before the scan.
+tasks.named('sonar') { dependsOn 'jacocoTestReport' }
 
 spotless {
 	java {
