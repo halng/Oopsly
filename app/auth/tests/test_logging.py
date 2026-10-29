@@ -1,7 +1,12 @@
 import logging
 import re
 
-from app.logging_config import OopslyFormatter, request_id, request_platform
+from app.logging_config import (
+    OopslyFormatter,
+    mask_headers,
+    request_id,
+    request_platform,
+)
 from tests.conftest import TEST_EMAIL, bearer, login
 
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
@@ -90,3 +95,36 @@ def test_rejected_tokens_are_logged_as_warnings(client, caplog):
     with caplog.at_level(logging.WARNING, logger="app.deps"):
         client.get("/api/auth/v1/user-profiles", headers={"Authorization": "Bearer x"})
     assert "JWT authentication failed" in caplog.text
+
+
+def test_mask_headers_never_exposes_credentials():
+    masked = mask_headers(
+        {
+            "Authorization": "Bearer eyJhbGciOi.secret.token",
+            "Cookie": "session=abc",
+            "X-Access-Token": "tok",
+            "X-Internal-Key": "super-secret-key",
+            "X-Platform": "WEB",
+        }
+    )
+    assert masked["authorization"] == "***"
+    assert masked["cookie"] == "***"
+    assert masked["x-access-token"] == "***"
+    assert masked["x-platform"] == "WEB"
+    assert "super-secret-key" not in masked["x-internal-key"]
+    assert masked["x-internal-key"].startswith("<len=16 sha256=")
+
+
+def test_rejected_requests_log_masked_headers(client, caplog):
+    with caplog.at_level(logging.INFO, logger="app.main"):
+        client.post(
+            "/api/auth/internal/v1/users/lookup",
+            json={"ids": []},
+            headers={"X-Internal-Key": "wrong-key", "Authorization": "Bearer abc"},
+        )
+    (record,) = [r for r in caplog.records if r.name == "app.main"]
+    text = record.getMessage()
+    assert "Status: 403" in text and "Headers:" in text
+    assert "wrong-key" not in text and "Bearer abc" not in text
+    assert "'x-internal-key': '<len=9 sha256=" in text
+    assert "'authorization': '***'" in text

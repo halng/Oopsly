@@ -13,7 +13,12 @@ from app.config import settings
 from app.deps import get_key_store
 from app.envelope import ApiError, respond
 from app.keys import rotation_loop
-from app.logging_config import request_id, request_platform, setup_logging
+from app.logging_config import (
+    mask_headers,
+    request_id,
+    request_platform,
+    setup_logging,
+)
 from app.routes import CONTEXT_PATH, root_router, router
 
 setup_logging()
@@ -76,13 +81,25 @@ async def log_request(request: Request, call_next):
         raise
     else:
         elapsed = int((time.monotonic() - started) * 1000)
-        logger.info(
-            "Request: %s %s | Status: %d | %d ms",
-            method,
-            path,
-            response.status_code,
-            elapsed,
-        )
+        if response.status_code >= 400:
+            # Rejected requests carry their (masked) headers so a 401/403 can be
+            # diagnosed from the log alone.
+            logger.info(
+                "Request: %s %s | Status: %d | %d ms | Headers: %s",
+                method,
+                path,
+                response.status_code,
+                elapsed,
+                mask_headers(request.headers),
+            )
+        else:
+            logger.info(
+                "Request: %s %s | Status: %d | %d ms",
+                method,
+                path,
+                response.status_code,
+                elapsed,
+            )
         return response
     finally:
         request_platform.reset(platform)
