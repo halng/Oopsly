@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Card } from '@/types';
 import { ApiService } from '@/services/api';
+import { toast } from '@/store/ToastStore';
 import { formatInterval } from '@/utils/fsrs';
 import {
     ImportCardsModal,
@@ -109,6 +110,7 @@ export default function SubjectDetailsPage() {
             setNewBack('');
             setNewHint('');
             setIsAddingCard(false);
+            toast.success('Card added');
             loadData();
         }
     };
@@ -124,13 +126,17 @@ export default function SubjectDetailsPage() {
         });
         if (res.isSuccess) {
             setEditingCard(null);
+            toast.success('Card updated');
             loadData();
         }
     };
 
     const handleDeleteCard = async (cardId: string) => {
         const res = await ApiService.deleteCard(cardId);
-        if (res.isSuccess) loadData();
+        if (res.isSuccess) {
+            toast.success('Card deleted');
+            loadData();
+        }
     };
 
     const handleGenerateAI = async () => {
@@ -156,6 +162,10 @@ export default function SubjectDetailsPage() {
                         ]
                     );
                 }
+                toast.success(
+                    `${res.data.length} AI cards added`,
+                    currentSubject.name
+                );
                 setIsAiModalOpen(false);
                 setAiNotes('');
                 loadData();

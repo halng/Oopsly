@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans, Playfair_Display } from 'next/font/google';
 import './globals.css';
+import ToastViewport from '@/components/shared/ToastViewport';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
     subsets: ['latin'],
@@ -63,6 +64,7 @@ export default function RootLayout({
                 className={`${plusJakartaSans.variable} ${playfairDisplay.variable} min-h-full flex flex-col`}
             >
                 {children}
+                <ToastViewport />
             </body>
         </html>
     );

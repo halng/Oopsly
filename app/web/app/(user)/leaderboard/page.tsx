@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Globe, Lock, Plus, Search, Trophy, Users } from 'lucide-react';
 import { Community, CommunityMember } from '@/types';
 import { ApiService } from '@/services/api';
+import { toast } from '@/store/ToastStore';
 import { useUserProfileStore } from '@/store';
 import CommunityModal from '@/components/leaderboard/CommunityModal';
 import CommunityRequestsModal from '@/components/leaderboard/CommunityRequestsModal';
@@ -276,7 +277,9 @@ export default function LeaderboardPage() {
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
                 onSubmit={async (data) => {
-                    await ApiService.createCommunity(data);
+                    const res = await ApiService.createCommunity(data);
+                    if (res.isSuccess)
+                        toast.success('Community created', data.name);
                     await loadCommunities();
                 }}
             />

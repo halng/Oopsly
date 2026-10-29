@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Shelf, Subject, TestSuite, TestSuiteInput } from '@/types';
 import { ApiService } from '@/services/api';
+import { toast } from '@/store/ToastStore';
 import {
     CloneSubjectModal,
     ImportCardsModal,
@@ -120,7 +121,8 @@ export default function ShelfPage() {
         icon?: string;
     }) => {
         if (!shelf) return;
-        await ApiService.updateShelf(shelf.id, data);
+        const res = await ApiService.updateShelf(shelf.id, data);
+        if (res.isSuccess) toast.success('Shelf updated');
         loadData();
     };
 
@@ -132,10 +134,12 @@ export default function ShelfPage() {
         isPublic: boolean;
     }) => {
         if (editingSubject) {
-            await ApiService.updateSubject(editingSubject.id, data);
+            const res = await ApiService.updateSubject(editingSubject.id, data);
+            if (res.isSuccess) toast.success('Subject updated');
         } else {
             if (!shelf) return;
-            await ApiService.createSubject(shelf.id, data);
+            const res = await ApiService.createSubject(shelf.id, data);
+            if (res.isSuccess) toast.success('Subject created', data.name);
         }
         loadData();
     };
@@ -151,6 +155,9 @@ export default function ShelfPage() {
             : await ApiService.createTestSuite(shelf.id, data);
         if (!res.isSuccess)
             throw new Error(res.message || 'Could not save the test suite');
+        toast.success(
+            editingTestSuite ? 'Test suite updated' : 'Test suite created'
+        );
         setTestSuites(await loadShelfTestSuites(shelf.id));
     };
 
@@ -161,7 +168,10 @@ export default function ShelfPage() {
         )
             return;
         const res = await ApiService.deleteTestSuite(shelf.id, suite.id);
-        if (res.isSuccess) setTestSuites(await loadShelfTestSuites(shelf.id));
+        if (res.isSuccess) {
+            toast.success('Test suite deleted', suite.title);
+            setTestSuites(await loadShelfTestSuites(shelf.id));
+        }
     };
 
     const filteredSubjects = useMemo(() => {
@@ -430,7 +440,14 @@ export default function ShelfPage() {
                             }}
                             onDelete={async () => {
                                 setActiveMenuSubjectId(null);
-                                await ApiService.deleteSubject(subject.id);
+                                const res = await ApiService.deleteSubject(
+                                    subject.id
+                                );
+                                if (res.isSuccess)
+                                    toast.success(
+                                        'Subject deleted',
+                                        subject.name
+                                    );
                                 loadData();
                             }}
                         />

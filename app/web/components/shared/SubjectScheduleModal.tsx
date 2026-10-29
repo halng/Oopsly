@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Subject, SubjectSchedule } from '@/types';
 import { ApiService } from '@/services/api';
+import { toast } from '@/store/ToastStore';
 
 interface SubjectScheduleModalProps {
     subject: Subject;
@@ -56,6 +57,7 @@ export default function SubjectScheduleModal({
         const res = await ApiService.updateSubject(subject.id, { schedule });
         if (res.isSuccess) {
             setIsSaved(true);
+            toast.success('Schedule saved');
             onUpdate();
             setTimeout(() => {
                 setIsSaved(false);

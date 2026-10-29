@@ -12,6 +12,7 @@ import {
     Volume2,
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
+import { toast } from '@/store/ToastStore';
 import { useLogout } from '@/hooks/useLogout';
 import { useUserProfileStore } from '@/store';
 import { ThemeModal } from '@/components/shared';
@@ -82,6 +83,7 @@ export default function SettingsPage() {
         if (res.isSuccess && res.data) {
             setProfile(res.data);
             setSavedSuccess(true);
+            toast.success('Settings saved');
             setTimeout(() => setSavedSuccess(false), 2000);
         }
         setIsSaving(false);

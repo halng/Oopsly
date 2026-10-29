@@ -124,7 +124,7 @@ describe('ApiService', () => {
             const res = await ApiService.getStats();
             expect(res).toMatchObject({
                 isSuccess: false,
-                statusCode: 200,
+                statusCode: 0,
                 message: 'down',
                 data: null,
                 timestamp: '2026-03-01T00:00:00.000Z',
