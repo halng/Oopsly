@@ -1,0 +1,232 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Oopsly game service on Fargate, 2 tasks behind an internal ALB, exposed through the shared HTTP API.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: stg
+    AllowedPattern: "[a-z0-9-]+"
+  NetworkStackName:
+    Type: String
+    Default: oopsly-network-stg
+    Description: Stack created from network.yaml.
+  ImageTag:
+    Type: String
+    Description: Tag already copied into the game ECR repository (see scripts/copy-images.sh).
+  DesiredCount:
+    Type: Number
+    Default: 2
+    MinValue: 1
+    MaxValue: 6
+    Description: Number of Fargate tasks.
+  CorsOrigins:
+    Type: String
+    Default: http://localhost:3000
+    Description: Comma-separated browser origins allowed to call the service.
+  AuthStackName:
+    Type: String
+    Default: oopsly-auth-stg
+    Description: Stack created from auth.yaml (its JWKS and base URL are imported).
+
+Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/oopsly-game-${Environment}
+      RetentionInDays: 14
+
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: read-secrets
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource:
+                  - Fn::ImportValue: !Sub ${NetworkStackName}-GameDatabaseUrlSecretArn
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub oopsly-game-${Environment}
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Cpu: "512"
+      Memory: "1024"
+      ExecutionRoleArn: !GetAtt ExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: oopsly-game
+          Image: !Sub
+            - "${Repository}:${ImageTag}"
+            - Repository:
+                Fn::ImportValue: !Sub ${NetworkStackName}-GameRepositoryUri
+          Essential: true
+          PortMappings:
+            - ContainerPort: 9008
+              Protocol: tcp
+          Environment:
+            - Name: PORT
+              Value: "9008"
+            - Name: CORS_ORIGINS
+              Value: !Ref CorsOrigins
+            - Name: JWKS_URL
+              Value:
+                Fn::ImportValue: !Sub ${AuthStackName}-JwksUrl
+          Secrets:
+            - Name: DATABASE_URL
+              ValueFrom: !Sub
+                - "${Secret}"
+                - Secret:
+                    Fn::ImportValue: !Sub ${NetworkStackName}-GameDatabaseUrlSecretArn
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  # Internal: only the API Gateway VPC link and other tasks can reach it.
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Internal load balancer for oopsly-game
+      VpcId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId:
+            Fn::ImportValue: !Sub ${NetworkStackName}-VpcLinkSecurityGroupId
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId:
+            Fn::ImportValue: !Sub ${NetworkStackName}-TaskSecurityGroupId
+
+  TaskIngressFromAlb:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-TaskSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 9008
+      ToPort: 9008
+      SourceSecurityGroupId: !GetAtt AlbSecurityGroup.GroupId
+      Description: oopsly-game load balancer to tasks
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub oopsly-game-${Environment}
+      Type: application
+      Scheme: internal
+      SecurityGroups:
+        - !GetAtt AlbSecurityGroup.GroupId
+      Subnets: !Split
+        - ","
+        - Fn::ImportValue: !Sub ${NetworkStackName}-SubnetIds
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: "3600"
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub oopsly-game-${Environment}
+      VpcId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-VpcId
+      Port: 9008
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: "200"
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: "30"
+
+  HttpListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  Service:
+    Type: AWS::ECS::Service
+    DependsOn: HttpListener
+    Properties:
+      ServiceName: oopsly-game
+      Cluster:
+        Fn::ImportValue: !Sub ${NetworkStackName}-ClusterName
+      TaskDefinition: !Ref TaskDefinition
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      HealthCheckGracePeriodSeconds: 120
+      DeploymentConfiguration:
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - Fn::ImportValue: !Sub ${NetworkStackName}-TaskSecurityGroupId
+          Subnets: !Split
+            - ","
+            - Fn::ImportValue: !Sub ${NetworkStackName}-SubnetIds
+      LoadBalancers:
+        - ContainerName: oopsly-game
+          ContainerPort: 9008
+          TargetGroupArn: !Ref TargetGroup
+
+  # ------------------------------------------------- API Gateway routes
+  Integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-HttpApiId
+      IntegrationType: HTTP_PROXY
+      IntegrationMethod: ANY
+      ConnectionType: VPC_LINK
+      ConnectionId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-VpcLinkId
+      IntegrationUri: !Ref HttpListener
+      PayloadFormatVersion: "1.0"
+      TimeoutInMillis: 30000
+
+  PublicApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-HttpApiId
+      RouteKey: "ANY /v1/game/{proxy+}"
+      Target: !Sub integrations/${Integration}
+
+Outputs:
+  InternalUrl:
+    Description: Private base URL, for other services in the VPC.
+    Value: !Sub http://${LoadBalancer.DNSName}

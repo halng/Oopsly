@@ -1,0 +1,37 @@
+# Defaults for `sam deploy --config-env <network|auth|api|game>` against the stg
+# environment. deploy.sh passes the environment-specific values explicitly, so this
+# file mainly keeps manual runs short.
+version = 0.1
+
+[network.deploy.parameters]
+template_file = "network.yaml"
+stack_name = "oopsly-network-stg"
+capabilities = "CAPABILITY_IAM"
+resolve_s3 = true
+confirm_changeset = false
+fail_on_empty_changeset = false
+parameter_overrides = "Environment=stg"
+
+[auth.deploy.parameters]
+template_file = "auth.yaml"
+stack_name = "oopsly-auth-stg"
+capabilities = "CAPABILITY_IAM"
+resolve_s3 = true
+confirm_changeset = false
+fail_on_empty_changeset = false
+
+[api.deploy.parameters]
+template_file = "api.yaml"
+stack_name = "oopsly-api-stg"
+capabilities = "CAPABILITY_IAM"
+resolve_s3 = true
+confirm_changeset = false
+fail_on_empty_changeset = false
+
+[game.deploy.parameters]
+template_file = "game.yaml"
+stack_name = "oopsly-game-stg"
+capabilities = "CAPABILITY_IAM"
+resolve_s3 = true
+confirm_changeset = false
+fail_on_empty_changeset = false

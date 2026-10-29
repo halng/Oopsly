@@ -1,0 +1,372 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Oopsly shared infrastructure: VPC, ECS cluster, Postgres, Redis, ECR repositories,
+  generated secrets and the HTTP API (API Gateway) that fronts every service.
+  Deploy this stack first; auth, api and game import its outputs.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: stg
+    AllowedPattern: "[a-z0-9-]+"
+  DbEngineVersion:
+    Type: String
+    Default: "15.10"
+  DbInstanceClass:
+    Type: String
+    Default: db.t4g.micro
+  RedisEngineVersion:
+    Type: String
+    Default: "7.1"
+  RedisNodeType:
+    Type: String
+    Default: cache.t4g.micro
+
+Resources:
+  # ---------------------------------------------------------------- network
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.40.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub oopsly-${Environment}
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  # Tasks get a public IP so they can pull images and reach AWS APIs without a NAT
+  # gateway. Nothing is reachable from the internet: security groups only admit
+  # traffic from the VPC link, the load balancers and the tasks themselves.
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: 10.40.0.0/24
+      MapPublicIpOnLaunch: true
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: 10.40.1.0/24
+      MapPublicIpOnLaunch: true
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicRouteA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicRouteB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref PublicRouteTable
+
+  # --------------------------------------------------------- security groups
+  VpcLinkSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: API Gateway VPC link; the only caller the internal load balancers accept
+      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+
+  # Shared by every service. Each service template adds its own ingress rule from
+  # its load balancer.
+  TaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Oopsly Fargate tasks
+      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Postgres accepts Oopsly tasks only
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref TaskSecurityGroup
+
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Redis accepts Oopsly tasks only
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !Ref TaskSecurityGroup
+
+  # ---------------------------------------------------------------- secrets
+  DbSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub oopsly-${Environment}-db
+      GenerateSecretString:
+        SecretStringTemplate: '{"username":"oopsly"}'
+        GenerateStringKey: password
+        PasswordLength: 32
+        ExcludePunctuation: true
+
+  # Shared by auth (INTERNAL_API_KEY) and api (AUTH_INTERNAL_KEY), so they always agree.
+  InternalKeySecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub oopsly-${Environment}-internal-key
+      GenerateSecretString:
+        PasswordLength: 48
+        ExcludePunctuation: true
+
+  JwtPassphraseSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub oopsly-${Environment}-jwt-passphrase
+      GenerateSecretString:
+        PasswordLength: 48
+        ExcludePunctuation: true
+
+  GameDatabaseUrlSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub oopsly-${Environment}-game-database-url
+      SecretString: !Sub
+        - "postgresql+psycopg://oopsly:${Password}@${Host}:5432/oopsly"
+        - Password: !Sub "{{resolve:secretsmanager:${DbSecret}:SecretString:password}}"
+          Host: !GetAtt Database.Endpoint.Address
+
+  # --------------------------------------------------------- data stores
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Oopsly database subnets
+      SubnetIds:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub oopsly-${Environment}
+      Engine: postgres
+      EngineVersion: !Ref DbEngineVersion
+      DBInstanceClass: !Ref DbInstanceClass
+      AllocatedStorage: 20
+      StorageType: gp3
+      StorageEncrypted: true
+      DBName: oopsly
+      MasterUsername: oopsly
+      MasterUserPassword: !Sub "{{resolve:secretsmanager:${DbSecret}:SecretString:password}}"
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      VPCSecurityGroups:
+        - !Ref DatabaseSecurityGroup
+      PubliclyAccessible: false
+      BackupRetentionPeriod: 7
+
+  RedisSubnets:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Oopsly Redis subnets
+      SubnetIds:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+
+  Redis:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:
+      ClusterName: !Sub oopsly-${Environment}
+      Engine: redis
+      EngineVersion: !Ref RedisEngineVersion
+      CacheNodeType: !Ref RedisNodeType
+      NumCacheNodes: 1
+      CacheSubnetGroupName: !Ref RedisSubnets
+      VpcSecurityGroupIds:
+        - !Ref RedisSecurityGroup
+
+  # ------------------------------------------------------------ containers
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub oopsly-${Environment}
+
+  AuthRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub oopsly-auth-${Environment}
+      EmptyOnDelete: true
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {"rules":[{"rulePriority":1,"description":"Keep the last 10 images","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}}]}
+
+  ApiRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub oopsly-api-${Environment}
+      EmptyOnDelete: true
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {"rules":[{"rulePriority":1,"description":"Keep the last 10 images","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}}]}
+
+  GameRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub oopsly-game-${Environment}
+      EmptyOnDelete: true
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {"rules":[{"rulePriority":1,"description":"Keep the last 10 images","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}}]}
+
+  # ------------------------------------------------------------ API Gateway
+  # One HTTP API for all services. CORS is left to the services themselves, so
+  # browsers never see duplicated headers. Services attach their own routes.
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub oopsly-${Environment}
+      ProtocolType: HTTP
+
+  VpcLink:
+    Type: AWS::ApiGatewayV2::VpcLink
+    Properties:
+      Name: !Sub oopsly-${Environment}
+      SubnetIds:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+      SecurityGroupIds:
+        - !Ref VpcLinkSecurityGroup
+
+  ApiAccessLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /apigateway/oopsly-${Environment}
+      RetentionInDays: 14
+
+  # No routes yet, so the first stage deployment needs the services' routes to exist
+  # only for traffic; the stage itself is valid empty. AutoDeploy publishes route
+  # changes made by the service stacks.
+  DefaultStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: $default
+      AutoDeploy: true
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 200
+        ThrottlingRateLimit: 100
+      AccessLogSettings:
+        DestinationArn: !GetAtt ApiAccessLogs.Arn
+        Format: >-
+          {"requestId":"$context.requestId","ip":"$context.identity.sourceIp","method":"$context.httpMethod","path":"$context.path","status":"$context.status","latencyMs":"$context.responseLatency","integrationError":"$context.integrationErrorMessage"}
+
+Outputs:
+  VpcId:
+    Value: !Ref Vpc
+    Export:
+      Name: !Sub ${AWS::StackName}-VpcId
+  SubnetIds:
+    Value: !Join [",", [!Ref PublicSubnetA, !Ref PublicSubnetB]]
+    Export:
+      Name: !Sub ${AWS::StackName}-SubnetIds
+  ClusterName:
+    Value: !Ref Cluster
+    Export:
+      Name: !Sub ${AWS::StackName}-ClusterName
+  TaskSecurityGroupId:
+    Value: !GetAtt TaskSecurityGroup.GroupId
+    Export:
+      Name: !Sub ${AWS::StackName}-TaskSecurityGroupId
+  VpcLinkSecurityGroupId:
+    Value: !GetAtt VpcLinkSecurityGroup.GroupId
+    Export:
+      Name: !Sub ${AWS::StackName}-VpcLinkSecurityGroupId
+  VpcLinkId:
+    Value: !Ref VpcLink
+    Export:
+      Name: !Sub ${AWS::StackName}-VpcLinkId
+  HttpApiId:
+    Value: !Ref HttpApi
+    Export:
+      Name: !Sub ${AWS::StackName}-HttpApiId
+  DbHost:
+    Value: !GetAtt Database.Endpoint.Address
+    Export:
+      Name: !Sub ${AWS::StackName}-DbHost
+  RedisHost:
+    Value: !GetAtt Redis.RedisEndpoint.Address
+    Export:
+      Name: !Sub ${AWS::StackName}-RedisHost
+  RedisPort:
+    Value: !GetAtt Redis.RedisEndpoint.Port
+    Export:
+      Name: !Sub ${AWS::StackName}-RedisPort
+  DbSecretArn:
+    Value: !Ref DbSecret
+    Export:
+      Name: !Sub ${AWS::StackName}-DbSecretArn
+  InternalKeySecretArn:
+    Value: !Ref InternalKeySecret
+    Export:
+      Name: !Sub ${AWS::StackName}-InternalKeySecretArn
+  JwtPassphraseSecretArn:
+    Value: !Ref JwtPassphraseSecret
+    Export:
+      Name: !Sub ${AWS::StackName}-JwtPassphraseSecretArn
+  GameDatabaseUrlSecretArn:
+    Value: !Ref GameDatabaseUrlSecret
+    Export:
+      Name: !Sub ${AWS::StackName}-GameDatabaseUrlSecretArn
+  AuthRepositoryUri:
+    Value: !GetAtt AuthRepository.RepositoryUri
+    Export:
+      Name: !Sub ${AWS::StackName}-AuthRepositoryUri
+  ApiRepositoryUri:
+    Value: !GetAtt ApiRepository.RepositoryUri
+    Export:
+      Name: !Sub ${AWS::StackName}-ApiRepositoryUri
+  GameRepositoryUri:
+    Value: !GetAtt GameRepository.RepositoryUri
+    Export:
+      Name: !Sub ${AWS::StackName}-GameRepositoryUri
+  ApiEndpoint:
+    Description: Public base URL. Point the web app's NEXT_PUBLIC_*_URL values at it.
+    Value: !GetAtt HttpApi.ApiEndpoint
