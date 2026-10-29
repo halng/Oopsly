@@ -127,6 +127,159 @@ test.describe('Test suite screen (question bank)', () => {
     });
 });
 
+test.describe('Bulk add questions', () => {
+    const PASTED = [
+        'Question\tType\tOption A\tOption B\tCorrect',
+        'Capital of France?\tsingle\tParis\tRome\tA',
+        'The sky is green\ttrue/false\t\t\tFalse',
+        'Broken row\tsingle\tx\ty\tZ',
+    ].join('\n');
+
+    async function openPasteTab(page: import('@playwright/test').Page) {
+        await page.goto('/home/biology/tests/midterm-quiz');
+        await page.getByTestId('btn-bulk-add-questions').click();
+        await expect(page.getByTestId('import-questions-modal')).toBeVisible();
+        await page.getByTestId('tab-import-paste').click();
+    }
+
+    test('pastes rows, previews them and imports only the valid ones', async ({
+        page,
+        mock,
+    }) => {
+        await openPasteTab(page);
+        await page.getByTestId('import-questions-paste').fill(PASTED);
+        await page.getByTestId('btn-parse-pasted').click();
+
+        await expect(
+            page.getByTestId('import-questions-summary')
+        ).toContainText('2 valid · 1 with issues');
+        await expect(page.getByText(/doesn't match any option/i)).toBeVisible();
+
+        await page.getByTestId('btn-run-import-questions').click();
+        await expect(page.getByTestId('toast-success')).toContainText(
+            '2 questions added'
+        );
+        await expect(page.getByTestId('import-questions-modal')).toHaveCount(0);
+
+        const created = await mock.requests('POST', `${SUITE}/questions`);
+        expect(created.map((r) => r.json)).toMatchObject([
+            {
+                text: 'Capital of France?',
+                type: 'SINGLE_CHOICE',
+                options: ['Paris', 'Rome'],
+                correctOptionIndex: 0,
+            },
+            {
+                text: 'The sky is green',
+                type: 'TRUE_FALSE',
+                correctOptionIndex: 1,
+            },
+        ]);
+        // The list is reloaded afterwards.
+        await expect
+            .poll(
+                async () =>
+                    (await mock.requests('GET', `${SUITE}/questions`)).length
+            )
+            .toBeGreaterThan(1);
+    });
+
+    test('uploads a CSV file', async ({ page, mock }) => {
+        await page.goto('/home/biology/tests/midterm-quiz');
+        await page.getByTestId('btn-bulk-add-questions').click();
+        await page.getByTestId('import-questions-file').setInputFiles({
+            name: 'questions.csv',
+            mimeType: 'text/csv',
+            buffer: Buffer.from(
+                'Question,Option A,Option B,Option C,Correct\n' +
+                    '"Which is a prime?",4,5,6,B\n'
+            ),
+        });
+        await expect(
+            page.getByTestId('import-questions-summary')
+        ).toContainText('1 valid');
+        await page.getByTestId('btn-run-import-questions').click();
+        await expect(page.getByTestId('toast-success')).toContainText(
+            '1 question added'
+        );
+        const [created] = await mock.requests('POST', `${SUITE}/questions`);
+        expect(created.json).toMatchObject({
+            text: 'Which is a prime?',
+            options: ['4', '5', '6'],
+            correctOptionIndex: 1,
+        });
+    });
+
+    test('lets the user fix the column mapping', async ({ page }) => {
+        await openPasteTab(page);
+        await page
+            .getByTestId('import-questions-paste')
+            .fill('Prompt\tAnswer\nIs water wet?\ttrue');
+        await page.getByTestId('btn-parse-pasted').click();
+        await expect(
+            page.getByTestId('import-questions-summary')
+        ).toContainText('1 valid');
+        await page.getByTestId('map-correct').selectOption('');
+        await expect(
+            page.getByTestId('import-questions-summary')
+        ).toContainText('0 valid');
+        await expect(
+            page.getByTestId('btn-run-import-questions')
+        ).toBeDisabled();
+    });
+
+    test('a server error stops the import and says why', async ({
+        page,
+        mock,
+    }) => {
+        await mock.override({
+            method: 'POST',
+            path: `${SUITE}/questions`,
+            status: 500,
+            body: failure('java.lang.IllegalStateException', 500),
+        });
+        await openPasteTab(page);
+        await page.getByTestId('import-questions-paste').fill(PASTED);
+        await page.getByTestId('btn-parse-pasted').click();
+        await page.getByTestId('btn-run-import-questions').click();
+
+        const error = page.getByTestId('import-questions-error');
+        await expect(error).toContainText('0 added, 2 not added');
+        await expect(error).toContainText('Something went wrong on our side');
+        await expect(error).not.toContainText('IllegalState');
+        await expect(page.getByTestId('toast-error')).toHaveCount(1);
+        // The modal stays open and the import stopped at the first failure.
+        await expect(page.getByTestId('import-questions-modal')).toBeVisible();
+        expect(await mock.requests('POST', `${SUITE}/questions`)).toHaveLength(
+            1
+        );
+    });
+
+    test('cancelling closes the modal without importing', async ({
+        page,
+        mock,
+    }) => {
+        await openPasteTab(page);
+        await page.getByTestId('import-questions-paste').fill(PASTED);
+        await page.getByTestId('btn-parse-pasted').click();
+        await page.getByTestId('btn-cancel-import-questions').click();
+        await expect(page.getByTestId('import-questions-modal')).toHaveCount(0);
+        expect(await mock.requests('POST', `${SUITE}/questions`)).toHaveLength(
+            0
+        );
+    });
+
+    test('offers CSV and Excel templates', async ({ page }) => {
+        await page.goto('/home/biology/tests/midterm-quiz');
+        await page.getByTestId('btn-bulk-add-questions').click();
+        const download = page.waitForEvent('download');
+        await page.getByTestId('btn-question-template-csv').click();
+        expect((await download).suggestedFilename()).toBe(
+            'oopsly_questions_template.csv'
+        );
+    });
+});
+
 test.describe('Take test screen', () => {
     test('answers every question, submits and shows the breakdown', async ({
         page,

@@ -59,10 +59,19 @@ const FALLBACK: Record<ApiErrorKind, string> = {
 const TECHNICAL =
     /exception|stack ?trace|\bat [\w.$]+\(|sql|null ?pointer|\bjava\.|\bpython\b|traceback|status \d{3}|<\/?\w+>|^\s*[{[]/i;
 
+// Bare HTTP reason phrases say less than our own wording does.
+const GENERIC =
+    /^(forbidden|unauthori[sz]ed|not found|bad request|conflict|internal server error|error|failed)\.?$/i;
+
 function isHumanMessage(message: string | undefined): message is string {
     if (!message) return false;
     const text = message.trim();
-    return text.length >= 3 && text.length <= 160 && !TECHNICAL.test(text);
+    return (
+        text.length >= 3 &&
+        text.length <= 160 &&
+        !TECHNICAL.test(text) &&
+        !GENERIC.test(text)
+    );
 }
 
 function sentence(text: string) {

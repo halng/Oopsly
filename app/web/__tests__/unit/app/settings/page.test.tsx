@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import SettingsPage from '@/app/(user)/settings/page';
 import { ApiService } from '@/services/api';
 import { useUserProfileStore } from '@/store';
+import { useToastStore } from '@/store/ToastStore';
 
 const { push, logout } = vi.hoisted(() => ({
     push: vi.fn(),
@@ -34,6 +35,7 @@ describe('SettingsPage', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        useToastStore.setState({ toasts: [] });
         useUserProfileStore.setState(initialProfileState, true);
         useUserProfileStore.getState().setProfile(profile as never);
         vi.mocked(ApiService.updateProfile).mockResolvedValue({
@@ -58,5 +60,31 @@ describe('SettingsPage', () => {
         expect(push).toHaveBeenCalledWith('/home');
         fireEvent.click(screen.getByTestId('btn-logout'));
         expect(logout).toHaveBeenCalled();
+    });
+
+    it('confirms with a toast once the settings are saved', async () => {
+        render(<SettingsPage />);
+        fireEvent.click(screen.getByTestId('btn-save-settings'));
+        await waitFor(() =>
+            expect(useToastStore.getState().toasts[0]).toMatchObject({
+                kind: 'success',
+                title: 'Settings saved',
+            })
+        );
+    });
+
+    it('does not claim success when saving fails', async () => {
+        vi.mocked(ApiService.updateProfile).mockResolvedValue({
+            isSuccess: false,
+            data: null,
+            message: 'nope',
+            timestamp: '',
+        } as never);
+        render(<SettingsPage />);
+        fireEvent.click(screen.getByTestId('btn-save-settings'));
+        await waitFor(() =>
+            expect(ApiService.updateProfile).toHaveBeenCalled()
+        );
+        expect(useToastStore.getState().toasts).toEqual([]);
     });
 });

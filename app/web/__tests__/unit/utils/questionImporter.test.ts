@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
+    downloadQuestionCsvTemplate,
+    downloadQuestionExcelTemplate,
     extractQuestionsFromTable,
     guessQuestionMapping,
     looksLikeQuestionHeader,
@@ -15,6 +17,11 @@ const header = [
     'Correct',
     'Explanation',
 ];
+
+const { toFile } = vi.hoisted(() => ({ toFile: vi.fn() }));
+vi.mock('write-excel-file/browser', () => ({
+    default: vi.fn(() => ({ toFile })),
+}));
 
 describe('guessQuestionMapping', () => {
     it('maps columns from headers', () => {
@@ -120,5 +127,79 @@ describe('parsing helpers', () => {
             ['Q', 'A'],
             ['1+1', '2'],
         ]);
+    });
+});
+
+describe('templates', () => {
+    it('downloads a CSV that the importer can read back', async () => {
+        let blob: Blob | undefined;
+        URL.createObjectURL = vi.fn((b: Blob) => {
+            blob = b;
+            return 'blob:x';
+        });
+        URL.revokeObjectURL = vi.fn();
+        const click = vi
+            .spyOn(HTMLAnchorElement.prototype, 'click')
+            .mockImplementation(() => {});
+
+        downloadQuestionCsvTemplate();
+
+        expect(click).toHaveBeenCalled();
+        const text = await blob!.text();
+        const rows = parsePastedRows(text);
+        const mapping = guessQuestionMapping(rows[0]);
+        const items = extractQuestionsFromTable(rows.slice(1), mapping);
+        expect(items).toHaveLength(4);
+        expect(items.every((q) => q.isValid)).toBe(true);
+        expect(items.map((q) => q.type)).toEqual([
+            'SINGLE_CHOICE',
+            'MULTIPLE_CHOICE',
+            'TRUE_FALSE',
+            'FILL_IN_THE_BLANK',
+        ]);
+        click.mockRestore();
+    });
+
+    it('writes the Excel template to a file', async () => {
+        await downloadQuestionExcelTemplate();
+        expect(toFile).toHaveBeenCalledWith('oopsly_questions_template.xlsx');
+    });
+});
+
+describe('edge cases', () => {
+    const mapping = guessQuestionMapping(header);
+    const run = (row: string[]) => extractQuestionsFromTable([row], mapping)[0];
+
+    it('accepts a number as the correct option', () => {
+        expect(run(['Q', '', 'a', 'b', '', '2', '']).input).toMatchObject({
+            correctOptionIndex: 1,
+        });
+    });
+
+    it('rejects more than six options', () => {
+        const wide = guessQuestionMapping(['Question', 'Options', 'Correct']);
+        const [q] = extractQuestionsFromTable(
+            [['Q', 'a|b|c|d|e|f|g', 'A']],
+            wide
+        );
+        expect(q.validationError).toMatch(/up to 6 options/i);
+    });
+
+    it('requires a true/false answer to be true or false', () => {
+        expect(run(['Q', 'tf', '', '', '', 'maybe', '']).validationError).toBe(
+            'Choose True or False'
+        );
+    });
+
+    it('numbers rows from the first data row', () => {
+        const [a, b] = extractQuestionsFromTable(
+            [
+                ['A', '', 'x', 'y', '', 'A', ''],
+                ['B', '', 'x', 'y', '', 'B', ''],
+            ],
+            mapping,
+            1
+        );
+        expect([a.rowNumber, b.rowNumber]).toEqual([1, 2]);
     });
 });

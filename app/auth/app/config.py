@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     jwt_key_cache_seconds: int = 60
 
     test_emails: str = ""
-    internal_api_key: str = ""
+    internal_api_key: str = "Jtz+A7HbztjSTpiLI0FZXd2NffOnP2wm0KGbwfDnFAo="
 
     allowed_origins: str = "http://localhost:8080,http://localhost:8081"
 

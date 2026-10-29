@@ -212,7 +212,9 @@ export const ApiService = {
         fetchJson<null>(
             `/v1/otp?email=${email}`,
             { method: 'POST' },
-            authClient
+            authClient,
+            // The login form shows this error inline.
+            false
         ),
 
     verifyOtp: (email: string, otp: string, name: string) =>
@@ -226,7 +228,8 @@ export const ApiService = {
                 method: 'POST',
                 body: JSON.stringify({ email, otp, name }),
             },
-            authClient
+            authClient,
+            false
         ),
 
     // User Profile
