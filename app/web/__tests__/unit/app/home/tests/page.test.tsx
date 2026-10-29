@@ -14,6 +14,8 @@ vi.mock('@/hooks/useTestSuiteContext', () => ({
     useTestSuiteContext: () => testSuiteContext,
 }));
 vi.mock('@/components/shared', () => ({
+    ImportQuestionsModal: ({ isOpen }: { isOpen: boolean }) =>
+        isOpen ? <div data-testid="import-modal" /> : null,
     HostGameModal: ({
         testSuite,
         onClose,
@@ -76,5 +78,15 @@ describe('TestSuiteDetailsPage', () => {
         );
         fireEvent.click(screen.getByText('close'));
         expect(screen.queryByTestId('host-modal')).not.toBeInTheDocument();
+    });
+
+    it('opens the bulk add modal', async () => {
+        render(<TestSuiteDetailsPage />);
+        await waitFor(() =>
+            expect(screen.getByText('2+2?')).toBeInTheDocument()
+        );
+        expect(screen.queryByTestId('import-modal')).not.toBeInTheDocument();
+        fireEvent.click(screen.getByTestId('btn-bulk-add-questions'));
+        expect(screen.getByTestId('import-modal')).toBeInTheDocument();
     });
 });

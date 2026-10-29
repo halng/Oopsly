@@ -5,6 +5,7 @@ import {
     ArrowLeft,
     ClipboardList,
     Edit2,
+    FileSpreadsheet,
     Play,
     Plus,
     Search,
@@ -13,9 +14,10 @@ import {
 } from 'lucide-react';
 import { Question, QuestionInput } from '@/types';
 import { ApiService } from '@/services/api';
+import { toast } from '@/store/ToastStore';
 import { useTestSuiteContext } from '@/hooks/useTestSuiteContext';
 import QuestionEditor from '@/components/tests/QuestionEditor';
-import { HostGameModal } from '@/components/shared';
+import { HostGameModal, ImportQuestionsModal } from '@/components/shared';
 import {
     QUESTION_TYPE_LABELS,
     describeAnswer,
@@ -51,6 +53,7 @@ export default function TestSuiteDetailsPage() {
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [isHosting, setIsHosting] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
 
     const shelfId = shelf?.id;
     const suiteId = testSuite?.id;
@@ -92,6 +95,7 @@ export default function TestSuiteDetailsPage() {
         if (!res.isSuccess)
             throw new Error(res.message || 'Could not add the question');
         setIsAdding(false);
+        toast.success('Question added');
         await afterChange();
     };
 
@@ -106,6 +110,7 @@ export default function TestSuiteDetailsPage() {
         if (!res.isSuccess)
             throw new Error(res.message || 'Could not update the question');
         setEditingId(null);
+        toast.success('Question updated');
         await afterChange();
     };
 
@@ -117,7 +122,10 @@ export default function TestSuiteDetailsPage() {
             suiteId,
             question.id
         );
-        if (res.isSuccess) await afterChange();
+        if (res.isSuccess) {
+            toast.success('Question deleted');
+            await afterChange();
+        }
     };
 
     if (isLoading || (!notFound && isLoadingQuestions)) {
@@ -223,18 +231,29 @@ export default function TestSuiteDetailsPage() {
                     />
                 </div>
                 {!isAdding && (
-                    <button
-                        type="button"
-                        data-testid="btn-add-question"
-                        onClick={() => {
-                            setEditingId(null);
-                            setIsAdding(true);
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--theme-accent)] text-white text-xs font-bold cursor-pointer"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add Question
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            data-testid="btn-bulk-add-questions"
+                            onClick={() => setIsImporting(true)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl border bg-white dark:bg-stone-900 text-xs font-bold cursor-pointer"
+                        >
+                            <FileSpreadsheet className="w-4 h-4" />
+                            Bulk add
+                        </button>
+                        <button
+                            type="button"
+                            data-testid="btn-add-question"
+                            onClick={() => {
+                                setEditingId(null);
+                                setIsAdding(true);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--theme-accent)] text-white text-xs font-bold cursor-pointer"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add Question
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -325,6 +344,16 @@ export default function TestSuiteDetailsPage() {
                         </li>
                     )}
                 </ol>
+            )}
+            {shelf && (
+                <ImportQuestionsModal
+                    isOpen={isImporting}
+                    shelfId={shelf.id}
+                    testSuiteId={testSuite.id}
+                    testSuiteTitle={testSuite.title}
+                    onClose={() => setIsImporting(false)}
+                    onImported={() => void afterChange()}
+                />
             )}
             {isHosting && shelf && (
                 <HostGameModal
