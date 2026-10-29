@@ -211,6 +211,9 @@ export default function SubjectDetailsPage() {
         );
     }
 
+    const isEmpty = cards.length === 0;
+    const emptyHint = isEmpty ? 'Add cards to start practising' : undefined;
+
     const filteredCards = cards.filter(
         (c) =>
             c.front.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -282,7 +285,9 @@ export default function SubjectDetailsPage() {
                         type="button"
                         data-testid="btn-subject-review"
                         onClick={() => router.push(`${baseUrl}/review`)}
-                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[var(--theme-accent)] text-white text-xs font-bold cursor-pointer"
+                        disabled={isEmpty}
+                        title={emptyHint}
+                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[var(--theme-accent)] text-white text-xs font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         <Play className="w-4 h-4 fill-white" />
                         Active Recall
@@ -291,7 +296,9 @@ export default function SubjectDetailsPage() {
                         type="button"
                         data-testid="btn-subject-learn"
                         onClick={() => router.push(`${baseUrl}/learn`)}
-                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold cursor-pointer"
+                        disabled={isEmpty}
+                        title={emptyHint}
+                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         <Brain className="w-4 h-4" />
                         Learn Quiz
@@ -300,7 +307,9 @@ export default function SubjectDetailsPage() {
                         type="button"
                         data-testid="btn-subject-match"
                         onClick={() => router.push(`${baseUrl}/match`)}
-                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-900 text-xs font-bold cursor-pointer"
+                        disabled={isEmpty}
+                        title={emptyHint}
+                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-900 text-xs font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         <Gamepad2 className="w-4 h-4" />
                         Speed Match
