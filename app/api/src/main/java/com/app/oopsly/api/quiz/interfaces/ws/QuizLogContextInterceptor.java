@@ -16,10 +16,7 @@
 
 package com.app.oopsly.api.quiz.interfaces.ws;
 
-import com.app.oopsly.api.quiz.domain.QuizChannels;
 import java.security.Principal;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.slf4j.MDC;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -30,18 +27,13 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
 
 /**
- * Binds {@code room} (the six digit code) and {@code user} to the log context while a room message
- * is handled, so every line written for a room, by any class, carries the same room code and can be
- * followed with one grep.
+ * Binds {@code user} to the log context while a room message is handled, so every line written for
+ * that message, by any class, carries the same user.
  */
 @Component
 public class QuizLogContextInterceptor implements ExecutorChannelInterceptor {
 
-    public static final String MDC_ROOM = "room";
     public static final String MDC_USER = "user";
-
-    private static final Pattern ROOM_DESTINATION =
-            Pattern.compile("^" + QuizChannels.APP_PREFIX + "/quiz/([^/]+)/");
 
     @Override
     public Message<?> beforeHandle(
@@ -50,11 +42,6 @@ public class QuizLogContextInterceptor implements ExecutorChannelInterceptor {
                 MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (accessor == null) {
             return message;
-        }
-        String destination = accessor.getDestination();
-        Matcher room = destination == null ? null : ROOM_DESTINATION.matcher(destination);
-        if (room != null && room.find()) {
-            MDC.put(MDC_ROOM, room.group(1));
         }
         Principal user = accessor.getUser();
         if (user != null) {
@@ -66,7 +53,6 @@ public class QuizLogContextInterceptor implements ExecutorChannelInterceptor {
     @Override
     public void afterMessageHandled(
             Message<?> message, MessageChannel channel, MessageHandler handler, Exception ex) {
-        MDC.remove(MDC_ROOM);
         MDC.remove(MDC_USER);
     }
 }

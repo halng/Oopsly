@@ -47,23 +47,21 @@ class QuizLogContextInterceptorTest {
     }
 
     @Test
-    void givenRoomMessage_whenHandled_thenRoomAndUserAreBoundThenCleared() {
+    void givenRoomMessage_whenHandled_thenUserIsBoundThenCleared() {
         interceptor.beforeHandle(send("/app/quiz/611564/join", "guest:abc"), null, null);
 
-        assertEquals("611564", MDC.get(QuizLogContextInterceptor.MDC_ROOM));
+        assertNull(MDC.get("room"));
         assertEquals("guest:abc", MDC.get(QuizLogContextInterceptor.MDC_USER));
 
         interceptor.afterMessageHandled(null, null, null, null);
 
-        assertNull(MDC.get(QuizLogContextInterceptor.MDC_ROOM));
         assertNull(MDC.get(QuizLogContextInterceptor.MDC_USER));
     }
 
     @Test
-    void givenNonRoomDestinationAndNoUser_whenHandled_thenNothingIsBound() {
+    void givenNoUser_whenHandled_thenNothingIsBound() {
         interceptor.beforeHandle(send("/app/other", null), null, null);
 
-        assertNull(MDC.get(QuizLogContextInterceptor.MDC_ROOM));
         assertNull(MDC.get(QuizLogContextInterceptor.MDC_USER));
     }
 
@@ -73,6 +71,6 @@ class QuizLogContextInterceptorTest {
 
         interceptor.beforeHandle(plain, null, null);
 
-        assertNull(MDC.get(QuizLogContextInterceptor.MDC_ROOM));
+        assertNull(MDC.get(QuizLogContextInterceptor.MDC_USER));
     }
 }
