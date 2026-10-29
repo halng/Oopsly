@@ -1,5 +1,7 @@
 FROM python:3.12-slim
 
+LABEL org.opencontainers.image.description="Oopsly auth service: authentication, authorization, profiles, subscriptions and JWKS"
+
 WORKDIR /app
 
 COPY pyproject.toml .

@@ -1,5 +1,7 @@
 FROM python:3.12-slim
 
+LABEL org.opencontainers.image.description="Oopsly garden game service"
+
 WORKDIR /app
 
 COPY pyproject.toml .

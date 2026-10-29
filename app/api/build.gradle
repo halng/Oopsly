@@ -321,3 +321,9 @@ tasks.named('bootRun') {
 		}
 	}
 }
+
+tasks.named('bootBuildImage') {
+	// Paketo turns this into the org.opencontainers.image.description label,
+	// which the bupu workflow reads back when it tags a release.
+	environment = ['BP_OCI_DESCRIPTION': 'Oopsly API service: decks, cards, test suites, quizzes and communities']
+}
