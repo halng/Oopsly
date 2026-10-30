@@ -281,8 +281,8 @@ public class SubjectServiceImpl implements SubjectService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Subject> pageData =
                 (query == null || query.isBlank())
-                        ? subjectRepository.findAllPublic(pageable)
-                        : subjectRepository.findPublicByQuery(query, pageable);
+                        ? subjectRepository.findAllPublic(currentUser.id(), pageable)
+                        : subjectRepository.findPublicByQuery(query, currentUser.id(), pageable);
 
         List<SubjectRes> subjects = toSubjectRes(pageData.getContent());
         PagingRes<SubjectRes> pagingRes =
@@ -297,7 +297,7 @@ public class SubjectServiceImpl implements SubjectService {
 
     @Override
     @Transactional
-    public ApiRes cloneDeck(UUID subjectId) {
+    public ApiRes cloneDeck(UUID subjectId, UUID shelfId) {
         log.info("Cloning public deck: {} for user: {}", subjectId, currentUser.id());
 
         Subject source =
@@ -312,14 +312,26 @@ public class SubjectServiceImpl implements SubjectService {
                                         new NotFoundException(
                                                 "Public subject not found with id: " + subjectId));
 
-        List<Shelf> shelves =
-                shelfRepository
-                        .findAllByUserId(currentUser.id(), PageRequest.of(0, 1))
-                        .getContent();
-        if (shelves.isEmpty()) {
-            return ApiRes.badRequest("No shelves found. Create a shelf first.");
+        if (source.getShelf() != null && currentUser.id().equals(source.getShelf().getUserId())) {
+            return ApiRes.conflict("You already own this deck.");
         }
-        Shelf targetShelf = shelves.get(0);
+        if (subjectRepository.hasCloneOf(subjectId, currentUser.id())) {
+            return ApiRes.conflict("You already cloned this deck.");
+        }
+
+        Shelf targetShelf;
+        if (shelfId != null) {
+            targetShelf = getShelfForCurrentUser(shelfId);
+        } else {
+            List<Shelf> shelves =
+                    shelfRepository
+                            .findAllByUserId(currentUser.id(), PageRequest.of(0, 1))
+                            .getContent();
+            if (shelves.isEmpty()) {
+                return ApiRes.badRequest("No shelves found. Create a shelf first.");
+            }
+            targetShelf = shelves.get(0);
+        }
 
         Subject cloned =
                 Subject.builder()
@@ -329,6 +341,7 @@ public class SubjectServiceImpl implements SubjectService {
                         .newCardsPerDay(source.getNewCardsPerDay())
                         .interval(source.getInterval())
                         .isPublic(false)
+                        .clonedFromId(source.getId())
                         .shelf(targetShelf)
                         .build();
         Subject savedClone = subjectRepository.save(cloned);

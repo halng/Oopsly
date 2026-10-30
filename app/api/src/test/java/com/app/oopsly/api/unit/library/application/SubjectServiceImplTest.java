@@ -482,29 +482,36 @@ class SubjectServiceImplTest {
     @Test
     void discoverPublicDecks_blankQuery_usesFindAllPublic() {
         Page<Subject> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
-        when(subjectRepository.findAllPublic(any(Pageable.class))).thenReturn(page);
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(subjectRepository.findAllPublic(eq(currentUserId), any(Pageable.class)))
+                .thenReturn(page);
 
         ApiRes result = subjectService.discoverPublicDecks("  ", 0, 10);
 
         assertTrue(result.getBody().isSuccess());
-        verify(subjectRepository).findAllPublic(any(Pageable.class));
-        verify(subjectRepository, never()).findPublicByQuery(any(), any());
+        verify(subjectRepository).findAllPublic(eq(currentUserId), any(Pageable.class));
+        verify(subjectRepository, never()).findPublicByQuery(any(), any(), any());
     }
 
     @Test
     void discoverPublicDecks_withQuery_usesFindPublicByQuery() {
         Page<Subject> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
-        when(subjectRepository.findPublicByQuery(eq("java"), any(Pageable.class))).thenReturn(page);
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(subjectRepository.findPublicByQuery(
+                        eq("java"), eq(currentUserId), any(Pageable.class)))
+                .thenReturn(page);
 
         ApiRes result = subjectService.discoverPublicDecks("java", 0, 10);
 
         assertTrue(result.getBody().isSuccess());
-        verify(subjectRepository).findPublicByQuery(eq("java"), any(Pageable.class));
+        verify(subjectRepository)
+                .findPublicByQuery(eq("java"), eq(currentUserId), any(Pageable.class));
     }
 
     @Test
     void cloneDeck_clonesPublicSubjectWithCards() {
         subject.setIsPublic(true);
+        ownedByAnotherUser();
         subject.setDeleted(false);
         Card live = new Card();
         live.setId(UUID.randomUUID());
@@ -529,7 +536,7 @@ class SubjectServiceImplTest {
                         });
         when(cardRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
 
-        ApiRes result = subjectService.cloneDeck(subjectId);
+        ApiRes result = subjectService.cloneDeck(subjectId, null);
 
         assertEquals(201, result.getStatusCode().value());
         verify(cardRepository).saveAll(anyList());
@@ -538,13 +545,14 @@ class SubjectServiceImplTest {
     @Test
     void cloneDeck_returnsBadRequest_whenNoShelves() {
         subject.setIsPublic(true);
+        ownedByAnotherUser();
         subject.setDeleted(false);
         when(currentUser.id()).thenReturn(currentUserId);
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
         when(shelfRepository.findAllByUserId(eq(currentUserId), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
 
-        ApiRes result = subjectService.cloneDeck(subjectId);
+        ApiRes result = subjectService.cloneDeck(subjectId, null);
 
         assertEquals(400, result.getStatusCode().value());
     }
@@ -555,7 +563,7 @@ class SubjectServiceImplTest {
         when(currentUser.id()).thenReturn(currentUserId);
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
 
-        assertThrows(NotFoundException.class, () -> subjectService.cloneDeck(subjectId));
+        assertThrows(NotFoundException.class, () -> subjectService.cloneDeck(subjectId, null));
     }
 
     @Test
@@ -596,18 +604,132 @@ class SubjectServiceImplTest {
     @Test
     void discoverPublicDecks_nullQuery_usesFindAllPublic() {
         Page<Subject> page = new PageImpl<>(List.of(subject), PageRequest.of(0, 10), 1);
-        when(subjectRepository.findAllPublic(any(Pageable.class))).thenReturn(page);
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(subjectRepository.findAllPublic(eq(currentUserId), any(Pageable.class)))
+                .thenReturn(page);
 
         subjectService.discoverPublicDecks(null, 0, 10);
-        verify(subjectRepository).findAllPublic(any(Pageable.class));
+        verify(subjectRepository).findAllPublic(eq(currentUserId), any(Pageable.class));
     }
 
     @Test
     void cloneDeck_throwsWhenDeletedPublicSubject() {
         subject.setIsPublic(true);
+        ownedByAnotherUser();
         subject.setDeleted(true);
         when(currentUser.id()).thenReturn(currentUserId);
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
-        assertThrows(NotFoundException.class, () -> subjectService.cloneDeck(subjectId));
+        assertThrows(NotFoundException.class, () -> subjectService.cloneDeck(subjectId, null));
+    }
+
+    @Test
+    void cloneDeck_intoChosenShelf_skipsFirstShelfLookup() {
+        subject.setIsPublic(true);
+        ownedByAnotherUser();
+        subject.setDeleted(false);
+        subject.setCards(List.of());
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
+                .thenReturn(Optional.of(shelve));
+        when(subjectRepository.save(any(Subject.class)))
+                .thenAnswer(
+                        inv -> {
+                            Subject s = inv.getArgument(0);
+                            s.setId(UUID.randomUUID());
+                            return s;
+                        });
+
+        ApiRes result = subjectService.cloneDeck(subjectId, shelveId);
+
+        assertEquals(201, result.getStatusCode().value());
+        verify(shelfRepository, never()).findAllByUserId(any(), any(Pageable.class));
+        org.mockito.ArgumentCaptor<Subject> saved =
+                org.mockito.ArgumentCaptor.forClass(Subject.class);
+        verify(subjectRepository).save(saved.capture());
+        assertSame(shelve, saved.getValue().getShelf());
+        assertFalse(saved.getValue().getIsPublic());
+    }
+
+    @Test
+    void cloneDeck_intoAnotherUsersShelf_throwsNotFound() {
+        subject.setIsPublic(true);
+        ownedByAnotherUser();
+        subject.setDeleted(false);
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> subjectService.cloneDeck(subjectId, shelveId));
+        verify(subjectRepository, never()).save(any(Subject.class));
+    }
+
+    private void ownedByAnotherUser() {
+        Shelf other = new Shelf();
+        other.setId(UUID.randomUUID());
+        other.setUserId(UUID.randomUUID());
+        subject.setShelf(other);
+    }
+
+    @Test
+    void discoverPublicDecks_asksOnlyForDecksTheUserDoesNotHave() {
+        Page<Subject> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(subjectRepository.findPublicByQuery(eq("x"), eq(currentUserId), any(Pageable.class)))
+                .thenReturn(page);
+
+        subjectService.discoverPublicDecks("x", 0, 10);
+
+        verify(subjectRepository)
+                .findPublicByQuery(eq("x"), eq(currentUserId), any(Pageable.class));
+    }
+
+    @Test
+    void cloneDeck_ownDeck_isRejectedWithConflict() {
+        subject.setIsPublic(true);
+        subject.setDeleted(false);
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+
+        ApiRes result = subjectService.cloneDeck(subjectId, null);
+
+        assertEquals(409, result.getStatusCode().value());
+        verify(subjectRepository, never()).save(any(Subject.class));
+    }
+
+    @Test
+    void cloneDeck_alreadyCloned_isRejectedWithConflict() {
+        subject.setIsPublic(true);
+        subject.setDeleted(false);
+        ownedByAnotherUser();
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(subjectRepository.hasCloneOf(subjectId, currentUserId)).thenReturn(true);
+
+        ApiRes result = subjectService.cloneDeck(subjectId, null);
+
+        assertEquals(409, result.getStatusCode().value());
+        verify(subjectRepository, never()).save(any(Subject.class));
+    }
+
+    @Test
+    void cloneDeck_remembersTheSourceDeck() {
+        subject.setIsPublic(true);
+        subject.setDeleted(false);
+        subject.setCards(List.of());
+        ownedByAnotherUser();
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(shelfRepository.findAllByUserId(eq(currentUserId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(shelve)));
+        when(subjectRepository.save(any(Subject.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        subjectService.cloneDeck(subjectId, null);
+
+        org.mockito.ArgumentCaptor<Subject> saved =
+                org.mockito.ArgumentCaptor.forClass(Subject.class);
+        verify(subjectRepository).save(saved.capture());
+        assertEquals(subjectId, saved.getValue().getClonedFromId());
     }
 }

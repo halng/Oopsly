@@ -20,8 +20,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shared.application.vm.CloneReq;
 import com.app.oopsly.api.shelf.DiscoverController;
 import com.app.oopsly.api.subject.SubjectService;
+import com.app.oopsly.api.testsuite.application.TestSuiteService;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +35,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DiscoverControllerTest {
 
     @Mock private SubjectService subjectService;
+    @Mock private TestSuiteService testSuiteService;
     @InjectMocks private DiscoverController discoverController;
 
     @Test
@@ -47,8 +50,35 @@ class DiscoverControllerTest {
     void cloneDeck_delegates() {
         UUID subjectId = UUID.randomUUID();
         ApiRes expected = ApiRes.created("ok");
-        when(subjectService.cloneDeck(subjectId)).thenReturn(expected);
-        assertSame(expected, discoverController.cloneDeck(subjectId));
-        verify(subjectService).cloneDeck(subjectId);
+        when(subjectService.cloneDeck(subjectId, null)).thenReturn(expected);
+        assertSame(expected, discoverController.cloneDeck(subjectId, null));
+        verify(subjectService).cloneDeck(subjectId, null);
+    }
+
+    @Test
+    void cloneDeck_passesTargetShelf() {
+        UUID subjectId = UUID.randomUUID();
+        UUID shelfId = UUID.randomUUID();
+        ApiRes expected = ApiRes.created("ok");
+        when(subjectService.cloneDeck(subjectId, shelfId)).thenReturn(expected);
+        assertSame(expected, discoverController.cloneDeck(subjectId, new CloneReq(shelfId)));
+    }
+
+    @Test
+    void discoverPublicTestSuites_delegates() {
+        ApiRes expected = ApiRes.success("ok");
+        when(testSuiteService.discoverPublic("bio", 0, 20)).thenReturn(expected);
+        assertSame(expected, discoverController.discoverPublicTestSuites("bio", 0, 20));
+    }
+
+    @Test
+    void cloneTestSuite_delegates() {
+        UUID id = UUID.randomUUID();
+        UUID shelfId = UUID.randomUUID();
+        ApiRes expected = ApiRes.created("ok");
+        when(testSuiteService.cloneSuite(id, shelfId)).thenReturn(expected);
+        assertSame(expected, discoverController.cloneTestSuite(id, new CloneReq(shelfId)));
+        when(testSuiteService.cloneSuite(id, null)).thenReturn(expected);
+        assertSame(expected, discoverController.cloneTestSuite(id, null));
     }
 }

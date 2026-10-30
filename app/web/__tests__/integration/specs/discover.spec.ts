@@ -42,8 +42,14 @@ test.describe('Discover screen', () => {
     }) => {
         await mock.override({
             method: 'GET',
-            path: `${API}/api/discover`,
-            body: envelope([]),
+            path: `${API}/discover`,
+            body: envelope({
+                entities: [],
+                currentPage: 0,
+                totalItems: 0,
+                totalPages: 0,
+                hasNextPage: false,
+            }),
         });
         await page.goto('/discover');
         await expect(page.getByTestId('discover-empty')).toBeVisible();
@@ -52,12 +58,41 @@ test.describe('Discover screen', () => {
     test('clone opens the shelf picker with the user shelves', async ({
         page,
     }) => {
-        // Known bug: the page never stores the shelves it fetches (the
-        // setShelves call is commented out), so the picker has nothing to offer.
-        test.fail();
         await page.goto('/discover');
         await page.getByTestId('btn-clone-pub-1').click();
         await expect(page.getByTestId('clone-subject-modal')).toBeVisible();
         await expect(page.getByTestId('clone-shelf-shelf-1')).toBeVisible();
+    });
+
+    test('lists public test suites and clones one into a chosen shelf', async ({
+        page,
+        mock,
+    }) => {
+        await page.goto('/discover');
+        await page.getByTestId('tab-discover-tests').click();
+        await expect(
+            page.getByTestId('discover-suite-pub-suite-1')
+        ).toContainText('12 questions');
+
+        await page.getByTestId('btn-clone-suite-pub-suite-1').click();
+        await expect(page.getByTestId('clone-test-suite-modal')).toBeVisible();
+        await expect(
+            page.getByTestId('btn-confirm-clone-test-suite')
+        ).toBeDisabled();
+        await page.getByTestId('clone-suite-shelf-shelf-1').click();
+        await page.getByTestId('btn-confirm-clone-test-suite').click();
+
+        await expect(page.getByTestId('toast-success')).toContainText(
+            'Test suite cloned'
+        );
+        const [clone] = await mock.requests(
+            'POST',
+            `${API}/discover/test-suites/pub-suite-1/clone`
+        );
+        expect(clone.json).toEqual({ shelfId: 'shelf-1' });
+        // What you cloned is yours now, so it leaves the catalog.
+        await expect(
+            page.getByTestId('discover-suite-pub-suite-1')
+        ).toHaveCount(0);
     });
 });

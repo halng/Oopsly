@@ -47,7 +47,7 @@ test.describe('Leaderboard screen (communities)', () => {
     }) => {
         await mock.override({
             method: 'GET',
-            path: `${API}/api/communities/comm-1/leaderboard`,
+            path: `${API}/communities/comm-1/leaderboard`,
             body: envelope({ community: {}, members: [] }),
         });
         await page.goto('/leaderboard');
@@ -68,7 +68,7 @@ test.describe('Leaderboard screen (communities)', () => {
                     (
                         await mock.requests(
                             'POST',
-                            `${API}/api/communities/comm-1/join`
+                            `${API}/communities/comm-1/join`
                         )
                     ).length
             )
@@ -76,8 +76,7 @@ test.describe('Leaderboard screen (communities)', () => {
         await expect
             .poll(
                 async () =>
-                    (await mock.requests('GET', `${API}/api/communities`))
-                        .length
+                    (await mock.requests('GET', `${API}/communities`)).length
             )
             .toBeGreaterThan(1);
     });
@@ -101,14 +100,14 @@ test.describe('Leaderboard screen (communities)', () => {
                     (
                         await mock.requests(
                             'POST',
-                            `${API}/api/communities/comm-2/invite`
+                            `${API}/communities/comm-2/invite`
                         )
                     ).length
             )
             .toBe(1);
         const [invite] = await mock.requests(
             'POST',
-            `${API}/api/communities/comm-2/invite`
+            `${API}/communities/comm-2/invite`
         );
         expect(invite.json).toEqual({ emailOrName: 'friend@oopsly.app' });
     });
@@ -119,12 +118,12 @@ test.describe('Leaderboard screen (communities)', () => {
     }) => {
         await mock.override({
             method: 'GET',
-            path: `${API}/api/communities`,
+            path: `${API}/communities`,
             body: envelope([]),
         });
         await mock.override({
             method: 'GET',
-            path: `${API}/api/communities/my`,
+            path: `${API}/communities/my`,
             body: envelope([]),
         });
         await page.goto('/leaderboard');

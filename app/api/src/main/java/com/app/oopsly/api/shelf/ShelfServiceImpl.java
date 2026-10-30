@@ -148,7 +148,7 @@ public class ShelfServiceImpl implements ShelfService {
         log.info("Fetching shelves page {} size {} for user {}", page, size, currentUser.id());
         int querryPage = page - 1;
         if (querryPage < 0) {
-            log.warn("Invalid page number {} (pages start at 1); user {}", page, currentUser.id());
+            throw new ValidationException("Page number must be greater than 0");
         }
         Pageable pageable = PageRequest.of(querryPage, size);
         Page<Shelf> pageData = shelfRepository.findAllByUserId(currentUser.id(), pageable);

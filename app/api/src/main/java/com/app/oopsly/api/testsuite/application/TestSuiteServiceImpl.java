@@ -20,6 +20,7 @@ import com.app.oopsly.api.card.Card;
 import com.app.oopsly.api.card.CardRepository;
 import com.app.oopsly.api.progress.UserProgressService;
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.shared.application.vm.PagingRes;
 import com.app.oopsly.api.shared.exception.NotFoundException;
 import com.app.oopsly.api.shared.exception.RetryLaterException;
 import com.app.oopsly.api.shared.exception.UnauthenticatedException;
@@ -68,6 +69,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -441,6 +444,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                     .description(description)
                     .timeLimitMinutes(from.timeLimitMinutes())
                     .isActive(from.isActive() != null ? from.isActive() : true)
+                    .isPublic(Boolean.TRUE.equals(from.isPublic()))
                     .build();
         }
 
@@ -449,6 +453,9 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         to.setTimeLimitMinutes(from.timeLimitMinutes());
         if (from.isActive() != null) {
             to.setIsActive(from.isActive());
+        }
+        if (from.isPublic() != null) {
+            to.setIsPublic(from.isPublic());
         }
         return to;
     }
@@ -461,6 +468,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                 from.getDescription(),
                 from.getTimeLimitMinutes(),
                 from.getIsActive(),
+                Boolean.TRUE.equals(from.getIsPublic()),
                 questionRepository.countByTestSuite(from),
                 from.getHighestScore());
     }
@@ -515,7 +523,107 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         return ApiRes.created("Test suite auto-generated successfully", this.toViewModel(saved));
     }
 
+    @Override
+    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "discoverFallback")
+    public ApiRes discoverPublic(String query, int page, int size) {
+        log.info("Discovering public test suites with query '{}'", query);
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50));
+        Page<TestSuiteEntity> data =
+                (query == null || query.isBlank())
+                        ? testSuiteRepository.findAllPublic(currentUser.id(), pageable)
+                        : testSuiteRepository.findPublicByQuery(
+                                query.trim(), currentUser.id(), pageable);
+
+        return ApiRes.success(
+                "Public test suites fetched successfully",
+                new PagingRes<>(
+                        data.getContent().stream().map(this::toViewModel).toList(),
+                        data.getNumber(),
+                        data.getTotalElements(),
+                        data.getTotalPages(),
+                        data.hasNext()));
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "testSuites", allEntries = true)
+    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "cloneSuiteFallback")
+    public ApiRes cloneSuite(UUID testSuiteId, UUID shelfId) {
+        log.info("Cloning public test suite {} for user {}", testSuiteId, currentUser.id());
+        TestSuiteEntity source =
+                testSuiteRepository
+                        .findById(testSuiteId)
+                        .filter(
+                                t ->
+                                        Boolean.TRUE.equals(t.getIsPublic())
+                                                && !Boolean.TRUE.equals(t.getDeleted()))
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                "Public test suite not found with id: "
+                                                        + testSuiteId));
+
+        if (source.getShelf() != null && currentUser.id().equals(source.getShelf().getUserId())) {
+            return ApiRes.conflict("You already own this test suite.");
+        }
+        if (testSuiteRepository.hasCloneOf(testSuiteId, currentUser.id())) {
+            return ApiRes.conflict("You already cloned this test suite.");
+        }
+
+        Shelf target;
+        if (shelfId != null) {
+            target = this.findShelveByIdAndUser(shelfId);
+        } else {
+            List<Shelf> shelves =
+                    shelfRepository
+                            .findAllByUserId(currentUser.id(), PageRequest.of(0, 1))
+                            .getContent();
+            if (shelves.isEmpty()) {
+                return ApiRes.badRequest("No shelves found. Create a shelf first.");
+            }
+            target = shelves.get(0);
+        }
+
+        TestSuiteEntity copy =
+                TestSuiteEntity.builder()
+                        .title(source.getTitle())
+                        .slug(uniqueSlug(target, source.getTitle(), null))
+                        .description(source.getDescription())
+                        .timeLimitMinutes(source.getTimeLimitMinutes())
+                        .isActive(true)
+                        .isPublic(false)
+                        .clonedFromId(source.getId())
+                        .shelf(target)
+                        .build();
+        TestSuiteEntity saved = testSuiteRepository.save(copy);
+
+        List<QuestionEntity> questions =
+                questionRepository.findAllByTestSuite(source).stream()
+                        .map(
+                                q ->
+                                        QuestionEntity.builder()
+                                                .text(q.getText())
+                                                .type(q.getType())
+                                                .metadata(q.getMetadata())
+                                                .testSuite(saved)
+                                                .build())
+                        .toList();
+        questionRepository.saveAll(questions);
+
+        return ApiRes.created("Test suite cloned successfully", this.toViewModel(saved));
+    }
+
     // Fallback methods for Circuit Breaker
+    public ApiRes discoverFallback(String query, int page, int size, Throwable t) {
+        log.error("Test suite service unavailable during discover: {}", t.toString());
+        throw unwrapTestSuiteException(t);
+    }
+
+    public ApiRes cloneSuiteFallback(UUID testSuiteId, UUID shelfId, Throwable t) {
+        log.error("Test suite service unavailable during clone: {}", t.toString());
+        throw unwrapTestSuiteException(t);
+    }
+
     public ApiRes createFallback(UUID deckId, TestSuiteReq request, Throwable t) {
         log.error("Test suite service unavailable during create: {}", t.toString());
         throw unwrapTestSuiteException(t);

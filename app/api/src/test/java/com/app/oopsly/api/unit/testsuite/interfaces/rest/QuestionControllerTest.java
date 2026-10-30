@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.testsuite.application.QuestionService;
+import com.app.oopsly.api.testsuite.application.vm.BulkQuestionReq;
 import com.app.oopsly.api.testsuite.application.vm.QuestionReq;
 import com.app.oopsly.api.testsuite.domain.QuestionType;
 import com.app.oopsly.api.testsuite.interfaces.rest.QuestionController;
@@ -70,6 +71,14 @@ class QuestionControllerTest {
                 .thenReturn(expectedResponse);
 
         assertSame(expectedResponse, questionController.create(shelveId, testSuiteId, questionReq));
+    }
+
+    @Test
+    void createBulk_delegatesToQuestionService() {
+        BulkQuestionReq bulk = new BulkQuestionReq(List.of(questionReq));
+        when(questionService.createBulk(shelveId, testSuiteId, bulk)).thenReturn(expectedResponse);
+
+        assertSame(expectedResponse, questionController.createBulk(shelveId, testSuiteId, bulk));
     }
 
     @Test

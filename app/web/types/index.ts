@@ -247,6 +247,7 @@ export interface TestSuite {
     description?: string;
     timeLimitMinutes?: number | null;
     isActive?: boolean;
+    isPublic?: boolean;
     questionCount: number;
     highestScore?: number | null;
 }
@@ -256,6 +257,7 @@ export interface TestSuiteInput {
     description?: string;
     timeLimitMinutes?: number | null;
     isActive?: boolean;
+    isPublic?: boolean;
 }
 
 export interface TestAttemptQuestion {

@@ -11,7 +11,7 @@ import {
 } from '@/utils/questionImporter';
 
 vi.mock('@/services/api', () => ({
-    ApiService: { createQuestion: vi.fn() },
+    ApiService: { createQuestionsBulk: vi.fn() },
 }));
 
 vi.mock('@/utils/fileImporter', () => ({ parseFileToTable: vi.fn() }));
@@ -70,15 +70,17 @@ describe('ImportQuestionsModal', () => {
     });
 
     it('imports valid rows silently and shows a success toast', async () => {
-        vi.mocked(ApiService.createQuestion).mockResolvedValue(ok as never);
+        vi.mocked(ApiService.createQuestionsBulk).mockResolvedValue(
+            ok as never
+        );
         const { onClose, onImported } = setup();
         await paste(TEXT);
         await userEvent.click(screen.getByTestId('btn-run-import-questions'));
         await waitFor(() => expect(onClose).toHaveBeenCalled());
-        expect(ApiService.createQuestion).toHaveBeenCalledWith(
+        expect(ApiService.createQuestionsBulk).toHaveBeenCalledWith(
             's1',
             't1',
-            expect.objectContaining({ text: 'Capital of France?' }),
+            [expect.objectContaining({ text: 'Capital of France?' })],
             { silent: true }
         );
         expect(onImported).toHaveBeenCalledWith(1);
@@ -88,8 +90,8 @@ describe('ImportQuestionsModal', () => {
         });
     });
 
-    it('stops on a server error and reports why', async () => {
-        vi.mocked(ApiService.createQuestion).mockResolvedValue({
+    it('adds nothing on a server error and reports why', async () => {
+        vi.mocked(ApiService.createQuestionsBulk).mockResolvedValue({
             isSuccess: false,
             statusCode: 500,
             message: 'java.lang.NullPointerException',
@@ -101,10 +103,10 @@ describe('ImportQuestionsModal', () => {
         );
         await userEvent.click(screen.getByTestId('btn-run-import-questions'));
         const alert = await screen.findByTestId('import-questions-error');
-        expect(alert).toHaveTextContent('0 added, 2 not added');
+        expect(alert).toHaveTextContent('No questions were added');
         expect(alert).toHaveTextContent(/something went wrong on our side/i);
         expect(alert).not.toHaveTextContent('NullPointer');
-        expect(ApiService.createQuestion).toHaveBeenCalledTimes(1);
+        expect(ApiService.createQuestionsBulk).toHaveBeenCalledTimes(1);
         expect(onClose).not.toHaveBeenCalled();
     });
 
@@ -233,34 +235,105 @@ describe('ImportQuestionsModal', () => {
         expect(screen.getByTestId('tab-import-paste')).toBeInTheDocument();
     });
 
-    it('keeps the failed rows after a partial failure so they can be retried', async () => {
-        vi.mocked(ApiService.createQuestion)
-            .mockResolvedValueOnce(ok as never)
-            .mockResolvedValueOnce({
-                isSuccess: false,
-                statusCode: 400,
-                message: 'Question text is too long',
-                data: null,
-            } as never);
+    it('keeps every row for a retry when the batch is rejected', async () => {
+        vi.mocked(ApiService.createQuestionsBulk).mockResolvedValue({
+            isSuccess: false,
+            statusCode: 400,
+            message: 'Question 2: Question text is too long',
+            data: null,
+        } as never);
         const { onClose, onImported } = setup();
         await paste(
             'Question\tOption A\tOption B\tCorrect\nQ1\ta\tb\tA\nQ2\ta\tb\tB'
         );
         await userEvent.click(screen.getByTestId('btn-run-import-questions'));
         const alert = await screen.findByTestId('import-questions-error');
-        expect(alert).toHaveTextContent('1 added, 1 failed');
-        expect(alert).toHaveTextContent('Question text is too long.');
-        expect(onImported).toHaveBeenCalledWith(1);
+        expect(alert).toHaveTextContent('No questions were added');
+        expect(alert).toHaveTextContent(
+            'Question 2: Question text is too long'
+        );
+        expect(onImported).not.toHaveBeenCalled();
         expect(onClose).not.toHaveBeenCalled();
         expect(useToastStore.getState().toasts[0]).toMatchObject({
             kind: 'error',
-            title: '1 added, 1 failed',
+            title: 'No questions were added',
         });
-        // Only the failed row is left to retry.
-        expect(screen.queryByText('Q1')).toBeNull();
+        expect(screen.getByText('Q1')).toBeInTheDocument();
         expect(
             screen.getByTestId('btn-run-import-questions')
-        ).toHaveTextContent('Import 1 questions');
+        ).toHaveTextContent('Import 2 questions');
+    });
+
+    it('sends every valid row in one request and reports the plural count', async () => {
+        vi.mocked(ApiService.createQuestionsBulk).mockResolvedValue(
+            ok as never
+        );
+        const { onClose, onImported } = setup();
+        await paste(
+            'Question\tOption A\tOption B\tCorrect\nQ1\ta\tb\tA\nQ2\ta\tb\tB'
+        );
+        await userEvent.click(screen.getByTestId('btn-run-import-questions'));
+        await waitFor(() => expect(onClose).toHaveBeenCalled());
+        expect(ApiService.createQuestionsBulk).toHaveBeenCalledTimes(1);
+        const sent = vi.mocked(ApiService.createQuestionsBulk).mock.calls[0][2];
+        expect(sent.map((q) => q.text)).toEqual(['Q1', 'Q2']);
+        expect(onImported).toHaveBeenCalledWith(2);
+        expect(useToastStore.getState().toasts[0]).toMatchObject({
+            kind: 'success',
+            title: '2 questions added',
+        });
+    });
+
+    it('skips unticked rows when importing', async () => {
+        vi.mocked(ApiService.createQuestionsBulk).mockResolvedValue(
+            ok as never
+        );
+        setup();
+        await paste(
+            'Question\tOption A\tOption B\tCorrect\nQ1\ta\tb\tA\nQ2\ta\tb\tB'
+        );
+        await userEvent.click(screen.getByLabelText('Include row 3'));
+        await userEvent.click(screen.getByTestId('btn-run-import-questions'));
+        await waitFor(() =>
+            expect(ApiService.createQuestionsBulk).toHaveBeenCalled()
+        );
+        const sent = vi.mocked(ApiService.createQuestionsBulk).mock.calls[0][2];
+        expect(sent).toHaveLength(1);
+    });
+
+    it('disables the controls and shows progress while the request is pending', async () => {
+        let release: (v: unknown) => void = () => undefined;
+        vi.mocked(ApiService.createQuestionsBulk).mockReturnValue(
+            new Promise((r) => (release = r)) as never
+        );
+        const { onClose } = setup();
+        await paste('Question\tOption A\tOption B\tCorrect\nQ1\ta\tb\tA');
+        await userEvent.click(screen.getByTestId('btn-run-import-questions'));
+        const run = await screen.findByTestId('btn-run-import-questions');
+        await waitFor(() => expect(run).toHaveTextContent('Importing...'));
+        expect(run).toBeDisabled();
+        await userEvent.click(screen.getByTestId('btn-close-import-questions'));
+        expect(onClose).not.toHaveBeenCalled();
+        release(ok);
+        await waitFor(() => expect(onClose).toHaveBeenCalled());
+    });
+
+    it('can be retried after a rejected batch', async () => {
+        vi.mocked(ApiService.createQuestionsBulk)
+            .mockResolvedValueOnce({
+                isSuccess: false,
+                statusCode: 400,
+                message: 'Question 1: bad',
+                data: null,
+            } as never)
+            .mockResolvedValueOnce(ok as never);
+        const { onClose } = setup();
+        await paste('Question\tOption A\tOption B\tCorrect\nQ1\ta\tb\tA');
+        await userEvent.click(screen.getByTestId('btn-run-import-questions'));
+        await screen.findByTestId('import-questions-error');
+        await userEvent.click(screen.getByTestId('btn-run-import-questions'));
+        await waitFor(() => expect(onClose).toHaveBeenCalled());
+        expect(ApiService.createQuestionsBulk).toHaveBeenCalledTimes(2);
     });
 
     it('closes through the close and cancel buttons and resets', async () => {

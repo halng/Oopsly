@@ -82,6 +82,7 @@ describe('TestSuiteModal', () => {
             description: 'Chapters 1-3',
             timeLimitMinutes: 45,
             isActive: true,
+            isPublic: false,
         });
     });
 
@@ -96,6 +97,7 @@ describe('TestSuiteModal', () => {
                 description: undefined,
                 timeLimitMinutes: null,
                 isActive: true,
+                isPublic: false,
             })
         );
     });
@@ -130,6 +132,7 @@ describe('TestSuiteModal', () => {
                 description: 'Desc',
                 timeLimitMinutes: 30,
                 isActive: false,
+                isPublic: false,
             })
         );
     });
@@ -172,5 +175,18 @@ describe('TestSuiteModal', () => {
         await userEvent.click(screen.getByTestId('btn-test-suite-modal-close'));
         await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
         expect(onClose).toHaveBeenCalledTimes(2);
+    });
+
+    it('shares the test suite when the Discover box is ticked', async () => {
+        const onSave = vi.fn().mockResolvedValue(undefined);
+        render(<TestSuiteModal onClose={vi.fn()} onSave={onSave} />);
+        await userEvent.type(screen.getByTestId('test-suite-title-input'), 'T');
+        await userEvent.click(screen.getByTestId('test-suite-public-input'));
+        await submit();
+        await waitFor(() =>
+            expect(onSave).toHaveBeenCalledWith(
+                expect.objectContaining({ isPublic: true })
+            )
+        );
     });
 });

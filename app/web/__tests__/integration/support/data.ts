@@ -200,6 +200,18 @@ export const catalog = [
     },
 ];
 
+export const publicTestSuites = [
+    {
+        ...testSuite,
+        id: 'pub-suite-1',
+        title: 'Cell Biology Quiz',
+        slug: 'cell-biology-quiz',
+        description: 'Organelles and membranes',
+        isPublic: true,
+        questionCount: 12,
+    },
+];
+
 export const communities = [
     {
         id: 'comm-1',
@@ -429,6 +441,11 @@ export function defaultStubs(): Stub[] {
             questions[0]
         ),
         ok(
+            'POST',
+            `${API}/v1/shelves/shelf-1/test-suites/suite-1/questions/bulk`,
+            questions
+        ),
+        ok(
             'PUT',
             `${API}/v1/shelves/shelf-1/test-suites/suite-1/questions/q-1`,
             questions[0]
@@ -449,19 +466,21 @@ export function defaultStubs(): Stub[] {
             submission
         ),
         ok('GET', `${API}/v1/users/me/stats`, stats),
-        ok('GET', `${API}/api/leaderboard`, leaderboard),
-        ok('GET', `${API}/api/discover`, catalog),
-        ok('GET', `${API}/api/communities`, communities),
-        ok('GET', `${API}/api/communities/my`, [communities[1]]),
-        ok('POST', `${API}/api/communities`, communities[0]),
-        ok('POST', `${API}/api/communities/comm-1/join`, { status: 'JOINED' }),
-        ok('GET', `${API}/api/communities/comm-2/leaderboard`, {
+        ok('GET', `${API}/leaderboard`, leaderboard),
+        ok('GET', `${API}/discover`, page(catalog)),
+        ok('GET', `${API}/discover/test-suites`, page(publicTestSuites)),
+        ok('POST', `${API}/discover/pub-1/clone`, subject),
+        ok('POST', `${API}/discover/test-suites/pub-suite-1/clone`, testSuite),
+        ok('GET', `${API}/communities`, communities),
+        ok('GET', `${API}/communities/my`, [communities[1]]),
+        ok('POST', `${API}/communities`, communities[0]),
+        ok('POST', `${API}/communities/comm-1/join`, { status: 'JOINED' }),
+        ok('GET', `${API}/communities/comm-2/leaderboard`, {
             community: communities[1],
             members,
         }),
-        ok('GET', `${API}/api/communities/comm-2/requests`, []),
-        ok('POST', `${API}/api/communities/comm-2/invite`, members[1]),
-        ok('POST', `${API}/api/discover/clone/pub-1`, subject),
+        ok('GET', `${API}/communities/comm-2/requests`, []),
+        ok('POST', `${API}/communities/comm-2/invite`, members[1]),
         // game service
         ok('GET', `${GAME}/v1/game/garden`, garden),
         ok('POST', `${GAME}/v1/game/rewards/focus`, reward),

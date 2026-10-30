@@ -45,7 +45,7 @@ class TestSuiteControllerTest {
 
     @BeforeEach
     void setUp() {
-        testSuiteReq = new TestSuiteReq("Chapter 1 Review", null, null, true);
+        testSuiteReq = new TestSuiteReq("Chapter 1 Review", null, null, true, null);
         shelveId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
         expectedResponse = ApiRes.success("Success");

@@ -22,6 +22,7 @@ import com.app.oopsly.api.subject.Subject;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
+import java.util.UUID;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -45,6 +46,11 @@ public class TestSuiteEntity extends Audit {
     private Integer timeLimitMinutes;
 
     private Boolean isActive;
+
+    @Builder.Default private Boolean isPublic = false;
+
+    /** The public test suite this one was cloned from, if any. */
+    private UUID clonedFromId;
 
     private Integer highestScore;
 

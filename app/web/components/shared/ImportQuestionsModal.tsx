@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { ApiService } from '@/services/api';
 import { toast } from '@/store/ToastStore';
-import { humanizeResponse, isBatchBlocking } from '@/utils/apiError';
+import { humanizeResponse } from '@/utils/apiError';
 import { parseFileToTable } from '@/utils/fileImporter';
 import {
     MAX_IMPORT_QUESTIONS,
@@ -66,7 +66,7 @@ export default function ImportQuestionsModal({
     const [skipped, setSkipped] = useState<Set<number>>(new Set());
     const [done, setDone] = useState<Set<number>>(new Set());
     const [filter, setFilter] = useState<Filter>('all');
-    const [progress, setProgress] = useState<number | null>(null);
+    const [isImporting, setIsImporting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const headers = useMemo(() => {
@@ -89,7 +89,6 @@ export default function ImportQuestionsModal({
     const validCount = items.filter((q) => q.isValid).length;
     const invalidCount = items.length - validCount;
     const overLimit = includedIndexes.length > MAX_IMPORT_QUESTIONS;
-    const isImporting = progress !== null;
 
     const reset = () => {
         setRawRows(null);
@@ -97,7 +96,7 @@ export default function ImportQuestionsModal({
         setSkipped(new Set());
         setDone(new Set());
         setErrorMsg(null);
-        setProgress(null);
+        setIsImporting(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
@@ -194,54 +193,33 @@ export default function ImportQuestionsModal({
 
     const runImport = async () => {
         const queue = includedIndexes.slice(0, MAX_IMPORT_QUESTIONS);
-        if (queue.length === 0) return;
+        const inputs = queue.flatMap((i) => items[i].input ?? []);
+        if (inputs.length === 0) return;
         setErrorMsg(null);
-        setProgress(0);
-        const created = new Set<number>();
-        let failures = 0;
-        let firstReason = '';
-        let aborted = false;
+        setIsImporting(true);
 
-        for (const [n, index] of queue.entries()) {
-            const input = items[index].input;
-            if (!input) continue;
-            const res = await ApiService.createQuestion(
-                shelfId,
-                testSuiteId,
-                input,
-                { silent: true }
-            );
-            if (res.isSuccess) {
-                created.add(index);
-            } else {
-                failures += 1;
-                firstReason ||= humanizeResponse(res);
-                if (isBatchBlocking(res)) {
-                    aborted = true;
-                    failures += queue.length - n - 1;
-                    break;
-                }
-            }
-            setProgress(n + 1);
-        }
+        const res = await ApiService.createQuestionsBulk(
+            shelfId,
+            testSuiteId,
+            inputs,
+            { silent: true }
+        );
+        setIsImporting(false);
 
-        setProgress(null);
-        if (created.size > 0) {
-            setDone((prev) => new Set([...prev, ...created]));
-            onImported(created.size);
-        }
-        if (failures === 0) {
-            toast.success(
-                `${created.size} question${created.size === 1 ? '' : 's'} added`,
-                testSuiteTitle
-            );
-            reset();
-            onClose();
+        if (!res.isSuccess) {
+            const reason = humanizeResponse(res);
+            toast.error('No questions were added', reason);
+            setErrorMsg(`No questions were added. ${reason}`);
             return;
         }
-        const summary = `${created.size} added, ${failures} ${aborted ? 'not added' : 'failed'}`;
-        toast.error(summary, firstReason);
-        setErrorMsg(`${summary}. ${firstReason} You can retry the rest.`);
+        setDone((prev) => new Set([...prev, ...queue]));
+        onImported(inputs.length);
+        toast.success(
+            `${inputs.length} question${inputs.length === 1 ? '' : 's'} added`,
+            testSuiteTitle
+        );
+        reset();
+        onClose();
     };
 
     const displayed = items
@@ -747,7 +725,7 @@ export default function ImportQuestionsModal({
                                 className="px-4 py-2 rounded-xl bg-[var(--theme-accent)] text-white font-bold cursor-pointer disabled:opacity-40"
                             >
                                 {isImporting
-                                    ? `Importing ${progress}/${Math.min(includedIndexes.length, MAX_IMPORT_QUESTIONS)}...`
+                                    ? 'Importing...'
                                     : `Import ${Math.min(includedIndexes.length, MAX_IMPORT_QUESTIONS)} questions`}
                             </button>
                         </div>

@@ -24,6 +24,7 @@ import com.app.oopsly.api.shared.exception.ValidationException;
 import com.app.oopsly.api.shared.security.CurrentUser;
 import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
+import com.app.oopsly.api.testsuite.application.vm.BulkQuestionReq;
 import com.app.oopsly.api.testsuite.application.vm.QuestionReq;
 import com.app.oopsly.api.testsuite.application.vm.QuestionRes;
 import com.app.oopsly.api.testsuite.domain.QuestionEntity;
@@ -33,6 +34,7 @@ import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.app.oopsly.api.testsuite.infrastructure.QuestionRepository;
 import com.app.oopsly.api.testsuite.infrastructure.TestSuiteRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
@@ -71,6 +73,37 @@ public class QuestionServiceImpl implements QuestionService {
         QuestionEntity savedEntity = questionRepository.save(question);
 
         return ApiRes.created("Question created successfully", this.toViewModel(savedEntity));
+    }
+
+    @Override
+    @Caching(
+            evict = {
+                @CacheEvict(value = "questions", key = "#testSuiteId + ':all'"),
+                @CacheEvict(value = "testSuites", key = "#shelveId + ':all'"),
+                @CacheEvict(value = "testSuites", key = "#shelveId + ':' + #testSuiteId")
+            })
+    @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "createBulkFallback")
+    public ApiRes createBulk(UUID shelveId, UUID testSuiteId, BulkQuestionReq request) {
+        log.info(
+                "Bulk creating {} questions for test suite {}",
+                request.questions().size(),
+                testSuiteId);
+        TestSuiteEntity testSuite = this.findTestSuite(shelveId, testSuiteId);
+
+        List<QuestionEntity> entities = new ArrayList<>(request.questions().size());
+        for (int i = 0; i < request.questions().size(); i++) {
+            try {
+                QuestionEntity question = this.toEntity(request.questions().get(i), null);
+                question.setTestSuite(testSuite);
+                entities.add(question);
+            } catch (ValidationException e) {
+                throw new ValidationException("Question " + (i + 1) + ": " + e.getMessage());
+            }
+        }
+        List<QuestionRes> saved =
+                questionRepository.saveAll(entities).stream().map(this::toViewModel).toList();
+
+        return ApiRes.created(saved.size() + " questions created successfully", saved);
     }
 
     @Override
@@ -200,6 +233,12 @@ public class QuestionServiceImpl implements QuestionService {
     public ApiRes createFallback(
             UUID shelveId, UUID testSuiteId, QuestionReq request, Throwable t) {
         log.error("Question service unavailable during create: {}", t.toString());
+        throw unwrapQuestionException(t);
+    }
+
+    public ApiRes createBulkFallback(
+            UUID shelveId, UUID testSuiteId, BulkQuestionReq request, Throwable t) {
+        log.error("Question service unavailable during bulk create: {}", t.toString());
         throw unwrapQuestionException(t);
     }
 

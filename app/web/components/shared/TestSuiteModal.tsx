@@ -23,6 +23,7 @@ export default function TestSuiteModal({
     const [timeLimit, setTimeLimit] = useState(
         testSuite?.timeLimitMinutes ? String(testSuite.timeLimitMinutes) : ''
     );
+    const [isPublic, setIsPublic] = useState(testSuite?.isPublic ?? false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -55,6 +56,7 @@ export default function TestSuiteModal({
                 description: description.trim() || undefined,
                 timeLimitMinutes,
                 isActive: testSuite?.isActive ?? true,
+                isPublic,
             });
             onClose();
         } catch (err) {
@@ -159,6 +161,25 @@ export default function TestSuiteModal({
                             className="w-full p-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl focus:ring-2 focus:ring-[var(--theme-accent)] focus:outline-none"
                         />
                     </div>
+
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            data-testid="test-suite-public-input"
+                            checked={isPublic}
+                            onChange={(e) => setIsPublic(e.target.checked)}
+                            className="mt-0.5 accent-[var(--theme-accent)]"
+                        />
+                        <span>
+                            <span className="font-bold block">
+                                Share in Discover
+                            </span>
+                            <span className="text-stone-500">
+                                Anyone can find this test suite and clone a
+                                copy, with its questions, to their own shelf.
+                            </span>
+                        </span>
+                    </label>
 
                     {error && (
                         <p
