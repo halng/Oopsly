@@ -27,7 +27,7 @@ export default function StudyFlashcard({
     const turn = flipped ? 'is-flipped' : hasFlipped ? 'is-unflipped' : '';
 
     return (
-        <div className="relative">
+        <div className="relative mx-auto w-full max-w-lg">
             {toolbar && (
                 <div className="absolute top-4 right-4 z-10">{toolbar}</div>
             )}
@@ -47,7 +47,7 @@ export default function StudyFlashcard({
                 className="study-flip-scene w-full cursor-pointer"
             >
                 <div
-                    className={`study-flip-inner min-h-[280px] sm:min-h-[320px] ${turn}`}
+                    className={`study-flip-inner aspect-square min-h-[280px] ${turn}`}
                 >
                     <div
                         aria-hidden={flipped}
@@ -56,13 +56,13 @@ export default function StudyFlashcard({
                         <span className="inline-flex items-center rounded-full bg-[var(--theme-card)] px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[var(--theme-text)]/45">
                             Prompt
                         </span>
-                        <p className="mt-8 text-2xl sm:text-3xl font-black whitespace-pre-wrap text-[var(--theme-text)]">
+                        <p className="my-auto py-6 text-2xl sm:text-3xl font-black whitespace-pre-wrap text-[var(--theme-text)]">
                             {front}
                         </p>
                         {frontExtra}
                         <div
                             data-testid="flashcard-flip-hint"
-                            className="mt-auto pt-8 text-xs font-semibold text-[var(--theme-text)]/40 flex items-center justify-center gap-1.5"
+                            className="pt-2 text-xs font-semibold text-[var(--theme-text)]/40 flex items-center justify-center gap-1.5"
                         >
                             <FlipVertical2 className="w-3.5 h-3.5" />
                             Tap or press Space to flip
@@ -77,11 +77,11 @@ export default function StudyFlashcard({
                         </span>
                         <p
                             data-testid="flashcard-answer"
-                            className="mt-8 text-xl sm:text-2xl font-bold whitespace-pre-wrap text-[var(--theme-secondary)]"
+                            className="my-auto py-6 text-xl sm:text-2xl font-bold whitespace-pre-wrap text-[var(--theme-secondary)]"
                         >
                             {back}
                         </p>
-                        <div className="mt-auto pt-8 text-xs font-semibold text-[var(--theme-text)]/40 flex items-center justify-center gap-1.5">
+                        <div className="pt-2 text-xs font-semibold text-[var(--theme-text)]/40 flex items-center justify-center gap-1.5">
                             <FlipVertical2 className="w-3.5 h-3.5" />
                             Tap to flip back
                         </div>

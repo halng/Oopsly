@@ -25,11 +25,8 @@ vi.mock('@/services/api', () => ({
     },
 }));
 vi.mock('@/hooks/useSyncStatus', () => ({ useSyncStatus: () => syncState }));
-vi.mock('@/components/shared', () => ({
-    CalendarModal: ({ onClose }: { onClose: () => void }) => (
-        <button onClick={onClose}>Close calendar</button>
-    ),
-}));
+const logout = vi.hoisted(() => vi.fn());
+vi.mock('@/hooks/useLogout', () => ({ useLogout: () => logout }));
 vi.mock('@/store/UserProfile', () => ({
     useUserProfileStore: () => ({
         profile: {
@@ -54,15 +51,42 @@ describe('Navbar', () => {
         expect(container).toMatchSnapshot();
     });
 
-    it('routes profile, pro, and calendar actions and handles a pending sync state', () => {
-        syncState.pendingCount = 2;
+    it('shows only the account menu next to the counters', () => {
+        render(<Navbar />);
+        expect(screen.queryByTitle('Study Calendar')).toBeNull();
+        expect(screen.queryByTitle('Settings')).toBeNull();
+        expect(screen.queryByText('Pro')).toBeNull();
+        expect(screen.queryByTestId('user-menu')).toBeNull();
+    });
+
+    it('opens the menu with Profile and Log out', () => {
         render(<Navbar />);
         fireEvent.click(screen.getByTestId('btn-user-profile'));
-        fireEvent.click(screen.getByText('Pro'));
-        fireEvent.click(screen.getByTitle('Study Calendar'));
+        expect(screen.getAllByRole('menuitem')).toHaveLength(2);
+
+        fireEvent.click(screen.getByTestId('menu-profile'));
         expect(push).toHaveBeenCalledWith('/settings');
-        expect(push).toHaveBeenCalledWith('/subscribe');
-        expect(screen.getByText('Close calendar')).toBeInTheDocument();
+        expect(screen.queryByTestId('user-menu')).toBeNull();
+
+        fireEvent.click(screen.getByTestId('btn-user-profile'));
+        fireEvent.click(screen.getByTestId('menu-logout'));
+        expect(logout).toHaveBeenCalledOnce();
+    });
+
+    it('closes the menu on Escape and on an outside click', () => {
+        render(<Navbar />);
+        fireEvent.click(screen.getByTestId('btn-user-profile'));
+        fireEvent.keyDown(document, { key: 'Escape' });
+        expect(screen.queryByTestId('user-menu')).toBeNull();
+
+        fireEvent.click(screen.getByTestId('btn-user-profile'));
+        fireEvent.mouseDown(document.body);
+        expect(screen.queryByTestId('user-menu')).toBeNull();
+    });
+
+    it('handles a pending sync state', () => {
+        syncState.pendingCount = 2;
+        render(<Navbar />);
         fireEvent.click(screen.getByTestId('btn-sync-status'));
         expect(syncState.syncNow).toHaveBeenCalledOnce();
         syncState.pendingCount = 0;

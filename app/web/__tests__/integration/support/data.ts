@@ -330,6 +330,11 @@ export function defaultStubs(): Stub[] {
         ok('GET', `${AUTH}/v1/user-profiles`, profile),
         ok('PATCH', `${AUTH}/v1/user-profiles`, profile),
         ok('PATCH', `${AUTH}/v1/user-profiles/settings/newcomer`, null),
+        ok('POST', `${AUTH}/v1/user-profiles/study-reminder`, null),
+        ok('POST', `${AUTH}/v1/user-profiles/study-reminder/calendar`, {
+            filename: 'oopsly-study-reminder.ics',
+            ics: 'BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n',
+        }),
         ok('PATCH', `${AUTH}/v1/user-settings`, profile.settings),
         // api service
         ok('GET', `${API}/v1/ping`, 'pong'),

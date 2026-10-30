@@ -1,0 +1,91 @@
+# Builds every module from source and runs the whole stack in Docker.
+# Layered on docker-compose.yml (Postgres, Redis, nginx), so pass both files:
+#   docker compose -f docker-compose.yml -f docker-compose-build.yaml up -d --build
+# Everything is then served from one origin, http://localhost:8080
+# (nginx -> web, api, auth, game). Local-only credentials; do not reuse them.
+x-db: &db
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: oopsly
+  DB_USERNAME: postgres
+  DB_PASSWORD: postgres
+
+services:
+  redis:
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Swap the host-pointing config for one that targets the services below.
+  nginx:
+    volumes:
+      - ./nginx/nginx.compose.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+      - api
+      - auth
+      - game
+
+  auth:
+    build: ./auth
+    environment:
+      <<: *db
+      REDIS_HOST: redis
+      INTERNAL_API_KEY: local-internal-key
+      ALLOWED_ORIGINS: http://localhost:8080
+      # Profile pictures go to the local S3 store. Browsers upload to localhost:9000, the
+      # service itself reaches it as s3:9000.
+      AVATAR_BUCKET: oopsly-avatars
+      AVATAR_REGION: us-east-1
+      AVATAR_S3_ENDPOINT: http://s3:9000
+      AVATAR_S3_PUBLIC_ENDPOINT: http://localhost:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      s3-init: { condition: service_completed_successfully }
+    networks:
+      - app-network
+
+  api:
+    build: ./api
+    environment:
+      <<: *db
+      SPRING_PROFILES_ACTIVE: dev
+      REDIS_HOST: redis
+      JWKS_URL: http://auth:9010/.well-known/pub.json
+      AUTH_BASE_URL: http://auth:9010/api/auth
+      AUTH_INTERNAL_KEY: local-internal-key
+      ALLOWED_ORIGINS: http://localhost:8080
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      auth: { condition: service_started }
+    networks:
+      - app-network
+
+  game:
+    build: ./game
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/oopsly
+      JWKS_URL: http://auth:9010/.well-known/pub.json
+      CORS_ORIGINS: http://localhost:8080
+    depends_on:
+      postgres: { condition: service_healthy }
+      auth: { condition: service_started }
+    networks:
+      - app-network
+
+  web:
+    build:
+      context: ./web
+      args:
+        # Inlined into the browser bundle: the nginx origin the browser sees.
+        NEXT_PUBLIC_API_URL: http://localhost:8080/api/oopsly
+        NEXT_PUBLIC_AUTH_URL: http://localhost:8080/api/auth
+        NEXT_PUBLIC_GAME_API_URL: http://localhost:8080
+    networks:
+      - app-network

@@ -24,7 +24,6 @@ vi.mock('@/services/api', () => ({
 }));
 vi.mock('@/components/shared', () => ({
     ImportCardsModal: () => null,
-    SubjectScheduleModal: () => null,
     CssProgressBar: () => <div data-testid="css-progress-bar" />,
 }));
 

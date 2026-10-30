@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import {
     ArrowLeft,
     Bell,
+    Sparkles,
     LogOut,
     Moon,
     Save,
@@ -16,6 +17,8 @@ import { toast } from '@/store/ToastStore';
 import { useLogout } from '@/hooks/useLogout';
 import { useUserProfileStore } from '@/store';
 import { ThemeModal } from '@/components/shared';
+import AvatarUploader from '@/components/settings/AvatarUploader';
+import StudyReminderPanel from '@/components/settings/StudyReminderPanel';
 import { ThemeId } from '@/types';
 
 export default function SettingsPage() {
@@ -118,6 +121,7 @@ export default function SettingsPage() {
                     </div>
                 </div>
                 <form onSubmit={handleSave} className="space-y-6">
+                    <AvatarUploader />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="font-bold text-sm block mb-1.5">
@@ -138,10 +142,11 @@ export default function SettingsPage() {
                             <input
                                 data-testid="input-email"
                                 type="email"
-                                required
+                                readOnly
+                                aria-readonly="true"
+                                title="Your email is your login and cannot be changed"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full p-3 bg-stone-50 border rounded-xl text-sm"
+                                className="w-full p-3 bg-stone-100 border rounded-xl text-sm text-stone-500 cursor-not-allowed"
                             />
                         </div>
                     </div>
@@ -241,6 +246,18 @@ export default function SettingsPage() {
                             }`}
                         >
                             <div className="w-4 h-4 rounded-full bg-white" />
+                        </button>
+                    </div>
+                    {allowReminders && <StudyReminderPanel />}
+                    <div className="grid grid-cols-1 gap-3">
+                        <button
+                            type="button"
+                            data-testid="btn-upgrade-pro"
+                            onClick={() => router.push('/subscribe')}
+                            className="flex items-center gap-2 p-4 bg-stone-50 rounded-2xl border font-bold cursor-pointer"
+                        >
+                            <Sparkles className="w-5 h-5" />
+                            Upgrade to Pro
                         </button>
                     </div>
                     <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4 border-t">

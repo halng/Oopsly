@@ -6,6 +6,7 @@ import {
     Subject,
     Card,
     TestSuite,
+    AvatarUploadTicket,
     UserProfile,
     UserSettings,
     StatsData,
@@ -274,6 +275,48 @@ export const ApiService = {
             {
                 method: 'PATCH',
                 body: JSON.stringify(profile),
+            },
+            authClient
+        ),
+
+    /** A short-lived form for posting a profile picture straight to S3. */
+    requestAvatarUpload: (contentType: string) =>
+        fetchJson<AvatarUploadTicket>(
+            '/v1/user-profiles/avatar/upload-url',
+            { method: 'POST', body: JSON.stringify({ contentType }) },
+            authClient
+        ),
+
+    /** Makes an uploaded object the user's picture; returns the new profile. */
+    confirmAvatar: (key: string) =>
+        fetchJson<UserProfile>(
+            '/v1/user-profiles/avatar/confirm',
+            { method: 'POST', body: JSON.stringify({ key }) },
+            authClient
+        ),
+
+    /** Emails the user a recurring calendar event for their study days. */
+    sendStudyReminder: (days: number[], time: string, timezone: string) =>
+        fetchJson<null>(
+            '/v1/user-profiles/study-reminder',
+            {
+                method: 'POST',
+                body: JSON.stringify({ days, time, timezone }),
+            },
+            authClient
+        ),
+
+    /** The same recurring event as the email, for downloading as a .ics file. */
+    getStudyReminderCalendar: (
+        days: number[],
+        time: string,
+        timezone: string
+    ) =>
+        fetchJson<{ filename: string; ics: string }>(
+            '/v1/user-profiles/study-reminder/calendar',
+            {
+                method: 'POST',
+                body: JSON.stringify({ days, time, timezone }),
             },
             authClient
         ),

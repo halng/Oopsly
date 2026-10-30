@@ -77,7 +77,7 @@ export default function ToastViewport() {
     return (
         <div
             data-testid="toast-viewport"
-            className="pointer-events-none fixed z-[100] bottom-20 md:bottom-4 inset-x-3 sm:inset-x-auto sm:right-4 flex flex-col items-stretch sm:items-end gap-2"
+            className="pointer-events-none fixed z-[100] top-4 inset-x-3 sm:inset-x-auto sm:right-4 flex flex-col items-stretch sm:items-end gap-2"
         >
             {toasts.map((t) => (
                 <ToastItem key={t.id} toast={t} />

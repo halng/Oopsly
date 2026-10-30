@@ -32,9 +32,13 @@ class Clock:
 class OutboxSender:
     def __init__(self):
         self.sent: list[tuple[str, str]] = []
+        self.reminders: list[tuple[str, str]] = []
 
     def send_otp(self, to: str, code: str) -> None:
         self.sent.append((to, code))
+
+    def send_study_reminder(self, to: str, ics: str) -> None:
+        self.reminders.append((to, ics))
 
 
 def make_key_store(factory, clock=None, **overrides) -> KeyStore:

@@ -14,9 +14,12 @@ from app.deps import (
 from app.envelope import bad_request, ok, respond
 from app.keys import KeyStore
 from app.schemas import (
+    AvatarConfirmReq,
+    AvatarUploadReq,
     LookupReq,
     RefreshReq,
     SetSubscriptionReq,
+    StudyReminderReq,
     UpdateProfileReq,
     ValidateOtpReq,
 )
@@ -125,6 +128,49 @@ def update_settings(
     svc: AuthService = Depends(get_service),
 ):
     return ok("Profile retrieved successfully", svc.update_settings(me.user_id, req))
+
+
+@router.post("/v1/user-profiles/avatar/upload-url", tags=["profiles"])
+def avatar_upload_url(
+    req: AvatarUploadReq,
+    me: Principal = Depends(authenticate),
+    svc: AuthService = Depends(get_service),
+):
+    return ok(
+        "Upload URL created", svc.request_avatar_upload(me.user_id, req.contentType)
+    )
+
+
+@router.post("/v1/user-profiles/avatar/confirm", tags=["profiles"])
+def avatar_confirm(
+    req: AvatarConfirmReq,
+    me: Principal = Depends(authenticate),
+    svc: AuthService = Depends(get_service),
+):
+    return ok("Profile picture updated", svc.confirm_avatar(me.user_id, req.key))
+
+
+@router.post("/v1/user-profiles/study-reminder", tags=["profiles"])
+def study_reminder(
+    req: StudyReminderReq,
+    me: Principal = Depends(authenticate),
+    svc: AuthService = Depends(get_service),
+):
+    svc.send_study_reminder(me.user_id, req.days, req.time, req.timezone)
+    return ok("Study reminder sent. Check your inbox to add it to your calendar.")
+
+
+@router.post("/v1/user-profiles/study-reminder/calendar", tags=["profiles"])
+def study_reminder_calendar(
+    req: StudyReminderReq,
+    me: Principal = Depends(authenticate),
+    svc: AuthService = Depends(get_service),
+):
+    ics = svc.study_reminder_ics(req.days, req.time, req.timezone)
+    return ok(
+        "Study reminder calendar generated",
+        {"filename": "oopsly-study-reminder.ics", "ics": ics},
+    )
 
 
 @router.patch("/v1/user-profiles/settings/newcomer", tags=["profiles"])

@@ -52,7 +52,7 @@ fi
 for stack in "${STACKS[@]}"; do
   case "$stack" in
     network)
-      deploy network "Environment=${ENVIRONMENT}"
+      deploy network "Environment=${ENVIRONMENT} AllowedOrigins=${ORIGINS}"
       ;;
     auth)
       scripts/copy-images.sh "$ENVIRONMENT" "$TAG" auth

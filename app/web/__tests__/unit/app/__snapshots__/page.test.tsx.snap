@@ -45,6 +45,34 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
           Oopsly
         </span>
       </div>
+      <nav
+        class="hidden md:flex items-center gap-6 text-sm font-semibold text-stone-600"
+      >
+        <a
+          class="hover:text-stone-900"
+          href="#features"
+        >
+          Features
+        </a>
+        <a
+          class="hover:text-stone-900"
+          href="#why"
+        >
+          Why Oopsly
+        </a>
+        <a
+          class="hover:text-stone-900"
+          href="#pricing"
+        >
+          Pricing
+        </a>
+        <a
+          class="hover:text-stone-900"
+          href="#faq"
+        >
+          FAQ
+        </a>
+      </nav>
       <div
         class="flex items-center gap-4"
       >
@@ -165,7 +193,8 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
         </button>
       </section>
       <section
-        class="py-24 bg-white px-6"
+        class="py-24 bg-white px-6 scroll-mt-16"
+        id="features"
       >
         <div
           class="max-w-7xl mx-auto"
@@ -353,6 +382,1383 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
           </div>
         </div>
       </section>
+      <section
+        class="py-20 px-6"
+      >
+        <div
+          class="max-w-5xl mx-auto"
+        >
+          <h2
+            class="text-3xl sm:text-4xl font-black text-stone-900 text-center mb-12"
+          >
+            How it works
+          </h2>
+          <ol
+            class="grid grid-cols-1 md:grid-cols-3 gap-8"
+          >
+            <li
+              class="flex gap-4"
+            >
+              <span
+                class="w-9 h-9 shrink-0 rounded-full bg-stone-900 text-white font-black flex items-center justify-center"
+              >
+                1
+              </span>
+              <div>
+                <h3
+                  class="font-bold text-stone-900 mb-1"
+                >
+                  Create or discover a deck
+                </h3>
+                <p
+                  class="text-stone-600 leading-relaxed"
+                >
+                  Add your own cards, import them in bulk, or pick a deck from the community.
+                </p>
+              </div>
+            </li>
+            <li
+              class="flex gap-4"
+            >
+              <span
+                class="w-9 h-9 shrink-0 rounded-full bg-stone-900 text-white font-black flex items-center justify-center"
+              >
+                2
+              </span>
+              <div>
+                <h3
+                  class="font-bold text-stone-900 mb-1"
+                >
+                  Review what is due
+                </h3>
+                <p
+                  class="text-stone-600 leading-relaxed"
+                >
+                  Each day Oopsly shows only the cards you are about to forget.
+                </p>
+              </div>
+            </li>
+            <li
+              class="flex gap-4"
+            >
+              <span
+                class="w-9 h-9 shrink-0 rounded-full bg-stone-900 text-white font-black flex items-center justify-center"
+              >
+                3
+              </span>
+              <div>
+                <h3
+                  class="font-bold text-stone-900 mb-1"
+                >
+                  Watch it grow
+                </h3>
+                <p
+                  class="text-stone-600 leading-relaxed"
+                >
+                  Earn XP, keep your streak and grow your garden as the knowledge sticks.
+                </p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+      <section
+        class="py-20 bg-white px-6"
+      >
+        <div
+          class="max-w-7xl mx-auto"
+        >
+          <div
+            class="text-center mb-14"
+          >
+            <h2
+              class="text-3xl sm:text-4xl font-black text-stone-900"
+            >
+              Everything you need to study
+            </h2>
+            <p
+              class="text-stone-500 mt-4 text-lg"
+            >
+              From your first card to your hundredth quiz.
+            </p>
+          </div>
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            <div
+              class="p-6 rounded-2xl border border-stone-100 bg-stone-50"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-library w-5 h-5 text-[var(--theme-secondary)] mb-3"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m16 6 4 14"
+                />
+                <path
+                  d="M12 6v14"
+                />
+                <path
+                  d="M8 8v12"
+                />
+                <path
+                  d="M4 4v16"
+                />
+              </svg>
+              <h3
+                class="font-bold text-stone-900 mb-1"
+              >
+                Decks & shelves
+              </h3>
+              <p
+                class="text-sm text-stone-600 leading-relaxed"
+              >
+                Organise subjects into shelves, then review, learn or match the same cards in the mode that suits the moment.
+              </p>
+            </div>
+            <div
+              class="p-6 rounded-2xl border border-stone-100 bg-stone-50"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-clipboard-check w-5 h-5 text-[var(--theme-secondary)] mb-3"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="4"
+                  rx="1"
+                  ry="1"
+                  width="8"
+                  x="8"
+                  y="2"
+                />
+                <path
+                  d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
+                />
+                <path
+                  d="m9 14 2 2 4-4"
+                />
+              </svg>
+              <h3
+                class="font-bold text-stone-900 mb-1"
+              >
+                Test suites
+              </h3>
+              <p
+                class="text-sm text-stone-600 leading-relaxed"
+              >
+                Build practice tests and bulk-add questions from a CSV, Excel file or pasted text instead of typing them one by one.
+              </p>
+            </div>
+            <div
+              class="p-6 rounded-2xl border border-stone-100 bg-stone-50"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-swords w-5 h-5 text-[var(--theme-secondary)] mb-3"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m13 19 6-6"
+                />
+                <path
+                  d="M14.5 17.5 3.586 6.586A2 2 0 013 5.172V3h2.172a2 2 0 011.414.586L17.5 14.5"
+                />
+                <path
+                  d="m14.828 6.172 2.586-2.586A2 2 0 0118.828 3H21v2.172a2 2 0 01-.586 1.414l-2.586 2.586"
+                />
+                <path
+                  d="m16 16 4 4"
+                />
+                <path
+                  d="m19 21 2-2"
+                />
+                <path
+                  d="m5 14 4 4"
+                />
+                <path
+                  d="m5 21-2-2"
+                />
+                <path
+                  d="M7.5 16.5 4 20"
+                />
+              </svg>
+              <h3
+                class="font-bold text-stone-900 mb-1"
+              >
+                Live quizzes
+              </h3>
+              <p
+                class="text-sm text-stone-600 leading-relaxed"
+              >
+                Host a room, share the code and quiz friends or a class in real time.
+              </p>
+            </div>
+            <div
+              class="p-6 rounded-2xl border border-stone-100 bg-stone-50"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-users w-5 h-5 text-[var(--theme-secondary)] mb-3"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+                />
+                <path
+                  d="M16 3.128a4 4 0 0 1 0 7.744"
+                />
+                <path
+                  d="M22 21v-2a4 4 0 0 0-3-3.87"
+                />
+                <circle
+                  cx="9"
+                  cy="7"
+                  r="4"
+                />
+              </svg>
+              <h3
+                class="font-bold text-stone-900 mb-1"
+              >
+                Communities
+              </h3>
+              <p
+                class="text-sm text-stone-600 leading-relaxed"
+              >
+                Discover decks other learners have shared, or build a community around your own.
+              </p>
+            </div>
+            <div
+              class="p-6 rounded-2xl border border-stone-100 bg-stone-50"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-trophy w-5 h-5 text-[var(--theme-secondary)] mb-3"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2"
+                />
+                <path
+                  d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2"
+                />
+                <path
+                  d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3"
+                />
+                <path
+                  d="M4 22h16"
+                />
+                <path
+                  d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"
+                />
+                <path
+                  d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3"
+                />
+              </svg>
+              <h3
+                class="font-bold text-stone-900 mb-1"
+              >
+                Streaks & leagues
+              </h3>
+              <p
+                class="text-sm text-stone-600 leading-relaxed"
+              >
+                Daily streaks, XP and a leaderboard give you a reason to come back tomorrow.
+              </p>
+            </div>
+            <div
+              class="p-6 rounded-2xl border border-stone-100 bg-stone-50"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-chart-column w-5 h-5 text-[var(--theme-secondary)] mb-3"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M3 3v16a2 2 0 0 0 2 2h16"
+                />
+                <path
+                  d="M18 17V9"
+                />
+                <path
+                  d="M13 17V5"
+                />
+                <path
+                  d="M8 17v-3"
+                />
+              </svg>
+              <h3
+                class="font-bold text-stone-900 mb-1"
+              >
+                Progress stats
+              </h3>
+              <p
+                class="text-sm text-stone-600 leading-relaxed"
+              >
+                See retention, reviews and cards studied so you know what is actually sticking.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section
+        class="py-24 px-6 scroll-mt-16"
+        id="why"
+      >
+        <div
+          class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-14 items-start"
+        >
+          <div>
+            <h2
+              class="text-3xl sm:text-4xl font-black text-stone-900 mb-8"
+            >
+              Why learners pick Oopsly
+            </h2>
+            <ul
+              class="space-y-6"
+            >
+              <li
+                class="flex gap-3"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-check w-5 h-5 mt-0.5 shrink-0 text-[var(--theme-accent)]"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 6 9 17l-5-5"
+                  />
+                </svg>
+                <div>
+                  <h3
+                    class="font-bold text-stone-900"
+                  >
+                    Reviews scheduled by memory, not by habit
+                  </h3>
+                  <p
+                    class="text-stone-600 leading-relaxed"
+                  >
+                    FSRS predicts when each card is about to fade, so you spend time on the cards that need it.
+                  </p>
+                </div>
+              </li>
+              <li
+                class="flex gap-3"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-check w-5 h-5 mt-0.5 shrink-0 text-[var(--theme-accent)]"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 6 9 17l-5-5"
+                  />
+                </svg>
+                <div>
+                  <h3
+                    class="font-bold text-stone-900"
+                  >
+                    Studying that feels good
+                  </h3>
+                  <p
+                    class="text-stone-600 leading-relaxed"
+                  >
+                    The garden turns finished sessions into something you can see grow, without turning study into a slot machine.
+                  </p>
+                </div>
+              </li>
+              <li
+                class="flex gap-3"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-check w-5 h-5 mt-0.5 shrink-0 text-[var(--theme-accent)]"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 6 9 17l-5-5"
+                  />
+                </svg>
+                <div>
+                  <h3
+                    class="font-bold text-stone-900"
+                  >
+                    Alone or together
+                  </h3>
+                  <p
+                    class="text-stone-600 leading-relaxed"
+                  >
+                    Solo reviews, shared decks, live quiz rooms and leaderboards in one place.
+                  </p>
+                </div>
+              </li>
+              <li
+                class="flex gap-3"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-check w-5 h-5 mt-0.5 shrink-0 text-[var(--theme-accent)]"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 6 9 17l-5-5"
+                  />
+                </svg>
+                <div>
+                  <h3
+                    class="font-bold text-stone-900"
+                  >
+                    Bring your material with you
+                  </h3>
+                  <p
+                    class="text-stone-600 leading-relaxed"
+                  >
+                    Import questions in bulk and keep studying offline; everything syncs when you reconnect.
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div
+            class="rounded-3xl bg-white border border-stone-200 shadow-sm overflow-hidden"
+          >
+            <table
+              class="w-full text-sm"
+            >
+              <thead>
+                <tr
+                  class="bg-stone-50 text-left"
+                >
+                  <th
+                    class="p-4 font-bold text-stone-500"
+                  >
+                    Feature
+                  </th>
+                  <th
+                    class="p-4 font-black text-stone-900 text-center"
+                  >
+                    Oopsly
+                  </th>
+                  <th
+                    class="p-4 font-bold text-stone-500 text-center"
+                  >
+                    Typical flashcard app
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  class="border-t border-stone-100"
+                >
+                  <td
+                    class="p-4 text-stone-700"
+                  >
+                    Modern spaced repetition (FSRS)
+                  </td>
+                  <td
+                    class="p-4 text-center"
+                  >
+                    <svg
+                      aria-label="Included"
+                      class="lucide lucide-check w-5 h-5 mx-auto text-emerald-600"
+                      fill="none"
+                      height="24"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M20 6 9 17l-5-5"
+                      />
+                    </svg>
+                  </td>
+                  <td
+                    class="p-4 text-center"
+                  >
+                    <svg
+                      aria-label="Not included"
+                      class="lucide lucide-x w-5 h-5 mx-auto text-stone-300"
+                      fill="none"
+                      height="24"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M18 6 6 18"
+                      />
+                      <path
+                        d="m6 6 12 12"
+                      />
+                    </svg>
+                  </td>
+                </tr>
+                <tr
+                  class="border-t border-stone-100"
+                >
+                  <td
+                    class="p-4 text-stone-700"
+                  >
+                    Gamified garden & streaks
+                  </td>
+                  <td
+                    class="p-4 text-center"
+                  >
+                    <svg
+                      aria-label="Included"
+                      class="lucide lucide-check w-5 h-5 mx-auto text-emerald-600"
+                      fill="none"
+                      height="24"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M20 6 9 17l-5-5"
+                      />
+                    </svg>
+                  </td>
+                  <td
+                    class="p-4 text-center"
+                  >
+                    <svg
+                      aria-label="Not included"
+                      class="lucide lucide-x w-5 h-5 mx-auto text-stone-300"
+                      fill="none"
+                      height="24"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M18 6 6 18"
+                      />
+                      <path
+                        d="m6 6 12 12"
+                      />
+                    </svg>
+                  </td>
+                </tr>
+                <tr
+                  class="border-t border-stone-100"
+                >
+                  <td
+                    class="p-4 text-stone-700"
+                  >
+                    Live quiz rooms
+                  </td>
+                  <td
+                    class="p-4 text-center"
+                  >
+                    <svg
+                      aria-label="Included"
+                      class="lucide lucide-check w-5 h-5 mx-auto text-emerald-600"
+                      fill="none"
+                      height="24"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M20 6 9 17l-5-5"
+                      />
+                    </svg>
+                  </td>
+                  <td
+                    class="p-4 text-center"
+                  >
+                    <svg
+                      aria-label="Not included"
+                      class="lucide lucide-x w-5 h-5 mx-auto text-stone-300"
+                      fill="none"
+                      height="24"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M18 6 6 18"
+                      />
+                      <path
+                        d="m6 6 12 12"
+                      />
+                    </svg>
+                  </td>
+                </tr>
+                <tr
+                  class="border-t border-stone-100"
+                >
+                  <td
+                    class="p-4 text-stone-700"
+                  >
+                    Bulk import from CSV / Excel
+                  </td>
+                  <td
+                    class="p-4 text-center"
+                  >
+                    <svg
+                      aria-label="Included"
+                      class="lucide lucide-check w-5 h-5 mx-auto text-emerald-600"
+                      fill="none"
+                      height="24"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M20 6 9 17l-5-5"
+                      />
+                    </svg>
+                  </td>
+                  <td
+                    class="p-4 text-center"
+                  >
+                    <svg
+                      aria-label="Not included"
+                      class="lucide lucide-x w-5 h-5 mx-auto text-stone-300"
+                      fill="none"
+                      height="24"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M18 6 6 18"
+                      />
+                      <path
+                        d="m6 6 12 12"
+                      />
+                    </svg>
+                  </td>
+                </tr>
+                <tr
+                  class="border-t border-stone-100"
+                >
+                  <td
+                    class="p-4 text-stone-700"
+                  >
+                    Works offline
+                  </td>
+                  <td
+                    class="p-4 text-center"
+                  >
+                    <svg
+                      aria-label="Included"
+                      class="lucide lucide-check w-5 h-5 mx-auto text-emerald-600"
+                      fill="none"
+                      height="24"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M20 6 9 17l-5-5"
+                      />
+                    </svg>
+                  </td>
+                  <td
+                    class="p-4 text-center"
+                  >
+                    <svg
+                      aria-label="Included"
+                      class="lucide lucide-check w-5 h-5 mx-auto text-emerald-600"
+                      fill="none"
+                      height="24"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M20 6 9 17l-5-5"
+                      />
+                    </svg>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section
+        class="py-24 bg-white px-6 scroll-mt-16"
+        id="pricing"
+      >
+        <div
+          class="max-w-6xl mx-auto"
+        >
+          <div
+            class="text-center mb-10"
+          >
+            <h2
+              class="text-3xl sm:text-4xl font-black text-stone-900"
+            >
+              Plans & pricing
+            </h2>
+            <p
+              class="text-stone-500 mt-4 text-lg"
+            >
+              Start free. Upgrade when you are ready.
+            </p>
+          </div>
+          <div
+            class="flex justify-center mb-12"
+          >
+            <div
+              class="inline-flex p-1 rounded-2xl bg-stone-100"
+            >
+              <button
+                aria-pressed="false"
+                class="px-6 py-2.5 rounded-xl text-sm font-bold cursor-pointer text-stone-500"
+                data-testid="landing-billing-monthly"
+                type="button"
+              >
+                Monthly
+              </button>
+              <button
+                aria-pressed="true"
+                class="px-6 py-2.5 rounded-xl text-sm font-bold cursor-pointer bg-white shadow-sm"
+                data-testid="landing-billing-yearly"
+                type="button"
+              >
+                Yearly
+              </button>
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch"
+          >
+            <div
+              class="relative rounded-3xl p-8 flex flex-col bg-white border border-stone-200"
+              data-testid="landing-plan-basic"
+            >
+              <h3
+                class="text-xl font-bold"
+              >
+                Basic
+              </h3>
+              <p
+                class="text-sm mt-1 text-stone-500"
+              >
+                Start learning.
+              </p>
+              <div
+                class="my-6"
+              >
+                <span
+                  class="text-4xl font-black"
+                >
+                  $
+                  0
+                </span>
+                 
+                <span
+                  class="text-sm text-stone-500"
+                >
+                  forever
+                </span>
+              </div>
+              <ul
+                class="space-y-3 mb-8 text-sm flex-1 "
+              >
+                <li
+                  class="flex gap-2"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-check w-5 h-5 shrink-0 text-[var(--theme-accent)]"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20 6 9 17l-5-5"
+                    />
+                  </svg>
+                  Up to 3 decks
+                </li>
+                <li
+                  class="flex gap-2"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-check w-5 h-5 shrink-0 text-[var(--theme-accent)]"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20 6 9 17l-5-5"
+                    />
+                  </svg>
+                  FSRS scheduling
+                </li>
+                <li
+                  class="flex gap-2"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-check w-5 h-5 shrink-0 text-[var(--theme-accent)]"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20 6 9 17l-5-5"
+                    />
+                  </svg>
+                  Basic stats
+                </li>
+              </ul>
+              <button
+                class="w-full py-3.5 rounded-xl font-bold text-sm cursor-pointer bg-stone-900 text-white"
+                data-testid="landing-plan-cta-basic"
+                type="button"
+              >
+                Start free
+              </button>
+            </div>
+            <div
+              class="relative rounded-3xl p-8 flex flex-col bg-stone-900 text-white"
+              data-testid="landing-plan-pro"
+            >
+              <div
+                class="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-950 text-xs font-black px-4 py-1 rounded-full"
+              >
+                Most Popular
+              </div>
+              <h3
+                class="text-xl font-bold"
+              >
+                Pro
+              </h3>
+              <p
+                class="text-sm mt-1 text-stone-400"
+              >
+                For serious learners.
+              </p>
+              <div
+                class="my-6"
+              >
+                <span
+                  class="text-4xl font-black"
+                >
+                  $
+                  7.99
+                </span>
+                 
+                <span
+                  class="text-sm text-stone-400"
+                >
+                  / month
+                </span>
+                <p
+                  class="text-xs text-amber-300 mt-1"
+                >
+                  Billed yearly, save 20%
+                </p>
+              </div>
+              <ul
+                class="space-y-3 mb-8 text-sm flex-1 text-stone-300"
+              >
+                <li
+                  class="flex gap-2"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-check w-5 h-5 shrink-0 text-[var(--theme-accent)]"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20 6 9 17l-5-5"
+                    />
+                  </svg>
+                  Unlimited decks
+                </li>
+                <li
+                  class="flex gap-2"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-check w-5 h-5 shrink-0 text-[var(--theme-accent)]"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20 6 9 17l-5-5"
+                    />
+                  </svg>
+                  AI generation
+                </li>
+                <li
+                  class="flex gap-2"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-check w-5 h-5 shrink-0 text-[var(--theme-accent)]"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20 6 9 17l-5-5"
+                    />
+                  </svg>
+                  Advanced analytics
+                </li>
+              </ul>
+              <button
+                class="w-full py-3.5 rounded-xl font-bold text-sm cursor-pointer bg-[var(--theme-accent)] text-white"
+                data-testid="landing-plan-cta-pro"
+                type="button"
+              >
+                Choose Pro
+              </button>
+            </div>
+            <div
+              class="relative rounded-3xl p-8 flex flex-col bg-white border border-stone-200"
+              data-testid="landing-plan-lifetime"
+            >
+              <h3
+                class="text-xl font-bold"
+              >
+                Lifetime
+              </h3>
+              <p
+                class="text-sm mt-1 text-stone-500"
+              >
+                Pay once, learn forever.
+              </p>
+              <div
+                class="my-6"
+              >
+                <span
+                  class="text-4xl font-black"
+                >
+                  $
+                  199
+                </span>
+                 
+                <span
+                  class="text-sm text-stone-500"
+                >
+                  one-time
+                </span>
+              </div>
+              <ul
+                class="space-y-3 mb-8 text-sm flex-1 "
+              >
+                <li
+                  class="flex gap-2"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-check w-5 h-5 shrink-0 text-[var(--theme-accent)]"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20 6 9 17l-5-5"
+                    />
+                  </svg>
+                  Everything in Pro
+                </li>
+                <li
+                  class="flex gap-2"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-check w-5 h-5 shrink-0 text-[var(--theme-accent)]"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20 6 9 17l-5-5"
+                    />
+                  </svg>
+                  All future updates
+                </li>
+              </ul>
+              <button
+                class="w-full py-3.5 rounded-xl font-bold text-sm cursor-pointer bg-stone-900 text-white"
+                data-testid="landing-plan-cta-lifetime"
+                type="button"
+              >
+                Choose Lifetime
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section
+        class="py-24 px-6 scroll-mt-16"
+        id="faq"
+      >
+        <div
+          class="max-w-3xl mx-auto"
+        >
+          <h2
+            class="text-3xl sm:text-4xl font-black text-stone-900 text-center mb-10"
+          >
+            Frequently asked questions
+          </h2>
+          <div
+            class="space-y-3"
+          >
+            <details
+              class="group rounded-2xl bg-white border border-stone-200 p-5"
+            >
+              <summary
+                class="font-bold text-stone-900 cursor-pointer list-none flex justify-between items-center"
+              >
+                Is Oopsly free?
+                <span
+                  class="text-stone-400 group-open:rotate-45 transition-transform text-xl leading-none"
+                >
+                  +
+                </span>
+              </summary>
+              <p
+                class="mt-3 text-stone-600 leading-relaxed"
+              >
+                Yes. The Basic plan is free and includes up to 3 decks with FSRS scheduling and basic stats. Upgrade whenever you need more.
+              </p>
+            </details>
+            <details
+              class="group rounded-2xl bg-white border border-stone-200 p-5"
+            >
+              <summary
+                class="font-bold text-stone-900 cursor-pointer list-none flex justify-between items-center"
+              >
+                What is spaced repetition?
+                <span
+                  class="text-stone-400 group-open:rotate-45 transition-transform text-xl leading-none"
+                >
+                  +
+                </span>
+              </summary>
+              <p
+                class="mt-3 text-stone-600 leading-relaxed"
+              >
+                A study method that shows you each card just before you would forget it. FSRS is a modern scheduler that models your memory per card, so you review less and remember more.
+              </p>
+            </details>
+            <details
+              class="group rounded-2xl bg-white border border-stone-200 p-5"
+            >
+              <summary
+                class="font-bold text-stone-900 cursor-pointer list-none flex justify-between items-center"
+              >
+                Can I bring my existing questions?
+                <span
+                  class="text-stone-400 group-open:rotate-45 transition-transform text-xl leading-none"
+                >
+                  +
+                </span>
+              </summary>
+              <p
+                class="mt-3 text-stone-600 leading-relaxed"
+              >
+                Yes. Test suites accept bulk imports from CSV, Excel or pasted text, with a preview before anything is added.
+              </p>
+            </details>
+            <details
+              class="group rounded-2xl bg-white border border-stone-200 p-5"
+            >
+              <summary
+                class="font-bold text-stone-900 cursor-pointer list-none flex justify-between items-center"
+              >
+                Does it work offline?
+                <span
+                  class="text-stone-400 group-open:rotate-45 transition-transform text-xl leading-none"
+                >
+                  +
+                </span>
+              </summary>
+              <p
+                class="mt-3 text-stone-600 leading-relaxed"
+              >
+                Yes. Keep studying without a connection and your progress syncs when you are back online.
+              </p>
+            </details>
+            <details
+              class="group rounded-2xl bg-white border border-stone-200 p-5"
+            >
+              <summary
+                class="font-bold text-stone-900 cursor-pointer list-none flex justify-between items-center"
+              >
+                Can I switch or cancel my plan?
+                <span
+                  class="text-stone-400 group-open:rotate-45 transition-transform text-xl leading-none"
+                >
+                  +
+                </span>
+              </summary>
+              <p
+                class="mt-3 text-stone-600 leading-relaxed"
+              >
+                You can change plans from the subscription page at any time.
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
+      <section
+        class="px-6 pb-24"
+      >
+        <div
+          class="max-w-4xl mx-auto rounded-3xl bg-stone-900 text-white text-center px-8 py-14"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-wand-sparkles w-6 h-6 mx-auto mb-4 text-amber-300"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"
+            />
+            <path
+              d="m14 7 3 3"
+            />
+            <path
+              d="M5 6v4"
+            />
+            <path
+              d="M19 14v4"
+            />
+            <path
+              d="M10 2v2"
+            />
+            <path
+              d="M7 8H3"
+            />
+            <path
+              d="M21 16h-4"
+            />
+            <path
+              d="M11 3H9"
+            />
+          </svg>
+          <h2
+            class="text-3xl sm:text-4xl font-black mb-4"
+          >
+            Ready to remember more?
+          </h2>
+          <p
+            class="text-stone-300 mb-8"
+          >
+            Create your first deck in minutes. It is free.
+          </p>
+          <button
+            class="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-[var(--theme-accent)] text-white font-bold cursor-pointer hover:scale-105 transition-transform"
+            data-testid="final-cta-button"
+            type="button"
+          >
+            Create your free account
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-arrow-right w-5 h-5"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M5 12h14"
+              />
+              <path
+                d="m12 5 7 7-7 7"
+              />
+            </svg>
+          </button>
+        </div>
+      </section>
     </main>
     <footer
       class="bg-stone-50 py-12 px-6 border-t border-stone-200 text-center"
@@ -389,6 +1795,28 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
           Oopsly
         </span>
       </div>
+      <nav
+        class="flex justify-center gap-6 text-sm text-stone-500 mb-4"
+      >
+        <a
+          class="hover:text-stone-900"
+          href="#features"
+        >
+          Features
+        </a>
+        <a
+          class="hover:text-stone-900"
+          href="#pricing"
+        >
+          Pricing
+        </a>
+        <a
+          class="hover:text-stone-900"
+          href="#faq"
+        >
+          FAQ
+        </a>
+      </nav>
       <p
         class="text-stone-500 flex items-center justify-center gap-1"
       >

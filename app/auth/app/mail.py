@@ -14,6 +14,8 @@ _TEMPLATE = Path(__file__).with_name("email-otp.html")
 class Sender(Protocol):
     def send_otp(self, to: str, code: str) -> None: ...
 
+    def send_study_reminder(self, to: str, ics: str) -> None: ...
+
 
 def mask(email: str) -> str:
     """Hides most of the local part for logs."""
@@ -37,3 +39,10 @@ class NoOpSender:
 
     def send_otp(self, to: str, code: str) -> None:
         logger.info("mail disabled; skipping OTP email to %s", mask(to))
+
+    def send_study_reminder(self, to: str, ics: str) -> None:
+        logger.info(
+            "mail disabled; skipping study reminder to %s (%d byte calendar)",
+            mask(to),
+            len(ics),
+        )

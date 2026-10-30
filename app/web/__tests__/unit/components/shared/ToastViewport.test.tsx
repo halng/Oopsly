@@ -20,6 +20,16 @@ describe('ToastViewport', () => {
         expect(screen.getByRole('alert')).toHaveTextContent('You are offline.');
     });
 
+    it('sits in the top-right corner', () => {
+        render(<ToastViewport />);
+        act(() => {
+            toast.info('Hello');
+        });
+        const viewport = screen.getByTestId('toast-viewport');
+        expect(viewport).toHaveClass('top-4', 'sm:right-4');
+        expect(viewport).not.toHaveClass('bottom-4');
+    });
+
     it('dismisses on click', async () => {
         render(<ToastViewport />);
         act(() => {

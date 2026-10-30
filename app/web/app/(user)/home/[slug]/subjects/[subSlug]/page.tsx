@@ -14,17 +14,12 @@ import {
     Layers,
     Check,
     FileSpreadsheet,
-    Calendar as CalendarIcon,
 } from 'lucide-react';
 import { Card } from '@/types';
 import { ApiService } from '@/services/api';
 import { toast } from '@/store/ToastStore';
 import { formatInterval } from '@/utils/fsrs';
-import {
-    ImportCardsModal,
-    SubjectScheduleModal,
-    CssProgressBar,
-} from '@/components/shared';
+import { ImportCardsModal, CssProgressBar } from '@/components/shared';
 import { useSubjectContext } from '@/hooks/useSubjectContext';
 
 export default function SubjectDetailsPage() {
@@ -52,7 +47,6 @@ export default function SubjectDetailsPage() {
         null
     );
     const [editingCard, setEditingCard] = useState<Card | null>(null);
-    const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
     const subjectId = currentSubject?.id;
     const shelfId = currentShelf?.id;
@@ -313,15 +307,6 @@ export default function SubjectDetailsPage() {
                     >
                         <Gamepad2 className="w-4 h-4" />
                         Speed Match
-                    </button>
-                    <button
-                        type="button"
-                        data-testid="btn-subject-schedule"
-                        onClick={() => setIsScheduleModalOpen(true)}
-                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-bold cursor-pointer"
-                    >
-                        <CalendarIcon className="w-4 h-4" />
-                        Schedule
                     </button>
                 </div>
 
@@ -614,13 +599,6 @@ export default function SubjectDetailsPage() {
                         setIsImportModalOpen(false);
                         loadData();
                     }}
-                />
-            )}
-            {isScheduleModalOpen && (
-                <SubjectScheduleModal
-                    subject={currentSubject}
-                    onClose={() => setIsScheduleModalOpen(false)}
-                    onUpdate={loadData}
                 />
             )}
         </div>

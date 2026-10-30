@@ -21,6 +21,10 @@ Parameters:
   RedisNodeType:
     Type: String
     Default: cache.t4g.micro
+  AllowedOrigins:
+    Type: CommaDelimitedList
+    Default: http://localhost:3000
+    Description: Browser origins allowed to upload profile pictures straight to S3.
 
 Resources:
   # ---------------------------------------------------------------- network
@@ -298,7 +302,47 @@ Resources:
         Format: >-
           {"requestId":"$context.requestId","ip":"$context.identity.sourceIp","method":"$context.httpMethod","path":"$context.path","status":"$context.status","latencyMs":"$context.responseLatency","integrationError":"$context.integrationErrorMessage"}
 
+  # ---------------------------------------------------------------- avatars
+  # Private: pictures are only reachable through short-lived presigned URLs.
+  AvatarBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins: !Ref AllowedOrigins
+            AllowedMethods: [GET, POST]
+            AllowedHeaders: ["*"]
+            MaxAge: 3000
+      LifecycleConfiguration:
+        Rules:
+          - Id: abort-incomplete-uploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+
 Outputs:
+  AvatarBucketName:
+    Value: !Ref AvatarBucket
+    Export:
+      Name: !Sub ${AWS::StackName}-AvatarBucketName
+  AvatarBucketArn:
+    Value: !GetAtt AvatarBucket.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-AvatarBucketArn
   VpcId:
     Value: !Ref Vpc
     Export:

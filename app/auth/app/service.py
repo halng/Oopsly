@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr, ValidationErro
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app import domain, features, mail
+from app import avatars, domain, features, mail, reminder
 from app.envelope import ApiError, bad_request, not_found, unauthorized
 from app.kv import KV
 from app.models import Settings, Subscription, User
@@ -100,6 +100,7 @@ class AuthService:
         sender: mail.Sender,
         run_async: Callable[[Callable[[], None]], Any],
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
+        avatar_storage: avatars.AvatarStorage | None = None,
     ):
         self.db = db
         self.kv = kv
@@ -108,6 +109,7 @@ class AuthService:
         self.sender = sender
         self.run_async = run_async
         self.now = now
+        self.avatar_storage = avatar_storage
 
     # --- authentication ---
 
@@ -225,6 +227,46 @@ class AuthService:
 
     # --- profile ---
 
+    def _picture(self, stored: str | None) -> str:
+        """A displayable URL for the stored picture (presigned for our own keys)."""
+        if not avatars.is_key(stored):
+            return stored or ""
+        return self.avatar_storage.presign_get(stored) if self.avatar_storage else ""
+
+    def _require_avatars(self) -> avatars.AvatarStorage:
+        if self.avatar_storage is None:
+            raise ApiError(503, "Profile picture uploads are not available")
+        return self.avatar_storage
+
+    def request_avatar_upload(self, user_id: str, content_type: str) -> dict:
+        """A short-lived form the browser posts the image to, straight to S3."""
+        storage = self._require_avatars()
+        if content_type not in avatars.ALLOWED_TYPES:
+            raise bad_request("Picture must be a JPEG, PNG or WebP image")
+        user = self._current_user(user_id)
+        key = avatars.new_key(str(user.id), content_type)
+        upload = storage.presign_upload(key, content_type)
+        return {**upload, "key": key, "maxBytes": avatars.MAX_BYTES}
+
+    def confirm_avatar(self, user_id: str, key: str) -> dict:
+        """Makes an uploaded object the user's picture and drops the previous one."""
+        storage = self._require_avatars()
+        user = self._current_user(user_id)
+        if not key.startswith(avatars.user_prefix(str(user.id))):
+            raise bad_request("Invalid picture")
+        if not storage.exists(key):
+            raise bad_request("Picture was not uploaded")
+        previous = user.picture_url
+        user.picture_url = key
+        user.updated_at = self.now()
+        self.db.commit()
+        if avatars.is_key(previous) and previous != key:
+            try:
+                storage.delete(previous)
+            except Exception:
+                logger.warning("could not delete previous avatar", exc_info=True)
+        return self.profile(user_id)
+
     def _ensure_settings(self, user_id: uuid.UUID) -> Settings:
         settings = self.db.scalars(
             select(Settings).where(Settings.user_id == user_id)
@@ -243,7 +285,7 @@ class AuthService:
             "name": user.name or "",
             "email": user.email,
             "displayName": user.display_name or "",
-            "avatarUrl": user.picture_url or "",
+            "avatarUrl": self._picture(user.picture_url),
             "bio": user.bio or "",
             "settings": {
                 "theme": st.theme,
@@ -297,6 +339,28 @@ class AuthService:
         self.db.commit()
         return self.profile(user_id)
 
+    def study_reminder_ics(self, days: list[int], time: str, timezone: str) -> str:
+        """The recurring study event as an iCalendar file body."""
+        try:
+            return reminder.build_ics(days, time, timezone, self.now())
+        except reminder.InvalidReminder as e:
+            raise bad_request(str(e)) from None
+
+    def send_study_reminder(
+        self, user_id: str, days: list[int], time: str, timezone: str
+    ) -> None:
+        """Emails the user a recurring calendar event for their study days."""
+        ics = self.study_reminder_ics(days, time, timezone)
+        to = self._current_user(user_id).email
+
+        def deliver() -> None:
+            try:
+                self.sender.send_study_reminder(to, ics)
+            except Exception:
+                logger.exception("failed to send study reminder to %s", mail.mask(to))
+
+        self.run_async(deliver)
+
     def mark_not_newcomer(self, user_id: str) -> None:
         user = self._current_user(user_id)
         st = self.db.scalars(
@@ -333,6 +397,12 @@ class AuthService:
             raise bad_request("Validation failed: " + exc.message) from None
         if len(fields.name) > MAX_NAME or len(fields.pictureUrl) > MAX_PICTURE_URL:
             raise bad_request("Validation failed: value too long")
+        # Object keys are only ever set through confirm_avatar; a patch may keep the
+        # current one but must not point at someone else's picture.
+        if avatars.is_key(fields.pictureUrl) and fields.pictureUrl != (
+            user.picture_url or ""
+        ):
+            raise bad_request("Validation failed: invalid picture")
         user.name, user.display_name, user.bio = (
             fields.name,
             fields.displayName,
@@ -346,7 +416,7 @@ class AuthService:
             "email": user.email,
             "name": user.name,
             "displayName": user.display_name,
-            "pictureUrl": user.picture_url,
+            "pictureUrl": self._picture(user.picture_url),
             "bio": user.bio,
             "age": user.age,
         }
@@ -427,7 +497,7 @@ class AuthService:
                 "id": str(user.id),
                 "name": user.name or "",
                 "displayName": user.display_name or "",
-                "pictureUrl": user.picture_url or "",
+                "pictureUrl": self._picture(user.picture_url),
                 "dailyGoal": goal if goal is not None else 20,
             }
             for user, goal in rows

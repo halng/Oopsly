@@ -55,6 +55,32 @@ Resources:
                   - Fn::ImportValue: !Sub ${NetworkStackName}-InternalKeySecretArn
                   - Fn::ImportValue: !Sub ${NetworkStackName}-JwtPassphraseSecretArn
 
+  # What the running container may do: manage profile pictures, nothing else.
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: avatars
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub
+                  - "${BucketArn}/avatars/*"
+                  - BucketArn:
+                      Fn::ImportValue: !Sub ${NetworkStackName}-AvatarBucketArn
+
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -65,6 +91,7 @@ Resources:
       Cpu: "512"
       Memory: "1024"
       ExecutionRoleArn: !GetAtt ExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
       ContainerDefinitions:
         - Name: oopsly-auth
           Image: !Sub
@@ -97,6 +124,11 @@ Resources:
                 Fn::ImportValue: !Sub ${NetworkStackName}-RedisPort
             - Name: ALLOWED_ORIGINS
               Value: !Ref AllowedOrigins
+            - Name: AVATAR_BUCKET
+              Value:
+                Fn::ImportValue: !Sub ${NetworkStackName}-AvatarBucketName
+            - Name: AVATAR_REGION
+              Value: !Ref AWS::Region
           Secrets:
             - Name: DB_PASSWORD
               ValueFrom: !Sub
