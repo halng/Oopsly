@@ -29,6 +29,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -165,6 +166,49 @@ class LoggingConfigTest {
                                         e.getLevel() == Level.INFO
                                                 && e.getFormattedMessage().contains("Status: 0"));
         assertTrue(found);
+    }
+
+    @Test
+    void givenRejectedRequest_thenLogsMaskedHeaders() throws Exception {
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn("/internal");
+        when(response.getStatus()).thenReturn(403);
+        when(request.getHeaderNames())
+                .thenReturn(
+                        Collections.enumeration(
+                                List.of(
+                                        "Authorization",
+                                        "Cookie",
+                                        "X-Internal-Key",
+                                        "X-Platform")));
+        when(request.getHeader("Authorization")).thenReturn("Bearer eyJ.secret.token");
+        when(request.getHeader("Cookie")).thenReturn("session=abc");
+        when(request.getHeader("X-Internal-Key")).thenReturn("wrong-key");
+        when(request.getHeader("X-Platform")).thenReturn("WEB");
+        when(request.getHeader("X-Request-ID")).thenReturn("rid-9");
+
+        loggingConfig.doFilter(request, response, filterChain);
+
+        String message = listAppender.list.get(0).getFormattedMessage();
+        assertTrue(message.contains("Status: 403"));
+        assertTrue(message.contains("authorization=***"));
+        assertTrue(message.contains("cookie=***"));
+        assertTrue(message.contains("x-platform=WEB"));
+        assertTrue(message.contains("x-internal-key=<len=9 sha256="));
+        assertFalse(message.contains("wrong-key"));
+        assertFalse(message.contains("eyJ.secret.token"));
+        assertFalse(message.contains("session=abc"));
+    }
+
+    @Test
+    void givenSuccessfulRequest_thenHeadersAreNotLogged() throws Exception {
+        when(request.getMethod()).thenReturn("GET");
+        when(request.getRequestURI()).thenReturn("/ok");
+        when(response.getStatus()).thenReturn(200);
+
+        loggingConfig.doFilter(request, response, filterChain);
+
+        assertFalse(listAppender.list.get(0).getFormattedMessage().contains("Headers:"));
     }
 
     @Test

@@ -1,125 +1,179 @@
 name: Release
 
+# Manual release. Give it the tag the Docker images were built with (the "Build and Push
+# Docker Image" workflow); it creates the GitHub release for that tag, then deploys the
+# selected services. Shared infrastructure (network, Postgres, Redis, API Gateway) is
+# provisioned by the deployment itself.
+
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
     inputs:
-      precheck:
-        description: "Run pre-release checks"
-        required: false
-        default: true
+      tag:
+        description: "Tag used to build the Docker images, for example v1a2b3c4"
+        required: true
+        type: string
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        type: choice
+        options:
+          - stg
+          - prod
+        default: stg
+      authService:
+        description: "Deploy the auth service"
+        required: true
         type: boolean
+        default: false
+      apiService:
+        description: "Deploy the API service"
+        required: true
+        type: boolean
+        default: false
+      gameService:
+        description: "Deploy the game service"
+        required: true
+        type: boolean
+        default: false
+      webService:
+        description: "Deploy the web frontend"
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
-  actions: read
-  packages: write
+  packages: read
+
+concurrency:
+  group: release-${{ inputs.environment }}
+  cancel-in-progress: false
 
 jobs:
-  # 1. Deploy to Staging & Run Tests
-  deploy-backend-staging:
-    name: Deploy backend to stg env for ${{ github.ref_name }}
-    uses: ./.github/workflows/deploy-api.yaml
-    with:
-      git_tag: ${{ github.ref_name }}
-      env: stg
-    secrets: inherit
-
-  deploy-frontend-staging:
-    name: Deploy frontend to stg env for ${{ github.ref_name }}
-    uses: ./.github/workflows/deploy-web.yaml
-    with:
-      git_tag: ${{ github.ref_name }}
-      env: stg
-    secrets: inherit
-
-  test-staging:
-    needs: [deploy-backend-staging, deploy-frontend-staging]
+  validate-inputs:
+    name: Validate ${{ inputs.tag }}
     runs-on: ubuntu-latest
-    name: Run E2E & Perf Tests for ${{ github.ref_name }}
+    outputs:
+      services: ${{ steps.check.outputs.services }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.ref_name }}
+          fetch-tags: true
 
-      - name: Run E2E & Perf Tests
-        run: |
-          npm ci # Make sure dependencies are installed
-          npm run test:e2e
-          npm run test:perf
-          
-      # FIX: Upload results so the next job can download them
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          name: test-results
-          path: |
-            e2e-results/*.png
-            perf-results/*.html
-          retention-days: 1
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-  # FIX: Reusable workflows must be their own job
-  run-qa-suite:
-    name: Run QA Suite
-    needs: test-staging
-    # FIX: Ensure it runs on a tag push, or if precheck is true on manual dispatch
-    if: ${{ github.event_name == 'push' || inputs.precheck == true }}
-    uses: ./.github/workflows/pre-release-check.yaml
-    with:
-      ref_name: ${{ github.ref_name }}
+      - name: Check the tag, the selection and the images
+        id: check
+        env:
+          TAG: ${{ inputs.tag }}
+          AUTH: ${{ inputs.authService }}
+          API: ${{ inputs.apiService }}
+          GAME: ${{ inputs.gameService }}
+          WEB: ${{ inputs.webService }}
+        run: |
+          if [[ ! "$TAG" =~ ^v[A-Za-z0-9._-]+$ ]]; then
+            echo "Error: tag must look like v1a2b3c4."
+            exit 1
+          fi
+          if ! git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            echo "Error: tag ${TAG} does not exist. Run 'Build and Push Docker Image' first."
+            exit 1
+          fi
 
-  # FIX: Group remaining steps into a new job
-  upload-release-assets:
-    needs: run-qa-suite
+          SERVICES=""
+          [[ "$AUTH" == "true" ]] && SERVICES="${SERVICES:+$SERVICES }auth"
+          [[ "$API" == "true" ]] && SERVICES="${SERVICES:+$SERVICES }api"
+          [[ "$GAME" == "true" ]] && SERVICES="${SERVICES:+$SERVICES }game"
+          if [[ -z "$SERVICES" && "$WEB" != "true" ]]; then
+            echo "Error: select at least one service to deploy."
+            exit 1
+          fi
+
+          # Fail now, not halfway through a deployment, if an image was never pushed.
+          for service in $SERVICES; do
+            image="ghcr.io/halng/oopsly-${service}:${TAG}"
+            if ! docker manifest inspect "$image" >/dev/null 2>&1; then
+              echo "Error: ${image} was not found. Build it with the same tag first."
+              exit 1
+            fi
+          done
+
+          echo "services=${SERVICES}" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Release ${TAG} to ${{ inputs.environment }}"
+            echo
+            echo "- Backend services: ${SERVICES:-none}"
+            echo "- Web frontend: ${WEB}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  create-release:
+    name: Create release ${{ inputs.tag }}
+    needs: validate-inputs
     runs-on: ubuntu-latest
-    name: Finalize Pre-Release for ${{ github.ref_name }}
+    permissions:
+      contents: write
     steps:
-      # FIX: Checkout is required to establish GH CLI repository context
-      - uses: actions/checkout@v4
-      
-      # FIX: Download the artifacts generated in 'test-staging'
-      - uses: actions/download-artifact@v4
-        with:
-          name: test-results
-          path: results
-
-      - name: Upload document and link to release
-        run: |
-          # Use results folder defined in the download step above
-          gh release upload ${{ github.ref_name }} ./results/*.png ./results/*.html
+      - name: Create the GitHub release if it does not exist yet
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Send Slack Notification
-        # FIX: Pass Bearer token header and move channel into JSON payload
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ inputs.tag }}
+          TARGET_ENV: ${{ inputs.environment }}
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-          -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
-          --data '{
-            "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
-            "text": "Pre-release checks completed for ${{ github.ref_name }}. Please review the results and approve the release."
-          }' https://slack.com/api/chat.postMessage
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists; reusing it."
+            exit 0
+          fi
+          # Staging releases stay pre-releases until the tag reaches prod.
+          FLAGS=(--verify-tag --title "$TAG" --generate-notes)
+          [[ "$TARGET_ENV" == "prod" ]] || FLAGS+=(--prerelease)
+          gh release create "$TAG" "${FLAGS[@]}"
 
-  # FIX: Removed `environment: production` (it must be defined inside deploy-api.yaml)
-  deploy-backend-production:
-    name: Deploy backend service to production for ${{ github.ref_name }}
-    needs: upload-release-assets
-    uses: ./.github/workflows/deploy-api.yaml
+  deploy-backend:
+    name: Deploy ${{ needs.validate-inputs.outputs.services }} to ${{ inputs.environment }}
+    needs: [validate-inputs, create-release]
+    if: ${{ needs.validate-inputs.outputs.services != '' }}
+    uses: ./.github/workflows/deploy-aws.yaml
+    permissions:
+      contents: read
+      packages: read
+      id-token: write
     with:
-      git_hash: ${{ github.sha }}
-      env: prod
+      git_tag: ${{ inputs.tag }}
+      env: ${{ inputs.environment }}
+      services: ${{ needs.validate-inputs.outputs.services }}
     secrets: inherit
 
-  # FIX: Removed `environment: production`
-  deploy-frontend-production:
-    name: Deploy frontend service to production for ${{ github.ref_name }}
-    needs: deploy-backend-production
+  deploy-frontend:
+    name: Deploy web to ${{ inputs.environment }}
+    needs: [validate-inputs, create-release]
+    if: ${{ inputs.webService }}
     uses: ./.github/workflows/deploy-web.yaml
     with:
-      git_hash: ${{ github.sha }}
-      env: prod
+      git_tag: ${{ inputs.tag }}
+      env: ${{ inputs.environment }}
     secrets: inherit
+
+  publish-release:
+    name: Promote release ${{ inputs.tag }}
+    needs: [deploy-backend, deploy-frontend]
+    if: >-
+      ${{ always() && inputs.environment == 'prod' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Mark the release as latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ inputs.tag }}
+        run: gh release edit "$TAG" --prerelease=false --latest

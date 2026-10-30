@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Shelf, Subject } from '@/types';
 import { ApiService } from '@/services/api';
+import { toast } from '@/store/ToastStore';
 import { syncManager } from '@/services/syncManager';
 import {
     ShelfModal,
@@ -127,6 +128,7 @@ export const HomePage: React.FC = () => {
                     settings: { ...profile.settings, dailyGoal: newGoal },
                 });
                 setIsEditingGoal(false);
+                toast.success('Daily goal updated', `${newGoal} cards per day`);
             }
         } catch (err) {
             console.error('Failed to save goal', err);
@@ -140,11 +142,12 @@ export const HomePage: React.FC = () => {
         icon: string;
     }) => {
         if (editingShelf) {
-            await ApiService.updateShelf(editingShelf.id, data);
+            const res = await ApiService.updateShelf(editingShelf.id, data);
+            if (res.isSuccess) toast.success('Shelf updated');
         } else {
             ApiService.createShelf(data).then((res) => {
                 if (res.isSuccess) {
-                    alert('Shelf created successfully');
+                    toast.success('Shelf created', data.name);
                     loadShelvesAndSubjects();
                 }
             });

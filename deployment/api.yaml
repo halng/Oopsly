@@ -1,0 +1,254 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Oopsly Java API on Fargate, 2 tasks behind an internal ALB, exposed through the shared HTTP API.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: stg
+    AllowedPattern: "[a-z0-9-]+"
+  NetworkStackName:
+    Type: String
+    Default: oopsly-network-stg
+    Description: Stack created from network.yaml.
+  ImageTag:
+    Type: String
+    Description: Tag already copied into the api ECR repository (see scripts/copy-images.sh).
+  DesiredCount:
+    Type: Number
+    Default: 2
+    MinValue: 1
+    MaxValue: 6
+    Description: Number of Fargate tasks.
+  AllowedOrigins:
+    Type: String
+    Default: http://localhost:3000
+    Description: Comma-separated browser origins allowed to call the service.
+  AuthStackName:
+    Type: String
+    Default: oopsly-auth-stg
+    Description: Stack created from auth.yaml (its JWKS and base URL are imported).
+
+Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/oopsly-api-${Environment}
+      RetentionInDays: 14
+
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: read-secrets
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource:
+                  - Fn::ImportValue: !Sub ${NetworkStackName}-DbSecretArn
+                  - Fn::ImportValue: !Sub ${NetworkStackName}-InternalKeySecretArn
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub oopsly-api-${Environment}
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Cpu: "1024"
+      Memory: "2048"
+      ExecutionRoleArn: !GetAtt ExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: oopsly-api
+          Image: !Sub
+            - "${Repository}:${ImageTag}"
+            - Repository:
+                Fn::ImportValue: !Sub ${NetworkStackName}-ApiRepositoryUri
+          Essential: true
+          PortMappings:
+            - ContainerPort: 9009
+              Protocol: tcp
+          Environment:
+            - Name: DB_HOST
+              Value:
+                Fn::ImportValue: !Sub ${NetworkStackName}-DbHost
+            - Name: DB_PORT
+              Value: "5432"
+            - Name: DB_NAME
+              Value: oopsly
+            - Name: DB_USERNAME
+              Value: oopsly
+            - Name: REDIS_HOST
+              Value:
+                Fn::ImportValue: !Sub ${NetworkStackName}-RedisHost
+            - Name: REDIS_PORT
+              Value:
+                Fn::ImportValue: !Sub ${NetworkStackName}-RedisPort
+            - Name: ALLOWED_ORIGINS
+              Value: !Ref AllowedOrigins
+            - Name: JWKS_URL
+              Value:
+                Fn::ImportValue: !Sub ${AuthStackName}-JwksUrl
+            - Name: AUTH_BASE_URL
+              Value:
+                Fn::ImportValue: !Sub ${AuthStackName}-AuthBaseUrl
+          Secrets:
+            - Name: DB_PASSWORD
+              ValueFrom: !Sub
+                - "${Secret}:password::"
+                - Secret:
+                    Fn::ImportValue: !Sub ${NetworkStackName}-DbSecretArn
+            - Name: AUTH_INTERNAL_KEY
+              ValueFrom: !Sub
+                - "${Secret}"
+                - Secret:
+                    Fn::ImportValue: !Sub ${NetworkStackName}-InternalKeySecretArn
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  # Internal: only the API Gateway VPC link and other tasks can reach it.
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Internal load balancer for oopsly-api
+      VpcId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId:
+            Fn::ImportValue: !Sub ${NetworkStackName}-VpcLinkSecurityGroupId
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId:
+            Fn::ImportValue: !Sub ${NetworkStackName}-TaskSecurityGroupId
+
+  TaskIngressFromAlb:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-TaskSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 9009
+      ToPort: 9009
+      SourceSecurityGroupId: !GetAtt AlbSecurityGroup.GroupId
+      Description: oopsly-api load balancer to tasks
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub oopsly-api-${Environment}
+      Type: application
+      Scheme: internal
+      SecurityGroups:
+        - !GetAtt AlbSecurityGroup.GroupId
+      Subnets: !Split
+        - ","
+        - Fn::ImportValue: !Sub ${NetworkStackName}-SubnetIds
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: "3600"
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub oopsly-api-${Environment}
+      VpcId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-VpcId
+      Port: 9009
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckPath: /api/oopsly/actuator/health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: "200"
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: "30"
+
+  HttpListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  Service:
+    Type: AWS::ECS::Service
+    DependsOn: HttpListener
+    Properties:
+      ServiceName: oopsly-api
+      Cluster:
+        Fn::ImportValue: !Sub ${NetworkStackName}-ClusterName
+      TaskDefinition: !Ref TaskDefinition
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      HealthCheckGracePeriodSeconds: 180
+      DeploymentConfiguration:
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - Fn::ImportValue: !Sub ${NetworkStackName}-TaskSecurityGroupId
+          Subnets: !Split
+            - ","
+            - Fn::ImportValue: !Sub ${NetworkStackName}-SubnetIds
+      LoadBalancers:
+        - ContainerName: oopsly-api
+          ContainerPort: 9009
+          TargetGroupArn: !Ref TargetGroup
+
+  # ------------------------------------------------- API Gateway routes
+  Integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-HttpApiId
+      IntegrationType: HTTP_PROXY
+      IntegrationMethod: ANY
+      ConnectionType: VPC_LINK
+      ConnectionId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-VpcLinkId
+      IntegrationUri: !Ref HttpListener
+      PayloadFormatVersion: "1.0"
+      TimeoutInMillis: 30000
+
+  PublicApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-HttpApiId
+      RouteKey: "ANY /api/oopsly/{proxy+}"
+      Target: !Sub integrations/${Integration}
+
+Outputs:
+  InternalUrl:
+    Description: Private base URL, for other services in the VPC.
+    Value: !Sub http://${LoadBalancer.DNSName}

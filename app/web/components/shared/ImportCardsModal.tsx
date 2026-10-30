@@ -19,6 +19,7 @@ import {
     downloadExcelTemplate,
 } from '@/utils/fileImporter';
 import { ApiService } from '@/services/api';
+import { toast } from '@/store/ToastStore';
 
 interface ImportCardsModalProps {
     shelfId: string;
@@ -192,6 +193,10 @@ export default function ImportCardsModal({
                 cardsToImport
             );
             if (res.isSuccess) {
+                toast.success(
+                    `${cardsToImport.length} cards imported`,
+                    subject.name
+                );
                 onImportSuccess(cardsToImport.length);
                 onClose();
             } else {

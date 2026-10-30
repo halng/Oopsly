@@ -335,6 +335,14 @@ export interface UserSettings {
     isNewComer?: boolean;
 }
 
+/** Form the browser posts a profile picture to (straight to S3). */
+export interface AvatarUploadTicket {
+    url: string;
+    fields: Record<string, string>;
+    key: string;
+    maxBytes: number;
+}
+
 export interface UserProfile {
     email: string;
     name: string;

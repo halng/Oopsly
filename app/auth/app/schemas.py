@@ -27,3 +27,17 @@ class SetSubscriptionReq(BaseModel):
 
 class LookupReq(BaseModel):
     ids: list[str] = []
+
+
+class StudyReminderReq(BaseModel):
+    days: list[int] = []
+    time: str = ""
+    timezone: str = ""
+
+
+class AvatarUploadReq(BaseModel):
+    contentType: str = ""
+
+
+class AvatarConfirmReq(BaseModel):
+    key: str = ""

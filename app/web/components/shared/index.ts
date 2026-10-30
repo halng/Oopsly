@@ -7,12 +7,13 @@ import ImportCardsModal from './ImportCardsModal';
 import CloneSubjectModal from './CloneSubjectModal';
 import JoinGameModal from './JoinGameModal';
 import HostGameModal from './HostGameModal';
-import SubjectScheduleModal from './SubjectScheduleModal';
 import InviteUserModal from './InviteUserModal';
 import CssProgressBar from './CssProgressBar';
 import TestSuiteModal from './TestSuiteModal';
+import ImportQuestionsModal from './ImportQuestionsModal';
 
 export {
+    ImportQuestionsModal,
     TestSuiteModal,
     CalendarModal,
     ThemeModal,
@@ -22,7 +23,6 @@ export {
     CloneSubjectModal,
     JoinGameModal,
     HostGameModal,
-    SubjectScheduleModal,
     InviteUserModal,
     CssProgressBar,
 };

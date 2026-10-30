@@ -33,19 +33,25 @@ jobs:
     steps:
       - name: Check deployment parameters
         id: check
+        env:
+          GIT_SHA: ${{ inputs.gitSHA }}
+          AUTH: ${{ inputs.authService }}
+          API: ${{ inputs.apiService }}
+          GAME: ${{ inputs.gameService }}
         run: |
-          if [[ -z "${{ inputs.gitSHA }}" ]]; then
+          if [[ -z "$GIT_SHA" ]]; then
             echo "Error: git SHA must be provided."
             exit 1
           fi
-          if [[ "${{ inputs.authService }}" != 'true' && "${{ inputs.apiService }}" != 'true' && "${{ inputs.gameService }}" != 'true' ]]; then
+          if [[ "$AUTH" != 'true' && "$API" != 'true' && "$GAME" != 'true' ]]; then
             echo "Error: At least one service must be selected for build."
             exit 1
           fi
 
-          TAG_NAME="v${GITHUB_SHA::7}"
+          # Derive the tag from the requested commit, not the commit the
+          # workflow itself was dispatched on (GITHUB_SHA).
+          TAG_NAME="v${GIT_SHA::7}"
           echo "tag=${TAG_NAME}" >> $GITHUB_OUTPUT
-  
 
   auth-service:
     runs-on: ubuntu-latest
@@ -96,18 +102,8 @@ jobs:
           ref: ${{ inputs.gitSHA }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Set up Java env
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v5
-      - name: Build Native Docker Image
-        run: ./gradlew bootBuildImage --imageName=ghcr.io/halng/oopsly-api:${{ needs.validate-inputs.outputs.tag-name }}
-        env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
+      - name: Build Docker Image
+        run: docker build -t ghcr.io/halng/oopsly-api:${{ needs.validate-inputs.outputs.tag-name }} .
         working-directory: app/api
 
       - name: Log in to GitHub Container Registry
@@ -195,6 +191,7 @@ jobs:
 
     permissions:
       contents: write
+      packages: read
 
     steps:
       - name: Checkout target commit and tags
@@ -203,6 +200,48 @@ jobs:
           ref: ${{ inputs.gitSHA }}
           fetch-depth: 0
           fetch-tags: true
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read image descriptions
+        id: images
+        shell: bash
+        env:
+          TAG_NAME: ${{ needs.validate-inputs.outputs.tag-name }}
+          BUILD_AUTH: ${{ inputs.authService }}
+          BUILD_API: ${{ inputs.apiService }}
+          BUILD_GAME: ${{ inputs.gameService }}
+        run: |
+          set -euo pipefail
+
+          # Reads org.opencontainers.image.description from each image that
+          # was built and pushed in this run.
+          : > IMAGES.md
+          for entry in "auth:$BUILD_AUTH" "api:$BUILD_API" "game:$BUILD_GAME"; do
+            name="${entry%%:*}"
+            [[ "${entry#*:}" == "true" ]] || continue
+
+            image="ghcr.io/halng/oopsly-${name}:${TAG_NAME}"
+            docker pull --quiet "$image" >/dev/null
+
+            description=$(
+              docker image inspect "$image" \
+                --format '{{ index .Config.Labels "org.opencontainers.image.description" }}'
+            )
+            if [[ -z "$description" || "$description" == "<no value>" ]]; then
+              echo "::warning::$image has no org.opencontainers.image.description label"
+              description="(no description)"
+            fi
+
+            echo "- \`$image\` - $description" >> IMAGES.md
+          done
+
+          cat IMAGES.md
 
       - name: Generate changelog
         id: changelog
@@ -240,6 +279,10 @@ jobs:
             fi
 
             echo
+            echo "## Images"
+            echo
+            cat IMAGES.md
+            echo
             echo "## Changes"
             echo
 
@@ -268,9 +311,12 @@ jobs:
             exit 1
           fi
 
+          IMAGES=$(cat IMAGES.md)
+
           git tag -a "$TAG_NAME" "$TARGET_SHA" \
             -m "Release $TAG_NAME" \
-            -m "Commit: $TARGET_SHA"
+            -m "Commit: $TARGET_SHA" \
+            -m "Images:"$'\n'"$IMAGES"
 
           git push origin "refs/tags/$TAG_NAME"
 

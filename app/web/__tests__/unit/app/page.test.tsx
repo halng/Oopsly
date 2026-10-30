@@ -78,4 +78,52 @@ describe('LandingPage', () => {
         expect(mockPush).toHaveBeenCalledTimes(1);
         expect(mockPush).toHaveBeenCalledWith('/login');
     });
+
+    it('shows plans and pricing, switching between monthly and yearly', async () => {
+        const user = userEvent.setup();
+        render(<LandingPage />);
+
+        expect(
+            screen.getByRole('heading', { name: /plans & pricing/i })
+        ).toBeInTheDocument();
+        expect(screen.getByTestId('landing-plan-basic')).toHaveTextContent(
+            '$0'
+        );
+        expect(screen.getByTestId('landing-plan-lifetime')).toHaveTextContent(
+            '$199'
+        );
+
+        // Yearly is the default.
+        expect(screen.getByTestId('landing-plan-pro')).toHaveTextContent(
+            '$7.99'
+        );
+        await user.click(screen.getByTestId('landing-billing-monthly'));
+        expect(screen.getByTestId('landing-plan-pro')).toHaveTextContent(
+            '$9.99'
+        );
+    });
+
+    it('lists the feature highlights, the comparison and the FAQ', () => {
+        render(<LandingPage />);
+
+        expect(screen.getByText('Test suites')).toBeInTheDocument();
+        expect(screen.getByText('Live quizzes')).toBeInTheDocument();
+        expect(
+            screen.getByRole('heading', { name: /why learners pick oopsly/i })
+        ).toBeInTheDocument();
+        expect(screen.getByText('Is Oopsly free?')).toBeInTheDocument();
+    });
+
+    it.each([
+        'landing-plan-cta-basic',
+        'landing-plan-cta-pro',
+        'final-cta-button',
+    ])('sends visitors to /login from %s', async (testId) => {
+        const user = userEvent.setup();
+        render(<LandingPage />);
+
+        await user.click(screen.getByTestId(testId));
+
+        expect(mockPush).toHaveBeenCalledWith('/login');
+    });
 });

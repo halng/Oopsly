@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HomePage from '@/app/(user)/home/page';
 import { ApiService } from '@/services/api';
 import { useUserProfileStore } from '@/store';
+import { useToastStore } from '@/store/ToastStore';
 import { shelf } from '@/__tests__/unit/helpers/studyFixtures';
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
@@ -157,6 +158,10 @@ describe('HomePage', () => {
                 dailyGoal: 1,
             })
         );
+        expect(useToastStore.getState().toasts[0]).toMatchObject({
+            kind: 'success',
+            title: 'Daily goal updated',
+        });
     });
 
     it('opens a shelf by slug', async () => {

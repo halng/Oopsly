@@ -8,6 +8,8 @@ import {
 } from '@/services/api';
 import { offlineDb } from '@/services/offlineDb';
 import { syncManager } from '@/services/syncManager';
+import { useToastStore } from '@/store/ToastStore';
+import { ApiError } from '@/utils/apiError';
 
 vi.mock('@/services/offlineDb', () => ({
     offlineDb: {
@@ -118,13 +120,133 @@ describe('ApiService', () => {
         });
     });
 
+    describe('error handling', () => {
+        const fail = (e: any) =>
+            apiClient.get('/x', { adapter: () => Promise.reject(e) });
+
+        it('rejects with an ApiError carrying status and kind', async () => {
+            vi.restoreAllMocks();
+            const cases: [any, string, number | undefined][] = [
+                [
+                    { response: { status: 400, data: { message: 'm' } } },
+                    'validation',
+                    400,
+                ],
+                [{ response: { status: 403, data: {} } }, 'forbidden', 403],
+                [{ response: { status: 404, data: {} } }, 'notFound', 404],
+                [{ response: { status: 409, data: {} } }, 'conflict', 409],
+                [{ response: { status: 429, data: {} } }, 'rateLimited', 429],
+                [{ response: { status: 503, data: {} } }, 'server', 503],
+                [{ request: {}, code: 'ECONNABORTED' }, 'timeout', undefined],
+                [{ request: {} }, 'network', undefined],
+                [{ message: 'odd' }, 'unknown', undefined],
+            ];
+            for (const [error, kind, status] of cases) {
+                const err = await fail(error).catch((e) => e);
+                expect(err).toBeInstanceOf(ApiError);
+                expect(err).toMatchObject({ kind, status });
+            }
+        });
+
+        it('reports an offline browser as offline', async () => {
+            vi.restoreAllMocks();
+            setOnline(false);
+            const err = await fail({ request: {} }).catch((e) => e);
+            expect(err.kind).toBe('offline');
+        });
+
+        it('treats a 401 after the session is gone as a session error', async () => {
+            vi.restoreAllMocks();
+            useAuthStore.setState({ sessionExpired: true } as never);
+            try {
+                const err = await fail({
+                    response: { status: 401, data: {} },
+                }).catch((e) => e);
+                expect(err).toMatchObject({ kind: 'session', status: 401 });
+            } finally {
+                useAuthStore.setState({ sessionExpired: false } as never);
+            }
+        });
+    });
+
+    describe('failure notifications', () => {
+        beforeEach(() => useToastStore.setState({ toasts: [] }));
+        const toasts = () => useToastStore.getState().toasts;
+
+        it('toasts a humanized reason when a write fails', async () => {
+            apiReq.mockRejectedValue(
+                new ApiError('java.lang.NullPointerException', 'server', 500)
+            );
+            const res = await ApiService.updateShelf('s1', {
+                name: 'x',
+            } as never);
+            expect(res).toMatchObject({ isSuccess: false, statusCode: 500 });
+            expect(toasts()).toHaveLength(1);
+            expect(toasts()[0]).toMatchObject({
+                kind: 'error',
+                title: "Couldn't save your changes",
+            });
+            expect(toasts()[0].description).toMatch(/on our side/i);
+            expect(toasts()[0].description).not.toMatch(/NullPointer/);
+        });
+
+        it('titles failed creates and deletes by method', async () => {
+            apiReq.mockRejectedValue(
+                new ApiError('Name is taken', 'conflict', 409)
+            );
+            await ApiService.createShelf({ name: 'x' } as never);
+            expect(toasts()[0]).toMatchObject({
+                title: "Couldn't create that",
+                description: 'Name is taken.',
+            });
+        });
+
+        it('stays quiet for failed reads', async () => {
+            apiReq.mockRejectedValue(new ApiError('x', 'server', 500));
+            await ApiService.getStats();
+            expect(toasts()).toEqual([]);
+        });
+
+        it('leaves login errors to the form', async () => {
+            apiReq.mockRejectedValue(new ApiError('x', 'server', 500));
+            authReq.mockRejectedValue(
+                new ApiError('Invalid code', 'validation', 400)
+            );
+            await ApiService.sendOtp('a@b.c');
+            await ApiService.verifyOtp('a@b.c', '000000', 'n');
+            expect(toasts()).toEqual([]);
+        });
+
+        it('stays quiet when the session expired', async () => {
+            apiReq.mockRejectedValue(new ApiError('expired', 'session', 401));
+            await ApiService.createShelf({ name: 'x' } as never);
+            expect(toasts()).toEqual([]);
+        });
+
+        it('createQuestion can be silenced for batch imports', async () => {
+            apiReq.mockRejectedValue(new ApiError('x', 'server', 500));
+            await ApiService.createQuestion('s', 't', { text: 'q' } as never, {
+                silent: true,
+            });
+            expect(toasts()).toEqual([]);
+            await ApiService.createQuestion('s', 't', { text: 'q' } as never);
+            expect(toasts()).toHaveLength(1);
+        });
+
+        it('reports status 0 when no response arrived', async () => {
+            apiReq.mockRejectedValue(new Error('boom'));
+            const res = await ApiService.createShelf({ name: 'x' } as never);
+            expect(res.statusCode).toBe(0);
+        });
+    });
+
     describe('fetchJson / healthCheck', () => {
         it('maps thrown errors into failure responses', async () => {
             apiReq.mockRejectedValue(new Error('down'));
             const res = await ApiService.getStats();
             expect(res).toMatchObject({
                 isSuccess: false,
-                statusCode: 200,
+                statusCode: 0,
                 message: 'down',
                 data: null,
                 timestamp: '2026-03-01T00:00:00.000Z',

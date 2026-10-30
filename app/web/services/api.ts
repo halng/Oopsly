@@ -6,6 +6,7 @@ import {
     Subject,
     Card,
     TestSuite,
+    AvatarUploadTicket,
     UserProfile,
     UserSettings,
     StatsData,
@@ -31,6 +32,13 @@ import { installTokenRefresh } from './tokenRefresh';
 import { syncManager } from './syncManager';
 import { ulid } from 'ulid';
 import slugify from 'slugify';
+import { toast } from '@/store/ToastStore';
+import {
+    ApiError,
+    failureTitle,
+    humanizeError,
+    kindFromStatus,
+} from '@/utils/apiError';
 import {
     CardRes,
     mapCardList,
@@ -92,20 +100,38 @@ function createClient(baseURL: string | undefined) {
         (response) => response,
         (error: AxiosError<ApiResponse<unknown>>) => {
             if (error.response?.status === 401 && isSessionGone()) {
-                return Promise.reject(new Error(SESSION_EXPIRED_MESSAGE));
+                return Promise.reject(
+                    new ApiError(SESSION_EXPIRED_MESSAGE, 'session', 401)
+                );
             }
             if (error.response) {
                 // The server answered with a non-2xx status — prefer the API's own message.
                 const message =
                     error.response.data?.message ||
                     `Request failed with status ${error.response.status}`;
-                return Promise.reject(new Error(message));
+                return Promise.reject(
+                    new ApiError(
+                        message,
+                        kindFromStatus(error.response.status),
+                        error.response.status
+                    )
+                );
             }
             if (error.request) {
                 // The request was sent but no response arrived (offline / network failure).
-                return Promise.reject(new Error('Network error occurred'));
+                const kind =
+                    error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT'
+                        ? 'timeout'
+                        : typeof navigator !== 'undefined' && !navigator.onLine
+                          ? 'offline'
+                          : 'network';
+                return Promise.reject(
+                    new ApiError('Network error occurred', kind)
+                );
             }
-            return Promise.reject(new Error(error.message || 'Request failed'));
+            return Promise.reject(
+                new ApiError(error.message || 'Request failed', 'unknown')
+            );
         }
     );
 
@@ -118,7 +144,8 @@ export const authClient = createClient(process.env.NEXT_PUBLIC_AUTH_URL);
 async function fetchJson<T>(
     url: string,
     options?: RequestInit,
-    client: typeof apiClient = apiClient
+    client: typeof apiClient = apiClient,
+    notifyOnError = true
 ): Promise<ApiResponse<T>> {
     try {
         const res = await client.request<ApiResponse<T>>({
@@ -133,9 +160,19 @@ async function fetchJson<T>(
         });
         return res.data;
     } catch (error: any) {
+        const method = (options?.method ?? 'GET').toUpperCase();
+        // Failed writes always tell the user what went wrong and why.
+        // Reads stay quiet: pages render their own empty/error states.
+        if (
+            notifyOnError &&
+            method !== 'GET' &&
+            !(error instanceof ApiError && error.kind === 'session')
+        ) {
+            toast.error(failureTitle(method), humanizeError(error));
+        }
         return {
             isSuccess: false,
-            statusCode: 200,
+            statusCode: error instanceof ApiError ? (error.status ?? 0) : 0,
             message: error?.message || 'Network error occurred',
             data: null,
             timestamp: new Date().toISOString(),
@@ -176,7 +213,9 @@ export const ApiService = {
         fetchJson<null>(
             `/v1/otp?email=${email}`,
             { method: 'POST' },
-            authClient
+            authClient,
+            // The login form shows this error inline.
+            false
         ),
 
     verifyOtp: (email: string, otp: string, name: string) =>
@@ -190,7 +229,8 @@ export const ApiService = {
                 method: 'POST',
                 body: JSON.stringify({ email, otp, name }),
             },
-            authClient
+            authClient,
+            false
         ),
 
     // User Profile
@@ -235,6 +275,48 @@ export const ApiService = {
             {
                 method: 'PATCH',
                 body: JSON.stringify(profile),
+            },
+            authClient
+        ),
+
+    /** A short-lived form for posting a profile picture straight to S3. */
+    requestAvatarUpload: (contentType: string) =>
+        fetchJson<AvatarUploadTicket>(
+            '/v1/user-profiles/avatar/upload-url',
+            { method: 'POST', body: JSON.stringify({ contentType }) },
+            authClient
+        ),
+
+    /** Makes an uploaded object the user's picture; returns the new profile. */
+    confirmAvatar: (key: string) =>
+        fetchJson<UserProfile>(
+            '/v1/user-profiles/avatar/confirm',
+            { method: 'POST', body: JSON.stringify({ key }) },
+            authClient
+        ),
+
+    /** Emails the user a recurring calendar event for their study days. */
+    sendStudyReminder: (days: number[], time: string, timezone: string) =>
+        fetchJson<null>(
+            '/v1/user-profiles/study-reminder',
+            {
+                method: 'POST',
+                body: JSON.stringify({ days, time, timezone }),
+            },
+            authClient
+        ),
+
+    /** The same recurring event as the email, for downloading as a .ics file. */
+    getStudyReminderCalendar: (
+        days: number[],
+        time: string,
+        timezone: string
+    ) =>
+        fetchJson<{ filename: string; ics: string }>(
+            '/v1/user-profiles/study-reminder/calendar',
+            {
+                method: 'POST',
+                body: JSON.stringify({ days, time, timezone }),
             },
             authClient
         ),
@@ -786,14 +868,17 @@ export const ApiService = {
     createQuestion: (
         shelfId: string,
         testSuiteId: string,
-        data: QuestionInput
+        data: QuestionInput,
+        opts?: { silent?: boolean }
     ) =>
         fetchJson<Question>(
             `/v1/shelves/${shelfId}/test-suites/${testSuiteId}/questions`,
             {
                 method: 'POST',
                 body: JSON.stringify(data),
-            }
+            },
+            apiClient,
+            !opts?.silent
         ),
 
     updateQuestion: (

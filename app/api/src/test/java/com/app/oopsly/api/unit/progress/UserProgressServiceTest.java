@@ -66,11 +66,12 @@ class UserProgressServiceTest {
 
     @Test
     void getCurrent_createsProgressOnFirstAccess() {
-        when(repository.findByUserId(userId)).thenReturn(Optional.empty());
-        when(repository.saveAndFlush(any(UserProgress.class))).thenAnswer(i -> i.getArgument(0));
+        UserProgress created = UserProgress.builder().userId(userId).build();
+        when(repository.findByUserId(userId)).thenReturn(Optional.empty(), Optional.of(created));
 
         UserProgress progress = service.getCurrent();
 
+        verify(repository).insertIfAbsent(any(UUID.class), eq(userId));
         assertEquals(userId, progress.getUserId());
         assertEquals(0, progress.getTotalXp());
         assertEquals("BRONZE", progress.getLeague());

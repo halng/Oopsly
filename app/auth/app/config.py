@@ -36,7 +36,16 @@ class Settings(BaseSettings):
     jwt_key_cache_seconds: int = 60
 
     test_emails: str = ""
-    internal_api_key: str = ""
+    internal_api_key: str = "Jtz+A7HbztjSTpiLI0FZXd2NffOnP2wm0KGbwfDnFAo="
+
+    # Profile pictures: leave the bucket empty to turn avatar uploads off.
+    avatar_bucket: str = ""
+    avatar_region: str = ""
+    avatar_url_ttl_seconds: int = 3600
+    # Only for S3-compatible stores such as MinIO. The public one is what
+    # browsers can reach; the other is what this service uses.
+    avatar_s3_endpoint: str = ""
+    avatar_s3_public_endpoint: str = ""
 
     allowed_origins: str = "http://localhost:8080,http://localhost:8081"
 

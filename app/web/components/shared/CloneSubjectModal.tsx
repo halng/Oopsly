@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Subject, Shelf, Card } from '@/types';
 import { ApiService } from '@/services/api';
+import { toast } from '@/store/ToastStore';
 import { useShelfStore } from '@/store';
 
 interface CloneSubjectModalProps {
@@ -144,6 +145,7 @@ export default function CloneSubjectModal({
                     res.data.color = selectedColor;
                 }
 
+                toast.success('Subject cloned', res.data.name);
                 onCloneSuccess(res.data, selectedShelfId);
                 onClose();
             } else {

@@ -1,0 +1,177 @@
+name: Deploy to AWS (SAM)
+
+# Deploys the backend from /deployment: always the shared `network` stack (VPC, Postgres,
+# Redis, API Gateway, ECR), then only the selected services. For each service it copies the
+# image the "Build and Push Docker Image" workflow pushed to GHCR into ECR and runs
+# `sam deploy`.
+#
+# Per-environment configuration lives in the GitHub Environment named like `env`:
+#   secret   AWS_ROLE_ARN       role the workflow assumes through OIDC
+#   variable ALLOWED_ORIGINS    comma-separated browser origins (CORS)
+
+on:
+  workflow_call:
+    inputs:
+      git_hash:
+        required: false
+        description: Git hash to deploy. Provide this or git_tag, not both.
+        type: string
+      git_tag:
+        required: false
+        description: Git tag to deploy (also the image tag). Provide this or git_hash, not both.
+        type: string
+      env:
+        required: true
+        type: string
+        description: Stack environment, for example stg or prod.
+      services:
+        required: false
+        type: string
+        default: auth api game
+        description: Space-separated services to deploy, any of auth, api, game.
+      aws_region:
+        required: false
+        type: string
+        default: ap-southeast-1
+    secrets:
+      AWS_ROLE_ARN:
+        required: false
+  workflow_dispatch:
+    inputs:
+      git_hash:
+        required: false
+        type: string
+      git_tag:
+        required: false
+        type: string
+      env:
+        required: true
+        type: string
+        description: Stack environment, for example stg or prod.
+      services:
+        required: false
+        type: string
+        default: auth api game
+        description: Space-separated services to deploy, any of auth, api, game.
+      aws_region:
+        required: false
+        type: string
+        default: ap-southeast-1
+
+concurrency:
+  group: deploy-aws-${{ inputs.env }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: read
+  id-token: write
+
+jobs:
+  validate-inputs:
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.check.outputs.ref }}
+      image-tag: ${{ steps.check.outputs.image_tag }}
+      services: ${{ steps.check.outputs.services }}
+    steps:
+      - name: Check deployment parameters
+        id: check
+        env:
+          GIT_HASH: ${{ inputs.git_hash }}
+          GIT_TAG: ${{ inputs.git_tag }}
+          ENV_NAME: ${{ inputs.env }}
+          SERVICES: ${{ inputs.services }}
+        run: |
+          if [[ -z "$GIT_HASH" && -z "$GIT_TAG" ]]; then
+            echo "Error: Either git_hash or git_tag must be provided."
+            exit 1
+          fi
+          if [[ -n "$GIT_HASH" && -n "$GIT_TAG" ]]; then
+            echo "Error: Provide git_hash or git_tag, not both."
+            exit 1
+          fi
+          if [[ ! "$ENV_NAME" =~ ^[a-z0-9-]+$ ]]; then
+            echo "Error: env must match [a-z0-9-]+."
+            exit 1
+          fi
+
+          SELECTED=""
+          for service in $SERVICES; do
+            case "$service" in
+              auth|api|game) SELECTED="${SELECTED:+$SELECTED }$service" ;;
+              *) echo "Error: unknown service '$service' (use auth, api, game)."; exit 1 ;;
+            esac
+          done
+          if [[ -z "$SELECTED" ]]; then
+            echo "Error: select at least one service."
+            exit 1
+          fi
+          echo "services=${SELECTED}" >> "$GITHUB_OUTPUT"
+
+          # The bupu workflow tags images (and the commit) v<first 7 chars of the sha>.
+          if [[ -n "$GIT_TAG" ]]; then
+            REF="$GIT_TAG"
+            IMAGE_TAG="$GIT_TAG"
+          else
+            REF="$GIT_HASH"
+            IMAGE_TAG="v${GIT_HASH::7}"
+          fi
+          echo "ref=${REF}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: sam deploy ${{ inputs.env }} (${{ needs.validate-inputs.outputs.image-tag }})
+    needs: validate-inputs
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.env }}
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate-inputs.outputs.ref }}
+
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy stacks
+        working-directory: deployment
+        env:
+          ENV_NAME: ${{ inputs.env }}
+          IMAGE_TAG: ${{ needs.validate-inputs.outputs.image-tag }}
+          SERVICES: ${{ needs.validate-inputs.outputs.services }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+          AWS_REGION: ${{ inputs.aws_region }}
+        # The network stack is always applied first; services are validated above.
+        # shellcheck disable=SC2086
+        run: ./deploy.sh "$ENV_NAME" "$IMAGE_TAG" network $SERVICES
+
+      - name: Summarise endpoints
+        env:
+          ENV_NAME: ${{ inputs.env }}
+        run: |
+          ENDPOINT=$(aws cloudformation describe-stacks \
+            --stack-name "oopsly-network-${ENV_NAME}" \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" \
+            --output text)
+          {
+            echo "## Deployed ${ENV_NAME}"
+            echo
+            echo "- Image tag: \`${{ needs.validate-inputs.outputs.image-tag }}\`"
+            echo "- Services: ${{ needs.validate-inputs.outputs.services }}"
+            echo "- Public API endpoint: ${ENDPOINT}"
+          } >> "$GITHUB_STEP_SUMMARY"

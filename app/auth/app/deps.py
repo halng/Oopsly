@@ -15,8 +15,8 @@ from fastapi import Depends, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app import avatars, domain, mail
 from app import db as database
-from app import domain, mail
 from app.config import settings
 from app.db import get_db
 from app.envelope import forbidden, unauthorized
@@ -53,6 +53,19 @@ def get_sender() -> mail.Sender:
     return mail.NoOpSender()
 
 
+@lru_cache
+def get_avatar_storage() -> avatars.AvatarStorage | None:
+    if not settings.avatar_bucket:
+        return None
+    return avatars.S3AvatarStorage(
+        settings.avatar_bucket,
+        settings.avatar_region,
+        settings.avatar_url_ttl_seconds,
+        settings.avatar_s3_endpoint,
+        settings.avatar_s3_public_endpoint,
+    )
+
+
 def get_tokens(keys: KeyStore = Depends(get_key_store)) -> TokenService:
     return TokenService(keys, settings.access_ttl, settings.refresh_ttl)
 
@@ -67,9 +80,10 @@ def get_service(
     tokens: TokenService = Depends(get_tokens),
     sender: mail.Sender = Depends(get_sender),
     run_async=Depends(get_run_async),
+    storage: avatars.AvatarStorage | None = Depends(get_avatar_storage),
 ) -> AuthService:
     otp = OtpService(kv, settings.test_email_list)
-    return AuthService(db, kv, tokens, otp, sender, run_async)
+    return AuthService(db, kv, tokens, otp, sender, run_async, avatar_storage=storage)
 
 
 @dataclass(frozen=True)

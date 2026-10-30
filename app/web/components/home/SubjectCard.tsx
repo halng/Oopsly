@@ -44,6 +44,8 @@ export default function SubjectCard({
     onDelete,
 }: SubjectCardProps) {
     const hasDue = subject.dueCount > 0;
+    const isEmpty = !subject.cardCount;
+    const emptyHint = isEmpty ? 'Add cards to start practising' : undefined;
 
     return (
         <div
@@ -184,7 +186,9 @@ export default function SubjectCard({
                     id={`review-btn-${subject.id}`}
                     data-testid={`btn-review-${subject.id}`}
                     onClick={onStartReview}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                    disabled={isEmpty}
+                    title={emptyHint}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[var(--theme-accent)]"
                 >
                     <Play className="w-3.5 h-3.5 fill-white" />
                     <span>
@@ -199,8 +203,9 @@ export default function SubjectCard({
                         id={`learn-mode-btn-${subject.id}`}
                         data-testid={`btn-learn-${subject.id}`}
                         onClick={onStartLearn}
-                        title="Adaptive quiz mode"
-                        className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 text-[11px] font-semibold transition-colors cursor-pointer"
+                        disabled={isEmpty}
+                        title={emptyHint ?? 'Adaptive quiz mode'}
+                        className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 text-[11px] font-semibold transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-stone-800"
                     >
                         <Brain className="w-3.5 h-3.5 text-amber-500" />
                         <span>Learn</span>
@@ -209,8 +214,9 @@ export default function SubjectCard({
                         id={`match-game-btn-${subject.id}`}
                         data-testid={`btn-match-${subject.id}`}
                         onClick={onStartMatch}
-                        title="Speed matching game"
-                        className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 text-[11px] font-semibold transition-colors cursor-pointer"
+                        disabled={isEmpty}
+                        title={emptyHint ?? 'Speed matching game'}
+                        className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 text-[11px] font-semibold transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-stone-800"
                     >
                         <Gamepad2 className="w-3.5 h-3.5 text-sky-500" />
                         <span>Match</span>

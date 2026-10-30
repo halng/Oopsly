@@ -56,11 +56,6 @@ test.describe('Home screen (library shelves)', () => {
         await page
             .getByPlaceholder(/Optional overview/)
             .fill('Ancient to modern');
-        const alerts: string[] = [];
-        page.on('dialog', (dialog) => {
-            alerts.push(dialog.message());
-            void dialog.dismiss();
-        });
         await page.getByRole('button', { name: 'Save Shelf' }).click();
 
         await expect
@@ -75,7 +70,9 @@ test.describe('Home screen (library shelves)', () => {
             slug: 'world-history',
             description: 'Ancient to modern',
         });
-        await expect.poll(() => alerts).toContain('Shelf created successfully');
+        await expect(page.getByTestId('toast-success')).toContainText(
+            'Shelf created'
+        );
     });
 
     test('editing the daily goal saves it through the settings API', async ({

@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/fixtures';
-import { AUTH } from '../support/data';
-import { failure } from '../support/wiremock';
+import { AUTH, profile } from '../support/data';
+import { envelope, failure } from '../support/wiremock';
 
 /**
  * The page re-fills the form when the profile response lands, which would
@@ -26,6 +26,123 @@ test.describe('Settings screen', () => {
         expect(
             await mock.requests('GET', `${AUTH}/v1/user-profiles`)
         ).not.toHaveLength(0);
+    });
+
+    test('uploads a new profile photo to S3 and shows the presigned link', async ({
+        page,
+        mock,
+    }) => {
+        const s3Posts: string[] = [];
+        await page.route('https://s3.test/**', (route) => {
+            s3Posts.push(route.request().method());
+            return route.fulfill({ status: 204 });
+        });
+        await mock.override({
+            method: 'POST',
+            path: `${AUTH}/v1/user-profiles/avatar/upload-url`,
+            body: envelope({
+                url: 'https://s3.test/oopsly-avatars',
+                fields: { key: 'avatars/u1/a.png', policy: 'p' },
+                key: 'avatars/u1/a.png',
+                maxBytes: 2097152,
+            }),
+        });
+        await mock.override({
+            method: 'POST',
+            path: `${AUTH}/v1/user-profiles/avatar/confirm`,
+            body: envelope({
+                ...profile,
+                avatarUrl: 'https://s3.test/avatars/u1/a.png?sig=1',
+            }),
+        });
+        await openLoadedSettings(page);
+        // The page reloads the profile after it changes; the server now has the photo.
+        await mock.override({
+            method: 'GET',
+            path: `${AUTH}/v1/user-profiles`,
+            body: envelope({
+                ...profile,
+                avatarUrl: 'https://s3.test/avatars/u1/a.png?sig=1',
+            }),
+        });
+        await page.getByTestId('input-avatar-file').setInputFiles({
+            name: 'me.png',
+            mimeType: 'image/png',
+            buffer: Buffer.from('png-bytes'),
+        });
+
+        await expect(page.getByTestId('toast-success')).toContainText(
+            'Profile photo updated'
+        );
+        await expect(page.getByTestId('avatar-preview')).toHaveAttribute(
+            'src',
+            'https://s3.test/avatars/u1/a.png?sig=1'
+        );
+        expect(s3Posts.filter((m) => m === 'POST')).toHaveLength(1);
+        const [confirmed] = await mock.requests(
+            'POST',
+            `${AUTH}/v1/user-profiles/avatar/confirm`
+        );
+        expect(confirmed.json).toEqual({ key: 'avatars/u1/a.png' });
+    });
+
+    test('refuses a non-image before uploading anything', async ({
+        page,
+        mock,
+    }) => {
+        await openLoadedSettings(page);
+        await page.getByTestId('input-avatar-file').setInputFiles({
+            name: 'notes.pdf',
+            mimeType: 'application/pdf',
+            buffer: Buffer.from('%PDF'),
+        });
+        await expect(page.getByTestId('toast-error')).toContainText(
+            'JPEG, PNG or WebP'
+        );
+        expect(
+            await mock.requests(
+                'POST',
+                `${AUTH}/v1/user-profiles/avatar/upload-url`
+            )
+        ).toHaveLength(0);
+    });
+
+    test('the email is read-only', async ({ page }) => {
+        await openLoadedSettings(page);
+        await expect(page.getByTestId('input-email')).not.toBeEditable();
+    });
+
+    test('emails a calendar event for the chosen study times', async ({
+        page,
+        mock,
+    }) => {
+        await openLoadedSettings(page);
+        await page.getByTestId('btn-toggle-reminders').click();
+        await page.getByTestId('btn-reminder-day-6').click();
+        await page.getByTestId('input-reminder-time').fill('07:30');
+        await page.getByTestId('btn-send-reminder').click();
+
+        await expect(page.getByTestId('toast-success')).toContainText(
+            'Reminder sent'
+        );
+        const [sent] = await mock.requests(
+            'POST',
+            `${AUTH}/v1/user-profiles/study-reminder`
+        );
+        expect(sent.json).toMatchObject({
+            days: [1, 2, 3, 4, 5, 6],
+            time: '07:30',
+        });
+    });
+
+    test('downloads the calendar event as an .ics file', async ({ page }) => {
+        await openLoadedSettings(page);
+        await page.getByTestId('btn-toggle-reminders').click();
+        const download = page.waitForEvent('download');
+        await page.getByTestId('btn-download-reminder').click();
+        expect((await download).suggestedFilename()).toBe(
+            'oopsly-study-reminder.ics'
+        );
     });
 
     test('saving sends the edited profile and settings', async ({

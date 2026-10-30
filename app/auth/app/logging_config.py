@@ -1,7 +1,10 @@
 """Console logs in the same shape as the API logback pattern."""
 
+import hashlib
 import logging
+import re
 import sys
+from collections.abc import Mapping
 from contextvars import ContextVar
 from datetime import datetime
 
@@ -21,6 +24,35 @@ _LEVEL_COLOR = {
     logging.ERROR: _BOLD_RED,
     logging.CRITICAL: _BOLD_RED,
 }
+
+
+_SECRET_HEADER = re.compile(r"authorization|cookie|token|secret|password|api-key", re.I)
+_FINGERPRINTED_HEADERS = {"x-internal-key"}
+
+
+def _fingerprint(value: str) -> str:
+    """Length plus a short hash: enough to compare two keys, not to recover one."""
+    digest = hashlib.sha256(value.encode()).hexdigest()[:8]
+    return f"<len={len(value)} sha256={digest}>"
+
+
+def mask_headers(headers: Mapping[str, str]) -> dict[str, str]:
+    """Request headers that are safe to log.
+
+    Credentials (Authorization/access tokens, cookies, anything token-like) are
+    never written; the internal service key is reduced to a fingerprint so a
+    mismatch between two services can still be spotted.
+    """
+    safe: dict[str, str] = {}
+    for name, value in headers.items():
+        key = name.lower()
+        if key in _FINGERPRINTED_HEADERS:
+            safe[key] = _fingerprint(value)
+        elif _SECRET_HEADER.search(key):
+            safe[key] = "***"
+        else:
+            safe[key] = value[:200]
+    return safe
 
 
 class OopslyFormatter(logging.Formatter):

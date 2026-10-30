@@ -8,17 +8,14 @@ import {
     Compass,
     BarChart3,
     Trophy,
-    Settings,
     Layers,
     WifiOff,
     RefreshCw,
     Database,
     Sprout,
-    Bell,
-    Calendar as CalendarIcon,
 } from 'lucide-react';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
-import { CalendarModal } from '@/components/shared';
+import UserMenu from '@/components/UserMenu';
 import { ApiService } from '@/services/api';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -28,7 +25,6 @@ const Navbar = () => {
     const router = useRouter();
     const pathname = usePathname() || '';
     const { isOnline, isSyncing, pendingCount, syncNow } = useSyncStatus();
-    const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
     const [reviewedToday, setReviewedToday] = React.useState(0);
     const userProfile = useUserProfileStore().profile;
     const [syncReady, setSyncReady] = React.useState(false);
@@ -294,71 +290,10 @@ const Navbar = () => {
                             <span>{userProfile?.xp} XP</span>
                         </div>
 
-                        {/* Calendar Button */}
-                        <button
-                            title="Study Calendar"
-                            onClick={() => setIsCalendarOpen(true)}
-                            className="p-2 rounded-xl text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 border border-[var(--theme-border)] transition-colors cursor-pointer"
-                        >
-                            <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                        </button>
-
-                        {/* Notifications Button */}
-                        <button
-                            title="Notifications"
-                            className="p-2 rounded-xl text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 border border-[var(--theme-border)] transition-colors cursor-pointer relative"
-                        >
-                            <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
-                            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 border-2 border-[var(--theme-card)]" />
-                        </button>
-
-                        {/* Upgrade to Pro */}
-                        <button
-                            onClick={() => router.push('/subscribe')}
-                            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[color-mix(in_srgb,var(--theme-accent)_10%,transparent)] text-[var(--theme-secondary)] dark:text-[var(--theme-accent)] hover:bg-[color-mix(in_srgb,var(--theme-accent)_20%,transparent)] transition-colors text-xs font-bold cursor-pointer border border-[color-mix(in_srgb,var(--theme-accent)_20%,transparent)]"
-                        >
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span>Pro</span>
-                        </button>
-
-                        {/* User Profile Avatar / Menu */}
-                        <button
-                            id="user-profile-btn"
-                            data-testid="btn-user-profile"
-                            onClick={() => router.push('/settings')}
-                            style={{ borderColor: 'var(--theme-border)' }}
-                            className="flex items-center gap-2 p-1 pl-1.5 pr-2 rounded-full border hover:opacity-90 transition-colors cursor-pointer"
-                        >
-                            <img
-                                src={
-                                    userProfile?.avatarUrl ||
-                                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
-                                }
-                                alt={userProfile?.displayName}
-                                className="w-7 h-7 rounded-full object-cover border border-white dark:border-stone-700 shadow-2xs shrink-0"
-                            />
-                            <span className="text-xs font-bold text-stone-800 dark:text-stone-200 max-w-[80px] lg:max-w-[100px] truncate hidden md:inline">
-                                {userProfile?.displayName.split(' ')[0] || ''}
-                            </span>
-                        </button>
-
-                        {/* Settings */}
-                        <button
-                            id="nav-settings-btn"
-                            data-testid="btn-settings"
-                            onClick={() => router.push('/settings')}
-                            title="Settings"
-                            className="p-2 rounded-xl text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
-                        >
-                            <Settings className="w-4 h-4" />
-                        </button>
+                        <UserMenu />
                     </div>
                 </div>
             </div>
-
-            {isCalendarOpen && (
-                <CalendarModal onClose={() => setIsCalendarOpen(false)} />
-            )}
         </>
     );
 };

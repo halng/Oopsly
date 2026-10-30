@@ -217,34 +217,6 @@ test.describe('Subject details screen', () => {
         await expect(modal).toContainText('Deck is full');
     });
 
-    test('saves a study schedule on the subject', async ({ page, mock }) => {
-        await page.goto('/home/biology/subjects/cell-biology');
-        await page.getByTestId('btn-subject-schedule').click();
-        await expect(page.getByTestId('subject-schedule-modal')).toBeVisible();
-        await page.getByTestId('btn-schedule-toggle').click();
-        await page.getByTestId('btn-schedule-day-1').click();
-        await page.getByTestId('input-schedule-time').fill('07:30');
-        await page.getByTestId('btn-schedule-save').click();
-
-        await expect
-            .poll(
-                async () =>
-                    (
-                        await mock.requests(
-                            'PATCH',
-                            `${API}/api/subjects/subject-1`
-                        )
-                    ).length
-            )
-            .toBe(1);
-        const [patch] = await mock.requests(
-            'PATCH',
-            `${API}/api/subjects/subject-1`
-        );
-        expect(patch.json).toMatchObject({ schedule: { time: '07:30' } });
-        await expect(page.getByTestId('subject-schedule-modal')).toHaveCount(0);
-    });
-
     test('cancelling an edit keeps the card unchanged', async ({
         page,
         mock,

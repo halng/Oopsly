@@ -24,6 +24,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -38,6 +39,19 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, UUID
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM UserProgress p WHERE p.userId = :userId")
     Optional<UserProgress> findByUserIdWithLock(@Param("userId") UUID userId);
+
+    /**
+     * Creates the row unless one exists. Atomic, so concurrent first requests (a login fires
+     * several at once) cannot collide on the user_id unique constraint.
+     */
+    @Modifying
+    @Query(
+            value =
+                    "INSERT INTO cms.user_progress (id, created_at, updated_at, deleted, user_id)"
+                            + " VALUES (:id, now(), now(), false, :userId)"
+                            + " ON CONFLICT (user_id) DO NOTHING",
+            nativeQuery = true)
+    void insertIfAbsent(@Param("id") UUID id, @Param("userId") UUID userId);
 
     @Query("SELECT p FROM UserProgress p WHERE p.deleted = false ORDER BY p.totalXp DESC")
     List<UserProgress> findTopByXp(Pageable pageable);

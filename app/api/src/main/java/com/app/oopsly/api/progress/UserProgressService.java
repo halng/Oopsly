@@ -45,9 +45,10 @@ public class UserProgressService {
         return repository
                 .findByUserId(userId)
                 .orElseGet(
-                        () ->
-                                repository.saveAndFlush(
-                                        UserProgress.builder().userId(userId).build()));
+                        () -> {
+                            repository.insertIfAbsent(UUID.randomUUID(), userId);
+                            return repository.findByUserId(userId).orElseThrow();
+                        });
     }
 
     /** Adds XP and advances the daily streak for the caller. Returns the updated progress. */
