@@ -67,8 +67,7 @@ class UserProgressServiceTest {
     @Test
     void getCurrent_createsProgressOnFirstAccess() {
         UserProgress created = UserProgress.builder().userId(userId).build();
-        when(repository.findByUserId(userId))
-                .thenReturn(Optional.empty(), Optional.of(created));
+        when(repository.findByUserId(userId)).thenReturn(Optional.empty(), Optional.of(created));
 
         UserProgress progress = service.getCurrent();
 
