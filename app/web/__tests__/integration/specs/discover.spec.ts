@@ -90,5 +90,9 @@ test.describe('Discover screen', () => {
             `${API}/discover/test-suites/pub-suite-1/clone`
         );
         expect(clone.json).toEqual({ shelfId: 'shelf-1' });
+        // What you cloned is yours now, so it leaves the catalog.
+        await expect(
+            page.getByTestId('discover-suite-pub-suite-1')
+        ).toHaveCount(0);
     });
 });

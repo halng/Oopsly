@@ -24,7 +24,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({ onClose }) => {
 
     useEffect(() => {
         const loadData = async () => {
-            const res = await ApiService.getShelves(0, 100);
+            const res = await ApiService.getShelves(1, 100);
             if (res.isSuccess && res.data) {
                 // Fetch subjects for all shelves
                 const allSubjects: Subject[] = [];

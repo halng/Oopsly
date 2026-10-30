@@ -715,23 +715,27 @@ class TestSuiteServiceImplTest {
 
     @Test
     void discoverPublic_blankQuery_listsAllPublic() {
-        when(testSuiteRepository.findAllPublic(any(Pageable.class)))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(testSuiteRepository.findAllPublic(eq(currentUserId), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(publicSuite())));
 
         ApiRes result = testSuiteService.discoverPublic("  ", 0, 10);
 
         assertTrue(result.getBody().isSuccess());
-        verify(testSuiteRepository, never()).findPublicByQuery(any(), any());
+        verify(testSuiteRepository, never()).findPublicByQuery(any(), any(), any());
     }
 
     @Test
     void discoverPublic_withQuery_searches() {
-        when(testSuiteRepository.findPublicByQuery(eq("bio"), any(Pageable.class)))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(testSuiteRepository.findPublicByQuery(
+                        eq("bio"), eq(currentUserId), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(publicSuite())));
 
         testSuiteService.discoverPublic(" bio ", 0, 10);
 
-        verify(testSuiteRepository).findPublicByQuery(eq("bio"), any(Pageable.class));
+        verify(testSuiteRepository)
+                .findPublicByQuery(eq("bio"), eq(currentUserId), any(Pageable.class));
     }
 
     @Test
@@ -809,16 +813,17 @@ class TestSuiteServiceImplTest {
 
     @Test
     void discoverPublic_clampsPagingAndMapsToViewModels() {
+        when(currentUser.id()).thenReturn(currentUserId);
         TestSuiteEntity suite = publicSuite();
         when(questionRepository.countByTestSuite(suite)).thenReturn(4L);
-        when(testSuiteRepository.findAllPublic(any(Pageable.class)))
+        when(testSuiteRepository.findAllPublic(eq(currentUserId), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(suite)));
 
         ApiRes result = testSuiteService.discoverPublic(null, -3, 500);
 
         org.mockito.ArgumentCaptor<Pageable> pageable =
                 org.mockito.ArgumentCaptor.forClass(Pageable.class);
-        verify(testSuiteRepository).findAllPublic(pageable.capture());
+        verify(testSuiteRepository).findAllPublic(eq(currentUserId), pageable.capture());
         assertEquals(0, pageable.getValue().getPageNumber());
         assertEquals(50, pageable.getValue().getPageSize());
         @SuppressWarnings("unchecked")
@@ -830,14 +835,15 @@ class TestSuiteServiceImplTest {
 
     @Test
     void discoverPublic_enforcesMinimumPageSize() {
-        when(testSuiteRepository.findAllPublic(any(Pageable.class)))
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(testSuiteRepository.findAllPublic(eq(currentUserId), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
 
         testSuiteService.discoverPublic("", 2, 0);
 
         org.mockito.ArgumentCaptor<Pageable> pageable =
                 org.mockito.ArgumentCaptor.forClass(Pageable.class);
-        verify(testSuiteRepository).findAllPublic(pageable.capture());
+        verify(testSuiteRepository).findAllPublic(eq(currentUserId), pageable.capture());
         assertEquals(2, pageable.getValue().getPageNumber());
         assertEquals(1, pageable.getValue().getPageSize());
     }
@@ -972,5 +978,49 @@ class TestSuiteServiceImplTest {
                 () ->
                         testSuiteService.cloneSuiteFallback(
                                 testSuiteId, null, new RuntimeException()));
+    }
+
+    @Test
+    void cloneSuite_ownSuite_isRejectedWithConflict() {
+        TestSuiteEntity source = publicSuite();
+        source.setShelf(shelve);
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(source));
+
+        ApiRes result = testSuiteService.cloneSuite(testSuiteId, shelveId);
+
+        assertEquals(409, result.getStatusCode().value());
+        verify(testSuiteRepository, never()).save(any());
+    }
+
+    @Test
+    void cloneSuite_alreadyCloned_isRejectedWithConflict() {
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(publicSuite()));
+        when(testSuiteRepository.hasCloneOf(testSuiteId, currentUserId)).thenReturn(true);
+
+        ApiRes result = testSuiteService.cloneSuite(testSuiteId, null);
+
+        assertEquals(409, result.getStatusCode().value());
+        verify(testSuiteRepository, never()).save(any());
+    }
+
+    @Test
+    void cloneSuite_remembersTheSourceSuite() {
+        TestSuiteEntity source = publicSuite();
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(testSuiteRepository.findById(testSuiteId)).thenReturn(Optional.of(source));
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
+                .thenReturn(Optional.of(shelve));
+        when(testSuiteRepository.save(any(TestSuiteEntity.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(questionRepository.findAllByTestSuite(source)).thenReturn(List.of());
+
+        testSuiteService.cloneSuite(testSuiteId, shelveId);
+
+        org.mockito.ArgumentCaptor<TestSuiteEntity> saved =
+                org.mockito.ArgumentCaptor.forClass(TestSuiteEntity.class);
+        verify(testSuiteRepository).save(saved.capture());
+        assertEquals(testSuiteId, saved.getValue().getClonedFromId());
     }
 }

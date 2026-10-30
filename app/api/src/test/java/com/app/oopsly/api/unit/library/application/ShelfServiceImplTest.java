@@ -513,4 +513,14 @@ class ShelfServiceImplTest {
         verify(cardRepository, times(1)).countByShelves(anyList());
         verify(cardRepository, times(1)).countDueByShelves(anyList());
     }
+
+    @Test
+    void getAll_pageZero_isRejectedInsteadOfQueryingWithANegativeIndex() {
+        when(currentUser.id()).thenReturn(currentUserId);
+
+        assertThrows(
+                com.app.oopsly.api.shared.exception.ValidationException.class,
+                () -> shelveService.getAll(0, 10));
+        verify(shelfRepository, never()).findAllByUserId(any(), any(Pageable.class));
+    }
 }

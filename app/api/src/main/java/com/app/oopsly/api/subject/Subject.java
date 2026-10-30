@@ -24,6 +24,7 @@ import com.app.oopsly.api.testsuite.domain.TestSuiteEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
+import java.util.UUID;
 import lombok.*;
 
 @Getter
@@ -56,6 +57,9 @@ public class Subject extends Audit {
     @Builder.Default private Integer newCardsPerDay = 5;
     @Builder.Default private Double interval = 1.0;
     @Builder.Default private Boolean isPublic = false;
+
+    /** The public subject this one was cloned from, if any. */
+    private UUID clonedFromId;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)

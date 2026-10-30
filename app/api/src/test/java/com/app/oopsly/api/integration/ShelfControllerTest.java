@@ -98,6 +98,16 @@ class ShelfControllerTest extends AbstractControllerTest {
         }
 
         @Test
+        void getAll_pageZero_returnsBadRequest() throws Exception {
+            mockMvc.perform(
+                            get("/v1/shelves")
+                                    .param("page", "0")
+                                    .param("size", "10")
+                                    .with(bearer(session)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
         void getById_found_returnsOk() throws Exception {
             UUID id = LibraryFixture.createShelf(mockMvc, objectMapper, session.accessToken());
             mockMvc.perform(get("/v1/shelves/{id}", id).with(bearer(session)))

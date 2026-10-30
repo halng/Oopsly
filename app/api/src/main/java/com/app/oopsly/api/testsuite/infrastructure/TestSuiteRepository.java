@@ -45,16 +45,28 @@ public interface TestSuiteRepository extends JpaRepository<TestSuiteEntity, UUID
                     + " t.id <> ?2")
     List<String> findSlugsByShelfExcluding(Shelf shelve, UUID excludeId);
 
+    /** Public test suites the user neither owns nor has already cloned. */
     @Query(
             "SELECT t FROM TestSuiteEntity t WHERE t.isPublic = true AND t.deleted = false AND"
-                    + " t.shelf.deleted = false")
-    Page<TestSuiteEntity> findAllPublic(Pageable pageable);
+                    + " t.shelf.deleted = false AND t.shelf.userId <> :userId AND NOT EXISTS"
+                    + " (SELECT 1 FROM TestSuiteEntity c WHERE c.clonedFromId = t.id AND c.deleted"
+                    + " = false AND c.shelf.userId = :userId)")
+    Page<TestSuiteEntity> findAllPublic(@Param("userId") UUID userId, Pageable pageable);
 
     @Query(
             "SELECT t FROM TestSuiteEntity t WHERE t.isPublic = true AND t.deleted = false AND"
-                    + " t.shelf.deleted = false AND (LOWER(t.title) LIKE LOWER(CONCAT('%', :query,"
-                    + " '%')) OR LOWER(t.description) LIKE LOWER(CONCAT('%', :query, '%')))")
-    Page<TestSuiteEntity> findPublicByQuery(@Param("query") String query, Pageable pageable);
+                    + " t.shelf.deleted = false AND t.shelf.userId <> :userId AND NOT EXISTS"
+                    + " (SELECT 1 FROM TestSuiteEntity c WHERE c.clonedFromId = t.id AND c.deleted"
+                    + " = false AND c.shelf.userId = :userId) AND (LOWER(t.title) LIKE"
+                    + " LOWER(CONCAT('%', :query, '%')) OR LOWER(t.description) LIKE"
+                    + " LOWER(CONCAT('%', :query, '%')))")
+    Page<TestSuiteEntity> findPublicByQuery(
+            @Param("query") String query, @Param("userId") UUID userId, Pageable pageable);
+
+    @Query(
+            "SELECT COUNT(c) > 0 FROM TestSuiteEntity c WHERE c.clonedFromId = :sourceId AND"
+                    + " c.deleted = false AND c.shelf.userId = :userId")
+    boolean hasCloneOf(@Param("sourceId") UUID sourceId, @Param("userId") UUID userId);
 
     // TODO(ai): used by the card-based preset run.
     @Query(

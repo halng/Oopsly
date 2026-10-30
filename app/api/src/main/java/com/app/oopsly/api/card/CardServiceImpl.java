@@ -137,6 +137,9 @@ public class CardServiceImpl implements CardService {
                 page,
                 size);
         int queryPage = page - 1;
+        if (queryPage < 0) {
+            throw new ValidationException("Page number must be greater than 0");
+        }
         Subject subject = getSubjectForCurrentUser(shelfId, subjectId);
         Pageable pageable = PageRequest.of(queryPage, size);
         Page<Card> pageData = cardRepository.findAllBySubject(subject, pageable);

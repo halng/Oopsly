@@ -86,4 +86,17 @@ describe('CalendarModal', () => {
             expect(screen.getByText('No Scheduled Studies')).toBeInTheDocument()
         );
     });
+
+    it('asks for the first page of shelves (pages start at 1)', async () => {
+        vi.mocked(ApiService.getShelves).mockResolvedValue({
+            isSuccess: true,
+            data: { entities: [] },
+            message: '',
+            timestamp: '',
+        } as never);
+        render(<CalendarModal onClose={vi.fn()} />);
+        await waitFor(() =>
+            expect(ApiService.getShelves).toHaveBeenCalledWith(1, 100)
+        );
+    });
 });

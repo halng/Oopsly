@@ -530,8 +530,9 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         PageRequest pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50));
         Page<TestSuiteEntity> data =
                 (query == null || query.isBlank())
-                        ? testSuiteRepository.findAllPublic(pageable)
-                        : testSuiteRepository.findPublicByQuery(query.trim(), pageable);
+                        ? testSuiteRepository.findAllPublic(currentUser.id(), pageable)
+                        : testSuiteRepository.findPublicByQuery(
+                                query.trim(), currentUser.id(), pageable);
 
         return ApiRes.success(
                 "Public test suites fetched successfully",
@@ -562,6 +563,13 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                                                 "Public test suite not found with id: "
                                                         + testSuiteId));
 
+        if (source.getShelf() != null && currentUser.id().equals(source.getShelf().getUserId())) {
+            return ApiRes.conflict("You already own this test suite.");
+        }
+        if (testSuiteRepository.hasCloneOf(testSuiteId, currentUser.id())) {
+            return ApiRes.conflict("You already cloned this test suite.");
+        }
+
         Shelf target;
         if (shelfId != null) {
             target = this.findShelveByIdAndUser(shelfId);
@@ -584,6 +592,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                         .timeLimitMinutes(source.getTimeLimitMinutes())
                         .isActive(true)
                         .isPublic(false)
+                        .clonedFromId(source.getId())
                         .shelf(target)
                         .build();
         TestSuiteEntity saved = testSuiteRepository.save(copy);

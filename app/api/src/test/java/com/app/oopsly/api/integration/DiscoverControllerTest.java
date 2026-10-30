@@ -165,4 +165,60 @@ class DiscoverControllerTest extends AbstractControllerTest {
                                 .with(bearer(cloner)))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void discover_hidesTheUsersOwnDecksAndTestSuites() throws Exception {
+        mockMvc.perform(get("/discover").with(bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.entities", hasSize(0)));
+        mockMvc.perform(get("/discover/test-suites").with(bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.entities", hasSize(0)));
+    }
+
+    @Test
+    void discover_hidesWhatTheUserAlreadyCloned_butOthersStillSeeIt() throws Exception {
+        mockMvc.perform(post("/discover/{id}/clone", publicSubjectId).with(bearer(cloner)))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/discover/test-suites/{id}/clone", publicSuiteId)
+                                .with(bearer(cloner)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/discover").with(bearer(cloner)))
+                .andExpect(jsonPath("$.data.entities", hasSize(0)));
+        mockMvc.perform(get("/discover/test-suites").with(bearer(cloner)))
+                .andExpect(jsonPath("$.data.entities", hasSize(0)));
+
+        AuthSession third = authenticate("integration3@oopsly.com");
+        mockMvc.perform(get("/discover").with(bearer(third)))
+                .andExpect(jsonPath("$.data.entities", hasSize(1)));
+        mockMvc.perform(get("/discover/test-suites").with(bearer(third)))
+                .andExpect(jsonPath("$.data.entities", hasSize(1)));
+    }
+
+    @Test
+    void clone_twice_returnsConflict() throws Exception {
+        mockMvc.perform(post("/discover/{id}/clone", publicSubjectId).with(bearer(cloner)))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/discover/{id}/clone", publicSubjectId).with(bearer(cloner)))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(
+                        post("/discover/test-suites/{id}/clone", publicSuiteId)
+                                .with(bearer(cloner)))
+                .andExpect(status().isCreated());
+        mockMvc.perform(
+                        post("/discover/test-suites/{id}/clone", publicSuiteId)
+                                .with(bearer(cloner)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void clone_ownDeckOrTestSuite_returnsConflict() throws Exception {
+        mockMvc.perform(post("/discover/{id}/clone", publicSubjectId).with(bearer(owner)))
+                .andExpect(status().isConflict());
+        mockMvc.perform(post("/discover/test-suites/{id}/clone", publicSuiteId).with(bearer(owner)))
+                .andExpect(status().isConflict());
+    }
 }

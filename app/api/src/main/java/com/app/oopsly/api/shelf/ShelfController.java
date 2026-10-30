@@ -28,6 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import java.util.UUID;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Validated
 @RequestMapping("/v1/shelves")
 @Tag(
         name = "Shelf",
@@ -152,9 +154,9 @@ public class ShelfController {
             })
     @GetMapping("")
     public ApiRes getAll(
-            @Parameter(description = "Page number", required = true, example = "0")
+            @Parameter(description = "Page number (starts from 1)", required = true, example = "1")
                     @RequestParam
-                    @Min(value = 0, message = "Page must be greater or equal 0") int page,
+                    @Min(value = 1, message = "Page must be greater or equal 1") int page,
             @Parameter(description = "Page size", required = true, example = "10")
                     @RequestParam
                     @Min(value = 1, message = "Size must be greater than 0") int size) {

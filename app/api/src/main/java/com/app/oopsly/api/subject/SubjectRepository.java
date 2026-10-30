@@ -36,14 +36,26 @@ public interface SubjectRepository extends JpaRepository<Subject, UUID> {
     @Query("SELECT c FROM Subject c WHERE c.shelf = ?1 AND c.deleted = false")
     Page<Subject> findAllByShelve(Shelf shelve, Pageable pageable);
 
+    /** Public subjects the user neither owns nor has already cloned. */
     @Query(
             "SELECT s FROM Subject s WHERE s.isPublic = true AND s.deleted = false AND"
-                    + " (LOWER(s.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(s.description)"
-                    + " LIKE LOWER(CONCAT('%', :query, '%')))")
-    Page<Subject> findPublicByQuery(@Param("query") String query, Pageable pageable);
+                    + " s.shelf.userId <> :userId AND NOT EXISTS (SELECT 1 FROM Subject c WHERE"
+                    + " c.clonedFromId = s.id AND c.deleted = false AND c.shelf.userId = :userId)"
+                    + " AND (LOWER(s.name) LIKE LOWER(CONCAT('%', :query, '%')) OR"
+                    + " LOWER(s.description) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<Subject> findPublicByQuery(
+            @Param("query") String query, @Param("userId") UUID userId, Pageable pageable);
 
-    @Query("SELECT s FROM Subject s WHERE s.isPublic = true AND s.deleted = false")
-    Page<Subject> findAllPublic(Pageable pageable);
+    @Query(
+            "SELECT s FROM Subject s WHERE s.isPublic = true AND s.deleted = false AND"
+                    + " s.shelf.userId <> :userId AND NOT EXISTS (SELECT 1 FROM Subject c WHERE"
+                    + " c.clonedFromId = s.id AND c.deleted = false AND c.shelf.userId = :userId)")
+    Page<Subject> findAllPublic(@Param("userId") UUID userId, Pageable pageable);
+
+    @Query(
+            "SELECT COUNT(c) > 0 FROM Subject c WHERE c.clonedFromId = :sourceId AND c.deleted ="
+                    + " false AND c.shelf.userId = :userId")
+    boolean hasCloneOf(@Param("sourceId") UUID sourceId, @Param("userId") UUID userId);
 
     @Query(
             "SELECT s FROM Subject s WHERE s.shelf.userId = :userId AND s.deleted = false"

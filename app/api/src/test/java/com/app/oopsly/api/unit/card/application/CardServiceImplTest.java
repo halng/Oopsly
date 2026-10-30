@@ -393,7 +393,7 @@ class CardServiceImplTest {
 
         assertThrows(
                 NotFoundException.class,
-                () -> cardService.getAllCardsBySubject(shelveId, subjectId, 0, 10));
+                () -> cardService.getAllCardsBySubject(shelveId, subjectId, 1, 10));
         verify(cardRepository, never()).findAllBySubject(any(), any());
     }
 
@@ -406,7 +406,7 @@ class CardServiceImplTest {
 
         assertThrows(
                 NotFoundException.class,
-                () -> cardService.getAllCardsBySubject(shelveId, subjectId, 0, 10));
+                () -> cardService.getAllCardsBySubject(shelveId, subjectId, 1, 10));
         verify(cardRepository, never()).findAllBySubject(any(), any());
     }
 
@@ -913,5 +913,14 @@ class CardServiceImplTest {
                         () ->
                                 cardService.getAllCardsBySubjectFallback(
                                         shelveId, subjectId, 0, 10, validation)));
+    }
+
+    @Test
+    void getAllCardsBySubject_pageZero_isRejected_beforeAnyLookup() {
+        assertThrows(
+                ValidationException.class,
+                () -> cardService.getAllCardsBySubject(shelveId, subjectId, 0, 10));
+        verify(cardRepository, never()).findAllBySubject(any(), any());
+        verify(shelfRepository, never()).findByIdAndUserId(any(), any());
     }
 }

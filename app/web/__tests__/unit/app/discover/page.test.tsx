@@ -1,10 +1,4 @@
-import {
-    act,
-    fireEvent,
-    render,
-    screen,
-    waitFor,
-} from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DiscoverPage from '@/app/(user)/discover/page';
 import { ApiService } from '@/services/api';
@@ -191,31 +185,19 @@ describe('DiscoverPage', () => {
         expect(screen.queryByTestId('clone-test-suite-modal')).toBeNull();
     });
 
-    it('marks a deck as cloned for a few seconds after a successful clone', async () => {
+    it('removes a deck from the catalog once it is cloned', async () => {
         render(<DiscoverPage />);
         await waitFor(() =>
             expect(screen.getByTestId('btn-clone-d1')).toBeInTheDocument()
         );
-        vi.useFakeTimers({ shouldAdvanceTime: true });
-        try {
-            fireEvent.click(screen.getByTestId('btn-clone-d1'));
-            fireEvent.click(screen.getByTestId('mock-subject-cloned'));
-            expect(screen.getByTestId('btn-clone-d1')).toHaveTextContent(
-                'Cloned!'
-            );
-            expect(screen.queryByTestId('clone-subject-modal')).toBeNull();
-            act(() => {
-                vi.advanceTimersByTime(3600);
-            });
-            expect(screen.getByTestId('btn-clone-d1')).toHaveTextContent(
-                'Clone to shelf'
-            );
-        } finally {
-            vi.useRealTimers();
-        }
+        fireEvent.click(screen.getByTestId('btn-clone-d1'));
+        fireEvent.click(screen.getByTestId('mock-subject-cloned'));
+        expect(screen.queryByTestId('discover-card-d1')).toBeNull();
+        expect(screen.queryByTestId('clone-subject-modal')).toBeNull();
+        expect(screen.getByTestId('discover-empty')).toBeInTheDocument();
     });
 
-    it('marks a test suite as cloned after a successful clone', async () => {
+    it('removes a test suite from the catalog once it is cloned', async () => {
         render(<DiscoverPage />);
         await waitFor(() =>
             expect(screen.getByTestId('tab-discover-tests')).toBeInTheDocument()
@@ -223,9 +205,18 @@ describe('DiscoverPage', () => {
         fireEvent.click(screen.getByTestId('tab-discover-tests'));
         fireEvent.click(screen.getByTestId('btn-clone-suite-ts1'));
         fireEvent.click(screen.getByTestId('mock-suite-cloned'));
-        expect(screen.getByTestId('btn-clone-suite-ts1')).toHaveTextContent(
-            'Cloned!'
+        expect(screen.queryByTestId('discover-suite-ts1')).toBeNull();
+        // The decks tab is untouched.
+        fireEvent.click(screen.getByTestId('tab-discover-decks'));
+        expect(screen.getByTestId('discover-card-d1')).toBeInTheDocument();
+    });
+
+    it('loads shelves with the first page (pages start at 1)', async () => {
+        render(<DiscoverPage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('discover-card-d1')).toBeInTheDocument()
         );
+        expect(ApiService.getShelves).toHaveBeenCalledWith(1, 100);
     });
 
     it('filters decks by tag and hides the tag chips on the test suites tab', async () => {

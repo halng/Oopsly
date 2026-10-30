@@ -97,9 +97,9 @@ public class SubjectController {
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
                     UUID shelfId,
-            @Parameter(description = "Page number (starts from 0)", required = true, example = "0")
+            @Parameter(description = "Page number (starts from 1)", required = true, example = "1")
                     @RequestParam
-                    @Min(value = 0, message = "Page must be greater than or equal to 0") int page,
+                    @Min(value = 1, message = "Page must be greater than or equal to 1") int page,
             @Parameter(description = "Page size", required = true, example = "10")
                     @RequestParam
                     @Min(value = 1, message = "Size must be greater than 0") int size) {

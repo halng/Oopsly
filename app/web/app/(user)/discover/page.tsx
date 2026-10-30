@@ -17,7 +17,6 @@ export default function DiscoverPage() {
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
     const [selectedSubjectToClone, setSelectedSubjectToClone] =
         useState<CatalogItem | null>(null);
-    const [clonedSuccessId, setClonedSuccessId] = useState<string | null>(null);
     const [tab, setTab] = useState<Tab>('decks');
     const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
     const [suiteToClone, setSuiteToClone] = useState<TestSuite | null>(null);
@@ -26,7 +25,7 @@ export default function DiscoverPage() {
         Promise.all([
             ApiService.getDiscoverCatalog(),
             ApiService.getDiscoverTestSuites(),
-            ApiService.getShelves(0, 100),
+            ApiService.getShelves(1, 100),
         ]).then(([catalogRes, suitesRes, shelvesRes]) => {
             if (catalogRes.isSuccess && catalogRes.data) {
                 setCatalog(
@@ -219,9 +218,7 @@ export default function DiscoverPage() {
                                 onClick={() => setSuiteToClone(suite)}
                                 className="w-full py-2 rounded-xl bg-[var(--theme-accent)] text-white text-xs font-bold cursor-pointer"
                             >
-                                {clonedSuccessId === suite.id
-                                    ? 'Cloned!'
-                                    : 'Clone to shelf'}
+                                Clone to shelf
                             </button>
                         </div>
                     ))}
@@ -253,9 +250,7 @@ export default function DiscoverPage() {
                                 onClick={() => setSelectedSubjectToClone(item)}
                                 className="w-full py-2 rounded-xl bg-[var(--theme-accent)] text-white text-xs font-bold cursor-pointer"
                             >
-                                {clonedSuccessId === item.id
-                                    ? 'Cloned!'
-                                    : 'Clone to shelf'}
+                                Clone to shelf
                             </button>
                         </div>
                     ))}
@@ -266,9 +261,11 @@ export default function DiscoverPage() {
                 testSuite={suiteToClone}
                 shelves={shelves}
                 onClose={() => setSuiteToClone(null)}
-                onCloned={(cloned) => {
-                    setClonedSuccessId(suiteToClone?.id ?? cloned.id);
-                    setTimeout(() => setClonedSuccessId(null), 3500);
+                onCloned={() => {
+                    // A cloned suite is now yours, so it leaves the catalog.
+                    setTestSuites((prev) =>
+                        prev.filter((t) => t.id !== suiteToClone?.id)
+                    );
                 }}
             />
 
@@ -277,10 +274,12 @@ export default function DiscoverPage() {
                 onClose={() => setSelectedSubjectToClone(null)}
                 subject={selectedSubjectToClone}
                 shelves={shelves}
-                onCloneSuccess={(cloned) => {
-                    setClonedSuccessId(cloned.id);
+                onCloneSuccess={() => {
+                    // A cloned deck is now yours, so it leaves the catalog.
+                    setCatalog((prev) =>
+                        prev.filter((d) => d.id !== selectedSubjectToClone?.id)
+                    );
                     setSelectedSubjectToClone(null);
-                    setTimeout(() => setClonedSuccessId(null), 3500);
                 }}
             />
         </div>
