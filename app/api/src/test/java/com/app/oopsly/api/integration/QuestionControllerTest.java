@@ -164,6 +164,57 @@ class QuestionControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    void createBulk_addsAllQuestions() throws Exception {
+        mockMvc.perform(
+                        post(QUESTIONS + "/bulk", shelfId, testSuiteId)
+                                .with(bearer(session))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {"questions":[
+                                         {"text":"2+2=?","type":"SINGLE_CHOICE",
+                                          "options":["3","4"],"correctOptionIndex":1},
+                                         {"text":"Sky is green","type":"TRUE_FALSE",
+                                          "correctOptionIndex":1}]}
+                                        """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data", hasSize(2)));
+
+        mockMvc.perform(get(QUESTIONS, shelfId, testSuiteId).with(bearer(session)))
+                .andExpect(jsonPath("$.data", hasSize(2)));
+    }
+
+    @Test
+    void createBulk_oneInvalidQuestion_createsNothing() throws Exception {
+        mockMvc.perform(
+                        post(QUESTIONS + "/bulk", shelfId, testSuiteId)
+                                .with(bearer(session))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {"questions":[
+                                         {"text":"2+2=?","type":"SINGLE_CHOICE",
+                                          "options":["3","4"],"correctOptionIndex":1},
+                                         {"text":"Bad","type":"SINGLE_CHOICE",
+                                          "options":["3","4"],"correctOptionIndex":9}]}
+                                        """))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get(QUESTIONS, shelfId, testSuiteId).with(bearer(session)))
+                .andExpect(jsonPath("$.data", hasSize(0)));
+    }
+
+    @Test
+    void createBulk_emptyList_returnsBadRequest() throws Exception {
+        mockMvc.perform(
+                        post(QUESTIONS + "/bulk", shelfId, testSuiteId)
+                                .with(bearer(session))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"questions\":[]}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void otherUsersShelf_returnsNotFound() throws Exception {
         AuthSession other = authenticate(EMAIL_2);
 

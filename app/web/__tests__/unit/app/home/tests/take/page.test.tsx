@@ -124,6 +124,8 @@ describe('TakeTestPage', () => {
         );
         fireEvent.click(screen.getByTestId('answer-option-0'));
         fireEvent.click(screen.getByTestId('btn-submit-test'));
+        expect(ApiService.submitTestSuite).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByTestId('btn-confirm-submit'));
         await waitFor(() =>
             expect(ApiService.submitTestSuite).toHaveBeenCalled()
         );
@@ -134,5 +136,19 @@ describe('TakeTestPage', () => {
         expect(await screen.findByTestId('seed-pouch')).toHaveTextContent(
             'camphor_tree'
         );
+    });
+
+    it('keeps the attempt open when the confirmation is cancelled', async () => {
+        render(<TakeTestPage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('question-prompt')).toBeInTheDocument()
+        );
+        fireEvent.click(screen.getByTestId('btn-submit-test'));
+        expect(screen.getByTestId('submit-confirm-modal')).toHaveTextContent(
+            '1 unanswered question(s)'
+        );
+        fireEvent.click(screen.getByTestId('btn-cancel-submit'));
+        expect(screen.queryByTestId('submit-confirm-modal')).toBeNull();
+        expect(ApiService.submitTestSuite).not.toHaveBeenCalled();
     });
 });

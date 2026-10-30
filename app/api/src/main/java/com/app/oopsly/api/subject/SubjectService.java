@@ -36,5 +36,6 @@ public interface SubjectService {
 
     ApiRes discoverPublicDecks(String query, int page, int size);
 
-    ApiRes cloneDeck(UUID subjectId);
+    /** Clones into {@code shelfId}, or the user's first shelf when it is null. */
+    ApiRes cloneDeck(UUID subjectId, UUID shelfId);
 }

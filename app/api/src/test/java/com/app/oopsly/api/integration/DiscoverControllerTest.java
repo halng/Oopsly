@@ -16,6 +16,7 @@
 
 package com.app.oopsly.api.integration;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 
 @DisplayName("DiscoverController integration")
 class DiscoverControllerTest extends AbstractControllerTest {
@@ -39,6 +41,8 @@ class DiscoverControllerTest extends AbstractControllerTest {
     private AuthSession owner;
     private AuthSession cloner;
     private UUID publicSubjectId;
+    private UUID publicSuiteId;
+    private UUID clonerShelfId;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -55,7 +59,39 @@ class DiscoverControllerTest extends AbstractControllerTest {
         subjectRepository.saveAndFlush(subject);
 
         // cloner needs a shelf to receive clones
-        LibraryFixture.createShelf(mockMvc, objectMapper, cloner.accessToken());
+        clonerShelfId =
+                uuidFromDataId(
+                        mockMvc.perform(
+                                        post("/v1/shelves")
+                                                .with(bearer(cloner))
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(
+                                                        "{\"name\":\"Mine\",\"color\":\"#8BC34A\"}"))
+                                .andReturn());
+
+        publicSuiteId =
+                uuidFromDataId(
+                        mockMvc.perform(
+                                        post("/v1/shelves/{s}/test-suites", library.shelfId())
+                                                .with(bearer(owner))
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(
+                                                        "{\"title\":\"Shared\",\"isPublic\":true}"))
+                                .andExpect(status().isCreated())
+                                .andReturn());
+        mockMvc.perform(
+                        post(
+                                        "/v1/shelves/{s}/test-suites/{t}/questions",
+                                        library.shelfId(),
+                                        publicSuiteId)
+                                .with(bearer(owner))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {"text":"2+2=?","type":"SINGLE_CHOICE",
+                                         "options":["3","4"],"correctOptionIndex":1}
+                                        """))
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -80,6 +116,53 @@ class DiscoverControllerTest extends AbstractControllerTest {
     @Test
     void clone_unknown_returnsNotFound() throws Exception {
         mockMvc.perform(post("/discover/{id}/clone", UUID.randomUUID()).with(bearer(cloner)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void discoverTestSuites_listsOnlyPublicOnes() throws Exception {
+        mockMvc.perform(get("/discover/test-suites").with(bearer(cloner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.entities", hasSize(1)))
+                .andExpect(jsonPath("$.data.entities[0].title").value("Shared"))
+                .andExpect(jsonPath("$.data.entities[0].questionCount").value(1));
+    }
+
+    @Test
+    void cloneTestSuite_copiesIntoChosenShelfWithQuestions() throws Exception {
+        UUID cloneId =
+                uuidFromDataId(
+                        mockMvc.perform(
+                                        post("/discover/test-suites/{id}/clone", publicSuiteId)
+                                                .with(bearer(cloner))
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content("{\"shelfId\":\"" + clonerShelfId + "\"}"))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.data.isPublic").value(false))
+                                .andExpect(jsonPath("$.data.questionCount").value(1))
+                                .andReturn());
+
+        mockMvc.perform(
+                        get("/v1/shelves/{s}/test-suites/{t}", clonerShelfId, cloneId)
+                                .with(bearer(cloner)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void cloneTestSuite_intoSomeoneElsesShelf_returnsNotFound() throws Exception {
+        mockMvc.perform(
+                        post("/discover/test-suites/{id}/clone", publicSuiteId)
+                                .with(bearer(cloner))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"shelfId\":\"" + UUID.randomUUID() + "\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void cloneTestSuite_unknown_returnsNotFound() throws Exception {
+        mockMvc.perform(
+                        post("/discover/test-suites/{id}/clone", UUID.randomUUID())
+                                .with(bearer(cloner)))
                 .andExpect(status().isNotFound());
     }
 }

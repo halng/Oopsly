@@ -42,6 +42,12 @@ public interface TestSuiteService {
     /** Grades a finished test run, awards XP and returns a per-question breakdown. */
     ApiRes submit(UUID shelveId, UUID testSuiteId, TestSubmissionReq request);
 
+    /** Public test suites of every user, optionally filtered by title or description. */
+    ApiRes discoverPublic(String query, int page, int size);
+
+    /** Copies a public test suite and its questions into one of the current user's shelves. */
+    ApiRes cloneSuite(UUID testSuiteId, UUID shelfId);
+
     // TODO(ai): will generate questions with AI; currently creates an empty suite.
     ApiRes autoGenerate(UUID shelveId, UUID subjectId, int numQuestions);
 }

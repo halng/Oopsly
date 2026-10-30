@@ -46,6 +46,8 @@ public class TestSuiteEntity extends Audit {
 
     private Boolean isActive;
 
+    @Builder.Default private Boolean isPublic = false;
+
     private Integer highestScore;
 
     // TODO(ai): card-based presets (selection + subjects) are kept for the AI integration.

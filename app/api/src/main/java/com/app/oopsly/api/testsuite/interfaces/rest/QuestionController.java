@@ -18,6 +18,7 @@ package com.app.oopsly.api.testsuite.interfaces.rest;
 
 import com.app.oopsly.api.shared.application.vm.ApiRes;
 import com.app.oopsly.api.testsuite.application.QuestionService;
+import com.app.oopsly.api.testsuite.application.vm.BulkQuestionReq;
 import com.app.oopsly.api.testsuite.application.vm.QuestionReq;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -65,6 +66,29 @@ public class QuestionController {
                     UUID testSuiteId,
             @Valid @RequestBody QuestionReq requestBody) {
         return this.service.create(shelveId, testSuiteId, requestBody);
+    }
+
+    @Operation(
+            summary = "Bulk create questions",
+            description =
+                    "Creates up to 200 questions in a test suite in one call. All questions are"
+                            + " validated first; if any is invalid nothing is created")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "201",
+                        description = "Questions created successfully",
+                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
+                @ApiResponse(responseCode = "400", description = "Invalid question"),
+                @ApiResponse(responseCode = "404", description = "Shelve or test suite not found")
+            })
+    @PostMapping("/bulk")
+    public ApiRes createBulk(
+            @Parameter(description = "Shelve ID", required = true) @PathVariable UUID shelveId,
+            @Parameter(description = "Test Suite ID", required = true) @PathVariable
+                    UUID testSuiteId,
+            @Valid @RequestBody BulkQuestionReq requestBody) {
+        return this.service.createBulk(shelveId, testSuiteId, requestBody);
     }
 
     @Operation(summary = "Update question", description = "Replaces an existing question")

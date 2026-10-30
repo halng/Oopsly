@@ -17,12 +17,16 @@
 package com.app.oopsly.api.testsuite.application;
 
 import com.app.oopsly.api.shared.application.vm.ApiRes;
+import com.app.oopsly.api.testsuite.application.vm.BulkQuestionReq;
 import com.app.oopsly.api.testsuite.application.vm.QuestionReq;
 import java.util.UUID;
 
 /** Question CRUD; every call checks that the shelf belongs to the current user. */
 public interface QuestionService {
     ApiRes create(UUID shelveId, UUID testSuiteId, QuestionReq request);
+
+    /** Adds every question or none; an invalid question fails the whole call. */
+    ApiRes createBulk(UUID shelveId, UUID testSuiteId, BulkQuestionReq request);
 
     ApiRes update(UUID shelveId, UUID testSuiteId, UUID questionId, QuestionReq request);
 

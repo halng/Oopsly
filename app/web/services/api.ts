@@ -71,6 +71,15 @@ export interface GradeResult {
 const SESSION_EXPIRED_MESSAGE =
     'Your session has expired. Please sign in again.';
 
+function discoverQuery(query: string | undefined, page: number, size: number) {
+    const params = new URLSearchParams({
+        page: String(page),
+        size: String(size),
+    });
+    if (query?.trim()) params.set('q', query.trim());
+    return `?${params.toString()}`;
+}
+
 /** True once a failed refresh has signed the user out. */
 function isSessionGone() {
     return useAuthStore.getState().sessionExpired;
@@ -788,15 +797,26 @@ export const ApiService = {
     },
 
     // Discover & Clone
-    getDiscoverCatalog: () =>
-        fetchJson<(Subject & { cardsPreview: Partial<Card>[] })[]>(
-            '/api/discover'
+    getDiscoverCatalog: (query?: string, page = 0, size = 50) =>
+        fetchJson<PaginatedResponse<Subject>>(
+            `/discover${discoverQuery(query, page, size)}`
+        ),
+
+    getDiscoverTestSuites: (query?: string, page = 0, size = 50) =>
+        fetchJson<PaginatedResponse<TestSuite>>(
+            `/discover/test-suites${discoverQuery(query, page, size)}`
         ),
 
     cloneSubject: (subjectId: string, targetShelfId: string) =>
-        fetchJson<Subject>(`/api/discover/clone/${subjectId}`, {
+        fetchJson<Subject>(`/discover/${subjectId}/clone`, {
             method: 'POST',
-            body: JSON.stringify({ targetShelfId }),
+            body: JSON.stringify({ shelfId: targetShelfId }),
+        }),
+
+    cloneTestSuite: (testSuiteId: string, targetShelfId: string) =>
+        fetchJson<TestSuite>(`/discover/test-suites/${testSuiteId}/clone`, {
+            method: 'POST',
+            body: JSON.stringify({ shelfId: targetShelfId }),
         }),
 
     // Study sessions (Learn / Match XP)
@@ -881,6 +901,23 @@ export const ApiService = {
             !opts?.silent
         ),
 
+    /** Adds every question or none; the server rejects the whole batch if one is invalid. */
+    createQuestionsBulk: (
+        shelfId: string,
+        testSuiteId: string,
+        questions: QuestionInput[],
+        opts?: { silent?: boolean }
+    ) =>
+        fetchJson<Question[]>(
+            `/v1/shelves/${shelfId}/test-suites/${testSuiteId}/questions/bulk`,
+            {
+                method: 'POST',
+                body: JSON.stringify({ questions }),
+            },
+            apiClient,
+            !opts?.silent
+        ),
+
     updateQuestion: (
         shelfId: string,
         testSuiteId: string,
@@ -906,12 +943,12 @@ export const ApiService = {
     // Stats & Leaderboard
     getStats: () => fetchJson<StatsData>('/v1/users/me/stats'),
 
-    getLeaderboard: () => fetchJson<LeaderboardUser[]>('/api/leaderboard'),
+    getLeaderboard: () => fetchJson<LeaderboardUser[]>('/leaderboard'),
 
     // Communities
-    getCommunities: () => fetchJson<Community[]>('/api/communities'),
+    getCommunities: () => fetchJson<Community[]>('/communities'),
 
-    getMyCommunities: () => fetchJson<Community[]>('/api/communities/my'),
+    getMyCommunities: () => fetchJson<Community[]>('/communities/my'),
 
     createCommunity: (data: {
         name: string;
@@ -921,7 +958,7 @@ export const ApiService = {
         isPrivate?: boolean;
         tags?: string[];
     }) =>
-        fetchJson<Community>('/api/communities', {
+        fetchJson<Community>('/communities', {
             method: 'POST',
             body: JSON.stringify(data),
         }),
@@ -931,36 +968,36 @@ export const ApiService = {
             status: 'JOINED' | 'REQUEST_SENT';
             member?: CommunityMember;
             request?: CommunityJoinRequest;
-        }>(`/api/communities/${id}/join`, {
+        }>(`/communities/${id}/join`, {
             method: 'POST',
             body: JSON.stringify({ message }),
         }),
 
     leaveCommunity: (id: string) =>
-        fetchJson<{ left: boolean }>(`/api/communities/${id}/leave`, {
+        fetchJson<null>(`/communities/${id}/leave`, {
             method: 'POST',
         }),
 
     inviteUserToCommunity: (id: string, emailOrName: string) =>
-        fetchJson<CommunityMember>(`/api/communities/${id}/invite`, {
+        fetchJson<CommunityMember>(`/communities/${id}/invite`, {
             method: 'POST',
             body: JSON.stringify({ emailOrName }),
         }),
 
     getCommunityJoinRequests: (id: string) =>
-        fetchJson<CommunityJoinRequest[]>(`/api/communities/${id}/requests`),
+        fetchJson<CommunityJoinRequest[]>(`/communities/${id}/requests`),
 
     approveJoinRequest: (id: string, requestId: string) =>
         fetchJson<CommunityMember>(
-            `/api/communities/${id}/requests/${requestId}/approve`,
+            `/communities/${id}/requests/${requestId}/approve`,
             {
                 method: 'POST',
             }
         ),
 
     rejectJoinRequest: (id: string, requestId: string) =>
-        fetchJson<{ rejected: boolean }>(
-            `/api/communities/${id}/requests/${requestId}/reject`,
+        fetchJson<CommunityJoinRequest>(
+            `/communities/${id}/requests/${requestId}/reject`,
             {
                 method: 'POST',
             }
@@ -968,7 +1005,7 @@ export const ApiService = {
 
     getCommunityLeaderboard: (id: string) =>
         fetchJson<{ community: Community; members: CommunityMember[] }>(
-            `/api/communities/${id}/leaderboard`
+            `/communities/${id}/leaderboard`
         ),
 
     // AI Flashcard Generation

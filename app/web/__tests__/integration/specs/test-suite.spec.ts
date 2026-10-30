@@ -161,20 +161,22 @@ test.describe('Bulk add questions', () => {
         );
         await expect(page.getByTestId('import-questions-modal')).toHaveCount(0);
 
-        const created = await mock.requests('POST', `${SUITE}/questions`);
-        expect(created.map((r) => r.json)).toMatchObject([
-            {
-                text: 'Capital of France?',
-                type: 'SINGLE_CHOICE',
-                options: ['Paris', 'Rome'],
-                correctOptionIndex: 0,
-            },
-            {
-                text: 'The sky is green',
-                type: 'TRUE_FALSE',
-                correctOptionIndex: 1,
-            },
-        ]);
+        const [bulk] = await mock.requests('POST', `${SUITE}/questions/bulk`);
+        expect((bulk.json as { questions: unknown[] }).questions).toMatchObject(
+            [
+                {
+                    text: 'Capital of France?',
+                    type: 'SINGLE_CHOICE',
+                    options: ['Paris', 'Rome'],
+                    correctOptionIndex: 0,
+                },
+                {
+                    text: 'The sky is green',
+                    type: 'TRUE_FALSE',
+                    correctOptionIndex: 1,
+                },
+            ]
+        );
         // The list is reloaded afterwards.
         await expect
             .poll(
@@ -202,12 +204,16 @@ test.describe('Bulk add questions', () => {
         await expect(page.getByTestId('toast-success')).toContainText(
             '1 question added'
         );
-        const [created] = await mock.requests('POST', `${SUITE}/questions`);
-        expect(created.json).toMatchObject({
-            text: 'Which is a prime?',
-            options: ['4', '5', '6'],
-            correctOptionIndex: 1,
-        });
+        const [bulk] = await mock.requests('POST', `${SUITE}/questions/bulk`);
+        expect((bulk.json as { questions: unknown[] }).questions).toMatchObject(
+            [
+                {
+                    text: 'Which is a prime?',
+                    options: ['4', '5', '6'],
+                    correctOptionIndex: 1,
+                },
+            ]
+        );
     });
 
     test('lets the user fix the column mapping', async ({ page }) => {
@@ -228,13 +234,10 @@ test.describe('Bulk add questions', () => {
         ).toBeDisabled();
     });
 
-    test('a server error stops the import and says why', async ({
-        page,
-        mock,
-    }) => {
+    test('a server error adds nothing and says why', async ({ page, mock }) => {
         await mock.override({
             method: 'POST',
-            path: `${SUITE}/questions`,
+            path: `${SUITE}/questions/bulk`,
             status: 500,
             body: failure('java.lang.IllegalStateException', 500),
         });
@@ -244,15 +247,15 @@ test.describe('Bulk add questions', () => {
         await page.getByTestId('btn-run-import-questions').click();
 
         const error = page.getByTestId('import-questions-error');
-        await expect(error).toContainText('0 added, 2 not added');
+        await expect(error).toContainText('No questions were added');
         await expect(error).toContainText('Something went wrong on our side');
         await expect(error).not.toContainText('IllegalState');
         await expect(page.getByTestId('toast-error')).toHaveCount(1);
-        // The modal stays open and the import stopped at the first failure.
+        // The modal stays open so the batch can be retried.
         await expect(page.getByTestId('import-questions-modal')).toBeVisible();
-        expect(await mock.requests('POST', `${SUITE}/questions`)).toHaveLength(
-            1
-        );
+        expect(
+            await mock.requests('POST', `${SUITE}/questions/bulk`)
+        ).toHaveLength(1);
     });
 
     test('cancelling closes the modal without importing', async ({
@@ -264,9 +267,9 @@ test.describe('Bulk add questions', () => {
         await page.getByTestId('btn-parse-pasted').click();
         await page.getByTestId('btn-cancel-import-questions').click();
         await expect(page.getByTestId('import-questions-modal')).toHaveCount(0);
-        expect(await mock.requests('POST', `${SUITE}/questions`)).toHaveLength(
-            0
-        );
+        expect(
+            await mock.requests('POST', `${SUITE}/questions/bulk`)
+        ).toHaveLength(0);
     });
 
     test('offers CSV and Excel templates', async ({ page }) => {
@@ -294,6 +297,7 @@ test.describe('Take test screen', () => {
         await page.getByTestId('btn-next-question').click();
         await page.getByTestId('answer-true-false-0').click();
         await page.getByTestId('btn-submit-test').click();
+        await page.getByTestId('btn-confirm-submit').click();
 
         await expect(page.getByTestId('test-results')).toBeVisible();
         await expect(page.getByTestId('test-results-summary')).toContainText(
@@ -326,15 +330,12 @@ test.describe('Take test screen', () => {
         await page.goto('/home/biology/tests/midterm-quiz/take');
         await page.getByTestId('btn-next-question').click();
 
-        const messages: string[] = [];
-        page.once('dialog', (dialog) => {
-            messages.push(dialog.message());
-            void dialog.dismiss();
-        });
         await page.getByTestId('btn-submit-test').click();
-        await expect
-            .poll(() => messages)
-            .toEqual(['You have 2 unanswered question(s). Submit anyway?']);
+        await expect(page.getByTestId('submit-confirm-modal')).toContainText(
+            'You have 2 unanswered question(s)'
+        );
+        await page.getByTestId('btn-cancel-submit').click();
+        await expect(page.getByTestId('submit-confirm-modal')).toBeHidden();
         expect(await mock.requests('POST', `${SUITE}/submit`)).toHaveLength(0);
     });
 
@@ -362,8 +363,8 @@ test.describe('Take test screen', () => {
         });
         await page.goto('/home/biology/tests/midterm-quiz/take');
         await page.getByTestId('btn-next-question').click();
-        page.once('dialog', (dialog) => void dialog.accept());
         await page.getByTestId('btn-submit-test').click();
+        await page.getByTestId('btn-confirm-submit').click();
 
         await expect(page.getByTestId('take-test-submit-error')).toHaveText(
             'Could not grade the test'

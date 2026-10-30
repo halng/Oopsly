@@ -529,7 +529,7 @@ class SubjectServiceImplTest {
                         });
         when(cardRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
 
-        ApiRes result = subjectService.cloneDeck(subjectId);
+        ApiRes result = subjectService.cloneDeck(subjectId, null);
 
         assertEquals(201, result.getStatusCode().value());
         verify(cardRepository).saveAll(anyList());
@@ -544,7 +544,7 @@ class SubjectServiceImplTest {
         when(shelfRepository.findAllByUserId(eq(currentUserId), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
 
-        ApiRes result = subjectService.cloneDeck(subjectId);
+        ApiRes result = subjectService.cloneDeck(subjectId, null);
 
         assertEquals(400, result.getStatusCode().value());
     }
@@ -555,7 +555,7 @@ class SubjectServiceImplTest {
         when(currentUser.id()).thenReturn(currentUserId);
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
 
-        assertThrows(NotFoundException.class, () -> subjectService.cloneDeck(subjectId));
+        assertThrows(NotFoundException.class, () -> subjectService.cloneDeck(subjectId, null));
     }
 
     @Test
@@ -608,6 +608,47 @@ class SubjectServiceImplTest {
         subject.setDeleted(true);
         when(currentUser.id()).thenReturn(currentUserId);
         when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
-        assertThrows(NotFoundException.class, () -> subjectService.cloneDeck(subjectId));
+        assertThrows(NotFoundException.class, () -> subjectService.cloneDeck(subjectId, null));
+    }
+
+    @Test
+    void cloneDeck_intoChosenShelf_skipsFirstShelfLookup() {
+        subject.setIsPublic(true);
+        subject.setDeleted(false);
+        subject.setCards(List.of());
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
+                .thenReturn(Optional.of(shelve));
+        when(subjectRepository.save(any(Subject.class)))
+                .thenAnswer(
+                        inv -> {
+                            Subject s = inv.getArgument(0);
+                            s.setId(UUID.randomUUID());
+                            return s;
+                        });
+
+        ApiRes result = subjectService.cloneDeck(subjectId, shelveId);
+
+        assertEquals(201, result.getStatusCode().value());
+        verify(shelfRepository, never()).findAllByUserId(any(), any(Pageable.class));
+        org.mockito.ArgumentCaptor<Subject> saved =
+                org.mockito.ArgumentCaptor.forClass(Subject.class);
+        verify(subjectRepository).save(saved.capture());
+        assertSame(shelve, saved.getValue().getShelf());
+        assertFalse(saved.getValue().getIsPublic());
+    }
+
+    @Test
+    void cloneDeck_intoAnotherUsersShelf_throwsNotFound() {
+        subject.setIsPublic(true);
+        subject.setDeleted(false);
+        when(currentUser.id()).thenReturn(currentUserId);
+        when(subjectRepository.findById(subjectId)).thenReturn(Optional.of(subject));
+        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> subjectService.cloneDeck(subjectId, shelveId));
+        verify(subjectRepository, never()).save(any(Subject.class));
     }
 }

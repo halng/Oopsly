@@ -30,6 +30,7 @@ import com.app.oopsly.api.shelf.Shelf;
 import com.app.oopsly.api.shelf.ShelfRepository;
 import com.app.oopsly.api.testsuite.application.QuestionMetadataMapper;
 import com.app.oopsly.api.testsuite.application.QuestionServiceImpl;
+import com.app.oopsly.api.testsuite.application.vm.BulkQuestionReq;
 import com.app.oopsly.api.testsuite.application.vm.QuestionReq;
 import com.app.oopsly.api.testsuite.application.vm.QuestionRes;
 import com.app.oopsly.api.testsuite.domain.QuestionEntity;
@@ -104,6 +105,61 @@ class QuestionServiceImplTest {
         ArgumentCaptor<QuestionEntity> captor = ArgumentCaptor.forClass(QuestionEntity.class);
         verify(questionRepository).save(captor.capture());
         return captor.getValue();
+    }
+
+    @Test
+    void createBulk_savesEveryQuestion_andReturnsThemInOrder() {
+        ownsSuite();
+        when(questionRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+
+        ApiRes result =
+                questionService.createBulk(
+                        shelfId,
+                        testSuiteId,
+                        new BulkQuestionReq(
+                                List.of(
+                                        single("One?", List.of("a", "b"), 0),
+                                        single("Two?", List.of("a", "b"), 1))));
+
+        assertEquals(HttpStatus.CREATED, result.getStatusCode());
+        @SuppressWarnings("unchecked")
+        List<QuestionRes> data = (List<QuestionRes>) result.getBody().data();
+        assertEquals(List.of("One?", "Two?"), data.stream().map(QuestionRes::text).toList());
+    }
+
+    @Test
+    void createBulk_invalidQuestion_failsWholeBatchWithRowNumber() {
+        ownsSuite();
+
+        ValidationException ex =
+                assertThrows(
+                        ValidationException.class,
+                        () ->
+                                questionService.createBulk(
+                                        shelfId,
+                                        testSuiteId,
+                                        new BulkQuestionReq(
+                                                List.of(
+                                                        single("One?", List.of("a", "b"), 0),
+                                                        single("Two?", List.of("a", "b"), 5)))));
+
+        assertTrue(ex.getMessage().startsWith("Question 2: "));
+        verify(questionRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void createBulk_unknownSuite_throwsNotFound() {
+        when(currentUser.id()).thenReturn(userId);
+        when(shelfRepository.findByIdAndUserId(shelfId, userId)).thenReturn(Optional.empty());
+
+        assertThrows(
+                NotFoundException.class,
+                () ->
+                        questionService.createBulk(
+                                shelfId,
+                                testSuiteId,
+                                new BulkQuestionReq(
+                                        List.of(single("One?", List.of("a", "b"), 0)))));
     }
 
     @Test
@@ -352,5 +408,82 @@ class QuestionServiceImplTest {
                 () ->
                         questionService.getAllByTestSuiteFallback(
                                 shelfId, testSuiteId, new RuntimeException()));
+    }
+
+    @Test
+    void createBulk_fallback_preservesDomainErrors_andWrapsOthers() {
+        BulkQuestionReq req = new BulkQuestionReq(List.of(single("Q?", List.of("a", "b"), 0)));
+        assertThrows(
+                ValidationException.class,
+                () ->
+                        questionService.createBulkFallback(
+                                shelfId, testSuiteId, req, new ValidationException("bad")));
+        assertThrows(
+                NotFoundException.class,
+                () ->
+                        questionService.createBulkFallback(
+                                shelfId, testSuiteId, req, new NotFoundException("x")));
+        assertThrows(
+                RetryLaterException.class,
+                () ->
+                        questionService.createBulkFallback(
+                                shelfId, testSuiteId, req, new RuntimeException()));
+    }
+
+    @Test
+    void createBulk_numbersTheFirstInvalidRow_evenWhenLaterOnesAreInvalidToo() {
+        ownsSuite();
+
+        ValidationException ex =
+                assertThrows(
+                        ValidationException.class,
+                        () ->
+                                questionService.createBulk(
+                                        shelfId,
+                                        testSuiteId,
+                                        new BulkQuestionReq(
+                                                List.of(
+                                                        single("One?", List.of("a", "b"), 7),
+                                                        single("Two?", List.of("a", "b"), 9)))));
+
+        assertTrue(ex.getMessage().startsWith("Question 1: "));
+    }
+
+    @Test
+    void createBulk_unknownTestSuite_throwsNotFound_andSavesNothing() {
+        when(currentUser.id()).thenReturn(userId);
+        when(shelfRepository.findByIdAndUserId(shelfId, userId)).thenReturn(Optional.of(shelf));
+        when(testSuiteRepository.findByIdAndShelve(testSuiteId, shelf))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                NotFoundException.class,
+                () ->
+                        questionService.createBulk(
+                                shelfId,
+                                testSuiteId,
+                                new BulkQuestionReq(
+                                        List.of(single("One?", List.of("a", "b"), 0)))));
+        verify(questionRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void createBulk_attachesEverySavedQuestionToTheSuite() {
+        ownsSuite();
+        when(questionRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+
+        questionService.createBulk(
+                shelfId,
+                testSuiteId,
+                new BulkQuestionReq(
+                        List.of(
+                                single("One?", List.of("a", "b"), 0),
+                                single("Two?", List.of("a", "b"), 1))));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<QuestionEntity>> saved = ArgumentCaptor.forClass(List.class);
+        verify(questionRepository).saveAll(saved.capture());
+        assertEquals(2, saved.getValue().size());
+        assertTrue(saved.getValue().stream().allMatch(q -> q.getTestSuite() == testSuite));
     }
 }

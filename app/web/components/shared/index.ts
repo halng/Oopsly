@@ -11,8 +11,10 @@ import InviteUserModal from './InviteUserModal';
 import CssProgressBar from './CssProgressBar';
 import TestSuiteModal from './TestSuiteModal';
 import ImportQuestionsModal from './ImportQuestionsModal';
+import CloneTestSuiteModal from './CloneTestSuiteModal';
 
 export {
+    CloneTestSuiteModal,
     ImportQuestionsModal,
     TestSuiteModal,
     CalendarModal,

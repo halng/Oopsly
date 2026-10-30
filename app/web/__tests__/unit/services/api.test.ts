@@ -397,16 +397,32 @@ describe('ApiService', () => {
                 () => ApiService.getDiscoverCatalog(),
                 'api',
                 'GET',
-                '/api/discover',
+                '/discover?page=0&size=50',
                 undefined,
+            ],
+            [
+                'getDiscoverTestSuites',
+                () => ApiService.getDiscoverTestSuites(' bio '),
+                'api',
+                'GET',
+                '/discover/test-suites?page=0&size=50&q=bio',
+                undefined,
+            ],
+            [
+                'cloneTestSuite',
+                () => ApiService.cloneTestSuite('u', 't'),
+                'api',
+                'POST',
+                '/discover/test-suites/u/clone',
+                { shelfId: 't' },
             ],
             [
                 'cloneSubject',
                 () => ApiService.cloneSubject('u', 't'),
                 'api',
                 'POST',
-                '/api/discover/clone/u',
-                { targetShelfId: 't' },
+                '/discover/u/clone',
+                { shelfId: 't' },
             ],
             [
                 'logStudySession',
@@ -481,6 +497,15 @@ describe('ApiService', () => {
                 { q: 1 },
             ],
             [
+                'createQuestionsBulk',
+                () =>
+                    ApiService.createQuestionsBulk('s', 't', [{ q: 1 }] as any),
+                'api',
+                'POST',
+                '/v1/shelves/s/test-suites/t/questions/bulk',
+                { questions: [{ q: 1 }] },
+            ],
+            [
                 'updateQuestion',
                 () => ApiService.updateQuestion('s', 't', 'q', { q: 1 } as any),
                 'api',
@@ -509,7 +534,7 @@ describe('ApiService', () => {
                 () => ApiService.getLeaderboard(),
                 'api',
                 'GET',
-                '/api/leaderboard',
+                '/leaderboard',
                 undefined,
             ],
             [
@@ -517,7 +542,7 @@ describe('ApiService', () => {
                 () => ApiService.getCommunities(),
                 'api',
                 'GET',
-                '/api/communities',
+                '/communities',
                 undefined,
             ],
             [
@@ -525,7 +550,7 @@ describe('ApiService', () => {
                 () => ApiService.getMyCommunities(),
                 'api',
                 'GET',
-                '/api/communities/my',
+                '/communities/my',
                 undefined,
             ],
             [
@@ -533,7 +558,7 @@ describe('ApiService', () => {
                 () => ApiService.createCommunity({ name: 'c' }),
                 'api',
                 'POST',
-                '/api/communities',
+                '/communities',
                 { name: 'c' },
             ],
             [
@@ -541,7 +566,7 @@ describe('ApiService', () => {
                 () => ApiService.joinCommunity('c', 'hi'),
                 'api',
                 'POST',
-                '/api/communities/c/join',
+                '/communities/c/join',
                 { message: 'hi' },
             ],
             [
@@ -549,7 +574,7 @@ describe('ApiService', () => {
                 () => ApiService.leaveCommunity('c'),
                 'api',
                 'POST',
-                '/api/communities/c/leave',
+                '/communities/c/leave',
                 undefined,
             ],
             [
@@ -557,7 +582,7 @@ describe('ApiService', () => {
                 () => ApiService.inviteUserToCommunity('c', 'bob'),
                 'api',
                 'POST',
-                '/api/communities/c/invite',
+                '/communities/c/invite',
                 { emailOrName: 'bob' },
             ],
             [
@@ -565,7 +590,7 @@ describe('ApiService', () => {
                 () => ApiService.getCommunityJoinRequests('c'),
                 'api',
                 'GET',
-                '/api/communities/c/requests',
+                '/communities/c/requests',
                 undefined,
             ],
             [
@@ -573,7 +598,7 @@ describe('ApiService', () => {
                 () => ApiService.approveJoinRequest('c', 'r'),
                 'api',
                 'POST',
-                '/api/communities/c/requests/r/approve',
+                '/communities/c/requests/r/approve',
                 undefined,
             ],
             [
@@ -581,7 +606,7 @@ describe('ApiService', () => {
                 () => ApiService.rejectJoinRequest('c', 'r'),
                 'api',
                 'POST',
-                '/api/communities/c/requests/r/reject',
+                '/communities/c/requests/r/reject',
                 undefined,
             ],
             [
@@ -589,7 +614,7 @@ describe('ApiService', () => {
                 () => ApiService.getCommunityLeaderboard('c'),
                 'api',
                 'GET',
-                '/api/communities/c/leaderboard',
+                '/communities/c/leaderboard',
                 undefined,
             ],
             [

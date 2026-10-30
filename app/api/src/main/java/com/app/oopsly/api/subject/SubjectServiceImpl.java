@@ -297,7 +297,7 @@ public class SubjectServiceImpl implements SubjectService {
 
     @Override
     @Transactional
-    public ApiRes cloneDeck(UUID subjectId) {
+    public ApiRes cloneDeck(UUID subjectId, UUID shelfId) {
         log.info("Cloning public deck: {} for user: {}", subjectId, currentUser.id());
 
         Subject source =
@@ -312,14 +312,19 @@ public class SubjectServiceImpl implements SubjectService {
                                         new NotFoundException(
                                                 "Public subject not found with id: " + subjectId));
 
-        List<Shelf> shelves =
-                shelfRepository
-                        .findAllByUserId(currentUser.id(), PageRequest.of(0, 1))
-                        .getContent();
-        if (shelves.isEmpty()) {
-            return ApiRes.badRequest("No shelves found. Create a shelf first.");
+        Shelf targetShelf;
+        if (shelfId != null) {
+            targetShelf = getShelfForCurrentUser(shelfId);
+        } else {
+            List<Shelf> shelves =
+                    shelfRepository
+                            .findAllByUserId(currentUser.id(), PageRequest.of(0, 1))
+                            .getContent();
+            if (shelves.isEmpty()) {
+                return ApiRes.badRequest("No shelves found. Create a shelf first.");
+            }
+            targetShelf = shelves.get(0);
         }
-        Shelf targetShelf = shelves.get(0);
 
         Subject cloned =
                 Subject.builder()

@@ -25,5 +25,6 @@ public record TestSuiteRes(
         String description,
         Integer timeLimitMinutes,
         Boolean isActive,
+        Boolean isPublic,
         long questionCount,
         Integer highestScore) {}
