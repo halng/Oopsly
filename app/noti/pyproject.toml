@@ -1,0 +1,38 @@
+[project]
+name = "oopsly-noti"
+version = "0.1.0"
+description = "Oopsly notification Lambda: sends OTP, welcome, community invite and study calendar emails from an SQS queue"
+requires-python = ">=3.11"
+# Standard library only; boto3 is provided by the Lambda runtime.
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.8.0",
+    "boto3>=1.35.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["noti*"]
+
+[tool.setuptools.package-data]
+noti = ["resource/*.html"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["noti"]
+
+[tool.coverage.report]
+fail_under = 90
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
