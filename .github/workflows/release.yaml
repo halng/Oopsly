@@ -1,11 +1,11 @@
 name: Release
 
-# Manual release of one backend service, or all of them. Give it the tag the Docker images
-# were built with (the "Build and Push Docker Image" workflow) and the service to deploy. It validates the
-# input, deploys through deploy-aws.yaml, then creates a GitHub release tagged
-# <tag>-<service> (<tag>.all when every service is deployed): a release for prod, a
-# pre-release for stg. Shared infrastructure (network,
-# Postgres, Redis, API Gateway) is provisioned by the deployment itself.
+# Manual release of one backend service (auth, api, game or the noti email Lambda), or all
+# of them. Give it the tag the Docker images were built with (the "Build and Push Docker
+# Image" workflow) and the service to deploy. It validates the input, deploys through
+# deploy-aws.yaml, then creates a GitHub release tagged <tag>.<service> (<tag>.all when every
+# service is deployed): a release for prod, a pre-release for stg. Shared infrastructure
+# (network, Postgres, Redis, API Gateway) is provisioned by the deployment itself.
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ on:
         required: true
         type: string
       service:
-        description: "Service to deploy (all = auth, api and game)"
+        description: "Service to deploy (all = auth, api, game and noti)"
         required: true
         type: choice
         options:
@@ -23,6 +23,7 @@ on:
           - auth
           - api
           - game
+          - noti
       environment:
         description: "Environment to deploy to"
         required: true
@@ -77,7 +78,7 @@ jobs:
           fi
 
           if [[ "$SERVICE" == "all" ]]; then
-            SERVICES="auth api game"
+            SERVICES="auth api game noti"
             RELEASE_TAG="${TAG}.all"
           else
             SERVICES="$SERVICE"
@@ -85,7 +86,9 @@ jobs:
           fi
 
           # Fail now, not halfway through a deployment, if an image was never pushed.
+          # noti is a Lambda built from the tagged source, so it has no image.
           for service in $SERVICES; do
+            if [[ "$service" == "noti" ]]; then continue; fi
             image="ghcr.io/halng/oopsly-${service}:${TAG}"
             if ! docker manifest inspect "$image" >/dev/null 2>&1; then
               echo "Error: ${image} was not found. Build it with the same tag first."
@@ -117,7 +120,6 @@ jobs:
     permissions:
       contents: read
       packages: read
-      id-token: write
     secrets: inherit
 
   create-release:

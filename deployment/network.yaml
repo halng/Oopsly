@@ -228,6 +228,28 @@ Resources:
       LogGroupName: !Sub /oopsly/${Environment}
       RetentionInDays: 14
 
+  # ---------------------------------------------------------------- email
+  # Services publish email events here; the noti Lambda (noti.yaml) consumes them. Messages
+  # that fail three times land in the dead-letter queue for inspection.
+  NotiDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub oopsly-noti-${Environment}-dlq
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+
+  NotiQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub oopsly-noti-${Environment}
+      # At least six times the Lambda timeout, as Lambda recommends.
+      VisibilityTimeout: 180
+      MessageRetentionPeriod: 86400
+      SqsManagedSseEnabled: true
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt NotiDeadLetterQueue.Arn
+        maxReceiveCount: 3
+
   # ------------------------------------------------------------ containers
   Cluster:
     Type: AWS::ECS::Cluster
@@ -419,6 +441,14 @@ Outputs:
     Value: !GetAtt GameRepository.RepositoryUri
     Export:
       Name: !Sub ${AWS::StackName}-GameRepositoryUri
+  NotiQueueUrl:
+    Value: !Ref NotiQueue
+    Export:
+      Name: !Sub ${AWS::StackName}-NotiQueueUrl
+  NotiQueueArn:
+    Value: !GetAtt NotiQueue.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-NotiQueueArn
   LogGroupName:
     Value: !Ref LogGroup
     Export:

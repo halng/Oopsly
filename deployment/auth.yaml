@@ -61,6 +61,14 @@ Resources:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
       Policies:
+        - PolicyName: noti
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: sqs:SendMessage
+                Resource:
+                  Fn::ImportValue: !Sub ${NetworkStackName}-NotiQueueArn
         - PolicyName: avatars
           PolicyDocument:
             Version: "2012-10-17"
@@ -122,6 +130,11 @@ Resources:
               Value:
                 Fn::ImportValue: !Sub ${NetworkStackName}-AvatarBucketName
             - Name: AVATAR_REGION
+              Value: !Ref AWS::Region
+            - Name: NOTI_QUEUE_URL
+              Value:
+                Fn::ImportValue: !Sub ${NetworkStackName}-NotiQueueUrl
+            - Name: NOTI_REGION
               Value: !Ref AWS::Region
           Secrets:
             - Name: DB_PASSWORD

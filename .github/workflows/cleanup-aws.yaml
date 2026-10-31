@@ -1,11 +1,12 @@
 name: Clean up AWS
 
 # Deletes AWS stacks of one environment to save cost, for example after testing a backend
-# deployment. Stacks go in reverse dependency order (game, api, auth, network); see
+# deployment. Stacks go in reverse dependency order (noti, game, api, auth, network); see
 # deployment/cleanup.sh. Type the environment name into `confirm` to proceed.
 #
-# Uses the same GitHub Environment config as deploy-aws.yaml (secret AWS_ROLE_ARN); the
-# role also needs cloudformation:DeleteStack and secretsmanager:DeleteSecret.
+# Uses the same GitHub Environment config as deploy-aws.yaml (secrets AWS_ACCESS_KEY_ID
+# and AWS_SECRET_ACCESS_KEY); the IAM user also needs cloudformation:DeleteStack and
+# secretsmanager:DeleteSecret.
 
 on:
   workflow_dispatch:
@@ -27,6 +28,7 @@ on:
           - game
           - api
           - auth
+          - noti
           - network
         default: all
       confirm:
@@ -44,7 +46,6 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   validate-inputs:
@@ -73,7 +74,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ inputs.aws_region }}
 
       - name: Delete stacks
