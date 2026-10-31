@@ -1,9 +1,11 @@
 name: Release
 
-# Manual release. Give it the tag the Docker images were built with (the "Build and Push
-# Docker Image" workflow); it creates the GitHub release for that tag, then deploys the
-# selected services. Shared infrastructure (network, Postgres, Redis, API Gateway) is
-# provisioned by the deployment itself.
+# Manual release of one backend service, or all of them. Give it the tag the Docker images
+# were built with (the "Build and Push Docker Image" workflow) and the service to deploy. It validates the
+# input, deploys through deploy-aws.yaml, then creates a GitHub release tagged
+# <tag>-<service> (<tag>.all when every service is deployed): a release for prod, a
+# pre-release for stg. Shared infrastructure (network,
+# Postgres, Redis, API Gateway) is provisioned by the deployment itself.
 
 on:
   workflow_dispatch:
@@ -12,6 +14,15 @@ on:
         description: "Tag used to build the Docker images, for example v1a2b3c4"
         required: true
         type: string
+      service:
+        description: "Service to deploy (all = auth, api and game)"
+        required: true
+        type: choice
+        options:
+          - all
+          - auth
+          - api
+          - game
       environment:
         description: "Environment to deploy to"
         required: true
@@ -20,21 +31,6 @@ on:
           - stg
           - prod
         default: stg
-      authService:
-        description: "Deploy the auth service"
-        required: true
-        type: boolean
-        default: false
-      apiService:
-        description: "Deploy the API service"
-        required: true
-        type: boolean
-        default: false
-      gameService:
-        description: "Deploy the game service"
-        required: true
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -46,10 +42,11 @@ concurrency:
 
 jobs:
   validate-inputs:
-    name: Validate ${{ inputs.tag }}
+    name: Validate ${{ inputs.tag }} (${{ inputs.service }})
     runs-on: ubuntu-latest
     outputs:
       services: ${{ steps.check.outputs.services }}
+      release-tag: ${{ steps.check.outputs.release_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,13 +61,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check the tag, the selection and the images
+      - name: Check the tag and the images
         id: check
         env:
           TAG: ${{ inputs.tag }}
-          AUTH: ${{ inputs.authService }}
-          API: ${{ inputs.apiService }}
-          GAME: ${{ inputs.gameService }}
+          SERVICE: ${{ inputs.service }}
         run: |
           if [[ ! "$TAG" =~ ^v[A-Za-z0-9._-]+$ ]]; then
             echo "Error: tag must look like v1a2b3c4."
@@ -81,13 +76,12 @@ jobs:
             exit 1
           fi
 
-          SERVICES=""
-          [[ "$AUTH" == "true" ]] && SERVICES="${SERVICES:+$SERVICES }auth"
-          [[ "$API" == "true" ]] && SERVICES="${SERVICES:+$SERVICES }api"
-          [[ "$GAME" == "true" ]] && SERVICES="${SERVICES:+$SERVICES }game"
-          if [[ -z "$SERVICES" ]]; then
-            echo "Error: select at least one service to deploy."
-            exit 1
+          if [[ "$SERVICE" == "all" ]]; then
+            SERVICES="auth api game"
+            RELEASE_TAG="${TAG}.all"
+          else
+            SERVICES="$SERVICE"
+            RELEASE_TAG="${TAG}.${SERVICE}"
           fi
 
           # Fail now, not halfway through a deployment, if an image was never pushed.
@@ -100,67 +94,66 @@ jobs:
           done
 
           echo "services=${SERVICES}" >> "$GITHUB_OUTPUT"
-          {
-            echo "## Release ${TAG} to ${{ inputs.environment }}"
-            echo
-            echo "- Backend services: ${SERVICES:-none}"
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "## Release ${RELEASE_TAG} to ${{ inputs.environment }}" >> "$GITHUB_STEP_SUMMARY"
 
-  create-release:
-    name: Create release ${{ inputs.tag }}
+  approve:
+    name: Approve ${{ inputs.environment }} deployment
     needs: validate-inputs
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Create the GitHub release if it does not exist yet
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          TAG: ${{ inputs.tag }}
-          TARGET_ENV: ${{ inputs.environment }}
-        run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release ${TAG} already exists; reusing it."
-            exit 0
-          fi
-          # Staging releases stay pre-releases until the tag reaches prod.
-          FLAGS=(--verify-tag --title "$TAG" --generate-notes)
-          [[ "$TARGET_ENV" == "prod" ]] || FLAGS+=(--prerelease)
-          gh release create "$TAG" "${FLAGS[@]}"
-
-  deploy:
     environment:
       name: ${{ inputs.environment }}_approval
-    runs-on: ubuntu-latest
-    name: Deploy ${{ needs.validate-inputs.outputs.services }} to ${{ inputs.environment }} environment
-    needs: [validate-inputs, create-release]
-    if: ${{ needs.validate-inputs.outputs.services != '' }}
     steps:
-      - uses: ./.github/workflows/deploy-aws.yaml
-        with:
-          git_tag: ${{ inputs.tag }}
-          env: ${{ inputs.environment }}
-          services: ${{ needs.validate-inputs.outputs.services }}
+      - run: echo "Approved ${{ inputs.service }} ${{ inputs.tag }} for ${{ inputs.environment }}"
+
+  deploy:
+    name: Deploy ${{ inputs.service }} to ${{ inputs.environment }} environment
+    needs: approve
+    uses: ./.github/workflows/deploy-aws.yaml
+    with:
+      git_tag: ${{ inputs.tag }}
+      env: ${{ inputs.environment }}
+      services: ${{ needs.validate-inputs.outputs.services }}
     permissions:
       contents: read
       packages: read
       id-token: write
     secrets: inherit
 
-  publish-release:
-    name: Promote release ${{ inputs.tag }}
-    needs: [deploy]
-    if: >-
-      ${{ always() && inputs.environment == 'prod' &&
-      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+  create-release:
+    name: Create release ${{ needs.validate-inputs.outputs.release-tag }}
+    needs: [validate-inputs, deploy]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Mark the release as latest
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Create the GitHub release, or update it if the service was redeployed
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ inputs.tag }}
-        run: gh release edit "$TAG" --prerelease=false --latest
+          SERVICE: ${{ inputs.service }}
+          RELEASE_TAG: ${{ needs.validate-inputs.outputs.release-tag }}
+          TARGET_ENV: ${{ inputs.environment }}
+        run: |
+          if [[ "$TARGET_ENV" == "prod" ]]; then
+            KIND="--prerelease=false"
+          else
+            KIND="--prerelease"
+          fi
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release ${RELEASE_TAG} already exists; updating it for ${TARGET_ENV}."
+            gh release edit "$RELEASE_TAG" "$KIND"
+          else
+            # The release tag is created on the commit the images were built from.
+            gh release create "$RELEASE_TAG" "$KIND" \
+              --target "$(git rev-list -n 1 "refs/tags/${TAG}")" \
+              --title "${SERVICE} ${TAG}" --generate-notes
+          fi

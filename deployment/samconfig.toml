@@ -45,5 +45,5 @@ resolve_s3 = true
 s3_prefix = "oopsly-network-stg"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "Environment=\"stg\" DbEngineVersion=\"18.6\" DbInstanceClass=\"db.t4g.micro\" RedisEngineVersion=\"7.1\" RedisNodeType=\"cache.t4g.micro\" AllowedOrigins=\"https://oopsly-web.vercel.app/\""
+parameter_overrides = "Environment=\"stg\" DbEngineVersion=\"18.6\" DbInstanceClass=\"db.t4g.micro\" RedisEngineVersion=\"7.1\" RedisNodeType=\"cache.t4g.micro\" AllowedOrigins=\"https://oopsly-web.vercel.app\""
 image_repositories = []

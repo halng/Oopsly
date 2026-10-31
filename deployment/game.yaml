@@ -29,12 +29,6 @@ Parameters:
     Description: Stack created from auth.yaml (its JWKS and base URL are imported).
 
 Resources:
-  LogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /ecs/oopsly-game-${Environment}
-      RetentionInDays: 14
-
   ExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -94,9 +88,10 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Ref LogGroup
+              awslogs-group:
+                Fn::ImportValue: !Sub ${NetworkStackName}-LogGroupName
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: ecs
+              awslogs-stream-prefix: game
 
   # Internal: only the API Gateway VPC link and other tasks can reach it.
   AlbSecurityGroup:

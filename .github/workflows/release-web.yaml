@@ -1,48 +1,116 @@
 name: Deploy Frontend
 
+# Manual release of the web app, which is hosted on Vercel (no backend involved). It
+# validates the input, deploys, then creates a GitHub release tagged <tag>-web: a release
+# for prod, a pre-release for stg.
+
 on:
   workflow_dispatch:
     inputs:
       git_hash:
-        required: false
-        type: string
-      env:
+        description: "Commit hash or tag to deploy, for example v1a2b3c4"
         required: true
         type: string
+      env:
+        description: "Environment to deploy to"
+        required: true
+        type: choice
+        options:
+          - stg
+          - prod
+        default: stg
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-web-${{ inputs.env }}
+  cancel-in-progress: false
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     outputs:
-      release-ref: ${{ steps.check.outputs.tag }}
+      release-ref: ${{ steps.check.outputs.ref }}
+      release-tag: ${{ steps.check.outputs.release_tag }}
     steps:
       - name: Check deployment parameters
         id: check
+        env:
+          GIT_HASH: ${{ inputs.git_hash }}
         run: |
-          if [[ -z "${{ inputs.git_hash }}" ]]; then
+          if [[ -z "$GIT_HASH" ]]; then
             echo "Error: git_hash must be provided."
             exit 1
           fi
+          if [[ ! "$GIT_HASH" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "Error: git_hash may only contain letters, digits, '.', '_' and '-'."
+            exit 1
+          fi
 
-          echo "tag=${{ inputs.git_hash }}" >> $GITHUB_OUTPUT
+          # The bupu workflow tags builds v<first 7 chars of the sha>; accept either form.
+          if [[ "$GIT_HASH" == v* ]]; then
+            TAG="$GIT_HASH"
+          else
+            TAG="v${GIT_HASH::7}"
+          fi
+          echo "ref=${GIT_HASH}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${TAG}-web" >> "$GITHUB_OUTPUT"
+
   deploy:
     environment:
       name: ${{ inputs.env }}_approval
     runs-on: ubuntu-latest
     needs: validate
-    if: ${{ needs.validate.outputs.release-ref != '' && needs.validate.outputs.release-ref != 'null' }}
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ needs.validate.outputs.release-ref }}
+      - name: Resolve the commit being deployed
+        id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Deploy to Vercel to ${{ inputs.env }}
+        env:
+          TARGET_ENV: ${{ inputs.env }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           npm install -g vercel
           # If env is prod, use --prod flag
-          if [ "${{ inputs.env }}" == "prod" ]; then
-            vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
+          if [ "$TARGET_ENV" == "prod" ]; then
+            vercel --prod --token "$VERCEL_TOKEN"
           else
-            vercel --yes --token ${{ secrets.VERCEL_TOKEN }}
+            vercel --yes --token "$VERCEL_TOKEN"
           fi
         working-directory: ./app/web
+
+  create-release:
+    name: Create release ${{ needs.validate.outputs.release-tag }}
+    needs: [validate, deploy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create the GitHub release, or update it if the web app was redeployed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.validate.outputs.release-tag }}
+          SHA: ${{ needs.deploy.outputs.sha }}
+          TARGET_ENV: ${{ inputs.env }}
+        run: |
+          if [[ "$TARGET_ENV" == "prod" ]]; then
+            KIND="--prerelease=false"
+          else
+            KIND="--prerelease"
+          fi
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release ${RELEASE_TAG} already exists; updating it for ${TARGET_ENV}."
+            gh release edit "$RELEASE_TAG" "$KIND"
+          else
+            gh release create "$RELEASE_TAG" "$KIND" --target "$SHA" \
+              --title "web ${RELEASE_TAG%-web}" --generate-notes
+          fi

@@ -6,6 +6,7 @@
 # With no stack names it deploys everything in dependency order:
 #   network -> (copy images to ECR) -> auth -> api -> game
 #
+# ALLOWED_ORIGINS only applies to prod; every other environment allows all origins.
 # <image-tag> is the tag the bupu workflow pushed, e.g. v1a2b3c4.
 # Honors AWS_PROFILE / AWS_REGION. DESIRED_COUNT (default 2) sets tasks per service.
 set -euo pipefail
@@ -17,7 +18,13 @@ shift 2
 STACKS=("$@")
 [[ ${#STACKS[@]} -gt 0 ]] || STACKS=(network auth api game)
 
-ORIGINS="${ALLOWED_ORIGINS:-https://oopsly-web.vercel.app/}"
+# Browsers send `Origin` without a trailing slash and the services compare it exactly, so
+# strip slashes and spaces. Anything but prod allows every origin (stg URLs change often).
+if [[ "$ENVIRONMENT" == "prod" ]]; then
+  ORIGINS="$(tr -d ' ' <<<"${ALLOWED_ORIGINS:-https://oopsly-web.vercel.app}" | sed -E 's#/+(,|$)#\1#g')"
+else
+  ORIGINS="*"
+fi
 COUNT="${DESIRED_COUNT:-2}"
 NETWORK_STACK="oopsly-network-${ENVIRONMENT}"
 AUTH_STACK="oopsly-auth-${ENVIRONMENT}"
@@ -25,6 +32,7 @@ AUTH_STACK="oopsly-auth-${ENVIRONMENT}"
 deploy() {
   local name="$1" overrides="$2"
   echo "==> sam deploy oopsly-${name}-${ENVIRONMENT}"
+  set -f # keep a "*" origin from being globbed when $overrides is split
   sam deploy \
     --template-file "${name}.yaml" \
     --stack-name "oopsly-${name}-${ENVIRONMENT}" \
@@ -34,6 +42,7 @@ deploy() {
     --no-confirm-changeset \
     --no-fail-on-empty-changeset \
     --parameter-overrides $overrides
+  set +f
 }
 
 has_stack() { aws cloudformation describe-stacks --stack-name "$1" >/dev/null 2>&1; }

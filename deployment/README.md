@@ -58,17 +58,27 @@ Run the **Release** workflow (`.github/workflows/release.yaml`) by hand with:
 
 - `tag`: the tag the Docker images were built with, for example `v1a2b3c4` (run
   "Build and Push Docker Image" first; it pushes the images and the tag),
-- `environment`: `stg` or `prod`,
-- which services to deploy: auth, api, game and optionally the web frontend.
+- `service`: `auth`, `api` or `game`,
+- `environment`: `stg` or `prod`.
 
-It then (1) checks that the tag exists and that every selected image is in GHCR, (2) creates
-the GitHub release for the tag (a pre-release for `stg`, reused if it already exists),
-(3) deploys through `deploy-aws.yaml`, and (4) for `prod` marks the release as latest.
+It then (1) checks that the tag exists and the service image is in GHCR, (2) waits for the
+`<env>_approval` environment and deploys through `deploy-aws.yaml`, and (3) creates the
+GitHub release `<tag>-<service>` (for example `v1a2b3c4-api`): a release for `prod`, a
+pre-release for `stg`. The web app has its own **Deploy Frontend** workflow
+(`release-web.yaml`, Vercel) with the same release logic and the suffix `-web`.
 
 `deploy-aws.yaml` always applies the shared `network` stack first (VPC, subnets, Postgres,
-Redis, API Gateway, ECR; a no-op once it exists), then only the selected services. `api`
+Redis, API Gateway, ECR; a no-op once it exists), then the selected service. `api`
 and `game` need the `auth` stack to exist in that environment, so deploy `auth` first on a
 new environment; `deploy.sh` stops with a clear message otherwise.
+
+## Clean up
+
+Run the **Clean up AWS** workflow (`cleanup-aws.yaml`), or `./cleanup.sh <env> [stacks]`,
+to delete stacks and stop paying for them. Stacks go in reverse order (game, api, auth,
+network); `all` removes everything. The final Postgres snapshot is kept (remove it by hand if the
+data is not needed). The avatar bucket `oopsly-avatar-<env>` is deleted for every
+environment except `prod`, because its fixed name would block the next deploy.
 
 Per GitHub Environment (`stg`, `prod`):
 
@@ -94,6 +104,8 @@ Validate the templates without AWS access: `uvx cfn-lint *.yaml` (or `sam valida
   IP, to pull from ECR); security groups only admit the VPC link, the ALBs and the tasks.
   Move to private subnets plus a NAT or VPC endpoints if policy requires it.
 - **CORS** is handled by the services (`AllowedOrigins` / `CorsOrigins`), not by API Gateway.
+  `prod` allows only `ALLOWED_ORIGINS` (trailing slashes are stripped; the origin must have
+  none); every other environment allows `*`.
 - **One Postgres instance** (`oopsly` database) is shared; auth uses its own schema, and
   the auth and game containers run their Alembic migrations on start. The database is
   snapshotted on stack deletion.
