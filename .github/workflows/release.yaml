@@ -111,7 +111,7 @@ jobs:
 
   deploy:
     name: Deploy ${{ inputs.service }} to ${{ inputs.environment }} environment
-    needs: approve
+    needs: [approve, validate-inputs]
     uses: ./.github/workflows/deploy-aws.yaml
     with:
       git_tag: ${{ inputs.tag }}
