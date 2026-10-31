@@ -19,6 +19,10 @@ on:
           - stg
           - prod
         default: stg
+      api_gateway_url:
+        description: "API Gateway URL for the frontend to use"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -72,6 +76,16 @@ jobs:
       - name: Resolve the commit being deployed
         id: sha
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Create .env file
+        run: |
+          echo "NEXT_PUBLIC_API_URL=${API_GATEWAY_URL}/api/oopsly" >> .env
+          echo "NEXT_PUBLIC_AUTH_URL=${API_GATEWAY_URL}/api/auth" >> .env
+          
+          echo "Contents of .env:"
+          cat .env
+        env:
+          API_GATEWAY_URL: ${{ inputs.api_gateway_url }}
+        working-directory: ./app/web
       - name: Deploy to Vercel to ${{ inputs.env }}
         env:
           TARGET_ENV: ${{ inputs.env }}
