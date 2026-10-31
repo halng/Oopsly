@@ -16,6 +16,7 @@ Internet -> HTTP API --VPC link--> internal ALB (per service) -> 2 Fargate tasks
 | `auth.yaml` | auth service: ECS service (2 tasks), internal ALB, API routes |
 | `api.yaml` | Java API: same shape; reads the auth stack's internal URLs |
 | `game.yaml` | game service: same shape |
+| `noti.yaml` | noti Lambda (sends emails from the SQS queue that `network.yaml` creates) and its SMTP secret |
 | `deploy.sh` | runs `sam deploy` for the stacks in order and copies images to ECR |
 | `scripts/copy-images.sh` | copies `ghcr.io/halng/oopsly-*:<tag>` into ECR |
 
@@ -58,7 +59,7 @@ Run the **Release** workflow (`.github/workflows/release.yaml`) by hand with:
 
 - `tag`: the tag the Docker images were built with, for example `v1a2b3c4` (run
   "Build and Push Docker Image" first; it pushes the images and the tag),
-- `service`: `auth`, `api` or `game`,
+- `service`: `auth`, `api`, `game`, `noti` (the email Lambda, see `app/noti`) or `all`,
 - `environment`: `stg` or `prod`.
 
 It then (1) checks that the tag exists and the service image is in GHCR, (2) waits for the
@@ -84,7 +85,11 @@ Per GitHub Environment (`stg`, `prod`):
 
 | Kind | Name | Value |
 |---|---|---|
-| secret | `AWS_ROLE_ARN` | IAM role the workflow assumes through OIDC (needs CloudFormation, ECS, ECR, EC2, ELB, RDS, ElastiCache, API Gateway, IAM, Secrets Manager, Logs and S3 for the SAM bucket) |
+| secret | `AWS_ACCESS_KEY_ID` | Access key ID of an IAM user (needs CloudFormation, ECS, ECR, EC2, ELB, RDS, ElastiCache, API Gateway, IAM, Secrets Manager, Logs and S3 for the SAM bucket) |
+| secret | `AWS_SECRET_ACCESS_KEY` | Secret access key of the same IAM user |
+| variable | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_FROM` | mail server the noti Lambda sends through (`SMTP_FROM` like `Oopsly <no-reply@example.com>`) |
+| secret | `SMTP_PASSWORD` | password of the SMTP user |
+| variable | `APP_URL` | web app address used for links in emails (optional) |
 | variable | `ALLOWED_ORIGINS` | comma-separated browser origins for CORS |
 
 Add required reviewers on the `prod` environment to gate production deployments.

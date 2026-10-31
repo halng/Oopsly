@@ -66,9 +66,6 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -91,7 +88,6 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     private final UserProgressService userProgressService;
 
     @Override
-    @CacheEvict(value = "testSuites", key = "#deckId + ':all'")
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID deckId, TestSuiteReq request) {
         log.info("Creating test suite for shelve {}", deckId);
@@ -106,11 +102,6 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
-    @Caching(
-            evict = {
-                @CacheEvict(value = "testSuites", key = "#deckId + ':' + #testSuiteId"),
-                @CacheEvict(value = "testSuites", key = "#deckId + ':all'")
-            })
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(UUID deckId, UUID testSuiteId, TestSuiteReq request) {
         log.info("Updating test suite {} for shelve {}", testSuiteId, deckId);
@@ -131,11 +122,6 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
-    @Caching(
-            evict = {
-                @CacheEvict(value = "testSuites", key = "#deckId + ':' + #testSuiteId"),
-                @CacheEvict(value = "testSuites", key = "#deckId + ':all'")
-            })
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID deckId, UUID testSuiteId) {
         log.info("Deleting test suite {} for shelve {}", testSuiteId, deckId);
@@ -150,7 +136,6 @@ public class TestSuiteServiceImpl implements TestSuiteService {
 
     @Override
     @Transactional
-    @Cacheable(value = "testSuites", key = "#deckId + ':' + #testSuiteId")
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "getByIdFallback")
     public ApiRes getById(UUID deckId, UUID testSuiteId) {
         log.info("Fetching test suite {} for shelve {}", testSuiteId, deckId);
@@ -162,7 +147,6 @@ public class TestSuiteServiceImpl implements TestSuiteService {
 
     @Override
     @Transactional
-    @Cacheable(value = "testSuites", key = "#shelveId + ':all'")
     @CircuitBreaker(
             name = "testSuiteServiceCircuitBreaker",
             fallbackMethod = "getAllByShelveFallback")
@@ -270,11 +254,6 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     }
 
     @Override
-    @Caching(
-            evict = {
-                @CacheEvict(value = "testSuites", key = "#shelveId + ':' + #testSuiteId"),
-                @CacheEvict(value = "testSuites", key = "#shelveId + ':all'")
-            })
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "submitFallback")
     @Transactional
     public ApiRes submit(UUID shelveId, UUID testSuiteId, TestSubmissionReq request) {
@@ -546,7 +525,6 @@ public class TestSuiteServiceImpl implements TestSuiteService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "testSuites", allEntries = true)
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "cloneSuiteFallback")
     public ApiRes cloneSuite(UUID testSuiteId, UUID shelfId) {
         log.info("Cloning public test suite {} for user {}", testSuiteId, currentUser.id());

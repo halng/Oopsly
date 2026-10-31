@@ -40,9 +40,6 @@ import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -57,12 +54,6 @@ public class QuestionServiceImpl implements QuestionService {
     private final CurrentUser currentUser;
 
     @Override
-    @Caching(
-            evict = {
-                @CacheEvict(value = "questions", key = "#testSuiteId + ':all'"),
-                @CacheEvict(value = "testSuites", key = "#shelveId + ':all'"),
-                @CacheEvict(value = "testSuites", key = "#shelveId + ':' + #testSuiteId")
-            })
     @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID shelveId, UUID testSuiteId, QuestionReq request) {
         log.info("Creating question for test suite {}", testSuiteId);
@@ -76,12 +67,6 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    @Caching(
-            evict = {
-                @CacheEvict(value = "questions", key = "#testSuiteId + ':all'"),
-                @CacheEvict(value = "testSuites", key = "#shelveId + ':all'"),
-                @CacheEvict(value = "testSuites", key = "#shelveId + ':' + #testSuiteId")
-            })
     @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "createBulkFallback")
     public ApiRes createBulk(UUID shelveId, UUID testSuiteId, BulkQuestionReq request) {
         log.info(
@@ -107,11 +92,6 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    @Caching(
-            evict = {
-                @CacheEvict(value = "questions", key = "#testSuiteId + ':' + #questionId"),
-                @CacheEvict(value = "questions", key = "#testSuiteId + ':all'")
-            })
     @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(UUID shelveId, UUID testSuiteId, UUID questionId, QuestionReq request) {
         log.info("Updating question {} for test suite {}", questionId, testSuiteId);
@@ -125,13 +105,6 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    @Caching(
-            evict = {
-                @CacheEvict(value = "questions", key = "#testSuiteId + ':' + #questionId"),
-                @CacheEvict(value = "questions", key = "#testSuiteId + ':all'"),
-                @CacheEvict(value = "testSuites", key = "#shelveId + ':all'"),
-                @CacheEvict(value = "testSuites", key = "#shelveId + ':' + #testSuiteId")
-            })
     @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID shelveId, UUID testSuiteId, UUID questionId) {
         log.info("Deleting question {} for test suite {}", questionId, testSuiteId);
@@ -155,7 +128,6 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    @Cacheable(value = "questions", key = "#testSuiteId + ':all'")
     @CircuitBreaker(
             name = "questionServiceCircuitBreaker",
             fallbackMethod = "getAllByTestSuiteFallback")

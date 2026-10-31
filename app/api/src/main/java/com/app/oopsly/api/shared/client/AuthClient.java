@@ -47,6 +47,8 @@ public class AuthClient {
     static final int MAX_IDS_PER_CALL = 200;
     private static final String INTERNAL_KEY_HEADER = "X-Internal-Key";
     private static final String LOOKUP_PATH = "/internal/v1/users/lookup";
+    private static final String COMMUNITY_INVITE_PATH =
+            "/internal/v1/notifications/community-invite";
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
@@ -108,6 +110,28 @@ public class AuthClient {
     @CircuitBreaker(name = CircuitBreakerNames.AUTH_CLIENT, fallbackMethod = "lookupFallback")
     public AuthProfile lookup(UUID id) {
         return lookupAll(List.of(id)).get(id);
+    }
+
+    /**
+     * Asks the auth service (which owns user emails) to tell a user they were added to a community.
+     * Best effort: a failure is logged and never fails the invite.
+     */
+    public void notifyCommunityInvite(UUID userId, String communityName, String inviterName) {
+        try {
+            restClient
+                    .post()
+                    .uri(COMMUNITY_INVITE_PATH)
+                    .header(INTERNAL_KEY_HEADER, internalKey)
+                    .body(
+                            Map.of(
+                                    "userId", userId.toString(),
+                                    "communityName", communityName,
+                                    "inviterName", inviterName))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RuntimeException e) {
+            log.warn("Could not queue the community invite email: {}", e.toString());
+        }
     }
 
     @SuppressWarnings("unused")

@@ -10,7 +10,7 @@ TIME_RE = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
 BYDAY = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"]
 EVENT_MINUTES = 30
 ALARM_MINUTES = 10
-SUMMARY = "Study on Oopsly"
+SUMMARY = "Learning on Oopsly"
 DESCRIPTION = "Time for your Oopsly review. Keep your streak going!"
 
 

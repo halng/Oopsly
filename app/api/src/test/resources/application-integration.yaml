@@ -17,8 +17,6 @@ server:
 spring:
   main:
     allow-bean-definition-overriding: true
-  cache:
-    type: none
   datasource:
     url: jdbc:h2:mem:oopsly_integration;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;NON_KEYWORDS=INTERVAL,VALUE,YEAR,MONTH,DAY
     driver-class-name: org.h2.Driver

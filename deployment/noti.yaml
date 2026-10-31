@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >-
+  Oopsly noti service: a Lambda that reads email events from the shared SQS queue and
+  sends them over SMTP (OTP codes, welcome, community invites, study calendar events).
+  Needs the network stack, which owns the queue.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: stg
+    AllowedPattern: "[a-z0-9-]+"
+  NetworkStackName:
+    Type: String
+    Default: oopsly-network-stg
+    Description: Stack created from network.yaml (the queue is imported).
+  AppUrl:
+    Type: String
+    Default: https://oopsly-web.vercel.app
+    Description: Web app address used for links in emails.
+
+Resources:
+  # Holds host, port, username, password and from_email as JSON. Created with a placeholder;
+  # deploy.sh fills it from the SMTP_* variables, and later deploys leave the value alone.
+  SmtpSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub oopsly-${Environment}-smtp
+      SecretString: '{"host":"","port":587,"username":"","password":"","from_email":""}'
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/oopsly-noti-${Environment}
+      RetentionInDays: 14
+
+  Function:
+    Type: AWS::Serverless::Function
+    DependsOn: LogGroup
+    Properties:
+      FunctionName: !Sub oopsly-noti-${Environment}
+      Description: Sends Oopsly emails from the noti queue
+      CodeUri: ../app/noti/
+      Handler: noti.handler.handler
+      Runtime: python3.12
+      Architectures: [arm64]
+      MemorySize: 256
+      Timeout: 30
+      Environment:
+        Variables:
+          SMTP_SECRET_ARN: !Ref SmtpSecret
+          APP_URL: !Ref AppUrl
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: secretsmanager:GetSecretValue
+              Resource: !Ref SmtpSecret
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            Queue:
+              Fn::ImportValue: !Sub ${NetworkStackName}-NotiQueueArn
+            BatchSize: 10
+            MaximumBatchingWindowInSeconds: 1
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
+
+Outputs:
+  FunctionName:
+    Value: !Ref Function
+  SmtpSecretArn:
+    Value: !Ref SmtpSecret

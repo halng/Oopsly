@@ -98,6 +98,41 @@ class AuthClientTest {
     }
 
     @Test
+    void notifyCommunityInvite_postsTheInviteWithTheInternalKey() throws Exception {
+        AtomicReference<String> keyHeader = new AtomicReference<>();
+        AtomicReference<String> requestBody = new AtomicReference<>();
+        server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext(
+                "/api/auth/internal/v1/notifications/community-invite",
+                exchange -> {
+                    keyHeader.set(exchange.getRequestHeaders().getFirst("X-Internal-Key"));
+                    requestBody.set(
+                            new String(
+                                    exchange.getRequestBody().readAllBytes(),
+                                    StandardCharsets.UTF_8));
+                    exchange.sendResponseHeaders(200, -1);
+                    exchange.close();
+                });
+        server.start();
+        AuthClient client =
+                clientFor("http://127.0.0.1:" + server.getAddress().getPort() + "/api/auth");
+        UUID userId = UUID.randomUUID();
+
+        client.notifyCommunityInvite(userId, "Math Club", "Bo");
+
+        assertEquals("secret-key", keyHeader.get());
+        assertTrue(requestBody.get().contains(userId.toString()));
+        assertTrue(requestBody.get().contains("Math Club"));
+    }
+
+    @Test
+    void notifyCommunityInvite_neverThrowsWhenAuthIsUnreachable() {
+        AuthClient client = clientFor("http://127.0.0.1:1/api/auth");
+
+        assertDoesNotThrow(() -> client.notifyCommunityInvite(UUID.randomUUID(), "Club", "Bo"));
+    }
+
+    @Test
     void lookup_whenAuthIsUnreachable_throwsSoTheCircuitBreakerFallbackCanTakeOver() {
         AuthClient client = clientFor("http://127.0.0.1:1/api/auth");
 

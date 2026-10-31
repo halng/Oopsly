@@ -1,0 +1,56 @@
+name: CI Noti
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+    branches:
+      - main
+    paths:
+      - "app/noti/**"
+      - ".github/workflows/ci-noti.yaml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "app/noti/**"
+      - ".github/workflows/ci-noti.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-noti-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci-noti:
+    name: CI Noti
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/noti
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: app/noti/pyproject.toml
+
+      - name: Install dependencies
+        run: pip install ".[dev]"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Format
+        run: ruff format --check .
+
+      # Fails below 90% (pyproject.toml).
+      - name: Test with coverage
+        run: python -m pytest -q --cov=noti --cov-report=term-missing

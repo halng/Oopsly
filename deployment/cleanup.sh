@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Deletes Oopsly stacks from AWS to stop paying for them.
 #
-#   ./cleanup.sh <env> [network|auth|api|game|all ...]
+#   ./cleanup.sh <env> [network|auth|api|game|noti|all ...]
 #
-# Stacks are deleted in reverse dependency order (game, api, auth, network), whatever the
+# Stacks are deleted in reverse dependency order (noti, game, api, auth, network), whatever the
 # order of the arguments. `all` is every stack. Deleting `auth` needs `api` and `game` gone
 # (they import its outputs), and `network` needs every service gone.
 #
@@ -12,7 +12,7 @@
 # its fixed name (oopsly-avatar-<env>) would block the next deploy. Honors AWS_PROFILE / AWS_REGION.
 set -euo pipefail
 
-ENVIRONMENT="${1:?usage: cleanup.sh <env> [network|auth|api|game|all ...]}"
+ENVIRONMENT="${1:?usage: cleanup.sh <env> [network|auth|api|game|noti|all ...]}"
 shift
 REQUESTED=("$@")
 [[ ${#REQUESTED[@]} -gt 0 ]] || REQUESTED=(all)
@@ -22,12 +22,12 @@ has_stack() { aws cloudformation describe-stacks --stack-name "$1" >/dev/null 2>
 
 for stack in "${REQUESTED[@]}"; do
   case "$stack" in
-    network | auth | api | game | all) ;;
-    *) echo "unknown stack: $stack (use network, auth, api, game or all)" >&2; exit 1 ;;
+    network | auth | api | game | noti | all) ;;
+    *) echo "unknown stack: $stack (use network, auth, api, game, noti or all)" >&2; exit 1 ;;
   esac
 done
 
-for service in game api auth network; do
+for service in noti game api auth network; do
   wants "$service" || continue
   name="oopsly-${service}-${ENVIRONMENT}"
   if ! has_stack "$name"; then
@@ -42,7 +42,7 @@ done
 # Secrets Manager keeps deleted secrets for a recovery window, which blocks recreating a
 # secret with the same name on the next deploy. Remove them for good.
 if wants network; then
-  for secret in db internal-key jwt-passphrase game-database-url; do
+  for secret in db internal-key jwt-passphrase game-database-url smtp; do
     aws secretsmanager delete-secret \
       --secret-id "oopsly-${ENVIRONMENT}-${secret}" \
       --force-delete-without-recovery >/dev/null 2>&1 &&

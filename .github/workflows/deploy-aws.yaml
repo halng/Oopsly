@@ -6,8 +6,11 @@ name: Deploy to AWS (SAM)
 # `sam deploy`.
 #
 # Per-environment configuration lives in the GitHub Environment named like `env`:
-#   secret   AWS_ROLE_ARN       role the workflow assumes through OIDC
-#   variable ALLOWED_ORIGINS    comma-separated browser origins (CORS)
+#   secret   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY   IAM user access key
+#   variable ALLOWED_ORIGINS    comma-separated browser origins (CORS, prod only)
+#   variable APP_URL            web app address used for links in emails
+#   variable SMTP_HOST / SMTP_PORT / SMTP_USERNAME / SMTP_FROM, secret SMTP_PASSWORD
+#                               mail server the noti Lambda sends through
 
 on:
   workflow_call:
@@ -27,14 +30,18 @@ on:
       services:
         required: false
         type: string
-        default: auth api game
-        description: Space-separated services to deploy, any of auth, api, game.
+        default: auth api game noti
+        description: Space-separated services to deploy, any of auth, api, game, noti.
       aws_region:
         required: false
         type: string
         default: ap-southeast-1
     secrets:
-      AWS_ROLE_ARN:
+      AWS_ACCESS_KEY_ID:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
+      SMTP_PASSWORD:
         required: false
   workflow_dispatch:
     inputs:
@@ -51,8 +58,8 @@ on:
       services:
         required: false
         type: string
-        default: auth api game
-        description: Space-separated services to deploy, any of auth, api, game.
+        default: auth api game noti
+        description: Space-separated services to deploy, any of auth, api, game, noti.
       aws_region:
         required: false
         type: string
@@ -65,7 +72,6 @@ concurrency:
 permissions:
   contents: read
   packages: read
-  id-token: write
 
 jobs:
   validate-inputs:
@@ -99,8 +105,8 @@ jobs:
           SELECTED=""
           for service in $SERVICES; do
             case "$service" in
-              auth|api|game) SELECTED="${SELECTED:+$SELECTED }$service" ;;
-              *) echo "Error: unknown service '$service' (use auth, api, game)."; exit 1 ;;
+              auth|api|game|noti) SELECTED="${SELECTED:+$SELECTED }$service" ;;
+              *) echo "Error: unknown service '$service' (use auth, api, game, noti)."; exit 1 ;;
             esac
           done
           if [[ -z "$SELECTED" ]]; then
@@ -138,7 +144,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ inputs.aws_region }}
 
       - name: Log in to GitHub Container Registry
@@ -155,6 +162,12 @@ jobs:
           IMAGE_TAG: ${{ needs.validate-inputs.outputs.image-tag }}
           SERVICES: ${{ needs.validate-inputs.outputs.services }}
           ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+          APP_URL: ${{ vars.APP_URL }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          SMTP_USERNAME: ${{ vars.SMTP_USERNAME }}
+          SMTP_FROM: ${{ vars.SMTP_FROM }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           AWS_REGION: ${{ inputs.aws_region }}
         # The network stack is always applied first; services are validated above.
         # shellcheck disable=SC2086

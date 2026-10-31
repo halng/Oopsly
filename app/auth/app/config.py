@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     jwt_key_cache_seconds: int = 60
 
     test_emails: str = ""
+    # SQS queue the noti service reads. Leave empty to turn emails off.
+    noti_queue_url: str = ""
+    noti_region: str = ""
     internal_api_key: str = "Jtz+A7HbztjSTpiLI0FZXd2NffOnP2wm0KGbwfDnFAo="
 
     # Profile pictures: leave the bucket empty to turn avatar uploads off.
