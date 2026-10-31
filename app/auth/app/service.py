@@ -121,13 +121,7 @@ class AuthService:
             return
         code = self.otp.issue(email)
 
-        def deliver() -> None:
-            try:
-                self.sender.send_otp(email, code)
-            except Exception:
-                logger.exception("failed to send OTP email to %s", mail.mask(email))
-
-        self.run_async(deliver)
+        self._send_async("OTP email", email, lambda: self.sender.send_otp(email, code))
 
     def verify_otp(self, email: str, code: str, name: str) -> dict:
         """Validates the code and, on success, creates the user if needed."""
@@ -150,6 +144,11 @@ class AuthService:
         if user is None:
             user = self._create_user(email, name or email.split("@", 1)[0])
             logger.info("user %s signed up", mail.mask(email))
+            self._send_async(
+                "welcome email",
+                email,
+                lambda: self.sender.send_welcome(email, user.name),
+            )
         logger.info("user %s logged in", mail.mask(email))
         return self._issue_tokens(user)
 
@@ -204,6 +203,17 @@ class AuthService:
         )[0]
 
     # --- users ---
+
+    def _send_async(self, what: str, to: str, deliver: Callable[[], None]) -> None:
+        """Runs a send in the background; a failure is logged, never raised."""
+
+        def run() -> None:
+            try:
+                deliver()
+            except Exception:
+                logger.exception("failed to send %s to %s", what, mail.mask(to))
+
+        self.run_async(run)
 
     def _find_user_by_email(self, email: str) -> User | None:
         return self.db.scalars(
@@ -353,13 +363,25 @@ class AuthService:
         ics = self.study_reminder_ics(days, time, timezone)
         to = self._current_user(user_id).email
 
-        def deliver() -> None:
-            try:
-                self.sender.send_study_reminder(to, ics)
-            except Exception:
-                logger.exception("failed to send study reminder to %s", mail.mask(to))
+        self._send_async(
+            "study reminder", to, lambda: self.sender.send_study_reminder(to, ics)
+        )
 
-        self.run_async(deliver)
+    def notify_community_invite(
+        self, user_id: str, community_name: str, inviter_name: str
+    ) -> None:
+        """Tells a user they were added to a community; unknown users are skipped."""
+        parsed = parse_uuid(user_id)
+        user = self.db.get(User, parsed) if parsed else None
+        if user is None or user.deleted:
+            return
+        self._send_async(
+            "community invite",
+            user.email,
+            lambda: self.sender.send_community_invite(
+                user.email, user.name or "", community_name, inviter_name
+            ),
+        )
 
     def mark_not_newcomer(self, user_id: str) -> None:
         user = self._current_user(user_id)

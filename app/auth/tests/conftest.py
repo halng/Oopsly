@@ -33,12 +33,22 @@ class OutboxSender:
     def __init__(self):
         self.sent: list[tuple[str, str]] = []
         self.reminders: list[tuple[str, str]] = []
+        self.welcomes: list[tuple[str, str]] = []
+        self.invites: list[tuple[str, str, str, str]] = []
 
     def send_otp(self, to: str, code: str) -> None:
         self.sent.append((to, code))
 
     def send_study_reminder(self, to: str, ics: str) -> None:
         self.reminders.append((to, ics))
+
+    def send_welcome(self, to: str, name: str) -> None:
+        self.welcomes.append((to, name))
+
+    def send_community_invite(
+        self, to: str, name: str, community_name: str, inviter_name: str
+    ) -> None:
+        self.invites.append((to, name, community_name, inviter_name))
 
 
 def make_key_store(factory, clock=None, **overrides) -> KeyStore:

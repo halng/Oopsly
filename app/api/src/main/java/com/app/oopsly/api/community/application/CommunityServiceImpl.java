@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -198,17 +199,21 @@ public class CommunityServiceImpl implements CommunityService {
             throw new NotFoundException(ApiMessages.COMMUNITY_INVITE_USER_NOT_FOUND);
         }
 
+        Optional<CommunityMemberEntity> existing =
+                memberRepository.findByCommunityIdAndUserId(communityId, invitedId);
         CommunityMemberEntity member =
-                memberRepository
-                        .findByCommunityIdAndUserId(communityId, invitedId)
-                        .orElseGet(
-                                () ->
-                                        memberRepository.saveAndFlush(
-                                                CommunityMemberEntity.builder()
-                                                        .community(community)
-                                                        .userId(invitedId)
-                                                        .role(CommunityRole.MEMBER)
-                                                        .build()));
+                existing.orElseGet(
+                        () ->
+                                memberRepository.saveAndFlush(
+                                        CommunityMemberEntity.builder()
+                                                .community(community)
+                                                .userId(invitedId)
+                                                .role(CommunityRole.MEMBER)
+                                                .build()));
+        if (existing.isEmpty()) {
+            authClient.notifyCommunityInvite(
+                    invitedId, community.getName(), authClient.lookup(currentUser.id()).label());
+        }
 
         return ApiRes.success(ApiMessages.COMMUNITY_MEMBER_INVITED, toMemberRes(member, 0));
     }

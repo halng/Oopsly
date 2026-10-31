@@ -49,8 +49,9 @@ def get_kv() -> KV:
 
 @lru_cache
 def get_sender() -> mail.Sender:
-    # Swap in a Resend-backed Sender here once the sending domain exists.
-    return mail.NoOpSender()
+    if not settings.noti_queue_url:
+        return mail.NoOpSender()
+    return mail.SqsSender(settings.noti_queue_url, settings.noti_region)
 
 
 @lru_cache

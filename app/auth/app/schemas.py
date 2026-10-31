@@ -29,6 +29,12 @@ class LookupReq(BaseModel):
     ids: list[str] = []
 
 
+class CommunityInviteNotificationReq(BaseModel):
+    userId: str = ""
+    communityName: str = ""
+    inviterName: str = ""
+
+
 class StudyReminderReq(BaseModel):
     days: list[int] = []
     time: str = ""

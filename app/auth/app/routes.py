@@ -16,6 +16,7 @@ from app.keys import KeyStore
 from app.schemas import (
     AvatarConfirmReq,
     AvatarUploadReq,
+    CommunityInviteNotificationReq,
     LookupReq,
     RefreshReq,
     SetSubscriptionReq,
@@ -246,3 +247,15 @@ def set_subscription(
         "Subscription updated successfully",
         svc.set_subscription(user_id, req.plan, req.expiresAt),
     )
+
+
+@router.post(
+    "/internal/v1/notifications/community-invite",
+    tags=["internal"],
+    dependencies=[Depends(internal_only)],
+)
+def notify_community_invite(
+    req: CommunityInviteNotificationReq, svc: AuthService = Depends(get_service)
+):
+    svc.notify_community_invite(req.userId, req.communityName, req.inviterName)
+    return ok("Notification queued")

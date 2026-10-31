@@ -19,6 +19,8 @@ package com.app.oopsly.api.unit.community.application;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.app.oopsly.api.community.application.CommunityServiceImpl;
@@ -429,6 +431,8 @@ class CommunityServiceImplTest {
         assertEquals(CommunityRole.MEMBER, result.role());
         assertEquals("Friend", result.displayName());
         assertEquals(invited.id(), result.userId());
+        verify(authClient)
+                .notifyCommunityInvite(eq(invited.id()), eq(community.getName()), anyString());
     }
 
     @Test
@@ -448,6 +452,7 @@ class CommunityServiceImplTest {
 
         assertEquals(CommunityRole.ADMIN, result.role());
         verify(memberRepository, never()).saveAndFlush(any());
+        verify(authClient, never()).notifyCommunityInvite(any(), any(), any());
     }
 
     @Test
