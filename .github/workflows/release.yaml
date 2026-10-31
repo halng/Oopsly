@@ -35,11 +35,6 @@ on:
         required: true
         type: boolean
         default: false
-      webService:
-        description: "Deploy the web frontend"
-        required: true
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -76,7 +71,6 @@ jobs:
           AUTH: ${{ inputs.authService }}
           API: ${{ inputs.apiService }}
           GAME: ${{ inputs.gameService }}
-          WEB: ${{ inputs.webService }}
         run: |
           if [[ ! "$TAG" =~ ^v[A-Za-z0-9._-]+$ ]]; then
             echo "Error: tag must look like v1a2b3c4."
@@ -91,7 +85,7 @@ jobs:
           [[ "$AUTH" == "true" ]] && SERVICES="${SERVICES:+$SERVICES }auth"
           [[ "$API" == "true" ]] && SERVICES="${SERVICES:+$SERVICES }api"
           [[ "$GAME" == "true" ]] && SERVICES="${SERVICES:+$SERVICES }game"
-          if [[ -z "$SERVICES" && "$WEB" != "true" ]]; then
+          if [[ -z "$SERVICES" ]]; then
             echo "Error: select at least one service to deploy."
             exit 1
           fi
@@ -110,7 +104,6 @@ jobs:
             echo "## Release ${TAG} to ${{ inputs.environment }}"
             echo
             echo "- Backend services: ${SERVICES:-none}"
-            echo "- Web frontend: ${WEB}"
           } >> "$GITHUB_STEP_SUMMARY"
 
   create-release:
@@ -136,34 +129,28 @@ jobs:
           [[ "$TARGET_ENV" == "prod" ]] || FLAGS+=(--prerelease)
           gh release create "$TAG" "${FLAGS[@]}"
 
-  deploy-backend:
-    name: Deploy ${{ needs.validate-inputs.outputs.services }} to ${{ inputs.environment }}
+  deploy:
+    environment:
+      name: ${{ inputs.environment }}_approval
+    runs-on: ubuntu-latest
+    name: Deploy ${{ needs.validate-inputs.outputs.services }} to ${{ inputs.environment }} environment
     needs: [validate-inputs, create-release]
     if: ${{ needs.validate-inputs.outputs.services != '' }}
-    uses: ./.github/workflows/deploy-aws.yaml
+    steps:
+      - uses: ./.github/workflows/deploy-aws.yaml
+        with:
+          git_tag: ${{ inputs.tag }}
+          env: ${{ inputs.environment }}
+          services: ${{ needs.validate-inputs.outputs.services }}
     permissions:
       contents: read
       packages: read
       id-token: write
-    with:
-      git_tag: ${{ inputs.tag }}
-      env: ${{ inputs.environment }}
-      services: ${{ needs.validate-inputs.outputs.services }}
-    secrets: inherit
-
-  deploy-frontend:
-    name: Deploy web to ${{ inputs.environment }}
-    needs: [validate-inputs, create-release]
-    if: ${{ inputs.webService }}
-    uses: ./.github/workflows/deploy-web.yaml
-    with:
-      git_tag: ${{ inputs.tag }}
-      env: ${{ inputs.environment }}
     secrets: inherit
 
   publish-release:
     name: Promote release ${{ inputs.tag }}
-    needs: [deploy-backend, deploy-frontend]
+    needs: [deploy]
     if: >-
       ${{ always() && inputs.environment == 'prod' &&
       !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}

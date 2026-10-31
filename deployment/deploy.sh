@@ -17,7 +17,7 @@ shift 2
 STACKS=("$@")
 [[ ${#STACKS[@]} -gt 0 ]] || STACKS=(network auth api game)
 
-ORIGINS="${ALLOWED_ORIGINS:-http://localhost:3000}"
+ORIGINS="${ALLOWED_ORIGINS:-https://oopsly-web.vercel.app/}"
 COUNT="${DESIRED_COUNT:-2}"
 NETWORK_STACK="oopsly-network-${ENVIRONMENT}"
 AUTH_STACK="oopsly-auth-${ENVIRONMENT}"

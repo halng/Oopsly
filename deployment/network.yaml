@@ -11,7 +11,7 @@ Parameters:
     AllowedPattern: "[a-z0-9-]+"
   DbEngineVersion:
     Type: String
-    Default: "15.10"
+    Default: "18.6"
   DbInstanceClass:
     Type: String
     Default: db.t4g.micro
@@ -23,7 +23,7 @@ Parameters:
     Default: cache.t4g.micro
   AllowedOrigins:
     Type: CommaDelimitedList
-    Default: http://localhost:3000
+    Default: https://oopsly-web.vercel.app/
     Description: Browser origins allowed to upload profile pictures straight to S3.
 
 Resources:
