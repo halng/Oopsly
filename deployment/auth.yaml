@@ -25,12 +25,6 @@ Parameters:
     Description: Comma-separated browser origins allowed to call the service.
 
 Resources:
-  LogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /ecs/oopsly-auth-${Environment}
-      RetentionInDays: 14
-
   ExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -148,9 +142,10 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Ref LogGroup
+              awslogs-group:
+                Fn::ImportValue: !Sub ${NetworkStackName}-LogGroupName
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: ecs
+              awslogs-stream-prefix: auth
 
   # Internal: only the API Gateway VPC link and other tasks can reach it.
   AlbSecurityGroup:

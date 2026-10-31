@@ -11,7 +11,7 @@ Parameters:
     AllowedPattern: "[a-z0-9-]+"
   DbEngineVersion:
     Type: String
-    Default: "15.10"
+    Default: "18.6"
   DbInstanceClass:
     Type: String
     Default: db.t4g.micro
@@ -23,7 +23,7 @@ Parameters:
     Default: cache.t4g.micro
   AllowedOrigins:
     Type: CommaDelimitedList
-    Default: http://localhost:3000
+    Default: https://oopsly-web.vercel.app
     Description: Browser origins allowed to upload profile pictures straight to S3.
 
 Resources:
@@ -221,6 +221,13 @@ Resources:
       VpcSecurityGroupIds:
         - !Ref RedisSecurityGroup
 
+  # One log group for every service; each task logs to the stream <service>/<container>/<task>.
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /oopsly/${Environment}
+      RetentionInDays: 14
+
   # ------------------------------------------------------------ containers
   Cluster:
     Type: AWS::ECS::Cluster
@@ -309,6 +316,7 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
+      BucketName: !Sub oopsly-avatar-${Environment}
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -411,6 +419,10 @@ Outputs:
     Value: !GetAtt GameRepository.RepositoryUri
     Export:
       Name: !Sub ${AWS::StackName}-GameRepositoryUri
+  LogGroupName:
+    Value: !Ref LogGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-LogGroupName
   ApiEndpoint:
     Description: Public base URL. Point the web app's NEXT_PUBLIC_*_URL values at it.
     Value: !GetAtt HttpApi.ApiEndpoint

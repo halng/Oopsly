@@ -1,0 +1,84 @@
+name: Clean up AWS
+
+# Deletes AWS stacks of one environment to save cost, for example after testing a backend
+# deployment. Stacks go in reverse dependency order (game, api, auth, network); see
+# deployment/cleanup.sh. Type the environment name into `confirm` to proceed.
+#
+# Uses the same GitHub Environment config as deploy-aws.yaml (secret AWS_ROLE_ARN); the
+# role also needs cloudformation:DeleteStack and secretsmanager:DeleteSecret.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to clean up"
+        required: true
+        type: choice
+        options:
+          - stg
+          - prod
+        default: stg
+      target:
+        description: "What to delete (auth also needs api and game gone; network needs every service gone)"
+        required: true
+        type: choice
+        options:
+          - all
+          - game
+          - api
+          - auth
+          - network
+        default: all
+      confirm:
+        description: "Type the environment name again to confirm"
+        required: true
+        type: string
+      aws_region:
+        required: false
+        type: string
+        default: ap-southeast-1
+
+concurrency:
+  group: deploy-aws-${{ inputs.environment }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  validate-inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the confirmation
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          ENV_NAME: ${{ inputs.environment }}
+        run: |
+          if [[ "$CONFIRM" != "$ENV_NAME" ]]; then
+            echo "Error: confirm must equal '${ENV_NAME}'."
+            exit 1
+          fi
+
+  cleanup:
+    name: Delete ${{ inputs.target }} in ${{ inputs.environment }}
+    needs: validate-inputs
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}_approval
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Delete stacks
+        working-directory: deployment
+        env:
+          ENV_NAME: ${{ inputs.environment }}
+          TARGET: ${{ inputs.target }}
+        run: ./cleanup.sh "$ENV_NAME" "$TARGET"
