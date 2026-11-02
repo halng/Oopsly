@@ -34,9 +34,7 @@ describe('RootLayout', () => {
         expect(metadata.title).toBe(
             'Quizi — Active Recall & Spaced Repetition Flashcards'
         );
-        expect(metadata.description).toContain(
-            'Master any subject with Quizi'
-        );
+        expect(metadata.description).toContain('Master any subject with Quizi');
 
         // Verify keywords array contains expected terms
         expect(metadata.keywords).toContain('FSRS');

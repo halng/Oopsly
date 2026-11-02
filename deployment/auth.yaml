@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Quizi auth service on Fargate, 2 tasks behind an internal ALB, exposed through the shared HTTP API.
+Description: Quizi auth service on Fargate, 1 task behind an internal ALB, exposed through the shared HTTP API.
 
 Parameters:
   Environment:
@@ -15,7 +15,7 @@ Parameters:
     Description: Tag already copied into the auth ECR repository (see scripts/copy-images.sh).
   DesiredCount:
     Type: Number
-    Default: 2
+    Default: 1
     MinValue: 1
     MaxValue: 6
     Description: Number of Fargate tasks.

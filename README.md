@@ -387,6 +387,8 @@ pnpm dev
 NEXT_PUBLIC_API_URL=http://localhost:9009/api/quizi
 NEXT_PUBLIC_AUTH_URL=http://localhost:9010/api/auth
 NEXT_PUBLIC_GAME_API_URL=http://localhost:9008
+# Cloud only: host that serves the WebSockets (the HTTP API cannot). Unset locally.
+# NEXT_PUBLIC_WS_URL=https://ws.quizi.tech
 ```
 
 The web app renews expired access tokens by itself (using the refresh token); if that fails you are sent back to the login page.

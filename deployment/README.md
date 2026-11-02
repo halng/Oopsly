@@ -1,11 +1,11 @@
 # Deployment
 
-AWS CloudFormation templates deployed with the SAM CLI. Each service runs as 2 Fargate
-tasks behind its own internal ALB; one shared HTTP API (API Gateway) is the only public
+AWS CloudFormation templates deployed with the SAM CLI. Each service runs as Fargate
+tasks (auth 1, api 2, game 1) behind its own internal ALB; one shared HTTP API (API Gateway) is the only public
 entry point.
 
 ```
-Internet -> HTTP API --VPC link--> internal ALB (per service) -> 2 Fargate tasks
+Internet -> HTTP API --VPC link--> internal ALB (per service) -> Fargate tasks
                                                                     |
                                           shared Postgres + Redis <-+
 ```
@@ -19,6 +19,24 @@ Internet -> HTTP API --VPC link--> internal ALB (per service) -> 2 Fargate tasks
 | `noti.yaml` | noti Lambda (auth and api invoke it directly; it renders the template and sends through Resend) and its Resend secret |
 | `deploy.sh` | runs `sam deploy` for the stacks in order and copies images to ECR |
 | `scripts/copy-images.sh` | copies `ghcr.io/halng/quizi-*:<tag>` into ECR |
+
+## WebSockets
+
+The HTTP API cannot upgrade a connection, so the two socket endpoints go through a separate
+public ALB (`quizi-ws-<env>`, in `network.yaml`) on `ws.quizi.tech`; each service stack adds a
+listener rule and a second target group for its socket path:
+
+| Path on the socket ALB | Service |
+|---|---|
+| `/api/quizi/ws`, `/api/quizi/ws/*` | api (STOMP; the web app dials `/ws/websocket`) |
+| `/v1/game/ws` | game |
+
+The domains are fixed: prod uses `api.quizi.tech` and `ws.quizi.tech`, other environments
+`<env>-api.quizi.tech` and `<env>-ws.quizi.tech` (for example `stg-api.quizi.tech`). The
+**Release web** workflow derives `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_AUTH_URL`,
+`NEXT_PUBLIC_GAME_API_URL` and `NEXT_PUBLIC_WS_URL` from the environment, so it takes no URL inputs.
+Without `WsDomainName` the ALB listens on plain HTTP (fine for stg, not for prod). Everything
+else stays on the HTTP API.
 
 ## Public routes
 
@@ -45,14 +63,15 @@ ALLOWED_ORIGINS=https://app.example.com ./deploy.sh stg v1a2b3c4 api       # one
 
 Order matters: `network` -> `auth` -> `api` / `game` (they import the auth stack's URLs). `noti`
 has no dependencies; auth invokes it by its fixed name `quizi-noti-<env>`.
-`DESIRED_COUNT` (default 2) changes the number of tasks per service. At the end the
-script prints the public API URL (`https://api.quizi.tech` once the custom domain is set up);
-set the web app's `NEXT_PUBLIC_*` URLs to it:
+`AUTH_COUNT` (1), `API_COUNT` (2) and `GAME_COUNT` (1) set the number of tasks per service. At the end the
+script prints the public API URL. The web release workflow already points the web app at the
+fixed domains, which resolve to these values:
 
 ```
 NEXT_PUBLIC_API_URL=<api url>/api/quizi
 NEXT_PUBLIC_AUTH_URL=<api url>/api/auth
 NEXT_PUBLIC_GAME_API_URL=<api url>
+NEXT_PUBLIC_WS_URL=<ws url>
 ```
 
 ## Release pipeline

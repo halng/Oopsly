@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Quizi game service on Fargate, 2 tasks behind an internal ALB, exposed through the shared HTTP API.
+Description: Quizi game service on Fargate, 1 task behind an internal ALB, exposed through the shared HTTP API.
 
 Parameters:
   Environment:
@@ -15,7 +15,7 @@ Parameters:
     Description: Tag already copied into the game ECR repository (see scripts/copy-images.sh).
   DesiredCount:
     Type: Number
-    Default: 2
+    Default: 1
     MinValue: 1
     MaxValue: 6
     Description: Number of Fargate tasks.
@@ -168,9 +168,60 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref TargetGroup
 
+  # The HTTP API cannot upgrade to WebSocket, so the socket path is also served by the
+  # public socket load balancer from the network stack.
+  SocketIngressFromAlb:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-TaskSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 9008
+      ToPort: 9008
+      SourceSecurityGroupId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-SocketSecurityGroupId
+      Description: quizi-game socket load balancer to tasks
+
+  SocketTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub quizi-game-ws-${Environment}
+      VpcId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-VpcId
+      Port: 9008
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: "200"
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: "30"
+
+  SocketRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn:
+        Fn::ImportValue: !Sub ${NetworkStackName}-SocketListenerArn
+      Priority: 20
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+            - "/v1/game/ws"
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref SocketTargetGroup
+
   Service:
     Type: AWS::ECS::Service
-    DependsOn: HttpListener
+    DependsOn:
+      - HttpListener
+      - SocketRule
     Properties:
       ServiceName: quizi-game
       Cluster:
@@ -197,6 +248,9 @@ Resources:
         - ContainerName: quizi-game
           ContainerPort: 9008
           TargetGroupArn: !Ref TargetGroup
+        - ContainerName: quizi-game
+          ContainerPort: 9008
+          TargetGroupArn: !Ref SocketTargetGroup
 
   # ------------------------------------------------- API Gateway routes
   Integration:

@@ -63,8 +63,7 @@ describe('garden data utilities', () => {
         expect(loaded.totalXpContributed).toBe(0);
         saveGardenState(initial);
         expect(
-            JSON.parse(localStorage.getItem('quizi_ghibli_garden')!)
-                .forestLevel
+            JSON.parse(localStorage.getItem('quizi_ghibli_garden')!).forestLevel
         ).toBe(1);
         localStorage.setItem('quizi_ghibli_garden', '{bad json');
         expect(loadGardenState().plots).toHaveLength(16);

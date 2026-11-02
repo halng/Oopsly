@@ -59,12 +59,22 @@ describe('quizSocket', () => {
         window.sessionStorage.clear();
         useAuthStore.setState({ accessToken: '' } as never);
         delete process.env.NEXT_PUBLIC_API_URL;
+        delete process.env.NEXT_PUBLIC_WS_URL;
     });
 
     it('keeps one guest id per tab', () => {
         const first = guestId();
         expect(guestId()).toBe(first);
         expect(first).toMatch(/^[0-9a-f-]{36}$/);
+    });
+
+    it('dials the socket host instead of the API when NEXT_PUBLIC_WS_URL is set', () => {
+        process.env.NEXT_PUBLIC_API_URL = 'https://api.test/api/quizi';
+        process.env.NEXT_PUBLIC_WS_URL = 'https://ws.test/';
+        const { client } = setup('player');
+        expect(client.config.brokerURL).toBe(
+            'wss://ws.test/api/quizi/ws/websocket'
+        );
     });
 
     it('connects as a guest to the plain websocket endpoint and joins on connect', async () => {

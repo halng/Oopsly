@@ -34,6 +34,10 @@ Parameters:
     Type: String
     Default: ""
     Description: Domain the HTTP API answers on, e.g. api.quizi.tech. Needs HostedZoneId.
+  WsDomainName:
+    Type: String
+    Default: ""
+    Description: Domain the WebSocket endpoints answer on, e.g. ws.quizi.tech. Needs HostedZoneId.
   WebDomainName:
     Type: String
     Default: ""
@@ -47,6 +51,9 @@ Conditions:
   HasApiDomain: !And
     - !Not [!Equals [!Ref HostedZoneId, ""]]
     - !Not [!Equals [!Ref ApiDomainName, ""]]
+  HasWsDomain: !And
+    - !Not [!Equals [!Ref HostedZoneId, ""]]
+    - !Not [!Equals [!Ref WsDomainName, ""]]
   HasWebDomain: !And
     - !Not [!Equals [!Ref HostedZoneId, ""]]
     - !Not [!Equals [!Ref WebDomainName, ""]]
@@ -388,6 +395,80 @@ Resources:
       ResourceRecords:
         - !Ref WebTarget
 
+  # ------------------------------------------------------------ WebSocket entry
+  # The HTTP API cannot upgrade a connection, so the two socket endpoints (api: STOMP at
+  # /api/quizi/ws, game: /v1/game/ws) are reached through this public load balancer instead.
+  # Each service stack adds a listener rule that forwards its socket path to its tasks.
+  # Without WsDomainName the listener is plain HTTP, which is only fit for non-prod.
+  SocketSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Public load balancer for the WebSocket endpoints
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !If [HasWsDomain, 443, 80]
+          ToPort: !If [HasWsDomain, 443, 80]
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+
+  SocketLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub quizi-ws-${Environment}
+      Type: application
+      Scheme: internet-facing
+      SecurityGroups:
+        - !GetAtt SocketSecurityGroup.GroupId
+      Subnets:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+      LoadBalancerAttributes:
+        # Connections stay open for a whole quiz; STOMP heartbeats keep them alive anyway.
+        - Key: idle_timeout.timeout_seconds
+          Value: "3600"
+
+  WsCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: HasWsDomain
+    Properties:
+      DomainName: !Ref WsDomainName
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref WsDomainName
+          HostedZoneId: !Ref HostedZoneId
+
+  SocketListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref SocketLoadBalancer
+      Port: !If [HasWsDomain, 443, 80]
+      Protocol: !If [HasWsDomain, HTTPS, HTTP]
+      Certificates: !If
+        - HasWsDomain
+        - - CertificateArn: !Ref WsCertificate
+        - !Ref AWS::NoValue
+      SslPolicy: !If [HasWsDomain, ELBSecurityPolicy-TLS13-1-2-2021-06, !Ref AWS::NoValue]
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: "404"
+            ContentType: text/plain
+            MessageBody: Not found
+
+  SocketRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: HasWsDomain
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref WsDomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt SocketLoadBalancer.DNSName
+        HostedZoneId: !GetAtt SocketLoadBalancer.CanonicalHostedZoneID
+
   # ---------------------------------------------------------------- avatars
   # Private: pictures are only reachable through short-lived presigned URLs.
   AvatarBucket:
@@ -442,6 +523,20 @@ Outputs:
     Value: !Ref Cluster
     Export:
       Name: !Sub ${AWS::StackName}-ClusterName
+  SocketListenerArn:
+    Value: !Ref SocketListener
+    Export:
+      Name: !Sub ${AWS::StackName}-SocketListenerArn
+  SocketSecurityGroupId:
+    Value: !GetAtt SocketSecurityGroup.GroupId
+    Export:
+      Name: !Sub ${AWS::StackName}-SocketSecurityGroupId
+  SocketUrl:
+    Description: Base URL of the WebSocket endpoints. Set the web app's NEXT_PUBLIC_WS_URL to it.
+    Value: !If
+      - HasWsDomain
+      - !Sub https://${WsDomainName}
+      - !Sub http://${SocketLoadBalancer.DNSName}
   TaskSecurityGroupId:
     Value: !GetAtt TaskSecurityGroup.GroupId
     Export:

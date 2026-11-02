@@ -48,10 +48,15 @@ export function guestId(): string {
     }
 }
 
-/** SockJS also serves a plain websocket at `<endpoint>/websocket`. */
+/**
+ * SockJS also serves a plain websocket at `<endpoint>/websocket`. In the cloud the HTTP API
+ * cannot upgrade connections, so NEXT_PUBLIC_WS_URL names the socket host instead.
+ */
 function brokerUrl() {
-    const http =
-        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9009/api/quizi';
+    const wsHost = process.env.NEXT_PUBLIC_WS_URL;
+    const http = wsHost
+        ? `${wsHost.replace(/\/$/, '')}/api/quizi`
+        : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9009/api/quizi';
     return `${http.replace(/^http/, 'ws').replace(/\/$/, '')}/ws/websocket`;
 }
 

@@ -11,14 +11,17 @@
 # and RESEND_FROM (like "Quizi <no-reply@quizi.tech>") to store them; without RESEND_API_KEY
 # the stored secret is left as it is. APP_URL sets the links in emails.
 #
-# Custom domains (prod): HOSTED_ZONE_ID is the Route 53 zone of quizi.tech. With it, network
-# serves the API on API_DOMAIN (default api.quizi.tech) and points WEB_DOMAIN (default
-# quizi.tech) at the UI host (WEB_TARGET, default Vercel's 76.76.21.21). Other environments
-# get no custom domain unless API_DOMAIN / WEB_DOMAIN are set.
+# Custom domains: HOSTED_ZONE_ID is the Route 53 zone of quizi.tech. With it, network serves
+# the API on API_DOMAIN and the WebSockets on WS_DOMAIN, and (prod) points WEB_DOMAIN at the UI
+# host (WEB_TARGET, default Vercel's 76.76.21.21). The names are fixed per environment:
+#   prod:    api.quizi.tech      ws.quizi.tech      quizi.tech
+#   others:  <env>-api.quizi.tech  <env>-ws.quizi.tech (e.g. stg-api.quizi.tech), no web domain
+# The release-web workflow derives the same URLs, so keep them in step. Without HOSTED_ZONE_ID
+# no custom domain is created.
 #
 # ALLOWED_ORIGINS only applies to prod; every other environment allows all origins.
 # <image-tag> is the tag the bupu workflow pushed, e.g. v1a2b3c4.
-# Honors AWS_PROFILE / AWS_REGION. DESIRED_COUNT (default 2) sets tasks per service.
+# Honors AWS_PROFILE / AWS_REGION. Tasks per service: AUTH_COUNT (1), API_COUNT (2), GAME_COUNT (1).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -35,7 +38,9 @@ if [[ "$ENVIRONMENT" == "prod" ]]; then
 else
   ORIGINS="*"
 fi
-COUNT="${DESIRED_COUNT:-2}"
+AUTH_COUNT="${AUTH_COUNT:-1}"
+API_COUNT="${API_COUNT:-2}"
+GAME_COUNT="${GAME_COUNT:-1}"
 NETWORK_STACK="quizi-network-${ENVIRONMENT}"
 AUTH_STACK="quizi-auth-${ENVIRONMENT}"
 APP_URL="${APP_URL:-https://quizi.tech}"
@@ -44,14 +49,16 @@ HOSTED_ZONE_ID="${HOSTED_ZONE_ID:-}"
 if [[ "$ENVIRONMENT" == "prod" ]]; then
   API_DOMAIN="${API_DOMAIN:-api.quizi.tech}"
   WEB_DOMAIN="${WEB_DOMAIN:-quizi.tech}"
+  WS_DOMAIN="${WS_DOMAIN:-ws.quizi.tech}"
 else
-  API_DOMAIN="${API_DOMAIN:-}"
+  API_DOMAIN="${API_DOMAIN:-${ENVIRONMENT}-api.quizi.tech}"
   WEB_DOMAIN="${WEB_DOMAIN:-}"
+  WS_DOMAIN="${WS_DOMAIN:-${ENVIRONMENT}-ws.quizi.tech}"
 fi
 WEB_TARGET="${WEB_TARGET:-76.76.21.21}"
 NETWORK_OVERRIDES="Environment=${ENVIRONMENT} AllowedOrigins=${ORIGINS} WebTarget=${WEB_TARGET}"
 if [[ -n "$HOSTED_ZONE_ID" ]]; then
-  NETWORK_OVERRIDES+=" HostedZoneId=${HOSTED_ZONE_ID} ApiDomainName=${API_DOMAIN} WebDomainName=${WEB_DOMAIN}"
+  NETWORK_OVERRIDES+=" HostedZoneId=${HOSTED_ZONE_ID} ApiDomainName=${API_DOMAIN} WebDomainName=${WEB_DOMAIN} WsDomainName=${WS_DOMAIN}"
 fi
 
 deploy() {
@@ -110,15 +117,15 @@ for stack in "${STACKS[@]}"; do
       ;;
     auth)
       scripts/copy-images.sh "$ENVIRONMENT" "$TAG" auth
-      deploy auth "Environment=${ENVIRONMENT} NetworkStackName=${NETWORK_STACK} ImageTag=${TAG} DesiredCount=${COUNT} AllowedOrigins=${ORIGINS}"
+      deploy auth "Environment=${ENVIRONMENT} NetworkStackName=${NETWORK_STACK} ImageTag=${TAG} DesiredCount=${AUTH_COUNT} AllowedOrigins=${ORIGINS}"
       ;;
     api)
       scripts/copy-images.sh "$ENVIRONMENT" "$TAG" api
-      deploy api "Environment=${ENVIRONMENT} NetworkStackName=${NETWORK_STACK} AuthStackName=${AUTH_STACK} ImageTag=${TAG} DesiredCount=${COUNT} AllowedOrigins=${ORIGINS}"
+      deploy api "Environment=${ENVIRONMENT} NetworkStackName=${NETWORK_STACK} AuthStackName=${AUTH_STACK} ImageTag=${TAG} DesiredCount=${API_COUNT} AllowedOrigins=${ORIGINS}"
       ;;
     game)
       scripts/copy-images.sh "$ENVIRONMENT" "$TAG" game
-      deploy game "Environment=${ENVIRONMENT} NetworkStackName=${NETWORK_STACK} AuthStackName=${AUTH_STACK} ImageTag=${TAG} DesiredCount=${COUNT} CorsOrigins=${ORIGINS}"
+      deploy game "Environment=${ENVIRONMENT} NetworkStackName=${NETWORK_STACK} AuthStackName=${AUTH_STACK} ImageTag=${TAG} DesiredCount=${GAME_COUNT} CorsOrigins=${ORIGINS}"
       ;;
     noti)
       deploy noti "Environment=${ENVIRONMENT} AppUrl=${APP_URL}"
