@@ -1,5 +1,5 @@
 -- Make the script idempotent: clean up existing mock data if this runs multiple times
-DELETE FROM users WHERE email IN ('test@oopsly.com', 'user1@oopsly.com', 'user2@oopsly.com', 'integration@oopsly.com');
+DELETE FROM users WHERE email IN ('test@quizi.com', 'user1@quizi.com', 'user2@quizi.com', 'integration@quizi.com');
 
 DO $$
 DECLARE
@@ -8,7 +8,7 @@ v_user_id UUID;
     v_subject_id UUID;
     v_card_id UUID;
     v_tag_id UUID;
-    v_emails TEXT[] := ARRAY['test@oopsly.com', 'user1@oopsly.com', 'user2@oopsly.com', 'integration@oopsly.com'];
+    v_emails TEXT[] := ARRAY['test@quizi.com', 'user1@quizi.com', 'user2@quizi.com', 'integration@quizi.com'];
     v_email TEXT;
     v_name TEXT;
     i INT; -- Shelf loop
@@ -17,7 +17,7 @@ v_user_id UUID;
     t INT; -- Tag loop
 BEGIN
     FOREACH v_email IN ARRAY v_emails LOOP
-        -- Extract name from email (e.g., 'test' from 'test@oopsly.com')
+        -- Extract name from email (e.g., 'test' from 'test@quizi.com')
         v_name := split_part(v_email, '@', 1);
         v_user_id := gen_random_uuid();
 

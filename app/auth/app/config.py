@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     database_url: str = ""
     db_host: str = "localhost"
     db_port: int = 5432
-    db_name: str = "oopsly"
+    db_name: str = "quizi"
     db_username: str = "postgres"
     db_password: str = "postgres"
 
@@ -36,8 +36,8 @@ class Settings(BaseSettings):
     jwt_key_cache_seconds: int = 60
 
     test_emails: str = ""
-    # SQS queue the noti service reads. Leave empty to turn emails off.
-    noti_queue_url: str = ""
+    # Name or ARN of the noti Lambda that sends emails. Leave empty to turn emails off.
+    noti_function_name: str = ""
     noti_region: str = ""
     internal_api_key: str = "Jtz+A7HbztjSTpiLI0FZXd2NffOnP2wm0KGbwfDnFAo="
 

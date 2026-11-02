@@ -1,6 +1,6 @@
-# Oopsly API
+# Quizi API
 
-Spring Boot 3.5.8 / Java 21 REST API for Oopsly.
+Spring Boot 3.5.8 / Java 21 REST API for Quizi.
 
 ## Run locally
 
@@ -10,7 +10,7 @@ Spring Boot 3.5.8 / Java 21 REST API for Oopsly.
 # or: ./gradlew bootRun      # loads api/.env (profile default "prod" for env file name)
 ```
 
-- Base URL: `http://localhost:9009/api/v1/oopsly`
+- Base URL: `http://localhost:9009/api/v1/quizi`
 - Swagger: `/swagger-ui/index.html` under that context
 
 Stop infra: `./gradlew composeDown`
@@ -18,8 +18,8 @@ Stop infra: `./gradlew composeDown`
 ## Tests
 
 ```bash
-./gradlew test              # unit tests (com.app.oopsly.api.unit.*)
-./gradlew integrationTest   # integration tests (com.app.oopsly.api.integration.*)
+./gradlew test              # unit tests (com.app.quizi.api.unit.*)
+./gradlew integrationTest   # integration tests (com.app.quizi.api.integration.*)
 ```
 
 ## Docs

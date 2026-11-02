@@ -158,7 +158,7 @@ describe('file importer utilities', () => {
             expect(sheet[0][0]).toMatchObject({ value: 'Front' });
             expect(options).toEqual({ sheet: 'Flashcards' });
             expect(toFile).toHaveBeenCalledWith(
-                'oopsly_flashcards_template.xlsx'
+                'quizi_flashcards_template.xlsx'
             );
             vi.doUnmock('write-excel-file/browser');
         }

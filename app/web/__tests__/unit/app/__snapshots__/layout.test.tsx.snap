@@ -5,7 +5,7 @@ exports[`RootLayout > renders correctly with required attributes and children (S
   <div
     data-testid="child-element"
   >
-    Oopsly Content
+    Quizi Content
   </div>
 </div>
 `;

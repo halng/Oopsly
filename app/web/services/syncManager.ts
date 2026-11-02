@@ -152,7 +152,7 @@ class SyncManager {
                 // @ts-expect-error FIXME(halng): TypeScript doesn't recognize SyncManager on ServiceWorkerRegistration
                 if (registration.sync) {
                     // @ts-expect-error FIXME(halng): TypeScript doesn't recognize SyncManager on ServiceWorkerRegistration
-                    await registration.sync.register('sync-oopsly-reviews');
+                    await registration.sync.register('sync-quizi-reviews');
                 }
             } catch (err) {
                 console.warn(
@@ -226,7 +226,7 @@ class SyncManager {
             // Broadcast sync completion event to UI
             if (typeof window !== 'undefined') {
                 window.dispatchEvent(
-                    new CustomEvent('oopsly-sync-completed', {
+                    new CustomEvent('quizi-sync-completed', {
                         detail: {
                             successCount,
                             failedCount,

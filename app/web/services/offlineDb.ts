@@ -1,7 +1,7 @@
 import { Card, Subject, Shelf, TestSuite, UserProfile, Grade } from '../types';
 import { scheduleCard, ScheduleResult } from '../utils/fsrs';
 
-const DB_NAME = 'oopsly-offline-db';
+const DB_NAME = 'quizi-offline-db';
 const DB_VERSION = 1;
 
 export interface SyncAction {

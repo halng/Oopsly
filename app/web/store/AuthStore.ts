@@ -67,7 +67,7 @@ export const useAuthStore = create<AuthState>()(
                 set({ isAuthenticated: auth }),
         }),
         {
-            name: 'oopsly-auth',
+            name: 'quizi-auth',
             storage: createJSONStorage(() => localStorage),
             skipHydration: true,
             partialize: (state) => ({

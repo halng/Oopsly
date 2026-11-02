@@ -12,7 +12,7 @@ import {
 
 export const INITIAL_USER: UserProfile = {
     id: 'usr-1',
-    email: 'learner@oopsly.app',
+    email: 'learner@quizi.app',
     name: "jeff's learner",
     displayName: 'Hao Nguyen',
     avatarUrl:
@@ -96,7 +96,7 @@ export const INITIAL_SUBJECTS: Subject[] = [
         createdAt: new Date(Date.now() - 18 * 86400000).toISOString(),
         updatedAt: new Date().toISOString(),
         authorName: 'Hao Nguyen',
-        authorEmail: 'learner@oopsly.app',
+        authorEmail: 'learner@quizi.app',
     },
     {
         id: 'subj-2',
@@ -114,7 +114,7 @@ export const INITIAL_SUBJECTS: Subject[] = [
         createdAt: new Date(Date.now() - 12 * 86400000).toISOString(),
         updatedAt: new Date().toISOString(),
         authorName: 'Hao Nguyen',
-        authorEmail: 'learner@oopsly.app',
+        authorEmail: 'learner@quizi.app',
     },
     {
         id: 'subj-3',
@@ -132,7 +132,7 @@ export const INITIAL_SUBJECTS: Subject[] = [
         createdAt: new Date(Date.now() - 14 * 86400000).toISOString(),
         updatedAt: new Date().toISOString(),
         authorName: 'Hao Nguyen',
-        authorEmail: 'learner@oopsly.app',
+        authorEmail: 'learner@quizi.app',
     },
     {
         id: 'subj-4',
@@ -150,7 +150,7 @@ export const INITIAL_SUBJECTS: Subject[] = [
         createdAt: new Date(Date.now() - 9 * 86400000).toISOString(),
         updatedAt: new Date().toISOString(),
         authorName: 'Hao Nguyen',
-        authorEmail: 'learner@oopsly.app',
+        authorEmail: 'learner@quizi.app',
     },
     {
         id: 'subj-5',
@@ -168,7 +168,7 @@ export const INITIAL_SUBJECTS: Subject[] = [
         createdAt: new Date(Date.now() - 8 * 86400000).toISOString(),
         updatedAt: new Date().toISOString(),
         authorName: 'Hao Nguyen',
-        authorEmail: 'learner@oopsly.app',
+        authorEmail: 'learner@quizi.app',
     },
 ];
 
@@ -618,7 +618,7 @@ export const DISCOVER_CATALOG: (Subject & { cardsPreview: Partial<Card>[] })[] =
             createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
             updatedAt: new Date().toISOString(),
             authorName: 'DevOps Guild',
-            authorEmail: 'curator@oopsly.app',
+            authorEmail: 'curator@quizi.app',
             cardsPreview: [
                 {
                     front: 'What Linux kernel mechanisms isolate containers?',
@@ -650,7 +650,7 @@ export const DISCOVER_CATALOG: (Subject & { cardsPreview: Partial<Card>[] })[] =
             createdAt: new Date(Date.now() - 25 * 86400000).toISOString(),
             updatedAt: new Date().toISOString(),
             authorName: 'MedRecall Studio',
-            authorEmail: 'med@oopsly.app',
+            authorEmail: 'med@quizi.app',
             cardsPreview: [
                 {
                     front: 'What is the rate-limiting enzyme of Glycolysis?',
@@ -682,7 +682,7 @@ export const DISCOVER_CATALOG: (Subject & { cardsPreview: Partial<Card>[] })[] =
             createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
             updatedAt: new Date().toISOString(),
             authorName: 'Parisian Polyglot',
-            authorEmail: 'polyglot@oopsly.app',
+            authorEmail: 'polyglot@quizi.app',
             cardsPreview: [
                 {
                     front: 'Bien que (+ subjonctif)',
@@ -714,7 +714,7 @@ export const DISCOVER_CATALOG: (Subject & { cardsPreview: Partial<Card>[] })[] =
             createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
             updatedAt: new Date().toISOString(),
             authorName: 'AI Research Lab',
-            authorEmail: 'ai@oopsly.app',
+            authorEmail: 'ai@quizi.app',
             cardsPreview: [
                 {
                     front: 'What is the Scaled Dot-Product Attention formula in Transformers?',

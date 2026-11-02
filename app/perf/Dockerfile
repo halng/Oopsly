@@ -5,7 +5,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY locustfile.py .
-COPY oopsly_perf oopsly_perf
+COPY quizi_perf quizi_perf
 
 # Locust writes its pass/fail summary here; mount a volume to read it back.
 ENV PERF_RESULTS_DIR=/results

@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:9009/api/v1/oopsly",
+      "url": "http://localhost:9009/api/v1/quizi",
       "description": "Generated server url"
     }
   ],

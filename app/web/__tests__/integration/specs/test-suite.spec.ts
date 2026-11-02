@@ -278,7 +278,7 @@ test.describe('Bulk add questions', () => {
         const download = page.waitForEvent('download');
         await page.getByTestId('btn-question-template-csv').click();
         expect((await download).suggestedFilename()).toBe(
-            'oopsly_questions_template.csv'
+            'quizi_questions_template.csv'
         );
     });
 });

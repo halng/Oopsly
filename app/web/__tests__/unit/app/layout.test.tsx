@@ -17,13 +17,13 @@ describe('RootLayout', () => {
         // Render the layout with a dummy child component
         const { container } = render(
             <RootLayout>
-                <div data-testid="child-element">Oopsly Content</div>
+                <div data-testid="child-element">Quizi Content</div>
             </RootLayout>
         );
 
         expect(container).toMatchSnapshot();
         expect(screen.getByTestId('child-element')).toBeInTheDocument();
-        expect(screen.getByText('Oopsly Content')).toBeInTheDocument();
+        expect(screen.getByText('Quizi Content')).toBeInTheDocument();
     });
 
     it('exports the correct SEO metadata', () => {
@@ -32,11 +32,9 @@ describe('RootLayout', () => {
 
         // Verify core meta tags
         expect(metadata.title).toBe(
-            'Oopsly — Active Recall & Spaced Repetition Flashcards'
+            'Quizi — Active Recall & Spaced Repetition Flashcards'
         );
-        expect(metadata.description).toContain(
-            'Master any subject with Oopsly'
-        );
+        expect(metadata.description).toContain('Master any subject with Quizi');
 
         // Verify keywords array contains expected terms
         expect(metadata.keywords).toContain('FSRS');
@@ -45,17 +43,17 @@ describe('RootLayout', () => {
         // Verify OpenGraph configuration
         expect(metadata.openGraph).toMatchObject({
             type: 'website',
-            url: 'https://oopsly.app/',
-            title: 'Oopsly — Active Recall & Spaced Repetition Flashcards',
+            url: 'https://quizi.app/',
+            title: 'Quizi — Active Recall & Spaced Repetition Flashcards',
         });
 
         // Verify Twitter configuration
         expect(metadata.twitter).toMatchObject({
             card: 'summary_large_image',
-            site: 'https://oopsly.app/',
+            site: 'https://quizi.app/',
         });
 
         // Verify canonical link
-        expect(metadata.alternates?.canonical).toBe('https://oopsly.app/');
+        expect(metadata.alternates?.canonical).toBe('https://quizi.app/');
     });
 });

@@ -39,11 +39,11 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: oopsly
+          POSTGRES_DB: quizi
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres -d oopsly"
+          --health-cmd "pg_isready -U postgres -d quizi"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
@@ -57,7 +57,7 @@ jobs:
           --health-timeout 3s
           --health-retries 10
     env:
-      PERF_HOST: http://localhost:9009/api/oopsly
+      PERF_HOST: http://localhost:9009/api/quizi
       PERF_PROFILE: smoke
       PERF_RESULTS_DIR: results
     steps:
@@ -103,7 +103,7 @@ jobs:
           JAR=$(ls build/libs/*.jar | grep -v plain)
           nohup java -jar "$JAR" > ../perf/api.log 2>&1 &
           for i in $(seq 1 60); do
-            if curl -fs http://localhost:9009/api/oopsly/actuator/health > /dev/null; then
+            if curl -fs http://localhost:9009/api/quizi/actuator/health > /dev/null; then
               echo "API is up"; exit 0
             fi
             sleep 3

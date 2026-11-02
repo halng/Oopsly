@@ -1,1 +1,1 @@
-"""Oopsly garden game service."""
+"""Quizi garden game service."""

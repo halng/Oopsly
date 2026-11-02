@@ -75,10 +75,10 @@ export default function SubjectDetailsPage() {
         const handleSyncComplete = () => {
             void loadData();
         };
-        window.addEventListener('oopsly-sync-completed', handleSyncComplete);
+        window.addEventListener('quizi-sync-completed', handleSyncComplete);
         return () => {
             window.removeEventListener(
-                'oopsly-sync-completed',
+                'quizi-sync-completed',
                 handleSyncComplete
             );
         };

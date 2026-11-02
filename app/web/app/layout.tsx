@@ -16,9 +16,9 @@ const playfairDisplay = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-    title: 'Oopsly — Active Recall & Spaced Repetition Flashcards',
+    title: 'Quizi — Active Recall & Spaced Repetition Flashcards',
     description:
-        'Master any subject with Oopsly. A cross-platform flashcard app combining the scientifically-proven FSRS spaced repetition algorithm with a relaxing, gamified Ghibli-inspired forest sanctuary.',
+        'Master any subject with Quizi. A cross-platform flashcard app combining the scientifically-proven FSRS spaced repetition algorithm with a relaxing, gamified Ghibli-inspired forest sanctuary.',
     keywords: [
         'spaced repetition',
         'flashcards',
@@ -29,23 +29,23 @@ export const metadata: Metadata = {
         'pomodoro',
         'memory',
     ],
-    authors: [{ name: 'Oopsly' }],
+    authors: [{ name: 'Quizi' }],
     alternates: {
-        canonical: 'https://oopsly.app/',
+        canonical: 'https://quizi.app/',
     },
     openGraph: {
         type: 'website',
-        url: 'https://oopsly.app/',
-        title: 'Oopsly — Active Recall & Spaced Repetition Flashcards',
+        url: 'https://quizi.app/',
+        title: 'Quizi — Active Recall & Spaced Repetition Flashcards',
         description:
-            'Master any subject with Oopsly. Combine the proven FSRS spaced repetition algorithm with a relaxing, gamified Ghibli-inspired forest sanctuary.',
+            'Master any subject with Quizi. Combine the proven FSRS spaced repetition algorithm with a relaxing, gamified Ghibli-inspired forest sanctuary.',
     },
     twitter: {
         card: 'summary_large_image',
-        site: 'https://oopsly.app/',
-        title: 'Oopsly — Active Recall & Spaced Repetition Flashcards',
+        site: 'https://quizi.app/',
+        title: 'Quizi — Active Recall & Spaced Repetition Flashcards',
         description:
-            'Master any subject with Oopsly. Combine the proven FSRS spaced repetition algorithm with a relaxing, gamified Ghibli-inspired forest sanctuary.',
+            'Master any subject with Quizi. Combine the proven FSRS spaced repetition algorithm with a relaxing, gamified Ghibli-inspired forest sanctuary.',
     },
 };
 

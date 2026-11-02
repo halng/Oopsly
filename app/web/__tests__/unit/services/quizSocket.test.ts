@@ -59,6 +59,7 @@ describe('quizSocket', () => {
         window.sessionStorage.clear();
         useAuthStore.setState({ accessToken: '' } as never);
         delete process.env.NEXT_PUBLIC_API_URL;
+        delete process.env.NEXT_PUBLIC_WS_URL;
     });
 
     it('keeps one guest id per tab', () => {
@@ -67,12 +68,21 @@ describe('quizSocket', () => {
         expect(first).toMatch(/^[0-9a-f-]{36}$/);
     });
 
+    it('dials the socket host instead of the API when NEXT_PUBLIC_WS_URL is set', () => {
+        process.env.NEXT_PUBLIC_API_URL = 'https://api.test/api/quizi';
+        process.env.NEXT_PUBLIC_WS_URL = 'https://ws.test/';
+        const { client } = setup('player');
+        expect(client.config.brokerURL).toBe(
+            'wss://ws.test/api/quizi/ws/websocket'
+        );
+    });
+
     it('connects as a guest to the plain websocket endpoint and joins on connect', async () => {
-        process.env.NEXT_PUBLIC_API_URL = 'https://api.test/api/oopsly/';
+        process.env.NEXT_PUBLIC_API_URL = 'https://api.test/api/quizi/';
         const { client, onView, onEvent, onStatus } = setup('player');
 
         expect(client.config.brokerURL).toBe(
-            'wss://api.test/api/oopsly/ws/websocket'
+            'wss://api.test/api/quizi/ws/websocket'
         );
         await client.beforeConnect();
         expect(client.connectHeaders).toEqual({ 'guest-id': guestId() });
@@ -109,7 +119,7 @@ describe('quizSocket', () => {
             destination: '/app/quiz/123456/resume',
         });
         expect(client.config.brokerURL).toBe(
-            'ws://localhost:9009/api/oopsly/ws/websocket'
+            'ws://localhost:9009/api/quizi/ws/websocket'
         );
 
         client.onWebSocketClose();

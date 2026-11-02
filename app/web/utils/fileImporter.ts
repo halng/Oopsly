@@ -308,7 +308,7 @@ export function extractCardsFromTable(
  */
 export function downloadCsvTemplate(type: 'minimal' | 'full' = 'full') {
     let csvContent = '';
-    const filename = 'oopsly_flashcards_template.csv';
+    const filename = 'quizi_flashcards_template.csv';
 
     if (type === 'minimal') {
         csvContent =
@@ -340,7 +340,7 @@ export function downloadCsvTemplate(type: 'minimal' | 'full' = 'full') {
  * Downloads a sample Excel (.xlsx) template for users to fill in
  */
 export async function downloadExcelTemplate(type: 'minimal' | 'full' = 'full') {
-    const filename = 'oopsly_flashcards_template.xlsx';
+    const filename = 'quizi_flashcards_template.xlsx';
     let data: string[][] = [];
 
     if (type === 'minimal') {

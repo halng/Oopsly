@@ -162,7 +162,7 @@ describe('templates', () => {
 
     it('writes the Excel template to a file', async () => {
         await downloadQuestionExcelTemplate();
-        expect(toFile).toHaveBeenCalledWith('oopsly_questions_template.xlsx');
+        expect(toFile).toHaveBeenCalledWith('quizi_questions_template.xlsx');
     });
 });
 

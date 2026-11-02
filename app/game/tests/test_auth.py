@@ -33,11 +33,11 @@ class Clock:
 
 def test_access_token_verifies(make_token):
     result = verify_access_token(
-        make_token(id="user-9", sub="test@oopsly.com", role="USER")
+        make_token(id="user-9", sub="test@quizi.com", role="USER")
     )
     assert result.as_dict() == {
         "userId": "user-9",
-        "email": "test@oopsly.com",
+        "email": "test@quizi.com",
         "role": "USER",
     }
 
@@ -50,7 +50,7 @@ def test_verify_rejects_expired_forged_and_missing_id(rsa_key, make_token):
     with pytest.raises(jwt.PyJWTError):
         verify_access_token(forged)
     with pytest.raises(jwt.PyJWTError):
-        verify_access_token(make_token(sub="learner@oopsly.app"))
+        verify_access_token(make_token(sub="learner@quizi.app"))
     with pytest.raises(jwt.PyJWTError):
         verify_access_token("not-a-token")
 
@@ -169,7 +169,7 @@ def test_missing_kid_is_rejected():
 
 
 def test_session_route_returns_the_verified_result(session_factory, make_token):
-    token = make_token(id="user-9", sub="learner@oopsly.app", role="USER")
+    token = make_token(id="user-9", sub="learner@quizi.app", role="USER")
     with TestClient(app) as client:
         missing = client.get("/v1/game/session")
         assert missing.status_code == 401
@@ -188,7 +188,7 @@ def test_session_route_returns_the_verified_result(session_factory, make_token):
     assert ok.status_code == 200
     assert ok.json()["data"] == {
         "userId": "user-9",
-        "email": "learner@oopsly.app",
+        "email": "learner@quizi.app",
         "role": "USER",
     }
 

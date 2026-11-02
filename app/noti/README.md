@@ -1,55 +1,55 @@
 # noti
 
-AWS Lambda that sends Oopsly's emails. Other services never talk to the mail server: they put
-a JSON event on an SQS queue and this function turns it into an email over SMTP, so signing
-up or inviting someone never waits on (or fails because of) email delivery.
+AWS Lambda that sends Quizi's emails. Other services never talk to the mail provider: they invoke
+this function directly with a template name and its data. It renders the template and sends it
+through the [Resend](https://resend.com) API, so signing up or inviting someone never waits on (or
+fails because of) email delivery.
 
 ```
-auth / api --> SQS (oopsly-noti-<env>) --> noti Lambda --SMTP--> inbox
-                     |
-                     +-- 3 failed attempts --> dead-letter queue
+auth / api --lambda:Invoke (async)--> quizi-noti-<env> --HTTPS--> Resend --> inbox
 ```
 
 ## Events
 
-Every message is `{"type": ..., "to": "<one email>", "data": {...}}`.
+Every invocation payload is `{"template": ..., "to": "<one email>", "data": {...}}`.
 
-| type | sent when | `data` |
+| template | sent when | `data` |
 |---|---|---|
 | `otp` | someone asks for a login or signup code | `code` (required), `name` |
 | `welcome` | a user signs up for the first time | `name` |
 | `community_invite` | a user is added to a community | `communityName` (required), `inviterName`, `name` |
-| `study_reminder` | a user asks for their study schedule by email | `ics` (required): the iCalendar body, attached as `oopsly-learning.ics` |
+| `study_reminder` | a user asks for their study schedule by email | `ics` (required): the iCalendar body, attached as `quizi-learning.ics` |
 
-The calendar event is called **Learning on Oopsly**. `name` greets the user and falls back to
+The calendar event is called **Learning on Quizi**. `name` greets the user and falls back to
 the part of the address before the `@`.
 
-Who publishes what:
+Who invokes what:
 
-- **auth** publishes `otp`, `welcome` and `study_reminder` itself (`app/mail.py`, `SqsSender`).
-  It does nothing when `NOTI_QUEUE_URL` is empty (local development), and only logs.
-- **api** asks auth to publish `community_invite` (`POST /internal/v1/notifications/community-invite`),
+- **auth** invokes `otp`, `welcome` and `study_reminder` itself (`app/mail.py`, `LambdaSender`).
+  It does nothing when `NOTI_FUNCTION_NAME` is empty (local development), and only logs.
+- **api** asks auth to invoke `community_invite` (`POST /internal/v1/notifications/community-invite`),
   because auth owns user emails.
 
-A message that is not valid JSON, has an unknown type or a bad address can never succeed, so it is
-logged and dropped. Any other failure (SMTP down) puts only that message back on the queue; after
-three tries it moves to the dead-letter queue.
+Callers use `InvocationType="Event"`. A payload that is not an object, has an unknown template or a
+bad address can never succeed, so it is logged and dropped. Any other failure (Resend down, bad key)
+makes the function raise, and Lambda retries the invocation twice before giving up.
 
-## SMTP settings
+## Resend settings
 
-Stored as JSON in the Secrets Manager secret `oopsly-<env>-smtp`:
+Stored as JSON in the Secrets Manager secret `quizi-<env>-resend`:
 
 ```json
-{"host": "smtp.example.com", "port": 587, "username": "...", "password": "...", "from_email": "Oopsly <no-reply@example.com>"}
+{"api_key": "re_...", "from_email": "Quizi <no-reply@quizi.tech>"}
 ```
 
-Port 465 uses implicit TLS; any other port upgrades with STARTTLS. The deployment fills the secret
-from the GitHub Environment (variables `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_FROM`, secret
-`SMTP_PASSWORD`; see `deployment/README.md`). Set `APP_URL` for the links in emails.
+The sender domain must be verified in Resend. The deployment fills the secret from the GitHub
+Environment (variable `RESEND_FROM`, secret `RESEND_API_KEY`; see `deployment/README.md`). Set
+`APP_URL` for the links in emails.
 
 ## Develop
 
-Standard library only (boto3 comes with the Lambda runtime), so there is no build step.
+Standard library only (boto3 comes with the Lambda runtime), so there is no build step. Tests mock
+the Resend HTTP call.
 
 ```bash
 python -m venv .venv && . .venv/bin/activate

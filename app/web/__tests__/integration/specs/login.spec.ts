@@ -12,13 +12,13 @@ test.describe('Login screen', () => {
         await page.goto('/login');
         await page
             .getByPlaceholder('name@example.com')
-            .fill('learner@oopsly.app');
+            .fill('learner@quizi.app');
         await page.getByRole('button', { name: 'Continue with Email' }).click();
 
         await expect(page.getByPlaceholder('123456')).toBeVisible();
         const otpRequests = await mock.requests('POST', `${AUTH}/v1/otp`);
         expect(otpRequests).toHaveLength(1);
-        expect(otpRequests[0].url).toContain('email=learner@oopsly.app');
+        expect(otpRequests[0].url).toContain('email=learner@quizi.app');
 
         await page.getByPlaceholder('123456').fill('123456');
         await page.getByRole('button', { name: 'Verify' }).click();
@@ -29,11 +29,11 @@ test.describe('Login screen', () => {
             `${AUTH}/v1/otp/validate`
         );
         expect(validate.json).toMatchObject({
-            email: 'learner@oopsly.app',
+            email: 'learner@quizi.app',
             otp: '123456',
         });
         const stored = await page.evaluate(() =>
-            localStorage.getItem('oopsly-auth')
+            localStorage.getItem('quizi-auth')
         );
         expect(JSON.parse(stored ?? '{}').state).toMatchObject({
             isAuthenticated: true,
@@ -51,7 +51,7 @@ test.describe('Login screen', () => {
         await page.getByPlaceholder('Jane Doe').fill('Lena Learner');
         await page
             .getByPlaceholder('name@example.com')
-            .fill('learner@oopsly.app');
+            .fill('learner@quizi.app');
         await page.getByRole('button', { name: /Continue with Email/ }).click();
         await page.getByPlaceholder('123456').fill('654321');
         await page.getByRole('button', { name: 'Verify' }).click();
@@ -80,7 +80,7 @@ test.describe('Login screen', () => {
         await page.goto('/login');
         await page
             .getByPlaceholder('name@example.com')
-            .fill('learner@oopsly.app');
+            .fill('learner@quizi.app');
         await page.getByRole('button', { name: 'Continue with Email' }).click();
 
         await expect(
@@ -102,7 +102,7 @@ test.describe('Login screen', () => {
         await page.goto('/login');
         await page
             .getByPlaceholder('name@example.com')
-            .fill('learner@oopsly.app');
+            .fill('learner@quizi.app');
         await page.getByRole('button', { name: 'Continue with Email' }).click();
         await page.getByPlaceholder('123456').fill('000000');
         await page.getByRole('button', { name: 'Verify' }).click();
@@ -117,7 +117,7 @@ test.describe('Login screen', () => {
         await page.goto('/login');
         await page
             .getByPlaceholder('name@example.com')
-            .fill('learner@oopsly.app');
+            .fill('learner@quizi.app');
         await page.getByRole('button', { name: 'Continue with Email' }).click();
         await page.getByTestId('btn-use-different-email').click();
         await expect(page.getByPlaceholder('name@example.com')).toBeVisible();

@@ -94,7 +94,7 @@ describe('HomePage', () => {
 
     it('renders shelves after loading', async () => {
         render(<HomePage />);
-        expect(screen.getByText('Loading Oopsly...')).toBeInTheDocument();
+        expect(screen.getByText('Loading Quizi...')).toBeInTheDocument();
         await waitFor(() =>
             expect(screen.getByTestId('shelf-card-s1')).toBeInTheDocument()
         );

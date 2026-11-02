@@ -191,7 +191,7 @@ def test_reward_payloads_are_validated(client):
 
 
 def test_socket_plants_unlocks_and_harvests(client, session_factory, make_token):
-    token = make_token(id="user-1", sub="learner@oopsly.app", role="USER")
+    token = make_token(id="user-1", sub="learner@quizi.app", role="USER")
     with client.websocket_connect("/v1/game/ws?token=" + token) as socket:
         assert socket.receive_json()["type"] == "ready"
         socket.send_json(

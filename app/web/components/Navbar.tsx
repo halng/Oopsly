@@ -87,7 +87,7 @@ const Navbar = () => {
                             </div>
                             <div className="flex flex-col text-left">
                                 <span className="text-lg sm:text-xl font-extrabold tracking-tight text-[var(--theme-text)] flex items-center gap-1">
-                                    Oopsly
+                                    Quizi
                                     <span
                                         className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded-full"
                                         style={{

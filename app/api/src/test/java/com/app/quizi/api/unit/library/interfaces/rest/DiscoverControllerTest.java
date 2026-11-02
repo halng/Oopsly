@@ -1,0 +1,84 @@
+/*
+ *    Copyright 2026 Hao Nguyen Tan
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+package com.app.quizi.api.unit.library.interfaces.rest;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import com.app.quizi.api.shared.application.vm.ApiRes;
+import com.app.quizi.api.shared.application.vm.CloneReq;
+import com.app.quizi.api.shelf.DiscoverController;
+import com.app.quizi.api.subject.SubjectService;
+import com.app.quizi.api.testsuite.application.TestSuiteService;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class DiscoverControllerTest {
+
+    @Mock private SubjectService subjectService;
+    @Mock private TestSuiteService testSuiteService;
+    @InjectMocks private DiscoverController discoverController;
+
+    @Test
+    void discoverPublicDecks_delegates() {
+        ApiRes expected = ApiRes.success("ok");
+        when(subjectService.discoverPublicDecks("java", 0, 20)).thenReturn(expected);
+        assertSame(expected, discoverController.discoverPublicDecks("java", 0, 20));
+        verify(subjectService).discoverPublicDecks("java", 0, 20);
+    }
+
+    @Test
+    void cloneDeck_delegates() {
+        UUID subjectId = UUID.randomUUID();
+        ApiRes expected = ApiRes.created("ok");
+        when(subjectService.cloneDeck(subjectId, null)).thenReturn(expected);
+        assertSame(expected, discoverController.cloneDeck(subjectId, null));
+        verify(subjectService).cloneDeck(subjectId, null);
+    }
+
+    @Test
+    void cloneDeck_passesTargetShelf() {
+        UUID subjectId = UUID.randomUUID();
+        UUID shelfId = UUID.randomUUID();
+        ApiRes expected = ApiRes.created("ok");
+        when(subjectService.cloneDeck(subjectId, shelfId)).thenReturn(expected);
+        assertSame(expected, discoverController.cloneDeck(subjectId, new CloneReq(shelfId)));
+    }
+
+    @Test
+    void discoverPublicTestSuites_delegates() {
+        ApiRes expected = ApiRes.success("ok");
+        when(testSuiteService.discoverPublic("bio", 0, 20)).thenReturn(expected);
+        assertSame(expected, discoverController.discoverPublicTestSuites("bio", 0, 20));
+    }
+
+    @Test
+    void cloneTestSuite_delegates() {
+        UUID id = UUID.randomUUID();
+        UUID shelfId = UUID.randomUUID();
+        ApiRes expected = ApiRes.created("ok");
+        when(testSuiteService.cloneSuite(id, shelfId)).thenReturn(expected);
+        assertSame(expected, discoverController.cloneTestSuite(id, new CloneReq(shelfId)));
+        when(testSuiteService.cloneSuite(id, null)).thenReturn(expected);
+        assertSame(expected, discoverController.cloneTestSuite(id, null));
+    }
+}

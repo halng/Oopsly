@@ -41,6 +41,7 @@ describe('gameSocket', () => {
         vi.useRealTimers();
         vi.unstubAllGlobals();
         delete process.env.NEXT_PUBLIC_GAME_API_URL;
+        delete process.env.NEXT_PUBLIC_WS_URL;
     });
 
     it('does not connect without a token', async () => {
@@ -54,6 +55,14 @@ describe('gameSocket', () => {
         const url = FakeSocket.instances[0].url;
         expect(url).toMatch(
             /^ws:\/\/game\.test\/v1\/game\/ws\?token=tok%20en&platform=WEB&requestId=/
+        );
+    });
+
+    it('prefers the socket host when NEXT_PUBLIC_WS_URL is set', async () => {
+        process.env.NEXT_PUBLIC_WS_URL = 'https://ws.test/';
+        cleanup = await open(vi.fn());
+        expect(FakeSocket.instances[0].url).toMatch(
+            /^wss:\/\/ws\.test\/v1\/game\/ws\?token=/
         );
     });
 

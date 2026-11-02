@@ -9,8 +9,9 @@ name: Deploy to AWS (SAM)
 #   secret   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY   IAM user access key
 #   variable ALLOWED_ORIGINS    comma-separated browser origins (CORS, prod only)
 #   variable APP_URL            web app address used for links in emails
-#   variable SMTP_HOST / SMTP_PORT / SMTP_USERNAME / SMTP_FROM, secret SMTP_PASSWORD
-#                               mail server the noti Lambda sends through
+#   variable RESEND_FROM, secret RESEND_API_KEY
+#                               Resend account the noti Lambda sends through
+#   variable HOSTED_ZONE_ID     Route 53 zone of quizi.tech (prod: api.quizi.tech and quizi.tech)
 
 on:
   workflow_call:
@@ -41,7 +42,7 @@ on:
         required: false
       AWS_SECRET_ACCESS_KEY:
         required: false
-      SMTP_PASSWORD:
+      RESEND_API_KEY:
         required: false
   workflow_dispatch:
     inputs:
@@ -163,11 +164,9 @@ jobs:
           SERVICES: ${{ needs.validate-inputs.outputs.services }}
           ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
           APP_URL: ${{ vars.APP_URL }}
-          SMTP_HOST: ${{ vars.SMTP_HOST }}
-          SMTP_PORT: ${{ vars.SMTP_PORT }}
-          SMTP_USERNAME: ${{ vars.SMTP_USERNAME }}
-          SMTP_FROM: ${{ vars.SMTP_FROM }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          RESEND_FROM: ${{ vars.RESEND_FROM }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          HOSTED_ZONE_ID: ${{ vars.HOSTED_ZONE_ID }}
           AWS_REGION: ${{ inputs.aws_region }}
         # The network stack is always applied first; services are validated above.
         # shellcheck disable=SC2086
@@ -178,13 +177,13 @@ jobs:
           ENV_NAME: ${{ inputs.env }}
         run: |
           ENDPOINT=$(aws cloudformation describe-stacks \
-            --stack-name "oopsly-network-${ENV_NAME}" \
-            --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" \
+            --stack-name "quizi-network-${ENV_NAME}" \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
             --output text)
           {
             echo "## Deployed ${ENV_NAME}"
             echo
             echo "- Image tag: \`${{ needs.validate-inputs.outputs.image-tag }}\`"
             echo "- Services: ${{ needs.validate-inputs.outputs.services }}"
-            echo "- Public API endpoint: ${ENDPOINT}"
+            echo "- Public API URL: ${ENDPOINT}"
           } >> "$GITHUB_STEP_SUMMARY"

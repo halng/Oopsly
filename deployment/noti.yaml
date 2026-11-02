@@ -1,45 +1,42 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >-
-  Oopsly noti service: a Lambda that reads email events from the shared SQS queue and
-  sends them over SMTP (OTP codes, welcome, community invites, study calendar events).
-  Needs the network stack, which owns the queue.
+  Quizi noti service: a Lambda that auth and api invoke directly with a template name and
+  its data, renders the email and sends it through the Resend API (OTP codes, welcome,
+  community invites, study calendar events).
 
 Parameters:
   Environment:
     Type: String
     Default: stg
     AllowedPattern: "[a-z0-9-]+"
-  NetworkStackName:
-    Type: String
-    Default: oopsly-network-stg
-    Description: Stack created from network.yaml (the queue is imported).
   AppUrl:
     Type: String
-    Default: https://oopsly-web.vercel.app
+    Default: https://quizi.tech
     Description: Web app address used for links in emails.
 
 Resources:
-  # Holds host, port, username, password and from_email as JSON. Created with a placeholder;
-  # deploy.sh fills it from the SMTP_* variables, and later deploys leave the value alone.
-  SmtpSecret:
+  # Holds api_key and from_email as JSON. Created with a placeholder; deploy.sh fills it
+  # from RESEND_API_KEY / RESEND_FROM, and later deploys leave the value alone.
+  ResendSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub oopsly-${Environment}-smtp
-      SecretString: '{"host":"","port":587,"username":"","password":"","from_email":""}'
+      Name: !Sub quizi-${Environment}-resend
+      SecretString: '{"api_key":"","from_email":""}'
 
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/lambda/oopsly-noti-${Environment}
+      LogGroupName: !Sub /aws/lambda/quizi-noti-${Environment}
       RetentionInDays: 14
 
   Function:
     Type: AWS::Serverless::Function
     DependsOn: LogGroup
     Properties:
-      FunctionName: !Sub oopsly-noti-${Environment}
-      Description: Sends Oopsly emails from the noti queue
+      # The name is fixed: auth builds the function ARN from it.
+      FunctionName: !Sub quizi-noti-${Environment}
+      Description: Renders Quizi email templates and sends them through Resend
       CodeUri: ../app/noti/
       Handler: noti.handler.handler
       Runtime: python3.12
@@ -48,26 +45,22 @@ Resources:
       Timeout: 30
       Environment:
         Variables:
-          SMTP_SECRET_ARN: !Ref SmtpSecret
+          RESEND_SECRET_ARN: !Ref ResendSecret
           APP_URL: !Ref AppUrl
       Policies:
         - Statement:
             - Effect: Allow
               Action: secretsmanager:GetSecretValue
-              Resource: !Ref SmtpSecret
-      Events:
-        Queue:
-          Type: SQS
-          Properties:
-            Queue:
-              Fn::ImportValue: !Sub ${NetworkStackName}-NotiQueueArn
-            BatchSize: 10
-            MaximumBatchingWindowInSeconds: 1
-            FunctionResponseTypes:
-              - ReportBatchItemFailures
+              Resource: !Ref ResendSecret
+      # Callers invoke asynchronously; Lambda retries a failed send twice, then drops it.
+      EventInvokeConfig:
+        MaximumRetryAttempts: 2
+        MaximumEventAgeInSeconds: 3600
 
 Outputs:
   FunctionName:
     Value: !Ref Function
-  SmtpSecretArn:
-    Value: !Ref SmtpSecret
+  FunctionArn:
+    Value: !GetAtt Function.Arn
+  ResendSecretArn:
+    Value: !Ref ResendSecret

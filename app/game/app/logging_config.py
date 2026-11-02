@@ -23,7 +23,7 @@ _LEVEL_COLOR = {
 }
 
 
-class OopslyFormatter(logging.Formatter):
+class QuiziFormatter(logging.Formatter):
     """Mirror the Java logback pattern.
 
     %d{ISO8601} %highlight(%-5level) [%blue(%t)] %yellow([%X{XP}:%X{XID}])
@@ -53,7 +53,7 @@ class OopslyFormatter(logging.Formatter):
 
 def setup_logging() -> None:
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(OopslyFormatter())
+    handler.setFormatter(QuiziFormatter())
     logging.basicConfig(level=logging.INFO, handlers=[handler], force=True)
     for name in ("uvicorn", "uvicorn.error", "uvicorn.access", "app"):
         logger = logging.getLogger(name)

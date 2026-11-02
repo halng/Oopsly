@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Oopsly game service on Fargate, 2 tasks behind an internal ALB, exposed through the shared HTTP API.
+Description: Quizi game service on Fargate, 1 task behind an internal ALB, exposed through the shared HTTP API.
 
 Parameters:
   Environment:
@@ -8,14 +8,14 @@ Parameters:
     AllowedPattern: "[a-z0-9-]+"
   NetworkStackName:
     Type: String
-    Default: oopsly-network-stg
+    Default: quizi-network-stg
     Description: Stack created from network.yaml.
   ImageTag:
     Type: String
     Description: Tag already copied into the game ECR repository (see scripts/copy-images.sh).
   DesiredCount:
     Type: Number
-    Default: 2
+    Default: 1
     MinValue: 1
     MaxValue: 6
     Description: Number of Fargate tasks.
@@ -25,7 +25,7 @@ Parameters:
     Description: Comma-separated browser origins allowed to call the service.
   AuthStackName:
     Type: String
-    Default: oopsly-auth-stg
+    Default: quizi-auth-stg
     Description: Stack created from auth.yaml (its JWKS and base URL are imported).
 
 Resources:
@@ -54,7 +54,7 @@ Resources:
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub oopsly-game-${Environment}
+      Family: !Sub quizi-game-${Environment}
       RequiresCompatibilities:
         - FARGATE
       NetworkMode: awsvpc
@@ -62,7 +62,7 @@ Resources:
       Memory: "1024"
       ExecutionRoleArn: !GetAtt ExecutionRole.Arn
       ContainerDefinitions:
-        - Name: oopsly-game
+        - Name: quizi-game
           Image: !Sub
             - "${Repository}:${ImageTag}"
             - Repository:
@@ -97,7 +97,7 @@ Resources:
   AlbSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Internal load balancer for oopsly-game
+      GroupDescription: Internal load balancer for quizi-game
       VpcId:
         Fn::ImportValue: !Sub ${NetworkStackName}-VpcId
       SecurityGroupIngress:
@@ -121,12 +121,12 @@ Resources:
       FromPort: 9008
       ToPort: 9008
       SourceSecurityGroupId: !GetAtt AlbSecurityGroup.GroupId
-      Description: oopsly-game load balancer to tasks
+      Description: quizi-game load balancer to tasks
 
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Sub oopsly-game-${Environment}
+      Name: !Sub quizi-game-${Environment}
       Type: application
       Scheme: internal
       SecurityGroups:
@@ -141,7 +141,7 @@ Resources:
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub oopsly-game-${Environment}
+      Name: !Sub quizi-game-${Environment}
       VpcId:
         Fn::ImportValue: !Sub ${NetworkStackName}-VpcId
       Port: 9008
@@ -168,11 +168,62 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref TargetGroup
 
+  # The HTTP API cannot upgrade to WebSocket, so the socket path is also served by the
+  # public socket load balancer from the network stack.
+  SocketIngressFromAlb:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-TaskSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 9008
+      ToPort: 9008
+      SourceSecurityGroupId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-SocketSecurityGroupId
+      Description: quizi-game socket load balancer to tasks
+
+  SocketTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub quizi-game-ws-${Environment}
+      VpcId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-VpcId
+      Port: 9008
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: "200"
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: "30"
+
+  SocketRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn:
+        Fn::ImportValue: !Sub ${NetworkStackName}-SocketListenerArn
+      Priority: 20
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+            - "/v1/game/ws"
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref SocketTargetGroup
+
   Service:
     Type: AWS::ECS::Service
-    DependsOn: HttpListener
+    DependsOn:
+      - HttpListener
+      - SocketRule
     Properties:
-      ServiceName: oopsly-game
+      ServiceName: quizi-game
       Cluster:
         Fn::ImportValue: !Sub ${NetworkStackName}-ClusterName
       TaskDefinition: !Ref TaskDefinition
@@ -194,9 +245,12 @@ Resources:
             - ","
             - Fn::ImportValue: !Sub ${NetworkStackName}-SubnetIds
       LoadBalancers:
-        - ContainerName: oopsly-game
+        - ContainerName: quizi-game
           ContainerPort: 9008
           TargetGroupArn: !Ref TargetGroup
+        - ContainerName: quizi-game
+          ContainerPort: 9008
+          TargetGroupArn: !Ref SocketTargetGroup
 
   # ------------------------------------------------- API Gateway routes
   Integration:

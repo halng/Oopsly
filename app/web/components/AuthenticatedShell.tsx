@@ -43,7 +43,7 @@ const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
                 {!hideNavbar && (
                     <footer className="py-6 border-t border-stone-200/60 dark:border-stone-800/60 text-center text-xs text-stone-400">
                         <p>
-                            © 2026 Oopsly · Spaced Repetition Flashcards with
+                            © 2026 Quizi · Spaced Repetition Flashcards with
                             FSRS Algorithm & Collaborative Communities
                         </p>
                     </footer>

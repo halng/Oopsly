@@ -42,7 +42,7 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
           class="font-black text-stone-900 tracking-tight text-xl"
           data-testid="brand-logo"
         >
-          Oopsly
+          Quizi
         </span>
       </div>
       <nav
@@ -58,7 +58,7 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
           class="hover:text-stone-900"
           href="#why"
         >
-          Why Oopsly
+          Why Quizi
         </a>
         <a
           class="hover:text-stone-900"
@@ -163,7 +163,7 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
         <p
           class="text-lg sm:text-xl text-stone-600 max-w-2xl leading-relaxed mb-10 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200"
         >
-          Oopsly combines the scientifically-proven FSRS algorithm with a beautiful, relaxing gamified sanctuary to make studying your favorite part of the day.
+          Quizi combines the scientifically-proven FSRS algorithm with a beautiful, relaxing gamified sanctuary to make studying your favorite part of the day.
         </p>
         <button
           class="flex items-center gap-2 px-8 py-4 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white text-lg font-bold shadow-xl shadow-stone-900/20 transition-all cursor-pointer hover:-translate-y-1 active:translate-y-0 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300"
@@ -205,7 +205,7 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
             <h2
               class="text-3xl sm:text-4xl font-black text-stone-900"
             >
-              Why choose Oopsly?
+              Why choose Quizi?
             </h2>
             <p
               class="text-stone-500 mt-4 text-lg"
@@ -434,7 +434,7 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
                 <p
                   class="text-stone-600 leading-relaxed"
                 >
-                  Each day Oopsly shows only the cards you are about to forget.
+                  Each day Quizi shows only the cards you are about to forget.
                 </p>
               </div>
             </li>
@@ -761,7 +761,7 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
             <h2
               class="text-3xl sm:text-4xl font-black text-stone-900 mb-8"
             >
-              Why learners pick Oopsly
+              Why learners pick Quizi
             </h2>
             <ul
               class="space-y-6"
@@ -918,7 +918,7 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
                   <th
                     class="p-4 font-black text-stone-900 text-center"
                   >
-                    Oopsly
+                    Quizi
                   </th>
                   <th
                     class="p-4 font-bold text-stone-500 text-center"
@@ -1584,7 +1584,7 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
               <summary
                 class="font-bold text-stone-900 cursor-pointer list-none flex justify-between items-center"
               >
-                Is Oopsly free?
+                Is Quizi free?
                 <span
                   class="text-stone-400 group-open:rotate-45 transition-transform text-xl leading-none"
                 >
@@ -1792,7 +1792,7 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
         <span
           class="font-black text-stone-900 text-lg"
         >
-          Oopsly
+          Quizi
         </span>
       </div>
       <nav

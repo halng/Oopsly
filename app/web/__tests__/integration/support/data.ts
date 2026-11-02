@@ -1,12 +1,12 @@
 import type { Shelf, Subject, TestSuite, UserProfile } from '@/types';
 import { envelope, page, type Stub } from './wiremock';
 
-export const API = '/api/oopsly';
+export const API = '/api/quizi';
 export const AUTH = '/api/auth';
 export const GAME = '/game';
 
 export const profile: UserProfile = {
-    email: 'learner@oopsly.app',
+    email: 'learner@quizi.app',
     name: 'Lena Learner',
     displayName: 'Lena',
     streakDays: 7,
@@ -344,7 +344,7 @@ export function defaultStubs(): Stub[] {
         ok('PATCH', `${AUTH}/v1/user-profiles/settings/newcomer`, null),
         ok('POST', `${AUTH}/v1/user-profiles/study-reminder`, null),
         ok('POST', `${AUTH}/v1/user-profiles/study-reminder/calendar`, {
-            filename: 'oopsly-study-reminder.ics',
+            filename: 'quizi-study-reminder.ics',
             ics: 'BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n',
         }),
         ok('PATCH', `${AUTH}/v1/user-settings`, profile.settings),

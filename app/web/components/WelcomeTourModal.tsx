@@ -18,7 +18,7 @@ interface WelcomeTourModalProps {
 const TOUR_STEPS = [
     {
         id: 'welcome',
-        title: 'Welcome to Oopsly!',
+        title: 'Welcome to Quizi!',
         description:
             "Your ultimate companion for spaced repetition learning. Let's take a quick tour of how to make the most out of your study sessions.",
         icon: <Heart className="w-10 h-10 text-rose-500" />,

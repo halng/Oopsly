@@ -1,4 +1,4 @@
-# Oopsly
+# Quizi
 
 [![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=Oopsly%3A%3AAPI)](https://sonarcloud.io/summary/new_code?id=Oopsly%3A%3AAPI)
 
@@ -12,7 +12,7 @@
 
 | Attribute | Detail |
 |---|---|
-| **App Name (concept)** | Oopsly |
+| **App Name (concept)** | Quizi |
 | **Tagline** | *"Study Smart. Remember Forever."* |
 | **Core Philosophy** | Science-backed learning + Social engagement = Maximum retention |
 | **Target Users** | Students (K-12, University), Professionals, Language Learners, Self-learners |
@@ -21,7 +21,7 @@
 ## 🏗️ 2. INFORMATION ARCHITECTURE (IA)
 
 ```
-Oopsly
+Quizi
 ├── 🏠 Home (Dashboard)
 │   ├── Daily Study Queue (Due cards + streaks)
 │   ├── Quick Stats (streak, cards due, XP)
@@ -266,7 +266,7 @@ Phase 3 — Scale (6–12 months)
 
 ## ✅ 10. KEY DIFFERENTIATORS SUMMARY
 
-| Feature | Anki | Quizlet | **Oopsly** |
+| Feature | Anki | Quizlet | **Quizi** |
 |---|---|---|---|
 | SRS Algorithm | ✅ FSRS | ❌ Weak | ✅ **FSRS + AI-Adaptive** |
 | Modern UI/UX | ❌ | ✅ | ✅ **Best-in-class** |
@@ -297,7 +297,7 @@ app
 │   ├── tests/
 │   └── pyproject.toml
 ├── perf
-│   ├── locustfile.py + oopsly_perf/ (Locust performance tests, smoke + regression)
+│   ├── locustfile.py + quizi_perf/ (Locust performance tests, smoke + regression)
 │   └── thresholds.json (per-endpoint limits)
 ├── web
 │   ├── app/ (Next.js frontend)   
@@ -322,8 +322,8 @@ Prerequisites: Docker, JDK 21, Node with pnpm, Python 3.12.
 |---|---|---|
 | Postgres / Redis | 5432 / 6379 | via `app/docker-compose.yml` |
 | Auth (FastAPI) | 9010 | `http://localhost:9010/api/auth` |
-| nginx gateway (`app/nginx`) | 8080 | `http://localhost:8080` routes `/api/auth`, `/.well-known`, `/api/oopsly`, `/v1/game` and `/` (web) to the services above |
-| API (Spring Boot) | 9009 | `http://localhost:9009/api/oopsly` |
+| nginx gateway (`app/nginx`) | 8080 | `http://localhost:8080` routes `/api/auth`, `/.well-known`, `/api/quizi`, `/v1/game` and `/` (web) to the services above |
+| API (Spring Boot) | 9009 | `http://localhost:9009/api/quizi` |
 | Game (FastAPI) | 9008 | `http://localhost:9008` |
 | Web (Next.js) | 3000 | `http://localhost:3000` |
 
@@ -338,7 +338,7 @@ docker compose up -d --build   # postgres + redis + auth
 
 - JWKS: `http://localhost:9010/.well-known/pub.json` (the API and game read it from `JWKS_URL`; this is the default)
 - Swagger: `http://localhost:9010/api/auth/docs`
-- Email is not sent yet, so sign in with a test email: `test@oopsly.dev` with OTP `000000` (set by `TEST_EMAILS` in the compose file).
+- Email is not sent locally (`NOTI_FUNCTION_NAME` is empty), so sign in with a test email: `test@quizi.dev` with OTP `000000` (set by `TEST_EMAILS` in the compose file).
 - To run auth outside Docker (hot reload), keep postgres and redis up and generate a internal API key in the `.env` file (set `INTERNAL_API_KEY`) for the auth service to validate internal requests.
 
 ```bash
@@ -356,8 +356,8 @@ cd app/api
 ./gradlew bootRun -Pprofile=test
 ```
 
-- Base URL: `http://localhost:9009/api/oopsly`
-- Swagger: `http://localhost:9009/api/oopsly/swagger-ui/index.html`
+- Base URL: `http://localhost:9009/api/quizi`
+- Swagger: `http://localhost:9009/api/quizi/swagger-ui/index.html`
 - Allowed browser origins come from `ALLOWED_ORIGINS` (default `http://localhost:3000,http://localhost:8080,http://localhost:8081`); the live quiz socket answers 403 for any other origin.
 
 #### 3. Game service
@@ -370,7 +370,7 @@ alembic upgrade head
 uvicorn app.main:app --host 0.0.0.0 --port 9008 --reload
 ```
 
-Defaults: `DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/oopsly`,
+Defaults: `DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/quizi`,
 `JWKS_URL=http://localhost:9010/.well-known/pub.json`.
 
 #### 4. Web
@@ -384,9 +384,11 @@ pnpm dev
 `app/web/.env`:
 
 ```
-NEXT_PUBLIC_API_URL=http://localhost:9009/api/oopsly
+NEXT_PUBLIC_API_URL=http://localhost:9009/api/quizi
 NEXT_PUBLIC_AUTH_URL=http://localhost:9010/api/auth
 NEXT_PUBLIC_GAME_API_URL=http://localhost:9008
+# Cloud only: host that serves the WebSockets (the HTTP API cannot). Unset locally.
+# NEXT_PUBLIC_WS_URL=https://ws.quizi.tech
 ```
 
 The web app renews expired access tokens by itself (using the refresh token); if that fails you are sent back to the login page.

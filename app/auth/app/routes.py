@@ -170,7 +170,7 @@ def study_reminder_calendar(
     ics = svc.study_reminder_ics(req.days, req.time, req.timezone)
     return ok(
         "Study reminder calendar generated",
-        {"filename": "oopsly-study-reminder.ics", "ics": ics},
+        {"filename": "quizi-study-reminder.ics", "ics": ics},
     )
 
 

@@ -39,7 +39,7 @@ describe('OfflineSyncBanner', () => {
         const onDataSynced = vi.fn();
         render(<OfflineSyncBanner onDataSynced={onDataSynced} />);
         window.dispatchEvent(
-            new CustomEvent('oopsly-sync-completed', {
+            new CustomEvent('quizi-sync-completed', {
                 detail: { successCount: 1 },
             })
         );

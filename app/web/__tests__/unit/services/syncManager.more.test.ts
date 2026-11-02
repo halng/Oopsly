@@ -246,7 +246,7 @@ describe('SyncManager', () => {
             });
             (window as any).SyncManager = class {};
             await syncManager.requestBackgroundSync();
-            expect(register).toHaveBeenCalledWith('sync-oopsly-reviews');
+            expect(register).toHaveBeenCalledWith('sync-quizi-reviews');
         });
 
         it('skips registration when registration.sync is missing', async () => {
@@ -356,7 +356,7 @@ describe('SyncManager', () => {
             vi.spyOn(console, 'warn').mockImplementation(() => {});
 
             const events: any[] = [];
-            window.addEventListener('oopsly-sync-completed', (e: any) =>
+            window.addEventListener('quizi-sync-completed', (e: any) =>
                 events.push(e.detail)
             );
 

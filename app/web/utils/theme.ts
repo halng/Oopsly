@@ -146,7 +146,7 @@ export function applyTheme(themeId: ThemeId) {
     if (body) {
         body.setAttribute('data-theme', themeId);
     }
-    localStorage.setItem('oopsly_theme', themeId);
+    localStorage.setItem('quizi_theme', themeId);
 
     const option =
         THEME_OPTIONS.find((t) => t.id === themeId) || THEME_OPTIONS[0];
@@ -176,7 +176,7 @@ export function applyTheme(themeId: ThemeId) {
     // Dispatch custom event for any listening reactive elements
     if (typeof window !== 'undefined') {
         window.dispatchEvent(
-            new CustomEvent('oopsly-theme-applied', {
+            new CustomEvent('quizi-theme-applied', {
                 detail: { themeId, option },
             })
         );
@@ -184,11 +184,11 @@ export function applyTheme(themeId: ThemeId) {
 }
 
 export function saveTheme(themeId: ThemeId) {
-    localStorage.setItem('oopsly_theme', themeId);
+    localStorage.setItem('quizi_theme', themeId);
 }
 
 export function getSavedTheme(): ThemeId {
-    const saved = localStorage.getItem('oopsly_theme') as ThemeId | null;
+    const saved = localStorage.getItem('quizi_theme') as ThemeId | null;
     if (saved && THEME_OPTIONS.some((t) => t.id === saved)) {
         return saved;
     }

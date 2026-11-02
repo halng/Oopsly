@@ -80,7 +80,7 @@ jobs:
             ./app/api
             --org=a8c77c31-638a-4516-ab03-0e14eb961631
             --report
-            --project-name=OOPSLY-API
+            --project-name=QUIZI-API
 
       - name: Skip Snyk (API) — token not configured
         if: env.SNYK_TOKEN == ''
@@ -106,7 +106,7 @@ jobs:
             ./app/web
             --org=a8c77c31-638a-4516-ab03-0e14eb961631
             --report
-            --project-name=OOPSLY-WEB
+            --project-name=QUIZI-WEB
 
       - name: Skip Snyk (Web) — token not configured
         if: env.SNYK_TOKEN == ''
@@ -131,7 +131,7 @@ jobs:
             ./app/game
             --org=a8c77c31-638a-4516-ab03-0e14eb961631
             --report
-            --project-name=OOPSLY-GAME
+            --project-name=QUIZI-GAME
 
       - name: Skip Snyk (Game) — token not configured
         if: env.SNYK_TOKEN == ''
@@ -156,7 +156,7 @@ jobs:
             ./app/auth
             --org=a8c77c31-638a-4516-ab03-0e14eb961631
             --report
-            --project-name=OOPSLY-AUTH
+            --project-name=QUIZI-AUTH
 
       - name: Skip Snyk (Auth) — token not configured
         if: env.SNYK_TOKEN == ''

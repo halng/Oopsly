@@ -1,7 +1,7 @@
 import logging
 import re
 
-from app.logging_config import OopslyFormatter, request_id, request_platform
+from app.logging_config import QuiziFormatter, request_id, request_platform
 
 
 def test_log_line_matches_the_api_template():
@@ -17,7 +17,7 @@ def test_log_line_matches_the_api_template():
         exc_info=None,
     )
     record.threadName = "MainThread"
-    line = re.sub(r"\033\[[0-9;]*m", "", OopslyFormatter().format(record))
+    line = re.sub(r"\033\[[0-9;]*m", "", QuiziFormatter().format(record))
     assert re.fullmatch(
         r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} INFO  "
         r"\[MainThread\] \[WEB:01JTEST\] app.socket - "

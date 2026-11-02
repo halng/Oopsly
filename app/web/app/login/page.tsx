@@ -128,7 +128,7 @@ const AuthPage = () => {
                             <Layers className="w-6 h-6" />
                         </div>
                         <h1 className="text-2xl font-black text-stone-900 tracking-tight">
-                            Oopsly
+                            Quizi
                         </h1>
                     </div>
 
@@ -305,7 +305,7 @@ const AuthPage = () => {
                             </span>
                         </h2>
                         <p className="text-lg text-stone-600 leading-relaxed">
-                            Oopsly combines the advanced FSRS algorithm with
+                            Quizi combines the advanced FSRS algorithm with
                             beautiful, gamified study sessions to help you
                             remember everything you learn.
                         </p>

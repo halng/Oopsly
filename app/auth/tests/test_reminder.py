@@ -19,7 +19,7 @@ def test_ics_repeats_weekly_on_the_chosen_days():
     assert "RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR" in ics
     assert "DTSTART;TZID=Asia/Singapore:20261104T180000" in ics
     assert "DTEND;TZID=Asia/Singapore:20261104T183000" in ics
-    assert "UID:fixed@oopsly" in ics
+    assert "UID:fixed@quizi" in ics
     assert "TRIGGER:-PT10M" in ics
     assert ics.startswith("BEGIN:VCALENDAR\r\n") and ics.endswith("END:VCALENDAR\r\n")
 

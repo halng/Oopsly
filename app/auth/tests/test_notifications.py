@@ -55,41 +55,41 @@ def test_community_invite_is_internal_only(client):
     assert res.status_code in (401, 403)
 
 
-class FakeSqs:
+class FakeLambda:
     def __init__(self):
-        self.messages = []
+        self.calls = []
 
-    def send_message(self, QueueUrl, MessageBody):
-        self.messages.append((QueueUrl, json.loads(MessageBody)))
+    def invoke(self, FunctionName, InvocationType, Payload):
+        self.calls.append((FunctionName, InvocationType, json.loads(Payload)))
 
 
-def test_sqs_sender_publishes_one_event_per_email():
-    sqs = FakeSqs()
-    sender = mail.SqsSender("https://sqs.test/q", client=sqs)
+def test_lambda_sender_invokes_the_template_asynchronously():
+    fake = FakeLambda()
+    sender = mail.LambdaSender("quizi-noti-stg", client=fake)
     sender.send_otp("a@b.co", "123456")
     sender.send_welcome("a@b.co", "Ann")
     sender.send_community_invite("a@b.co", "Ann", "Math Club", "Bo")
     sender.send_study_reminder("a@b.co", "ICS")
-    assert [m[1]["type"] for m in sqs.messages] == [
+    assert [c[2]["template"] for c in fake.calls] == [
         "otp",
         "welcome",
         "community_invite",
         "study_reminder",
     ]
-    assert {m[0] for m in sqs.messages} == {"https://sqs.test/q"}
-    assert sqs.messages[0][1] == {
-        "type": "otp",
+    assert {c[:2] for c in fake.calls} == {("quizi-noti-stg", "Event")}
+    assert fake.calls[0][2] == {
+        "template": "otp",
         "to": "a@b.co",
         "data": {"code": "123456"},
     }
-    assert sqs.messages[2][1]["data"] == {
+    assert fake.calls[2][2]["data"] == {
         "name": "Ann",
         "communityName": "Math Club",
         "inviterName": "Bo",
     }
 
 
-def test_sqs_sender_builds_its_own_client(monkeypatch):
+def test_lambda_sender_builds_its_own_client(monkeypatch):
     import sys
     import types
 
@@ -97,11 +97,11 @@ def test_sqs_sender_builds_its_own_client(monkeypatch):
 
     def client(name, region_name=None):
         made.update(name=name, region=region_name)
-        return FakeSqs()
+        return FakeLambda()
 
     monkeypatch.setitem(sys.modules, "boto3", types.SimpleNamespace(client=client))
-    mail.SqsSender("https://sqs.test/q", "ap-southeast-1")
-    assert made == {"name": "sqs", "region": "ap-southeast-1"}
+    mail.LambdaSender("quizi-noti-stg", "ap-southeast-1")
+    assert made == {"name": "lambda", "region": "ap-southeast-1"}
 
 
 def test_noop_sender_only_logs(caplog):
@@ -112,9 +112,9 @@ def test_noop_sender_only_logs(caplog):
     assert caplog.text.count("h***@example.com") == 2
 
 
-def test_sender_follows_the_queue_setting(monkeypatch):
+def test_sender_follows_the_function_setting(monkeypatch):
     deps.get_sender.cache_clear()
-    monkeypatch.setattr(settings, "noti_queue_url", "https://sqs.test/q")
-    monkeypatch.setattr(mail, "SqsSender", lambda url, region: ("sqs", url))
-    assert deps.get_sender() == ("sqs", "https://sqs.test/q")
+    monkeypatch.setattr(settings, "noti_function_name", "quizi-noti-stg")
+    monkeypatch.setattr(mail, "LambdaSender", lambda name, region: ("lambda", name))
+    assert deps.get_sender() == ("lambda", "quizi-noti-stg")
     deps.get_sender.cache_clear()

@@ -1,4 +1,4 @@
-# Oopsly Auth
+# Quizi Auth
 
 Python (FastAPI) service that owns authentication, authorization, subscriptions, user profiles and access-token issuing.
 `app/api` and `app/game` only verify the tokens it issues, using the public keys it publishes.
@@ -75,7 +75,7 @@ Point them at the service with `JWKS_URL` (default `http://localhost:9010/.well-
 `JWT_KEY_PUBLISH_LEAD_HOURS`, `JWT_KEY_ROTATION_CHECK_SECONDS`, `TEST_EMAILS` (OTP `000000` bypass),
 `INTERNAL_API_KEY` (internal routes are rejected when unset), `ALLOWED_ORIGINS`.
 
-**Email is not sent yet** (`NoOpSender` only logs). Until Resend is wired up in `deps.get_sender`, only `TEST_EMAILS` can sign in (code `000000`).
+Email goes through the noti Lambda (`LambdaSender`, set `NOTI_FUNCTION_NAME`; see `app/noti`). Without it `NoOpSender` only logs, and only `TEST_EMAILS` can sign in (code `000000`).
 
 `JWT_SECRET` is gone: nothing shares a secret any more.
 

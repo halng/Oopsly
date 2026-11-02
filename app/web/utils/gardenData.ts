@@ -282,7 +282,7 @@ export function getInitialGardenState(): GardenState {
     };
 }
 
-const GARDEN_STORAGE_KEY = 'oopsly_ghibli_garden';
+const GARDEN_STORAGE_KEY = 'quizi_ghibli_garden';
 
 export function loadGardenState(): GardenState {
     try {

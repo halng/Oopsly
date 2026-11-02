@@ -136,7 +136,7 @@ describe('SettingsPage', () => {
 
     it('cannot send a reminder with no days picked', () => {
         localStorage.setItem(
-            'oopsly.studyReminder',
+            'quizi.studyReminder',
             JSON.stringify({ days: [], time: '18:00' })
         );
         useUserProfileStore.getState().setProfile({

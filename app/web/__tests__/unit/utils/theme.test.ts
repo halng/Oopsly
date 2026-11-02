@@ -17,13 +17,13 @@ describe('theme utilities', () => {
         expect(getSavedTheme()).toBe('ghibli-meadow');
         saveTheme('obsidian');
         expect(getSavedTheme()).toBe('obsidian');
-        localStorage.setItem('oopsly_theme', 'not-a-theme');
+        localStorage.setItem('quizi_theme', 'not-a-theme');
         expect(getSavedTheme()).toBe('ghibli-meadow');
     });
 
     it('applies a light theme to the document and dispatches an event', () => {
         const listener = vi.fn();
-        window.addEventListener('oopsly-theme-applied', listener);
+        window.addEventListener('quizi-theme-applied', listener);
         applyTheme('ghibli-meadow');
         const option = THEME_OPTIONS.find(
             (theme) => theme.id === 'ghibli-meadow'
@@ -34,9 +34,9 @@ describe('theme utilities', () => {
         expect(
             document.documentElement.style.getPropertyValue('--theme-accent')
         ).toBe(option.accentColor);
-        expect(localStorage.getItem('oopsly_theme')).toBe('ghibli-meadow');
+        expect(localStorage.getItem('quizi_theme')).toBe('ghibli-meadow');
         expect(listener).toHaveBeenCalledOnce();
-        window.removeEventListener('oopsly-theme-applied', listener);
+        window.removeEventListener('quizi-theme-applied', listener);
     });
 
     it('applies dark themes and falls back to the first option for an invalid runtime id', () => {

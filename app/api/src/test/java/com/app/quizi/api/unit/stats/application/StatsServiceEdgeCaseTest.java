@@ -1,0 +1,225 @@
+/*
+ *    Copyright 2026 Hao Nguyen Tan
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+package com.app.quizi.api.unit.stats.application;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import com.app.quizi.api.card.Card;
+import com.app.quizi.api.card.CardRepository;
+import com.app.quizi.api.progress.UserProgress;
+import com.app.quizi.api.progress.UserProgressService;
+import com.app.quizi.api.shared.application.vm.ApiRes;
+import com.app.quizi.api.shared.client.AuthClient;
+import com.app.quizi.api.shared.client.AuthProfile;
+import com.app.quizi.api.shared.security.CurrentUser;
+import com.app.quizi.api.shelf.Shelf;
+import com.app.quizi.api.stats.application.StatsServiceImpl;
+import com.app.quizi.api.stats.application.vm.StatsRes;
+import com.app.quizi.api.stats.domain.ReviewLogEntity;
+import com.app.quizi.api.stats.infrastructure.ReviewLogRepository;
+import com.app.quizi.api.subject.Subject;
+import com.app.quizi.api.subject.SubjectRepository;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+// @Disabled("Disabled because the retention rate calculation is not yet implemented in the
+// StatsServiceImpl")
+/** Edge cases of the learner statistics aggregation. */
+@ExtendWith(MockitoExtension.class)
+class StatsServiceEdgeCaseTest {
+
+    @Mock private CurrentUser currentUser;
+    @Mock private UserProgressService userProgressService;
+    @Mock private AuthClient authClient;
+    @Mock private SubjectRepository subjectRepository;
+    @Mock private CardRepository cardRepository;
+    @Mock private ReviewLogRepository reviewLogRepository;
+
+    @InjectMocks private StatsServiceImpl statsService;
+
+    private UUID userId;
+    private UserProgress progress;
+    private Shelf shelf;
+    private Subject subject;
+
+    @BeforeEach
+    void setUp() {
+        userId = UUID.randomUUID();
+        userId = UUID.randomUUID();
+        progress = UserProgress.builder().userId(userId).totalXp(120).dailyStreak(3).build();
+        lenient().when(userProgressService.getCurrent()).thenReturn(progress);
+        lenient().when(authClient.lookup(userId)).thenReturn(AuthProfile.unknown(userId));
+
+        shelf = new Shelf();
+        shelf.setId(UUID.randomUUID());
+        shelf.setUserId(userId);
+
+        subject = new Subject();
+        subject.setId(UUID.randomUUID());
+        subject.setShelf(shelf);
+    }
+
+    private Card card(Integer repetitions, Double difficulty, Instant nextPractice) {
+        Card card = new Card();
+        card.setId(UUID.randomUUID());
+        card.setSubject(subject);
+        card.setFsrsRepetitions(repetitions);
+        card.setFsrsDifficulty(difficulty);
+        card.setNextPracticeTime(nextPractice);
+        return card;
+    }
+
+    private ReviewLogEntity reviewLog(Integer grade) {
+        ReviewLogEntity log = new ReviewLogEntity();
+        log.setId(UUID.randomUUID());
+        log.setUserId(userId);
+        log.setGrade(grade);
+        log.setReviewedAt(Instant.now());
+        return log;
+    }
+
+    private void libraryOf(List<Card> cards) {
+        when(currentUser.id()).thenReturn(userId);
+        when(subjectRepository.findAllByUserId(userId)).thenReturn(List.of(subject));
+        when(cardRepository.findAllBySubjectInAndDeletedFalse(List.of(subject))).thenReturn(cards);
+    }
+
+    private static StatsRes statsOf(ApiRes response) {
+        return (StatsRes) response.getBody().data();
+    }
+
+    @Test
+    void getUserStats_withoutAnyShelfSkipsTheCardLookup() {
+        when(currentUser.id()).thenReturn(userId);
+        when(subjectRepository.findAllByUserId(userId)).thenReturn(List.of());
+        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
+                .thenReturn(0L);
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
+                .thenReturn(List.of());
+
+        StatsRes stats = statsOf(statsService.getUserStats());
+
+        assertEquals(0L, stats.totalCards());
+        assertEquals(0L, stats.dueCards());
+        assertEquals(0.0, stats.retentionRate());
+        assertEquals(20, stats.dailyGoal());
+        verifyNoInteractions(cardRepository);
+    }
+
+    @Test
+    void getUserStats_usesTheConfiguredDailyGoalAndStoredRetention() {
+        lenient()
+                .when(authClient.lookup(userId))
+                .thenReturn(new AuthProfile(userId, "n", "n", null, 42));
+        libraryOf(List.of(card(0, 0.0, Instant.now().minusSeconds(10))));
+        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
+                .thenReturn(3L);
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
+                .thenReturn(List.of());
+
+        StatsRes stats = statsOf(statsService.getUserStats());
+
+        assertEquals(42, stats.dailyGoal());
+        assertEquals(0.0, stats.retentionRate());
+    }
+
+    @Test
+    void getUserStats_ignoresTheStoredRetentionWhenItIsNotPositive() {
+        libraryOf(List.of(card(0, 0.0, Instant.now().minusSeconds(10))));
+        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
+                .thenReturn(0L);
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
+                .thenReturn(List.of());
+
+        // one card, all due -> computed retention drops to zero
+        assertEquals(0.0, statsOf(statsService.getUserStats()).retentionRate());
+    }
+
+    @Test
+    void getUserStats_classifiesEveryFsrsState() {
+        List<Card> cards =
+                List.of(
+                        card(null, null, null), // new, never scheduled
+                        card(1, 1.0, Instant.now().plusSeconds(3600)), // learning
+                        card(5, 5.0, Instant.now().plusSeconds(3600)), // review
+                        card(6, 9.0, Instant.now().plusSeconds(3600)), // relearning
+                        card(9, 2.0, Instant.now().plusSeconds(3600))); // mastered
+        libraryOf(cards);
+        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
+                .thenReturn(0L);
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
+                .thenReturn(List.of());
+
+        StatsRes stats = statsOf(statsService.getUserStats());
+
+        assertEquals(5L, stats.totalCards());
+        assertEquals(0L, stats.dueCards());
+        assertEquals(1L, stats.stateDistribution().newCards());
+        assertEquals(1L, stats.stateDistribution().learning());
+        assertEquals(2L, stats.stateDistribution().review());
+        assertEquals(1L, stats.stateDistribution().relearning());
+        assertEquals(1L, stats.stateDistribution().mastered());
+    }
+
+    @Test
+    void getUserStats_forecastsCardsDueToday() {
+        libraryOf(List.of(card(1, 1.0, Instant.now()), card(1, 1.0, null)));
+        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
+                .thenReturn(0L);
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
+                .thenReturn(List.of());
+
+        StatsRes stats = statsOf(statsService.getUserStats());
+
+        assertEquals(7, stats.upcomingDueForecast().size());
+        assertTrue(stats.upcomingDueForecast().stream().anyMatch(f -> f.dueCount() >= 1));
+    }
+
+    @Test
+    void getUserStats_computesWeeklyRetentionFromReviewGrades() {
+        libraryOf(List.of());
+        when(reviewLogRepository.countByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
+                .thenReturn(4L);
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
+                .thenReturn(
+                        List.of(
+                                reviewLog(4), // successful
+                                reviewLog(3), // successful
+                                reviewLog(1), // lapse
+                                reviewLog(null))); // unknown grade counts as a lapse
+
+        StatsRes stats = statsOf(statsService.getUserStats());
+
+        assertEquals(7, stats.weeklyActivity().size());
+        stats.weeklyActivity()
+                .forEach(
+                        day -> {
+                            assertEquals(4L, day.cardsReviewed());
+                            assertEquals(50.0, day.retention());
+                        });
+    }
+}

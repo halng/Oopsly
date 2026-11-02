@@ -5,7 +5,7 @@ version = 0.1
 
 [network.deploy.parameters]
 template_file = "network.yaml"
-stack_name = "oopsly-network-stg"
+stack_name = "quizi-network-stg"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = false
 fail_on_empty_changeset = false
@@ -13,28 +13,28 @@ parameter_overrides = "Environment=stg"
 
 [auth.deploy.parameters]
 template_file = "auth.yaml"
-stack_name = "oopsly-auth-stg"
+stack_name = "quizi-auth-stg"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = false
 fail_on_empty_changeset = false
 
 [api.deploy.parameters]
 template_file = "api.yaml"
-stack_name = "oopsly-api-stg"
+stack_name = "quizi-api-stg"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = false
 fail_on_empty_changeset = false
 
 [game.deploy.parameters]
 template_file = "game.yaml"
-stack_name = "oopsly-game-stg"
+stack_name = "quizi-game-stg"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = false
 fail_on_empty_changeset = false
 
 [noti.deploy.parameters]
 template_file = "noti.yaml"
-stack_name = "oopsly-noti-stg"
+stack_name = "quizi-noti-stg"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = false
 fail_on_empty_changeset = false
