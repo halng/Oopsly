@@ -46,10 +46,10 @@ describe('useAuthStore', () => {
     it('sets full credentials and marks as authenticated via setCredentials', () => {
         useAuthStore
             .getState()
-            .setCredentials('hello@oopsly.app', 'token-a', 'token-b');
+            .setCredentials('hello@quizi.app', 'token-a', 'token-b');
 
         const state = useAuthStore.getState();
-        expect(state.userEmail).toBe('hello@oopsly.app');
+        expect(state.userEmail).toBe('hello@quizi.app');
         expect(state.accessToken).toBe('token-a');
         expect(state.refreshToken).toBe('token-b');
         expect(state.isAuthenticated).toBe(true);
@@ -59,7 +59,7 @@ describe('useAuthStore', () => {
         // 1. Populate the state first
         useAuthStore
             .getState()
-            .setCredentials('hello@oopsly.app', 'token-a', 'token-b');
+            .setCredentials('hello@quizi.app', 'token-a', 'token-b');
 
         // 2. Execute the clear action
         useAuthStore.getState().clearAuth();
@@ -75,8 +75,8 @@ describe('useAuthStore', () => {
     it('restores the saved session after a page refresh', async () => {
         useAuthStore
             .getState()
-            .setCredentials('hello@oopsly.app', 'token-a', 'token-b');
-        const saved = localStorage.getItem('oopsly-auth');
+            .setCredentials('hello@quizi.app', 'token-a', 'token-b');
+        const saved = localStorage.getItem('quizi-auth');
         useAuthStore.setState({
             isAuthenticated: false,
             userEmail: '',
@@ -84,14 +84,14 @@ describe('useAuthStore', () => {
             refreshToken: '',
             hasHydrated: false,
         });
-        localStorage.setItem('oopsly-auth', saved ?? '');
+        localStorage.setItem('quizi-auth', saved ?? '');
 
         await useAuthStore.persist.rehydrate();
 
         const state = useAuthStore.getState();
         expect(state.hasHydrated).toBe(true);
         expect(state.isAuthenticated).toBe(true);
-        expect(state.userEmail).toBe('hello@oopsly.app');
+        expect(state.userEmail).toBe('hello@quizi.app');
         expect(state.accessToken).toBe('token-a');
         expect(state.refreshToken).toBe('token-b');
     });

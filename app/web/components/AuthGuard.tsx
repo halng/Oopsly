@@ -37,7 +37,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
                     <div className="flex flex-col items-center gap-4">
                         <div className="w-10 h-10 border-4 border-stone-200 border-t-[var(--theme-accent)] rounded-full animate-spin" />
                         <span className="text-stone-500 font-bold text-sm animate-pulse">
-                            Loading Oopsly...
+                            Loading Quizi...
                         </span>
                     </div>
                 </div>

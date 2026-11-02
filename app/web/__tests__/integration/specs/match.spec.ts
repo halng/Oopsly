@@ -56,7 +56,7 @@ test.describe('Match screen', () => {
             mistakes: 0,
         });
         const best = await page.evaluate(() =>
-            localStorage.getItem('oopsly:match-best:subject-1')
+            localStorage.getItem('quizi:match-best:subject-1')
         );
         expect(Number(best)).toBeGreaterThan(0);
     });

@@ -47,7 +47,7 @@ describe('garden data utilities', () => {
     it('loads valid saved state with defaults and recovers from malformed storage', () => {
         const initial = getInitialGardenState();
         localStorage.setItem(
-            'oopsly_ghibli_garden',
+            'quizi_ghibli_garden',
             JSON.stringify({
                 plots: [],
                 plantedTrees: [],
@@ -63,10 +63,10 @@ describe('garden data utilities', () => {
         expect(loaded.totalXpContributed).toBe(0);
         saveGardenState(initial);
         expect(
-            JSON.parse(localStorage.getItem('oopsly_ghibli_garden')!)
+            JSON.parse(localStorage.getItem('quizi_ghibli_garden')!)
                 .forestLevel
         ).toBe(1);
-        localStorage.setItem('oopsly_ghibli_garden', '{bad json');
+        localStorage.setItem('quizi_ghibli_garden', '{bad json');
         expect(loadGardenState().plots).toHaveLength(16);
     });
 });

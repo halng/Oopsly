@@ -380,7 +380,7 @@ cd app/api
 ./gradlew compileJava -q
 
 # Run unit tests for this module
-./gradlew test -q --tests "com.app.oopsly.api.unit.<entity_lower>.*"
+./gradlew test -q --tests "com.app.quizi.api.unit.<entity_lower>.*"
 
 # Run controller integration tests
 ./gradlew integrationTest -q --tests "*<Entity>ControllerTest"

@@ -343,7 +343,7 @@ export function downloadQuestionCsvTemplate() {
         .join('\n');
     download(
         new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-        'oopsly_questions_template.csv'
+        'quizi_questions_template.csv'
     );
 }
 
@@ -352,6 +352,6 @@ export async function downloadQuestionExcelTemplate() {
         row.map((value) => ({ value, type: String }))
     );
     await writeXlsxFile(sheet, { sheet: 'Questions' }).toFile(
-        'oopsly_questions_template.xlsx'
+        'quizi_questions_template.xlsx'
     );
 }

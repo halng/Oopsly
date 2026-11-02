@@ -13,7 +13,7 @@ RUN uv sync --frozen --no-dev --no-install-project
 # Stage 2: the virtualenv and the source, nothing else.
 FROM python:3.12-slim
 
-LABEL org.opencontainers.image.description="Oopsly auth service: authentication, authorization, profiles, subscriptions and JWKS"
+LABEL org.opencontainers.image.description="Quizi auth service: authentication, authorization, profiles, subscriptions and JWKS"
 
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \

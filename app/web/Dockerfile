@@ -17,7 +17,7 @@ RUN pnpm build
 
 # Stage 2: the standalone server only (no node_modules install, no pnpm).
 FROM node:22-alpine
-LABEL org.opencontainers.image.description="Oopsly web frontend"
+LABEL org.opencontainers.image.description="Quizi web frontend"
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
 RUN addgroup -S app && adduser -S app -G app

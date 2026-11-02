@@ -1,4 +1,4 @@
-"""Hands emails to the noti service, which owns templates and delivery."""
+"""Hands emails to the noti Lambda, which owns templates and delivery (via Resend)."""
 
 import html
 import json
@@ -42,7 +42,7 @@ def render_otp(to: str, code: str) -> str:
 
 
 class NoOpSender:
-    """Logs instead of sending; used when no noti queue is configured."""
+    """Logs instead of sending; used when no noti function is configured."""
 
     def send_otp(self, to: str, code: str) -> None:
         logger.info("mail disabled; skipping OTP email to %s", mask(to))
@@ -63,40 +63,42 @@ class NoOpSender:
         logger.info("mail disabled; skipping community invite to %s", mask(to))
 
 
-class SqsSender:
-    """Publishes one JSON event per email to the noti queue.
+class LambdaSender:
+    """Invokes the noti Lambda once per email, naming the template to render.
 
-    The noti Lambda picks the events up, so signing up or inviting someone never
-    waits on (or fails because of) the mail server.
+    The invocation is asynchronous (`Event`): Lambda queues it and retries failures
+    itself, so signing up or inviting someone never waits on (or fails because of)
+    the mail provider.
     """
 
-    def __init__(self, queue_url: str, region: str = "", client: Any = None):
+    def __init__(self, function_name: str, region: str = "", client: Any = None):
         if client is None:
             import boto3
 
-            client = boto3.client("sqs", region_name=region or None)
+            client = boto3.client("lambda", region_name=region or None)
         self._client = client
-        self._queue_url = queue_url
+        self._function_name = function_name
 
-    def _publish(self, kind: str, to: str, data: dict[str, Any]) -> None:
-        self._client.send_message(
-            QueueUrl=self._queue_url,
-            MessageBody=json.dumps({"type": kind, "to": to, "data": data}),
+    def _invoke(self, template: str, to: str, data: dict[str, Any]) -> None:
+        self._client.invoke(
+            FunctionName=self._function_name,
+            InvocationType="Event",
+            Payload=json.dumps({"template": template, "to": to, "data": data}).encode(),
         )
 
     def send_otp(self, to: str, code: str) -> None:
-        self._publish("otp", to, {"code": code})
+        self._invoke("otp", to, {"code": code})
 
     def send_study_reminder(self, to: str, ics: str) -> None:
-        self._publish("study_reminder", to, {"ics": ics})
+        self._invoke("study_reminder", to, {"ics": ics})
 
     def send_welcome(self, to: str, name: str) -> None:
-        self._publish("welcome", to, {"name": name})
+        self._invoke("welcome", to, {"name": name})
 
     def send_community_invite(
         self, to: str, name: str, community_name: str, inviter_name: str
     ) -> None:
-        self._publish(
+        self._invoke(
             "community_invite",
             to,
             {

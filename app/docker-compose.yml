@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-oopsly}
+      POSTGRES_DB: ${POSTGRES_DB:-quizi}
     ports:
       - "5432:5432"
     healthcheck:
@@ -27,7 +27,7 @@ services:
       - app-network
     restart: unless-stopped
 
-  # S3-compatible store for profile pictures (bucket oopsly-avatars, private).
+  # S3-compatible store for profile pictures (bucket quizi-avatars, private).
   # S3 API on http://localhost:9000, console on http://localhost:9001
   # (minioadmin / minioadmin). Local-only credentials.
   s3:
@@ -57,8 +57,8 @@ services:
       AWS_DEFAULT_REGION: us-east-1
     entrypoint: >
       /bin/sh -c "for i in $$(seq 1 30); do
-      aws --endpoint-url http://s3:9000 s3api create-bucket --bucket oopsly-avatars
-      >/dev/null 2>&1 || aws --endpoint-url http://s3:9000 s3api head-bucket --bucket oopsly-avatars
+      aws --endpoint-url http://s3:9000 s3api create-bucket --bucket quizi-avatars
+      >/dev/null 2>&1 || aws --endpoint-url http://s3:9000 s3api head-bucket --bucket quizi-avatars
       >/dev/null 2>&1 && exit 0; sleep 1; done; exit 1"
     networks:
       - app-network

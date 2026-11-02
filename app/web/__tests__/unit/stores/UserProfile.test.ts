@@ -25,7 +25,7 @@ describe('useUserProfileStore', () => {
             streakDays: 5,
             totalCardsStudied: 150,
             totalReviewed: 75,
-            email: 'hello@oopsly.app',
+            email: 'hello@quizi.app',
             totalReviews: 75,
             retentionRate: 0.85,
             xp: 1200,
@@ -46,7 +46,7 @@ describe('useUserProfileStore', () => {
         useUserProfileStore.getState().setProfile({
             id: 'user_123',
             name: 'Forest Learner',
-            email: 'hello@oopsly.app',
+            email: 'hello@quizi.app',
         } as UserProfile);
         useUserProfileStore.getState().clearProfile();
         expect(useUserProfileStore.getState().profile).toBeNull();

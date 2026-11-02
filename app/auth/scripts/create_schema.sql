@@ -2,7 +2,7 @@
 -- Alembic also does this on `alembic upgrade head`; run this script as a privileged role
 -- when the application role is not allowed to create schemas.
 --
---   psql "$DATABASE_URL" -v app_user=oopsly_auth -f scripts/create_schema.sql
+--   psql "$DATABASE_URL" -v app_user=quizi_auth -f scripts/create_schema.sql
 
 CREATE SCHEMA IF NOT EXISTS auth;
 

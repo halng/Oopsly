@@ -39,7 +39,7 @@ describe('LandingPage', () => {
         ).toBeInTheDocument();
 
         // Check Features section
-        expect(screen.getByText('Why choose Oopsly?')).toBeInTheDocument();
+        expect(screen.getByText('Why choose Quizi?')).toBeInTheDocument();
         expect(screen.getByText('FSRS Algorithm')).toBeInTheDocument();
         expect(screen.getByText('Gamified Garden')).toBeInTheDocument();
         expect(screen.getByText('Learn Anywhere')).toBeInTheDocument();
@@ -109,9 +109,9 @@ describe('LandingPage', () => {
         expect(screen.getByText('Test suites')).toBeInTheDocument();
         expect(screen.getByText('Live quizzes')).toBeInTheDocument();
         expect(
-            screen.getByRole('heading', { name: /why learners pick oopsly/i })
+            screen.getByRole('heading', { name: /why learners pick quizi/i })
         ).toBeInTheDocument();
-        expect(screen.getByText('Is Oopsly free?')).toBeInTheDocument();
+        expect(screen.getByText('Is Quizi free?')).toBeInTheDocument();
     });
 
     it.each([

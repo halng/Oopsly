@@ -12,7 +12,7 @@ def test_missing_token_is_rejected(session_factory):
 
 
 def test_valid_access_token_opens_a_starter_garden(session_factory, make_token):
-    token = make_token(id="user-9", sub="learner@oopsly.app")
+    token = make_token(id="user-9", sub="learner@quizi.app")
     with TestClient(app) as test_client:
         response = test_client.get(
             "/v1/game/garden",
@@ -136,12 +136,12 @@ def test_socket_waters_and_rejects_a_second_pour_without_dew(client, make_token)
         "/v1/game/plants", json={"species": "camphor_tree", "plotIndex": 0}
     )
     tree_id = planted.json()["data"]["plantedTrees"][0]["id"]
-    token = make_token(id="user-1", sub="learner@oopsly.app")
+    token = make_token(id="user-1", sub="learner@quizi.app")
     with client.websocket_connect(f"/v1/game/ws?token={token}") as socket:
         ready = socket.receive_json()
         assert ready["type"] == "ready"
         assert ready["data"]["userId"] == "user-1"
-        assert ready["data"]["email"] == "learner@oopsly.app"
+        assert ready["data"]["email"] == "learner@quizi.app"
         socket.send_json({"action": "water", "requestId": "pour-1", "treeId": tree_id})
         watered = socket.receive_json()
         assert watered["type"] == "garden"

@@ -68,11 +68,11 @@ describe('quizSocket', () => {
     });
 
     it('connects as a guest to the plain websocket endpoint and joins on connect', async () => {
-        process.env.NEXT_PUBLIC_API_URL = 'https://api.test/api/oopsly/';
+        process.env.NEXT_PUBLIC_API_URL = 'https://api.test/api/quizi/';
         const { client, onView, onEvent, onStatus } = setup('player');
 
         expect(client.config.brokerURL).toBe(
-            'wss://api.test/api/oopsly/ws/websocket'
+            'wss://api.test/api/quizi/ws/websocket'
         );
         await client.beforeConnect();
         expect(client.connectHeaders).toEqual({ 'guest-id': guestId() });
@@ -109,7 +109,7 @@ describe('quizSocket', () => {
             destination: '/app/quiz/123456/resume',
         });
         expect(client.config.brokerURL).toBe(
-            'ws://localhost:9009/api/oopsly/ws/websocket'
+            'ws://localhost:9009/api/quizi/ws/websocket'
         );
 
         client.onWebSocketClose();

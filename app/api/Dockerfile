@@ -14,7 +14,7 @@ RUN ./gradlew --no-daemon bootJar -x jar -x test \
 # Stage 2: JRE only, with the jar split into layers so a code change only
 # rewrites the small application layer.
 FROM eclipse-temurin:21-jre-alpine
-LABEL org.opencontainers.image.description="Oopsly API service: decks, cards, test suites, quizzes and communities"
+LABEL org.opencontainers.image.description="Quizi API service: decks, cards, test suites, quizzes and communities"
 WORKDIR /app
 RUN addgroup -S app && adduser -S app -G app
 COPY --from=build /layers/dependencies/ ./

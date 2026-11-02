@@ -89,7 +89,7 @@ jobs:
           # noti is a Lambda built from the tagged source, so it has no image.
           for service in $SERVICES; do
             if [[ "$service" == "noti" ]]; then continue; fi
-            image="ghcr.io/halng/oopsly-${service}:${TAG}"
+            image="ghcr.io/halng/quizi-${service}:${TAG}"
             if ! docker manifest inspect "$image" >/dev/null 2>&1; then
               echo "Error: ${image} was not found. Build it with the same tag first."
               exit 1

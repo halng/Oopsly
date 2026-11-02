@@ -7,7 +7,7 @@ import { wiremock } from './wiremock';
 export const AUTH_STORAGE = {
     state: {
         isAuthenticated: true,
-        userEmail: 'learner@oopsly.app',
+        userEmail: 'learner@quizi.app',
         accessToken: 'access-jwt',
         refreshToken: 'refresh-jwt',
     },
@@ -17,8 +17,8 @@ export const AUTH_STORAGE = {
 export async function signIn(page: Page) {
     await page.addInitScript((auth) => {
         // Seed once, so a logout inside the test is not undone by a reload.
-        if (!localStorage.getItem('oopsly-auth')) {
-            localStorage.setItem('oopsly-auth', JSON.stringify(auth));
+        if (!localStorage.getItem('quizi-auth')) {
+            localStorage.setItem('quizi-auth', JSON.stringify(auth));
         }
     }, AUTH_STORAGE);
 }

@@ -2,7 +2,7 @@ from app.kv import MemoryKV
 from app.otp import MAX_ATTEMPTS, TEST_CODE, TTL_SECONDS, OtpService, OtpStatus
 
 
-def _service(kv=None, tests=("test@oopsly.dev",)):
+def _service(kv=None, tests=("test@quizi.dev",)):
     return OtpService(kv or MemoryKV(), list(tests))
 
 
@@ -38,7 +38,7 @@ def test_code_expires_with_its_ttl():
 
 def test_test_emails_bypass_with_the_fixed_code():
     otp = _service()
-    assert otp.is_test_email("TEST@oopsly.dev")
-    assert otp.verify("test@oopsly.dev", TEST_CODE) is OtpStatus.VALID
+    assert otp.is_test_email("TEST@quizi.dev")
+    assert otp.verify("test@quizi.dev", TEST_CODE) is OtpStatus.VALID
     assert not otp.is_test_email("a@b.co")
     assert otp.verify("a@b.co", TEST_CODE) is OtpStatus.EXPIRED

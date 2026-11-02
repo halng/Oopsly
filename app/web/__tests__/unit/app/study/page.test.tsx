@@ -121,7 +121,7 @@ describe('StudyPage', () => {
         vi.clearAllMocks();
         useAuthStore
             .getState()
-            .setCredentials('learner@oopsly.app', 'token', 'refresh');
+            .setCredentials('learner@quizi.app', 'token', 'refresh');
         vi.mocked(GameService.getGarden).mockResolvedValue(ok(garden));
         vi.mocked(GameService.plant).mockResolvedValue(ok(garden));
         vi.mocked(GameService.water).mockResolvedValue(ok(garden));

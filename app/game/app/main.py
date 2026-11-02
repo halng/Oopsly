@@ -11,7 +11,7 @@ from app.socket import socket_router
 
 setup_logging()
 
-app = FastAPI(title="Oopsly Game", version="0.1.0")
+app = FastAPI(title="Quizi Game", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

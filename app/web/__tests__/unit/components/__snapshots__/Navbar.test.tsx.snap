@@ -51,7 +51,7 @@ exports[`Navbar > renders navigation and updates the daily progress after loadin
             <span
               class="text-lg sm:text-xl font-extrabold tracking-tight text-[var(--theme-text)] flex items-center gap-1"
             >
-              Oopsly
+              Quizi
               <span
                 class="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded-full"
                 style="background-color: var(--theme-subtle); color: var(--theme-accent);"

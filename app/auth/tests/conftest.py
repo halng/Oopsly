@@ -15,7 +15,7 @@ from app.kv import MemoryKV
 from app.main import app
 
 INTERNAL_KEY = "internal-secret"
-TEST_EMAIL = "test@oopsly.dev"
+TEST_EMAIL = "test@quizi.dev"
 
 
 class Clock:

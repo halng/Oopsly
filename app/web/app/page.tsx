@@ -87,7 +87,7 @@ const STEPS = [
     },
     {
         title: 'Review what is due',
-        text: 'Each day Oopsly shows only the cards you are about to forget.',
+        text: 'Each day Quizi shows only the cards you are about to forget.',
     },
     {
         title: 'Watch it grow',
@@ -128,7 +128,7 @@ const PLANS = [
 
 const FAQ = [
     [
-        'Is Oopsly free?',
+        'Is Quizi free?',
         'Yes. The Basic plan is free and includes up to 3 decks with FSRS scheduling and basic stats. Upgrade whenever you need more.',
     ],
     [
@@ -170,7 +170,7 @@ const LandingPage = () => {
                         className="font-black text-stone-900 tracking-tight text-xl"
                         data-testid="brand-logo"
                     >
-                        Oopsly
+                        Quizi
                     </span>
                 </div>
                 <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-stone-600">
@@ -178,7 +178,7 @@ const LandingPage = () => {
                         Features
                     </a>
                     <a href="#why" className="hover:text-stone-900">
-                        Why Oopsly
+                        Why Quizi
                     </a>
                     <a href="#pricing" className="hover:text-stone-900">
                         Pricing
@@ -218,7 +218,7 @@ const LandingPage = () => {
                     </h1>
 
                     <p className="text-lg sm:text-xl text-stone-600 max-w-2xl leading-relaxed mb-10 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
-                        Oopsly combines the scientifically-proven FSRS algorithm
+                        Quizi combines the scientifically-proven FSRS algorithm
                         with a beautiful, relaxing gamified sanctuary to make
                         studying your favorite part of the day.
                     </p>
@@ -241,7 +241,7 @@ const LandingPage = () => {
                     <div className="max-w-7xl mx-auto">
                         <div className="text-center mb-16">
                             <h2 className="text-3xl sm:text-4xl font-black text-stone-900">
-                                Why choose Oopsly?
+                                Why choose Quizi?
                             </h2>
                             <p className="text-stone-500 mt-4 text-lg">
                                 Designed for focus. Built on cognitive science.
@@ -350,12 +350,12 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-                {/* Why Oopsly */}
+                {/* Why Quizi */}
                 <section id="why" className="py-24 px-6 scroll-mt-16">
                     <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-14 items-start">
                         <div>
                             <h2 className="text-3xl sm:text-4xl font-black text-stone-900 mb-8">
-                                Why learners pick Oopsly
+                                Why learners pick Quizi
                             </h2>
                             <ul className="space-y-6">
                                 {WHY.map((item) => (
@@ -381,7 +381,7 @@ const LandingPage = () => {
                                             Feature
                                         </th>
                                         <th className="p-4 font-black text-stone-900 text-center">
-                                            Oopsly
+                                            Quizi
                                         </th>
                                         <th className="p-4 font-bold text-stone-500 text-center">
                                             Typical flashcard app
@@ -602,7 +602,7 @@ const LandingPage = () => {
                 <div className="flex items-center justify-center gap-2 mb-4">
                     <Layers className="w-6 h-6 text-[var(--theme-accent)]" />
                     <span className="font-black text-stone-900 text-lg">
-                        Oopsly
+                        Quizi
                     </span>
                 </div>
                 <nav className="flex justify-center gap-6 text-sm text-stone-500 mb-4">

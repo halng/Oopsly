@@ -92,7 +92,7 @@ test.describe('Leaderboard screen (communities)', () => {
         await page.goto('/leaderboard');
         await page.getByTestId('btn-select-community-comm-2').click();
         await page.getByTestId('btn-open-invite').click();
-        await page.getByTestId('input-invite-email').fill('friend@oopsly.app');
+        await page.getByTestId('input-invite-email').fill('friend@quizi.app');
         await page.getByTestId('btn-confirm-invite').click();
         await expect
             .poll(
@@ -109,7 +109,7 @@ test.describe('Leaderboard screen (communities)', () => {
             'POST',
             `${API}/communities/comm-2/invite`
         );
-        expect(invite.json).toEqual({ emailOrName: 'friend@oopsly.app' });
+        expect(invite.json).toEqual({ emailOrName: 'friend@quizi.app' });
     });
 
     test('with no communities it explains how leaderboards work', async ({

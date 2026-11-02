@@ -12,7 +12,7 @@ app:
 server:
   port: 0
   servlet:
-    context-path: /api/oopsly
+    context-path: /api/quizi
 
 spring:
   main:
@@ -33,5 +33,5 @@ management:
 logging:
   level:
     root: WARN
-    com.app.oopsly.api: WARN
+    com.app.quizi.api: WARN
     locust: INFO

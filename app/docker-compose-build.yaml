@@ -6,7 +6,7 @@
 x-db: &db
   DB_HOST: postgres
   DB_PORT: "5432"
-  DB_NAME: oopsly
+  DB_NAME: quizi
   DB_USERNAME: postgres
   DB_PASSWORD: postgres
 
@@ -37,7 +37,7 @@ services:
       ALLOWED_ORIGINS: http://localhost:8080
       # Profile pictures go to the local S3 store. Browsers upload to localhost:9000, the
       # service itself reaches it as s3:9000.
-      AVATAR_BUCKET: oopsly-avatars
+      AVATAR_BUCKET: quizi-avatars
       AVATAR_REGION: us-east-1
       AVATAR_S3_ENDPOINT: http://s3:9000
       AVATAR_S3_PUBLIC_ENDPOINT: http://localhost:9000
@@ -70,7 +70,7 @@ services:
   game:
     build: ./game
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/oopsly
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/quizi
       JWKS_URL: http://auth:9010/.well-known/pub.json
       CORS_ORIGINS: http://localhost:8080
     depends_on:
@@ -84,7 +84,7 @@ services:
       context: ./web
       args:
         # Inlined into the browser bundle: the nginx origin the browser sees.
-        NEXT_PUBLIC_API_URL: http://localhost:8080/api/oopsly
+        NEXT_PUBLIC_API_URL: http://localhost:8080/api/quizi
         NEXT_PUBLIC_AUTH_URL: http://localhost:8080/api/auth
         NEXT_PUBLIC_GAME_API_URL: http://localhost:8080
     networks:

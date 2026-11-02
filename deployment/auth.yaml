@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Oopsly auth service on Fargate, 2 tasks behind an internal ALB, exposed through the shared HTTP API.
+Description: Quizi auth service on Fargate, 2 tasks behind an internal ALB, exposed through the shared HTTP API.
 
 Parameters:
   Environment:
@@ -8,7 +8,7 @@ Parameters:
     AllowedPattern: "[a-z0-9-]+"
   NetworkStackName:
     Type: String
-    Default: oopsly-network-stg
+    Default: quizi-network-stg
     Description: Stack created from network.yaml.
   ImageTag:
     Type: String
@@ -49,7 +49,7 @@ Resources:
                   - Fn::ImportValue: !Sub ${NetworkStackName}-InternalKeySecretArn
                   - Fn::ImportValue: !Sub ${NetworkStackName}-JwtPassphraseSecretArn
 
-  # What the running container may do: manage profile pictures, nothing else.
+  # What the running container may do: manage profile pictures and invoke the noti Lambda.
   TaskRole:
     Type: AWS::IAM::Role
     Properties:
@@ -66,9 +66,10 @@ Resources:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
-                Action: sqs:SendMessage
-                Resource:
-                  Fn::ImportValue: !Sub ${NetworkStackName}-NotiQueueArn
+                Action: lambda:InvokeFunction
+                # Built from the name rather than imported, so auth deploys with or
+                # without the noti stack.
+                Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:quizi-noti-${Environment}
         - PolicyName: avatars
           PolicyDocument:
             Version: "2012-10-17"
@@ -86,7 +87,7 @@ Resources:
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub oopsly-auth-${Environment}
+      Family: !Sub quizi-auth-${Environment}
       RequiresCompatibilities:
         - FARGATE
       NetworkMode: awsvpc
@@ -95,7 +96,7 @@ Resources:
       ExecutionRoleArn: !GetAtt ExecutionRole.Arn
       TaskRoleArn: !GetAtt TaskRole.Arn
       ContainerDefinitions:
-        - Name: oopsly-auth
+        - Name: quizi-auth
           Image: !Sub
             - "${Repository}:${ImageTag}"
             - Repository:
@@ -115,9 +116,9 @@ Resources:
             - Name: DB_PORT
               Value: "5432"
             - Name: DB_NAME
-              Value: oopsly
+              Value: quizi
             - Name: DB_USERNAME
-              Value: oopsly
+              Value: quizi
             - Name: REDIS_HOST
               Value:
                 Fn::ImportValue: !Sub ${NetworkStackName}-RedisHost
@@ -131,9 +132,8 @@ Resources:
                 Fn::ImportValue: !Sub ${NetworkStackName}-AvatarBucketName
             - Name: AVATAR_REGION
               Value: !Ref AWS::Region
-            - Name: NOTI_QUEUE_URL
-              Value:
-                Fn::ImportValue: !Sub ${NetworkStackName}-NotiQueueUrl
+            - Name: NOTI_FUNCTION_NAME
+              Value: !Sub quizi-noti-${Environment}
             - Name: NOTI_REGION
               Value: !Ref AWS::Region
           Secrets:
@@ -164,7 +164,7 @@ Resources:
   AlbSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Internal load balancer for oopsly-auth
+      GroupDescription: Internal load balancer for quizi-auth
       VpcId:
         Fn::ImportValue: !Sub ${NetworkStackName}-VpcId
       SecurityGroupIngress:
@@ -188,12 +188,12 @@ Resources:
       FromPort: 9010
       ToPort: 9010
       SourceSecurityGroupId: !GetAtt AlbSecurityGroup.GroupId
-      Description: oopsly-auth load balancer to tasks
+      Description: quizi-auth load balancer to tasks
 
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Sub oopsly-auth-${Environment}
+      Name: !Sub quizi-auth-${Environment}
       Type: application
       Scheme: internal
       SecurityGroups:
@@ -205,7 +205,7 @@ Resources:
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub oopsly-auth-${Environment}
+      Name: !Sub quizi-auth-${Environment}
       VpcId:
         Fn::ImportValue: !Sub ${NetworkStackName}-VpcId
       Port: 9010
@@ -236,7 +236,7 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: HttpListener
     Properties:
-      ServiceName: oopsly-auth
+      ServiceName: quizi-auth
       Cluster:
         Fn::ImportValue: !Sub ${NetworkStackName}-ClusterName
       TaskDefinition: !Ref TaskDefinition
@@ -258,7 +258,7 @@ Resources:
             - ","
             - Fn::ImportValue: !Sub ${NetworkStackName}-SubnetIds
       LoadBalancers:
-        - ContainerName: oopsly-auth
+        - ContainerName: quizi-auth
           ContainerPort: 9010
           TargetGroupArn: !Ref TargetGroup
 

@@ -2,7 +2,7 @@ import logging
 import re
 
 from app.logging_config import (
-    OopslyFormatter,
+    QuiziFormatter,
     mask_headers,
     request_id,
     request_platform,
@@ -20,7 +20,7 @@ def test_line_matches_the_api_pattern():
     platform = request_platform.set("WEB")
     identifier = request_id.set("01ABC")
     try:
-        line = ANSI.sub("", OopslyFormatter().format(_record("hi")))
+        line = ANSI.sub("", QuiziFormatter().format(_record("hi")))
     finally:
         request_platform.reset(platform)
         request_id.reset(identifier)
@@ -39,7 +39,7 @@ def test_exceptions_are_appended_to_the_line():
         import sys
 
         record = _record("failed", logging.ERROR, sys.exc_info())
-    text = ANSI.sub("", OopslyFormatter().format(record))
+    text = ANSI.sub("", QuiziFormatter().format(record))
     assert "ERROR [" in text and text.rstrip().endswith("ValueError: boom")
 
 
@@ -88,7 +88,7 @@ def test_auth_events_are_logged_without_leaking_the_address(client, caplog):
     text = caplog.text
     assert "signed up" in text and "logged in" in text and "logged out" in text
     assert TEST_EMAIL not in text
-    assert "t***@oopsly.dev" in text
+    assert "t***@quizi.dev" in text
 
 
 def test_rejected_tokens_are_logged_as_warnings(client, caplog):

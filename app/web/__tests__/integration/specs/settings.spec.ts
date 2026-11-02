@@ -20,7 +20,7 @@ test.describe('Settings screen', () => {
             'Lena'
         );
         await expect(page.getByTestId('input-email')).toHaveValue(
-            'learner@oopsly.app'
+            'learner@quizi.app'
         );
         await expect(page.getByTestId('input-daily-goal')).toHaveValue('20');
         expect(
@@ -41,7 +41,7 @@ test.describe('Settings screen', () => {
             method: 'POST',
             path: `${AUTH}/v1/user-profiles/avatar/upload-url`,
             body: envelope({
-                url: 'https://s3.test/oopsly-avatars',
+                url: 'https://s3.test/quizi-avatars',
                 fields: { key: 'avatars/u1/a.png', policy: 'p' },
                 key: 'avatars/u1/a.png',
                 maxBytes: 2097152,
@@ -141,7 +141,7 @@ test.describe('Settings screen', () => {
         const download = page.waitForEvent('download');
         await page.getByTestId('btn-download-reminder').click();
         expect((await download).suggestedFilename()).toBe(
-            'oopsly-study-reminder.ics'
+            'quizi-study-reminder.ics'
         );
     });
 
@@ -224,7 +224,7 @@ test.describe('Settings screen', () => {
         // router push to the landing page completes.
         await expect(page).toHaveURL(/\/(login)?$/);
         const stored = await page.evaluate(() =>
-            localStorage.getItem('oopsly-auth')
+            localStorage.getItem('quizi-auth')
         );
         expect(JSON.parse(stored ?? '{}').state).toMatchObject({
             isAuthenticated: false,

@@ -1,11 +1,11 @@
-# Oopsly performance tests
+# Quizi performance tests
 
 [Locust](https://locust.io) suite for the API in `app/api`. One simulated user seeds its own
 shelf, subject, cards, test and questions, then calls **every endpoint once** (reads, writes,
 grading, garden, communities, live quiz room, discover) and soft-deletes what it created.
 Each endpoint gets its own statistics row, named after its path template.
 
-When a run ends, the statistics are checked against `oopsly_perf/thresholds.json`. Locust exits
+When a run ends, the statistics are checked against `quizi_perf/thresholds.json`. Locust exits
 non-zero if an endpoint is slower than its p95 limit, fails too often, or was never called, and
 `results/summary.md` holds the per-endpoint table.
 
@@ -46,7 +46,7 @@ The report lands in `app/api/build/reports/perf/summary.md`.
 
 | Variable | Default | Meaning |
 | :--- | :--- | :--- |
-| `PERF_HOST` | `http://localhost:9009/api/oopsly` | API base URL (`--host` also works) |
+| `PERF_HOST` | `http://localhost:9009/api/quizi` | API base URL (`--host` also works) |
 | `PERF_PROFILE` | `smoke` | `smoke` or `regression` (selects the thresholds) |
 | `PERF_JWKS_PORT` | `9099` | Port where Locust serves the JWKS the API verifies tokens with (`0` disables) |
 | `PERF_RESULTS_DIR` | `results` | Where `summary.md` is written |
@@ -59,10 +59,10 @@ a different key).
 
 ## Adding or tuning an endpoint
 
-1. Add a `@task` to `oopsly_perf/sweep.py` that uses `self.call(METHOD, "/path/{template}", ...)`.
+1. Add a `@task` to `quizi_perf/sweep.py` that uses `self.call(METHOD, "/path/{template}", ...)`.
    Use `expect=` for statuses that are a valid outcome (for example `400` when a garden plot is
    not affordable yet).
-2. Add `"METHOD /path/{template}"` to `required_endpoints` in `oopsly_perf/thresholds.json` for
+2. Add `"METHOD /path/{template}"` to `required_endpoints` in `quizi_perf/thresholds.json` for
    each profile, and a per-endpoint limit under `endpoints` if the default does not fit.
 
 ## Not covered

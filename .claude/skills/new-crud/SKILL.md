@@ -47,7 +47,7 @@ Before writing any code:
 6. Print a short plan summary before proceeding:
    ```
    📦 Module     : Product
-   📁 Package    : com.app.oopsly.api.product
+   📁 Package    : com.app.quizi.api.product
    🗄️  Migration  : V<n>__create_product_table.sql
    📋 Fields     : id, name, description, price, sku, stock, status, createdAt, updatedAt
    🔗 Endpoints  : POST /v1/<entities>, GET /v1/<entities>/{id}, GET /v1/<entities> (paged), PUT /v1/<entities>/{id}, PATCH /v1/<entities>/{id}
@@ -424,7 +424,7 @@ public class <Entity>Controller {
 ## Step 12 — Tests
 
 ### Unit Test: `<Entity>ServiceImplTest.java`
-Location: `app/api/src/test/java/com/app/oopsly/api/unit/<entity_lower>/application/`
+Location: `app/api/src/test/java/com/app/quizi/api/unit/<entity_lower>/application/`
 
 - Use `@ExtendWith(MockitoExtension.class)`
 - Mock `<Entity>Repository`
@@ -439,7 +439,7 @@ Location: `app/api/src/test/java/com/app/oopsly/api/unit/<entity_lower>/applicat
   - `delete_nonExistingId_throwsNotFoundException()`
 
 ### Integration Test: `<Entity>ControllerTest.java`
-Location: `app/api/src/test/java/com/app/oopsly/api/integration/`
+Location: `app/api/src/test/java/com/app/quizi/api/integration/`
 
 - Use `@SpringBootTest` + `@AutoConfigureMockMvc` + `@Testcontainers`
 - Spin up PostgreSQL via Testcontainers:
@@ -479,7 +479,7 @@ cd app/api
 ./gradlew compileJava -q
 
 # 2. Unit tests only (fast)
-./gradlew test -q --tests "com.app.oopsly.api.unit.<entity_lower>.*"
+./gradlew test -q --tests "com.app.quizi.api.unit.<entity_lower>.*"
 
 # 3. Integration tests
 ./gradlew integrationTest -q --tests "*<Entity>ControllerTest"

@@ -1,7 +1,7 @@
 [project]
-name = "oopsly-noti"
+name = "quizi-noti"
 version = "0.1.0"
-description = "Oopsly notification Lambda: sends OTP, welcome, community invite and study calendar emails from an SQS queue"
+description = "Quizi notification Lambda: sends OTP, welcome, community invite and study calendar emails through Resend"
 requires-python = ">=3.11"
 # Standard library only; boto3 is provided by the Lambda runtime.
 dependencies = []

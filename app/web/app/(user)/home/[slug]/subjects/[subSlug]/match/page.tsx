@@ -34,7 +34,7 @@ interface MatchTile {
 }
 
 function matchBestTimeKey(subjectId: string): string {
-    return `oopsly:match-best:${subjectId}`;
+    return `quizi:match-best:${subjectId}`;
 }
 
 function readBestTime(subjectId: string): number | null {

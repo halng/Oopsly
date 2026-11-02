@@ -7,7 +7,7 @@ describe('WelcomeTourModal', () => {
         const onClose = vi.fn();
         const { container } = render(<WelcomeTourModal onClose={onClose} />);
         expect(
-            screen.getByRole('heading', { name: 'Welcome to Oopsly!' })
+            screen.getByRole('heading', { name: 'Welcome to Quizi!' })
         ).toBeInTheDocument();
         expect(container).toMatchSnapshot();
         fireEvent.click(screen.getByRole('button', { name: 'Skip Tour' }));

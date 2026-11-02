@@ -63,7 +63,7 @@ exports[`WelcomeTourModal > renders the first step and supports skipping 1`] = `
         <h2
           class="text-xl sm:text-2xl font-black text-[var(--theme-text)]"
         >
-          Welcome to Oopsly!
+          Welcome to Quizi!
         </h2>
         <p
           class="text-sm text-stone-500 dark:text-stone-400 leading-relaxed min-h-[80px]"

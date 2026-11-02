@@ -10,8 +10,8 @@ TIME_RE = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
 BYDAY = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"]
 EVENT_MINUTES = 30
 ALARM_MINUTES = 10
-SUMMARY = "Learning on Oopsly"
-DESCRIPTION = "Time for your Oopsly review. Keep your streak going!"
+SUMMARY = "Learning on Quizi"
+DESCRIPTION = "Time for your Quizi review. Keep your streak going!"
 
 
 class InvalidReminder(ValueError):
@@ -57,11 +57,11 @@ def build_ics(
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//Oopsly//Study reminder//EN",
+        "PRODID:-//Quizi//Study reminder//EN",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
         "BEGIN:VEVENT",
-        f"UID:{uid or uuid.uuid4()}@oopsly",
+        f"UID:{uid or uuid.uuid4()}@quizi",
         f"DTSTAMP:{now.astimezone(ZoneInfo('UTC')).strftime(fmt)}Z",
         f"DTSTART;TZID={timezone}:{start.strftime(fmt)}",
         f"DTEND;TZID={timezone}:{end.strftime(fmt)}",

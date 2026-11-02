@@ -12,20 +12,20 @@ Internet -> HTTP API --VPC link--> internal ALB (per service) -> 2 Fargate tasks
 
 | File | What it creates |
 |---|---|
-| `network.yaml` | VPC and subnets, ECS cluster, Postgres, Redis, ECR repositories, generated secrets, the HTTP API, its stage and the VPC link |
+| `network.yaml` | VPC and subnets, ECS cluster, Postgres, Redis, ECR repositories, generated secrets, the HTTP API, its stage and the VPC link, plus (with `HostedZoneId`) the `api.quizi.tech` custom domain, its certificate and the Route 53 records for `api.quizi.tech` and `quizi.tech` |
 | `auth.yaml` | auth service: ECS service (2 tasks), internal ALB, API routes |
 | `api.yaml` | Java API: same shape; reads the auth stack's internal URLs |
 | `game.yaml` | game service: same shape |
-| `noti.yaml` | noti Lambda (sends emails from the SQS queue that `network.yaml` creates) and its SMTP secret |
+| `noti.yaml` | noti Lambda (auth and api invoke it directly; it renders the template and sends through Resend) and its Resend secret |
 | `deploy.sh` | runs `sam deploy` for the stacks in order and copies images to ECR |
-| `scripts/copy-images.sh` | copies `ghcr.io/halng/oopsly-*:<tag>` into ECR |
+| `scripts/copy-images.sh` | copies `ghcr.io/halng/quizi-*:<tag>` into ECR |
 
 ## Public routes
 
 | Route on the HTTP API | Service |
 |---|---|
 | `/api/auth/v1/*`, `/.well-known/*` | auth |
-| `/api/oopsly/*` | api |
+| `/api/quizi/*` | api |
 | `/v1/game/*` | game |
 
 `/api/auth/internal/*` is deliberately **not** routed. The api service calls it over
@@ -43,14 +43,16 @@ ALLOWED_ORIGINS=https://app.example.com ./deploy.sh stg v1a2b3c4          # ever
 ALLOWED_ORIGINS=https://app.example.com ./deploy.sh stg v1a2b3c4 api       # one service
 ```
 
-Order matters: `network` -> `auth` -> `api` / `game` (they import the auth stack's URLs).
+Order matters: `network` -> `auth` -> `api` / `game` (they import the auth stack's URLs). `noti`
+has no dependencies; auth invokes it by its fixed name `quizi-noti-<env>`.
 `DESIRED_COUNT` (default 2) changes the number of tasks per service. At the end the
-script prints the public endpoint; set the web app's `NEXT_PUBLIC_*` URLs to it:
+script prints the public API URL (`https://api.quizi.tech` once the custom domain is set up);
+set the web app's `NEXT_PUBLIC_*` URLs to it:
 
 ```
-NEXT_PUBLIC_API_URL=<endpoint>/api/oopsly
-NEXT_PUBLIC_AUTH_URL=<endpoint>/api/auth
-NEXT_PUBLIC_GAME_API_URL=<endpoint>
+NEXT_PUBLIC_API_URL=<api url>/api/quizi
+NEXT_PUBLIC_AUTH_URL=<api url>/api/auth
+NEXT_PUBLIC_GAME_API_URL=<api url>
 ```
 
 ## Release pipeline
@@ -78,7 +80,7 @@ new environment; `deploy.sh` stops with a clear message otherwise.
 Run the **Clean up AWS** workflow (`cleanup-aws.yaml`), or `./cleanup.sh <env> [stacks]`,
 to delete stacks and stop paying for them. Stacks go in reverse order (game, api, auth,
 network); `all` removes everything. The final Postgres snapshot is kept (remove it by hand if the
-data is not needed). The avatar bucket `oopsly-avatar-<env>` is deleted for every
+data is not needed). The avatar bucket `quizi-avatar-<env>` is deleted for every
 environment except `prod`, because its fixed name would block the next deploy.
 
 Per GitHub Environment (`stg`, `prod`):
@@ -87,8 +89,9 @@ Per GitHub Environment (`stg`, `prod`):
 |---|---|---|
 | secret | `AWS_ACCESS_KEY_ID` | Access key ID of an IAM user (needs CloudFormation, ECS, ECR, EC2, ELB, RDS, ElastiCache, API Gateway, IAM, Secrets Manager, Logs and S3 for the SAM bucket) |
 | secret | `AWS_SECRET_ACCESS_KEY` | Secret access key of the same IAM user |
-| variable | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_FROM` | mail server the noti Lambda sends through (`SMTP_FROM` like `Oopsly <no-reply@example.com>`) |
-| secret | `SMTP_PASSWORD` | password of the SMTP user |
+| variable | `RESEND_FROM` | sender the noti Lambda uses, like `Quizi <no-reply@quizi.tech>` (the domain must be verified in Resend) |
+| secret | `RESEND_API_KEY` | Resend API key |
+| variable | `HOSTED_ZONE_ID` | Route 53 hosted zone of `quizi.tech`; with it `prod` serves the API on `api.quizi.tech` and points `quizi.tech` at the UI (optional) |
 | variable | `APP_URL` | web app address used for links in emails (optional) |
 | variable | `ALLOWED_ORIGINS` | comma-separated browser origins for CORS |
 
@@ -111,6 +114,6 @@ Validate the templates without AWS access: `uvx cfn-lint *.yaml` (or `sam valida
 - **CORS** is handled by the services (`AllowedOrigins` / `CorsOrigins`), not by API Gateway.
   `prod` allows only `ALLOWED_ORIGINS` (trailing slashes are stripped; the origin must have
   none); every other environment allows `*`.
-- **One Postgres instance** (`oopsly` database) is shared; auth uses its own schema, and
+- **One Postgres instance** (`quizi` database) is shared; auth uses its own schema, and
   the auth and game containers run their Alembic migrations on start. The database is
   snapshotted on stack deletion.

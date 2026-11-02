@@ -33,7 +33,7 @@ interface ConnectOptions {
     onStatus: (status: QuizConnectionStatus) => void;
 }
 
-const GUEST_KEY = 'oopsly-guest-id';
+const GUEST_KEY = 'quizi-guest-id';
 
 /** Players without an account keep one id per browser tab so a refresh re-attaches them. */
 export function guestId(): string {
@@ -51,7 +51,7 @@ export function guestId(): string {
 /** SockJS also serves a plain websocket at `<endpoint>/websocket`. */
 function brokerUrl() {
     const http =
-        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9009/api/oopsly';
+        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9009/api/quizi';
     return `${http.replace(/^http/, 'ws').replace(/\/$/, '')}/ws/websocket`;
 }
 

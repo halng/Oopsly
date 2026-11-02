@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
-# Deploys Oopsly to AWS with the SAM CLI.
+# Deploys Quizi to AWS with the SAM CLI.
 #
 #   ALLOWED_ORIGINS=https://app.example.com ./deploy.sh <env> <image-tag> [network|auth|api|game|noti ...]
 #
 # With no stack names it deploys everything in dependency order:
 #   network -> (copy images to ECR) -> auth -> api -> game -> noti
+# (noti has no dependencies; auth only needs its function name, so any order works)
 #
-# noti (the email Lambda) reads its SMTP settings from Secrets Manager. Pass SMTP_HOST,
-# SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD and SMTP_FROM to store them; without SMTP_HOST the
-# stored secret is left as it is. APP_URL sets the links in emails.
+# noti (the email Lambda) reads its Resend settings from Secrets Manager. Pass RESEND_API_KEY
+# and RESEND_FROM (like "Quizi <no-reply@quizi.tech>") to store them; without RESEND_API_KEY
+# the stored secret is left as it is. APP_URL sets the links in emails.
+#
+# Custom domains (prod): HOSTED_ZONE_ID is the Route 53 zone of quizi.tech. With it, network
+# serves the API on API_DOMAIN (default api.quizi.tech) and points WEB_DOMAIN (default
+# quizi.tech) at the UI host (WEB_TARGET, default Vercel's 76.76.21.21). Other environments
+# get no custom domain unless API_DOMAIN / WEB_DOMAIN are set.
 #
 # ALLOWED_ORIGINS only applies to prod; every other environment allows all origins.
 # <image-tag> is the tag the bupu workflow pushed, e.g. v1a2b3c4.
@@ -25,25 +31,39 @@ STACKS=("$@")
 # Browsers send `Origin` without a trailing slash and the services compare it exactly, so
 # strip slashes and spaces. Anything but prod allows every origin (stg URLs change often).
 if [[ "$ENVIRONMENT" == "prod" ]]; then
-  ORIGINS="$(tr -d ' ' <<<"${ALLOWED_ORIGINS:-https://oopsly-web.vercel.app}" | sed -E 's#/+(,|$)#\1#g')"
+  ORIGINS="$(tr -d ' ' <<<"${ALLOWED_ORIGINS:-https://quizi.tech}" | sed -E 's#/+(,|$)#\1#g')"
 else
   ORIGINS="*"
 fi
 COUNT="${DESIRED_COUNT:-2}"
-NETWORK_STACK="oopsly-network-${ENVIRONMENT}"
-AUTH_STACK="oopsly-auth-${ENVIRONMENT}"
-APP_URL="${APP_URL:-https://oopsly-web.vercel.app}"
+NETWORK_STACK="quizi-network-${ENVIRONMENT}"
+AUTH_STACK="quizi-auth-${ENVIRONMENT}"
+APP_URL="${APP_URL:-https://quizi.tech}"
+
+HOSTED_ZONE_ID="${HOSTED_ZONE_ID:-}"
+if [[ "$ENVIRONMENT" == "prod" ]]; then
+  API_DOMAIN="${API_DOMAIN:-api.quizi.tech}"
+  WEB_DOMAIN="${WEB_DOMAIN:-quizi.tech}"
+else
+  API_DOMAIN="${API_DOMAIN:-}"
+  WEB_DOMAIN="${WEB_DOMAIN:-}"
+fi
+WEB_TARGET="${WEB_TARGET:-76.76.21.21}"
+NETWORK_OVERRIDES="Environment=${ENVIRONMENT} AllowedOrigins=${ORIGINS} WebTarget=${WEB_TARGET}"
+if [[ -n "$HOSTED_ZONE_ID" ]]; then
+  NETWORK_OVERRIDES+=" HostedZoneId=${HOSTED_ZONE_ID} ApiDomainName=${API_DOMAIN} WebDomainName=${WEB_DOMAIN}"
+fi
 
 deploy() {
   local name="$1" overrides="$2"
-  echo "==> sam deploy oopsly-${name}-${ENVIRONMENT}"
+  echo "==> sam deploy quizi-${name}-${ENVIRONMENT}"
   set -f # keep a "*" origin from being globbed when $overrides is split
   sam deploy \
     --template-file "${name}.yaml" \
-    --stack-name "oopsly-${name}-${ENVIRONMENT}" \
+    --stack-name "quizi-${name}-${ENVIRONMENT}" \
     --config-env "$name" \
     --capabilities CAPABILITY_IAM \
-    --s3-bucket "oopsly-sam-${ENVIRONMENT}" \
+    --s3-bucket "quizi-sam-${ENVIRONMENT}" \
     --no-confirm-changeset \
     --no-fail-on-empty-changeset \
     --parameter-overrides $overrides
@@ -54,7 +74,7 @@ has_stack() { aws cloudformation describe-stacks --stack-name "$1" >/dev/null 2>
 wants() { [[ " ${STACKS[*]} " == *" $1 "* ]]; }
 
 # api and game import the auth stack's URLs, and every service imports the network stack.
-if (wants auth || wants api || wants game || wants noti) && ! wants network && ! has_stack "$NETWORK_STACK"; then
+if (wants auth || wants api || wants game) && ! wants network && ! has_stack "$NETWORK_STACK"; then
   echo "Stack $NETWORK_STACK does not exist; include 'network' first." >&2
   exit 1
 fi
@@ -63,11 +83,11 @@ if (wants api || wants game) && ! wants auth && ! has_stack "$AUTH_STACK"; then
   exit 1
 fi
 
-# Writes the SMTP settings (from the environment, never the command line) into the secret
+# Writes the Resend settings (from the environment, never the command line) into the secret
 # the noti stack created.
-store_smtp_settings() {
-  if [[ -z "${SMTP_HOST:-}" ]]; then
-    echo "SMTP_HOST is not set; leaving oopsly-${ENVIRONMENT}-smtp as it is." >&2
+store_resend_settings() {
+  if [[ -z "${RESEND_API_KEY:-}" ]]; then
+    echo "RESEND_API_KEY is not set; leaving quizi-${ENVIRONMENT}-resend as it is." >&2
     return
   fi
   local settings
@@ -75,21 +95,18 @@ store_smtp_settings() {
 import json, os
 e = os.environ
 print(json.dumps({
-    "host": e["SMTP_HOST"],
-    "port": int(e.get("SMTP_PORT") or 587),
-    "username": e.get("SMTP_USERNAME", ""),
-    "password": e.get("SMTP_PASSWORD", ""),
-    "from_email": e.get("SMTP_FROM", ""),
+    "api_key": e["RESEND_API_KEY"],
+    "from_email": e.get("RESEND_FROM", ""),
 }))')"
   aws secretsmanager put-secret-value \
-    --secret-id "oopsly-${ENVIRONMENT}-smtp" --secret-string "$settings" >/dev/null
-  echo "==> stored SMTP settings in oopsly-${ENVIRONMENT}-smtp"
+    --secret-id "quizi-${ENVIRONMENT}-resend" --secret-string "$settings" >/dev/null
+  echo "==> stored Resend settings in quizi-${ENVIRONMENT}-resend"
 }
 
 for stack in "${STACKS[@]}"; do
   case "$stack" in
     network)
-      deploy network "Environment=${ENVIRONMENT} AllowedOrigins=${ORIGINS}"
+      deploy network "$NETWORK_OVERRIDES"
       ;;
     auth)
       scripts/copy-images.sh "$ENVIRONMENT" "$TAG" auth
@@ -104,8 +121,8 @@ for stack in "${STACKS[@]}"; do
       deploy game "Environment=${ENVIRONMENT} NetworkStackName=${NETWORK_STACK} AuthStackName=${AUTH_STACK} ImageTag=${TAG} DesiredCount=${COUNT} CorsOrigins=${ORIGINS}"
       ;;
     noti)
-      deploy noti "Environment=${ENVIRONMENT} NetworkStackName=${NETWORK_STACK} AppUrl=${APP_URL}"
-      store_smtp_settings
+      deploy noti "Environment=${ENVIRONMENT} AppUrl=${APP_URL}"
+      store_resend_settings
       ;;
     *)
       echo "unknown stack: $stack (use network, auth, api, game or noti)" >&2
@@ -116,5 +133,5 @@ done
 
 echo
 aws cloudformation describe-stacks --stack-name "$NETWORK_STACK" \
-  --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" --output text |
-  sed 's/^/Public API endpoint: /'
+  --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" --output text |
+  sed 's/^/Public API URL: /'

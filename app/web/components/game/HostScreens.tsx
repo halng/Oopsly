@@ -456,7 +456,7 @@ export function HostFinished({
                     onClick={onExit}
                     className="self-center rounded-xl bg-white text-[#46178f] px-8 py-3 font-black cursor-pointer"
                 >
-                    Back to Oopsly
+                    Back to Quizi
                 </button>
             </section>
         </div>

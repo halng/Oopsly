@@ -184,7 +184,7 @@ If changing a URL path or HTTP method:
 
 ### Run affected tests after each file change (not just at the end):
 cd app/api
-./gradlew test --tests "com.app.oopsly.api.unit.<entity_lower>.*" -q
+./gradlew test --tests "com.app.quizi.api.unit.<entity_lower>.*" -q
 ./gradlew integrationTest --tests "*<Entity>ControllerTest" -q
 
 This catches errors early before they compound.
@@ -200,7 +200,7 @@ cd app/api
 ./gradlew compileJava -q
 
 # 2. Run only the changed module's tests
-./gradlew test -q --tests "com.app.oopsly.api.unit.<entity_lower>.*"
+./gradlew test -q --tests "com.app.quizi.api.unit.<entity_lower>.*"
 
 # 3. Run the changed controller integration tests
 ./gradlew integrationTest -q --tests "*<Entity>ControllerTest"

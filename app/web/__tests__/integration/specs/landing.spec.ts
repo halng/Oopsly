@@ -5,7 +5,7 @@ test.describe('Landing screen', () => {
 
     test('shows the pitch and sends visitors to login', async ({ page }) => {
         await page.goto('/');
-        await expect(page.getByTestId('brand-logo')).toHaveText('Oopsly');
+        await expect(page.getByTestId('brand-logo')).toHaveText('Quizi');
         await expect(
             page.getByRole('heading', { name: /Master any subject with/ })
         ).toBeVisible();

@@ -1,14 +1,12 @@
-import json
-
 import pytest
 
 from noti import events
 
 
 def body(**over):
-    base = {"type": "welcome", "to": "ann@example.com", "data": {"name": "Ann"}}
+    base = {"template": "welcome", "to": "ann@example.com", "data": {"name": "Ann"}}
     base.update(over)
-    return json.dumps(base)
+    return base
 
 
 def test_parses_a_valid_event():
@@ -23,15 +21,15 @@ def test_name_falls_back_to_the_local_part():
 @pytest.mark.parametrize(
     "raw",
     [
-        "not json",
-        "[]",
-        body(type="nope"),
+        "not an object",
+        [],
+        body(template="nope"),
         body(to="not-an-email"),
         body(to="a@b.com, c@d.com"),
         body(data="x"),
-        body(type="otp", data={}),
-        body(type="community_invite", data={"name": "Ann"}),
-        body(type="study_reminder", data={}),
+        body(template="otp", data={}),
+        body(template="community_invite", data={"name": "Ann"}),
+        body(template="study_reminder", data={}),
     ],
 )
 def test_rejects_bad_events(raw):

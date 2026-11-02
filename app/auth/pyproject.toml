@@ -1,7 +1,7 @@
 [project]
-name = "oopsly-auth"
+name = "quizi-auth"
 version = "0.1.0"
-description = "Oopsly auth service: authentication, authorization, profiles, subscriptions and JWKS"
+description = "Quizi auth service: authentication, authorization, profiles, subscriptions and JWKS"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",

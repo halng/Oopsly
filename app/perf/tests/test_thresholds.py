@@ -5,8 +5,8 @@ import urllib.request
 import jwt
 import pytest
 
-from oopsly_perf import thresholds
-from oopsly_perf.auth import KID, generate_key, jwks, mint_token, serve_jwks, user_id
+from quizi_perf import thresholds
+from quizi_perf.auth import KID, generate_key, jwks, mint_token, serve_jwks, user_id
 
 RULES = {
     "default": {"p95_ms": 500, "max_failure_ratio": 0.0},

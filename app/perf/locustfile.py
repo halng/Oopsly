@@ -3,8 +3,8 @@
 Smoke:      PERF_PROFILE=smoke      locust -f locustfile.py --headless -u 2  -r 2 -t 45s
 Regression: PERF_PROFILE=regression locust -f locustfile.py --headless -u 20 -r 5 -t 2m
 
-`--host` (or PERF_HOST) points at the API, e.g. http://localhost:9009/api/oopsly.
-When the run ends the statistics are compared with oopsly_perf/thresholds.json and Locust
+`--host` (or PERF_HOST) points at the API, e.g. http://localhost:9009/api/quizi.
+When the run ends the statistics are compared with quizi_perf/thresholds.json and Locust
 exits non-zero if an endpoint is too slow, fails, or was never exercised.
 """
 
@@ -15,11 +15,11 @@ from pathlib import Path
 
 from locust import HttpUser, between, events
 
-from oopsly_perf import config, thresholds
-from oopsly_perf.auth import generate_key, mint_token, serve_jwks
-from oopsly_perf.sweep import ApiSweep
+from quizi_perf import config, thresholds
+from quizi_perf.auth import generate_key, mint_token, serve_jwks
+from quizi_perf.sweep import ApiSweep
 
-log = logging.getLogger("oopsly_perf")
+log = logging.getLogger("quizi_perf")
 _user_numbers = itertools.count(1)
 _run_id = os.environ.get("PERF_RUN_ID", str(os.getpid()))
 # One key per Locust process, published as a JWKS for the API under test (run without --processes).
@@ -28,8 +28,8 @@ if config.jwks_port():
     serve_jwks(_signing_key, config.jwks_port())
 
 
-class OopslyUser(HttpUser):
-    host = os.environ.get("PERF_HOST", "http://localhost:9009/api/oopsly")
+class QuiziUser(HttpUser):
+    host = os.environ.get("PERF_HOST", "http://localhost:9009/api/quizi")
     wait_time = between(0.1, 0.5)
     tasks = [ApiSweep]
 
@@ -39,7 +39,7 @@ class OopslyUser(HttpUser):
         self.suffix = f"{_run_id}-{number}-{id(self) % 10_000}"
 
         def token(role: str) -> str:
-            return mint_token(f"perf-{role}-{_run_id}-{number}@oopsly.dev", _signing_key)
+            return mint_token(f"perf-{role}-{_run_id}-{number}@quizi.dev", _signing_key)
 
         self.token = token("owner")
         self.other_token = token("member")

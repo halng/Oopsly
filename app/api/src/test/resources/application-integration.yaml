@@ -12,13 +12,13 @@ server:
   active:
     version: v1
   servlet:
-    context-path: /api/oopsly
+    context-path: /api/quizi
 
 spring:
   main:
     allow-bean-definition-overriding: true
   datasource:
-    url: jdbc:h2:mem:oopsly_integration;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;NON_KEYWORDS=INTERVAL,VALUE,YEAR,MONTH,DAY
+    url: jdbc:h2:mem:quizi_integration;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;NON_KEYWORDS=INTERVAL,VALUE,YEAR,MONTH,DAY
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -50,10 +50,10 @@ resilience4j:
         automaticTransitionFromOpenToHalfOpenEnabled: true
         ignore-exceptions:
           - org.springframework.web.client.HttpClientErrorException
-          - com.app.oopsly.api.shared.exception.NotFoundException
-          - com.app.oopsly.api.shared.exception.UnauthenticatedException
-          - com.app.oopsly.api.shared.exception.ValidationException
-          - com.app.oopsly.api.shared.exception.RetryLaterException
+          - com.app.quizi.api.shared.exception.NotFoundException
+          - com.app.quizi.api.shared.exception.UnauthenticatedException
+          - com.app.quizi.api.shared.exception.ValidationException
+          - com.app.quizi.api.shared.exception.RetryLaterException
           - java.lang.IllegalArgumentException
 
 management:
@@ -64,4 +64,4 @@ management:
 logging:
   level:
     root: WARN
-    com.app.oopsly.api: INFO
+    com.app.quizi.api: INFO

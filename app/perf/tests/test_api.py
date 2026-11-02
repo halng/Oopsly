@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 
-from oopsly_perf.api import Api
+from quizi_perf.api import Api
 
 
 class FakeResponse:

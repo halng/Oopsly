@@ -29,7 +29,7 @@ export default function SubscribePage() {
                     <div className="w-10 h-10 rounded-xl bg-[var(--theme-accent)] text-white flex items-center justify-center">
                         <Sparkles className="w-5 h-5" />
                     </div>
-                    <span className="font-black text-xl">Oopsly Pro</span>
+                    <span className="font-black text-xl">Quizi Pro</span>
                 </div>
                 <button
                     type="button"
@@ -136,7 +136,7 @@ export default function SubscribePage() {
                         onClick={() => handleSubscribe('pro')}
                         className="w-full py-3.5 rounded-xl bg-[var(--theme-accent)] font-bold text-sm cursor-pointer"
                     >
-                        {isLoading === 'pro' ? 'Loading...' : 'Get Oopsly Pro'}
+                        {isLoading === 'pro' ? 'Loading...' : 'Get Quizi Pro'}
                     </button>
                 </div>
                 <div className="bg-white rounded-3xl p-8 border">

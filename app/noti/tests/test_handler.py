@@ -1,76 +1,75 @@
 import json
 
-from noti import events, handler, smtp
+import pytest
 
-CFG = smtp.SmtpConfig("h", 587, "u", "p", "no-reply@oopsly.test")
+from noti import events, handler, resend
 
-
-def record(message_id, **over):
-    body = {"type": "otp", "to": "ann@example.com", "data": {"code": "123456"}}
-    body.update(over)
-    return {"messageId": message_id, "body": json.dumps(body)}
+CFG = resend.ResendConfig("re_key", "no-reply@quizi.test")
 
 
-def test_sends_every_message(monkeypatch):
-    monkeypatch.setattr(handler, "smtp_config", lambda: CFG)
+def payload(**over):
+    base = {"template": "otp", "to": "ann@example.com", "data": {"code": "123456"}}
+    base.update(over)
+    return base
+
+
+@pytest.fixture
+def config(monkeypatch):
+    monkeypatch.setattr(handler, "resend_config", lambda: CFG)
+
+
+def test_sends_the_rendered_template(config):
     sent = []
     result = handler.handler(
-        {"Records": [record("1"), record("2", type="welcome", data={})]},
+        payload(),
         None,
-        send=lambda cfg, to, msg, ics=None: sent.append((to, msg.subject, ics)),
+        send=lambda cfg, to, msg, ics=None: sent.append((cfg, to, msg.subject, ics)),
     )
-    assert result == {"batchItemFailures": []}
-    assert [s[0] for s in sent] == ["ann@example.com"] * 2
+    assert result == {"status": "sent"}
+    assert sent == [
+        (CFG, "ann@example.com", "Oops! You got it! Here is your code", None)
+    ]
 
 
-def test_study_reminder_attaches_the_ics(monkeypatch):
-    monkeypatch.setattr(handler, "smtp_config", lambda: CFG)
+def test_study_reminder_attaches_the_ics(config):
     sent = []
     handler.handler(
-        {"Records": [record("1", type=events.STUDY_REMINDER, data={"ics": "ICS"})]},
+        payload(template=events.STUDY_REMINDER, data={"ics": "ICS"}),
         None,
         send=lambda cfg, to, msg, ics=None: sent.append(ics),
     )
     assert sent == ["ICS"]
 
 
-def test_only_the_failed_message_is_retried(monkeypatch):
-    monkeypatch.setattr(handler, "smtp_config", lambda: CFG)
+def test_delivery_failure_is_raised_so_lambda_retries(config):
+    def down(cfg, to, msg, ics=None):
+        raise resend.ResendError("down")
 
-    def flaky(cfg, to, msg, ics=None):
-        if to == "bad@example.com":
-            raise OSError("smtp down")
-
-    result = handler.handler(
-        {"Records": [record("1"), record("2", to="bad@example.com")]},
-        None,
-        send=flaky,
-    )
-    assert result == {"batchItemFailures": [{"itemIdentifier": "2"}]}
+    with pytest.raises(resend.ResendError):
+        handler.handler(payload(), None, send=down)
 
 
-def test_malformed_messages_are_dropped_not_retried(monkeypatch):
-    monkeypatch.setattr(handler, "smtp_config", lambda: CFG)
-    result = handler.handler(
-        {"Records": [{"messageId": "1", "body": "garbage"}]},
-        None,
-        send=lambda *a, **k: 1 / 0,
-    )
-    assert result == {"batchItemFailures": []}
+def test_malformed_requests_are_dropped_not_retried(config):
+    result = handler.handler("garbage", None, send=lambda *a, **k: 1 / 0)
+    assert result["status"] == "dropped"
+    result = handler.handler(payload(template="nope"), None, send=lambda *a, **k: 1 / 0)
+    assert result["status"] == "dropped"
 
 
-def test_smtp_config_reads_the_secret(monkeypatch):
+def test_resend_config_reads_the_secret(monkeypatch):
     class Client:
         def get_secret_value(self, SecretId):
             assert SecretId == "arn:secret"
-            return {"SecretString": json.dumps({"host": "h", "from_email": "a@b.c"})}
+            return {
+                "SecretString": json.dumps({"api_key": "re_1", "from_email": "a@b.c"})
+            }
 
     import sys
     import types
 
     fake = types.SimpleNamespace(client=lambda name: Client())
     monkeypatch.setitem(sys.modules, "boto3", fake)
-    monkeypatch.setenv("SMTP_SECRET_ARN", "arn:secret")
-    handler.smtp_config.cache_clear()
-    assert handler.smtp_config().host == "h"
-    handler.smtp_config.cache_clear()
+    monkeypatch.setenv("RESEND_SECRET_ARN", "arn:secret")
+    handler.resend_config.cache_clear()
+    assert handler.resend_config().api_key == "re_1"
+    handler.resend_config.cache_clear()

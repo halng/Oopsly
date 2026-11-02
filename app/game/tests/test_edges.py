@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app import db as database
-from app.logging_config import OopslyFormatter
+from app.logging_config import QuiziFormatter
 from app.models import Tree
 from app.play import play_message
 from app.rules import next_stage
@@ -40,7 +40,7 @@ def test_formatter_appends_the_exception_trace():
         record = logging.LogRecord(
             "app.test", logging.ERROR, __file__, 1, "failed", None, sys.exc_info()
         )
-    assert "RuntimeError: boom" in OopslyFormatter().format(record)
+    assert "RuntimeError: boom" in QuiziFormatter().format(record)
 
 
 def test_the_last_stage_stays_ancient():

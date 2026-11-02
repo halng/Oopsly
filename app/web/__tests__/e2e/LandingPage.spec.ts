@@ -4,7 +4,7 @@ test('has rendered correctly main content', async ({ page }) => {
     await page.goto('/');
 
     await expect(page).toHaveTitle(
-        /Oopsly — Active Recall & Spaced Repetition Flashcards/
+        /Quizi — Active Recall & Spaced Repetition Flashcards/
     );
     await expect(page.getByTestId('brand-logo')).toBeVisible();
     await expect(page.getByTestId('brand-logo')).toHaveClass(
@@ -61,11 +61,11 @@ test('renders the hero content and feature highlights', async ({ page }) => {
     ).toBeVisible();
     await expect(
         page.getByText(
-            'Oopsly combines the scientifically-proven FSRS algorithm'
+            'Quizi combines the scientifically-proven FSRS algorithm'
         )
     ).toBeVisible();
     await expect(
-        page.getByRole('heading', { name: 'Why choose Oopsly?' })
+        page.getByRole('heading', { name: 'Why choose Quizi?' })
     ).toBeVisible();
     await expect(
         page.getByRole('heading', { name: 'FSRS Algorithm' })
@@ -89,5 +89,5 @@ test('shows the primary CTA labels and footer branding', async ({ page }) => {
     );
     await expect(page.getByText('Made with')).toBeVisible();
     await expect(page.getByText('for lifelong learners.')).toBeVisible();
-    await expect(page.locator('footer')).toContainText('Oopsly');
+    await expect(page.locator('footer')).toContainText('Quizi');
 });

@@ -52,13 +52,13 @@ def test_issued_tokens_verify_against_the_published_jwks(client):
 
 
 def test_otp_is_mailed_for_regular_emails(client, outbox):
-    res = client.post(f"{BASE}/v1/otp", params={"email": "new@oopsly.dev"})
+    res = client.post(f"{BASE}/v1/otp", params={"email": "new@quizi.dev"})
     assert res.status_code == 200
-    assert res.json()["message"] == "OTP sent successfully to new@oopsly.dev"
+    assert res.json()["message"] == "OTP sent successfully to new@quizi.dev"
     ((to, code),) = outbox.sent
-    assert to == "new@oopsly.dev" and len(code) == 6
+    assert to == "new@quizi.dev" and len(code) == 6
 
-    tokens = login_with(client, "new@oopsly.dev", code)
+    tokens = login_with(client, "new@quizi.dev", code)
     assert tokens["type"] == "Bearer"
 
 
@@ -88,7 +88,7 @@ def test_failed_mail_delivery_does_not_fail_the_request(client, outbox):
 
     outbox.send_otp = boom
     assert (
-        client.post(f"{BASE}/v1/otp", params={"email": "x@oopsly.dev"}).status_code
+        client.post(f"{BASE}/v1/otp", params={"email": "x@quizi.dev"}).status_code
         == 200
     )
 
@@ -103,19 +103,19 @@ def test_validate_otp_error_cases(client, outbox):
     assert garbage.status_code == 400
 
     expired = client.post(
-        f"{BASE}/v1/otp/validate", json={"email": "a@oopsly.dev", "otp": "123456"}
+        f"{BASE}/v1/otp/validate", json={"email": "a@quizi.dev", "otp": "123456"}
     )
     assert expired.status_code == 404
 
-    client.post(f"{BASE}/v1/otp", params={"email": "a@oopsly.dev"})
+    client.post(f"{BASE}/v1/otp", params={"email": "a@quizi.dev"})
     wrong = "000001" if outbox.sent[0][1] != "000001" else "000002"
     for _ in range(MAX_ATTEMPTS):
         res = client.post(
-            f"{BASE}/v1/otp/validate", json={"email": "a@oopsly.dev", "otp": wrong}
+            f"{BASE}/v1/otp/validate", json={"email": "a@quizi.dev", "otp": wrong}
         )
         assert res.status_code == 400
     locked = client.post(
-        f"{BASE}/v1/otp/validate", json={"email": "a@oopsly.dev", "otp": wrong}
+        f"{BASE}/v1/otp/validate", json={"email": "a@quizi.dev", "otp": wrong}
     )
     assert locked.status_code == 429
 
@@ -161,7 +161,7 @@ def test_refresh_rejects_bad_requests(client):
     assert refresh(refresh_token="garbage", user_email=TEST_EMAIL).status_code == 401
     assert (
         refresh(
-            refresh_token=tokens["refresh_token"], user_email="other@oopsly.dev"
+            refresh_token=tokens["refresh_token"], user_email="other@quizi.dev"
         ).status_code
         == 401
     )
@@ -179,11 +179,11 @@ def test_refresh_for_unknown_user_is_unauthorized(client):
     from app.tokens import TokenService
 
     token = TokenService(ghost, timedelta(hours=1), timedelta(days=1)).refresh_token(
-        "ghost@oopsly.dev"
+        "ghost@quizi.dev"
     )
     res = client.post(
         f"{BASE}/v1/users/refresh-token",
-        json={"refresh_token": token, "user_email": "ghost@oopsly.dev"},
+        json={"refresh_token": token, "user_email": "ghost@quizi.dev"},
     )
     assert res.status_code == 401
     assert "User not found" in res.json()["message"]

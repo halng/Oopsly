@@ -4,7 +4,7 @@ import { CalendarPlus, Clock, Download } from 'lucide-react';
 import { ApiService } from '@/services/api';
 import { toast } from '@/store/ToastStore';
 
-const STORAGE_KEY = 'oopsly.studyReminder';
+const STORAGE_KEY = 'quizi.studyReminder';
 
 const DAYS = [
     { value: 0, label: 'S', name: 'Sunday' },

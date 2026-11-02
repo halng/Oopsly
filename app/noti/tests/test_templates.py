@@ -31,9 +31,9 @@ def test_invite_without_inviter():
     assert "You have been invited" in m.text
 
 
-def test_study_reminder_is_named_learning_on_oopsly():
+def test_study_reminder_is_named_learning_on_quizi():
     m = render(events.STUDY_REMINDER, {"ics": "BEGIN:VCALENDAR"})
-    assert "Learning on Oopsly" in m.subject
+    assert "Learning on Quizi" in m.subject
 
 
 def test_user_input_is_escaped():

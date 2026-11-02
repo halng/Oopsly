@@ -8,9 +8,9 @@ plugins {
 	id 'org.barfuin.gradle.jacocolog' version '4.0.0'
 	id "org.sonarqube" version "7.3.1.8318"
 }
-group = 'com.app.oopsly'
+group = 'com.app.quizi'
 version = '0.0.1-SNAPSHOT'
-description = 'Backend server for Oopsly project'
+description = 'Backend server for Quizi project'
 
 java {
 	toolchain {
@@ -20,8 +20,8 @@ java {
 
 sonar {
   properties {
-    property "sonar.projectKey", "Oopsly::API"
-	property "sonar.projectName", "Oopsly::API"
+    property "sonar.projectKey", "Quizi::API"
+	property "sonar.projectName", "Quizi::API"
     property "sonar.organization", "tanhao111"
 	property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
   }
@@ -106,7 +106,7 @@ tasks.named('processTestAot').configure { enabled = false }
 tasks.named('test') {
 	useJUnitPlatform()
 	filter {
-		includeTestsMatching 'com.app.oopsly.api.unit.*'
+		includeTestsMatching 'com.app.quizi.api.unit.*'
 	}
 	testLogging {
 		events 'passed', 'skipped', 'failed'
@@ -128,8 +128,8 @@ tasks.register('integrationTest', Test) {
 		html.outputLocation = layout.buildDirectory.dir('reports/tests/integrationTest')
 	}
 	filter {
-		includeTestsMatching 'com.app.oopsly.api.integration.*'
-		excludeTestsMatching 'com.app.oopsly.api.integration.support.*'
+		includeTestsMatching 'com.app.quizi.api.integration.*'
+		excludeTestsMatching 'com.app.quizi.api.integration.support.*'
 		setFailOnNoMatchingTests(true)
 	}
 //	shouldRunAfter test

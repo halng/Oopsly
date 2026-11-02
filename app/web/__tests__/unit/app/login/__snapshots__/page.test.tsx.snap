@@ -44,7 +44,7 @@ exports[`AuthPage > renders the login screen and matches its snapshot 1`] = `
           <h1
             class="text-2xl font-black text-stone-900 tracking-tight"
           >
-            Oopsly
+            Quizi
           </h1>
         </div>
         <div>
@@ -181,7 +181,7 @@ exports[`AuthPage > renders the login screen and matches its snapshot 1`] = `
           <p
             class="text-lg text-stone-600 leading-relaxed"
           >
-            Oopsly combines the advanced FSRS algorithm with beautiful, gamified study sessions to help you remember everything you learn.
+            Quizi combines the advanced FSRS algorithm with beautiful, gamified study sessions to help you remember everything you learn.
           </p>
         </div>
         <div

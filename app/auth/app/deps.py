@@ -49,9 +49,9 @@ def get_kv() -> KV:
 
 @lru_cache
 def get_sender() -> mail.Sender:
-    if not settings.noti_queue_url:
+    if not settings.noti_function_name:
         return mail.NoOpSender()
-    return mail.SqsSender(settings.noti_queue_url, settings.noti_region)
+    return mail.LambdaSender(settings.noti_function_name, settings.noti_region)
 
 
 @lru_cache

@@ -1,7 +1,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  Oopsly shared infrastructure: VPC, ECS cluster, Postgres, Redis, ECR repositories,
-  generated secrets and the HTTP API (API Gateway) that fronts every service.
+  Quizi shared infrastructure: VPC, ECS cluster, Postgres, Redis, ECR repositories,
+  generated secrets and the HTTP API (API Gateway) that fronts every service, with its
+  custom domain (api.quizi.tech) and the DNS record for the web app (quizi.tech) in Route 53.
   Deploy this stack first; auth, api and game import its outputs.
 
 Parameters:
@@ -23,8 +24,32 @@ Parameters:
     Default: cache.t4g.micro
   AllowedOrigins:
     Type: CommaDelimitedList
-    Default: https://oopsly-web.vercel.app
+    Default: https://quizi.tech
     Description: Browser origins allowed to upload profile pictures straight to S3.
+  HostedZoneId:
+    Type: String
+    Default: ""
+    Description: Route 53 hosted zone of quizi.tech. Leave empty to skip custom domains.
+  ApiDomainName:
+    Type: String
+    Default: ""
+    Description: Domain the HTTP API answers on, e.g. api.quizi.tech. Needs HostedZoneId.
+  WebDomainName:
+    Type: String
+    Default: ""
+    Description: Domain the web app is served on, e.g. quizi.tech. Needs HostedZoneId.
+  WebTarget:
+    Type: String
+    Default: 76.76.21.21
+    Description: IPv4 address the web domain points at (Vercel's apex address).
+
+Conditions:
+  HasApiDomain: !And
+    - !Not [!Equals [!Ref HostedZoneId, ""]]
+    - !Not [!Equals [!Ref ApiDomainName, ""]]
+  HasWebDomain: !And
+    - !Not [!Equals [!Ref HostedZoneId, ""]]
+    - !Not [!Equals [!Ref WebDomainName, ""]]
 
 Resources:
   # ---------------------------------------------------------------- network
@@ -36,7 +61,7 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: !Sub oopsly-${Environment}
+          Value: !Sub quizi-${Environment}
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -106,7 +131,7 @@ Resources:
   TaskSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Oopsly Fargate tasks
+      GroupDescription: Quizi Fargate tasks
       VpcId: !Ref Vpc
       SecurityGroupEgress:
         - IpProtocol: "-1"
@@ -115,7 +140,7 @@ Resources:
   DatabaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Postgres accepts Oopsly tasks only
+      GroupDescription: Postgres accepts Quizi tasks only
       VpcId: !Ref Vpc
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -126,7 +151,7 @@ Resources:
   RedisSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Redis accepts Oopsly tasks only
+      GroupDescription: Redis accepts Quizi tasks only
       VpcId: !Ref Vpc
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -138,9 +163,9 @@ Resources:
   DbSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub oopsly-${Environment}-db
+      Name: !Sub quizi-${Environment}-db
       GenerateSecretString:
-        SecretStringTemplate: '{"username":"oopsly"}'
+        SecretStringTemplate: '{"username":"quizi"}'
         GenerateStringKey: password
         PasswordLength: 32
         ExcludePunctuation: true
@@ -149,7 +174,7 @@ Resources:
   InternalKeySecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub oopsly-${Environment}-internal-key
+      Name: !Sub quizi-${Environment}-internal-key
       GenerateSecretString:
         PasswordLength: 48
         ExcludePunctuation: true
@@ -157,7 +182,7 @@ Resources:
   JwtPassphraseSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub oopsly-${Environment}-jwt-passphrase
+      Name: !Sub quizi-${Environment}-jwt-passphrase
       GenerateSecretString:
         PasswordLength: 48
         ExcludePunctuation: true
@@ -165,9 +190,9 @@ Resources:
   GameDatabaseUrlSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub oopsly-${Environment}-game-database-url
+      Name: !Sub quizi-${Environment}-game-database-url
       SecretString: !Sub
-        - "postgresql+psycopg://oopsly:${Password}@${Host}:5432/oopsly"
+        - "postgresql+psycopg://quizi:${Password}@${Host}:5432/quizi"
         - Password: !Sub "{{resolve:secretsmanager:${DbSecret}:SecretString:password}}"
           Host: !GetAtt Database.Endpoint.Address
 
@@ -175,7 +200,7 @@ Resources:
   DbSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBSubnetGroupDescription: Oopsly database subnets
+      DBSubnetGroupDescription: Quizi database subnets
       SubnetIds:
         - !Ref PublicSubnetA
         - !Ref PublicSubnetB
@@ -185,15 +210,15 @@ Resources:
     DeletionPolicy: Snapshot
     UpdateReplacePolicy: Snapshot
     Properties:
-      DBInstanceIdentifier: !Sub oopsly-${Environment}
+      DBInstanceIdentifier: !Sub quizi-${Environment}
       Engine: postgres
       EngineVersion: !Ref DbEngineVersion
       DBInstanceClass: !Ref DbInstanceClass
       AllocatedStorage: 20
       StorageType: gp3
       StorageEncrypted: true
-      DBName: oopsly
-      MasterUsername: oopsly
+      DBName: quizi
+      MasterUsername: quizi
       MasterUserPassword: !Sub "{{resolve:secretsmanager:${DbSecret}:SecretString:password}}"
       DBSubnetGroupName: !Ref DbSubnetGroup
       VPCSecurityGroups:
@@ -204,7 +229,7 @@ Resources:
   RedisSubnets:
     Type: AWS::ElastiCache::SubnetGroup
     Properties:
-      Description: Oopsly Redis subnets
+      Description: Quizi Redis subnets
       SubnetIds:
         - !Ref PublicSubnetA
         - !Ref PublicSubnetB
@@ -212,7 +237,7 @@ Resources:
   Redis:
     Type: AWS::ElastiCache::CacheCluster
     Properties:
-      ClusterName: !Sub oopsly-${Environment}
+      ClusterName: !Sub quizi-${Environment}
       Engine: redis
       EngineVersion: !Ref RedisEngineVersion
       CacheNodeType: !Ref RedisNodeType
@@ -225,41 +250,19 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /oopsly/${Environment}
+      LogGroupName: !Sub /quizi/${Environment}
       RetentionInDays: 14
-
-  # ---------------------------------------------------------------- email
-  # Services publish email events here; the noti Lambda (noti.yaml) consumes them. Messages
-  # that fail three times land in the dead-letter queue for inspection.
-  NotiDeadLetterQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub oopsly-noti-${Environment}-dlq
-      MessageRetentionPeriod: 1209600
-      SqsManagedSseEnabled: true
-
-  NotiQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub oopsly-noti-${Environment}
-      # At least six times the Lambda timeout, as Lambda recommends.
-      VisibilityTimeout: 180
-      MessageRetentionPeriod: 86400
-      SqsManagedSseEnabled: true
-      RedrivePolicy:
-        deadLetterTargetArn: !GetAtt NotiDeadLetterQueue.Arn
-        maxReceiveCount: 3
 
   # ------------------------------------------------------------ containers
   Cluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Sub oopsly-${Environment}
+      ClusterName: !Sub quizi-${Environment}
 
   AuthRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub oopsly-auth-${Environment}
+      RepositoryName: !Sub quizi-auth-${Environment}
       EmptyOnDelete: true
       ImageScanningConfiguration:
         ScanOnPush: true
@@ -270,7 +273,7 @@ Resources:
   ApiRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub oopsly-api-${Environment}
+      RepositoryName: !Sub quizi-api-${Environment}
       EmptyOnDelete: true
       ImageScanningConfiguration:
         ScanOnPush: true
@@ -281,7 +284,7 @@ Resources:
   GameRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub oopsly-game-${Environment}
+      RepositoryName: !Sub quizi-game-${Environment}
       EmptyOnDelete: true
       ImageScanningConfiguration:
         ScanOnPush: true
@@ -295,13 +298,13 @@ Resources:
   HttpApi:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: !Sub oopsly-${Environment}
+      Name: !Sub quizi-${Environment}
       ProtocolType: HTTP
 
   VpcLink:
     Type: AWS::ApiGatewayV2::VpcLink
     Properties:
-      Name: !Sub oopsly-${Environment}
+      Name: !Sub quizi-${Environment}
       SubnetIds:
         - !Ref PublicSubnetA
         - !Ref PublicSubnetB
@@ -311,7 +314,7 @@ Resources:
   ApiAccessLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /apigateway/oopsly-${Environment}
+      LogGroupName: !Sub /apigateway/quizi-${Environment}
       RetentionInDays: 14
 
   # No routes yet, so the first stage deployment needs the services' routes to exist
@@ -331,6 +334,60 @@ Resources:
         Format: >-
           {"requestId":"$context.requestId","ip":"$context.identity.sourceIp","method":"$context.httpMethod","path":"$context.path","status":"$context.status","latencyMs":"$context.responseLatency","integrationError":"$context.integrationErrorMessage"}
 
+  # ------------------------------------------------------------ custom domains
+  # api.quizi.tech: a certificate validated through Route 53, a custom domain on the HTTP
+  # API (regional, so the certificate lives in this region) and an alias record to it.
+  ApiCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: HasApiDomain
+    Properties:
+      DomainName: !Ref ApiDomainName
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref ApiDomainName
+          HostedZoneId: !Ref HostedZoneId
+
+  ApiDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Condition: HasApiDomain
+    Properties:
+      DomainName: !Ref ApiDomainName
+      DomainNameConfigurations:
+        - CertificateArn: !Ref ApiCertificate
+          EndpointType: REGIONAL
+          SecurityPolicy: TLS_1_2
+
+  ApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Condition: HasApiDomain
+    Properties:
+      ApiId: !Ref HttpApi
+      DomainName: !Ref ApiDomain
+      Stage: !Ref DefaultStage
+
+  ApiRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: HasApiDomain
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref ApiDomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt ApiDomain.RegionalDomainName
+        HostedZoneId: !GetAtt ApiDomain.RegionalHostedZoneId
+
+  # quizi.tech: the UI is hosted outside AWS (Vercel); Route 53 only points the name at it.
+  WebRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: HasWebDomain
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref WebDomainName
+      Type: A
+      TTL: "300"
+      ResourceRecords:
+        - !Ref WebTarget
+
   # ---------------------------------------------------------------- avatars
   # Private: pictures are only reachable through short-lived presigned URLs.
   AvatarBucket:
@@ -338,7 +395,7 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
-      BucketName: !Sub oopsly-avatar-${Environment}
+      BucketName: !Sub quizi-avatar-${Environment}
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -441,18 +498,16 @@ Outputs:
     Value: !GetAtt GameRepository.RepositoryUri
     Export:
       Name: !Sub ${AWS::StackName}-GameRepositoryUri
-  NotiQueueUrl:
-    Value: !Ref NotiQueue
-    Export:
-      Name: !Sub ${AWS::StackName}-NotiQueueUrl
-  NotiQueueArn:
-    Value: !GetAtt NotiQueue.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-NotiQueueArn
   LogGroupName:
     Value: !Ref LogGroup
     Export:
       Name: !Sub ${AWS::StackName}-LogGroupName
   ApiEndpoint:
-    Description: Public base URL. Point the web app's NEXT_PUBLIC_*_URL values at it.
+    Description: Default execute-api base URL (works even without a custom domain).
     Value: !GetAtt HttpApi.ApiEndpoint
+  ApiUrl:
+    Description: Public base URL. Point the web app's NEXT_PUBLIC_*_URL values at it.
+    Value: !If
+      - HasApiDomain
+      - !Sub https://${ApiDomainName}
+      - !GetAtt HttpApi.ApiEndpoint

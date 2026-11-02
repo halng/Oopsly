@@ -1,6 +1,5 @@
-"""The messages other services put on the queue."""
+"""The requests other services send straight to the noti Lambda."""
 
-import json
 import re
 from dataclasses import dataclass, field
 from typing import Any
@@ -38,17 +37,14 @@ class Event:
         return given or self.to.split("@", 1)[0]
 
 
-def parse(body: str) -> Event:
-    try:
-        raw = json.loads(body)
-    except (TypeError, ValueError):
-        raise InvalidEvent("body is not JSON") from None
+def parse(raw: Any) -> Event:
+    """Reads `{"template": ..., "to": ..., "data": {...}}` as the Lambda receives it."""
     if not isinstance(raw, dict):
-        raise InvalidEvent("body must be a JSON object")
+        raise InvalidEvent("payload must be a JSON object")
 
-    kind = raw.get("type")
+    kind = raw.get("template")
     if kind not in REQUIRED:
-        raise InvalidEvent(f"unknown event type: {kind!r}")
+        raise InvalidEvent(f"unknown template: {kind!r}")
     to = str(raw.get("to") or "").strip()
     if not EMAIL_RE.match(to):
         raise InvalidEvent("`to` must be one email address")

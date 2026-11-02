@@ -17,7 +17,7 @@
 <configuration>
 
     <property name="LOGS" value="/tmp/logs" />
-    <property name="APP_NAME" value="oopsly-app" />
+    <property name="APP_NAME" value="quizi-app" />
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
@@ -46,7 +46,7 @@
     <logger name="org.springframework" level="INFO" />
     <logger name="org.hibernate" level="WARN" />
 
-    <logger name="com.oopsly" level="DEBUG" additivity="false">
+    <logger name="com.quizi" level="DEBUG" additivity="false">
         <appender-ref ref="Console" />
         <appender-ref ref="RollingFile" />
     </logger>

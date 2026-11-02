@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copies images built by the "Build and Push Docker Image" workflow (ghcr.io/halng/oopsly-*)
+# Copies images built by the "Build and Push Docker Image" workflow (ghcr.io/halng/quizi-*)
 # into the ECR repositories created by network.yaml.
 #
 #   scripts/copy-images.sh <env> <image-tag> [auth|api|game ...]
@@ -21,8 +21,8 @@ aws ecr get-login-password --region "$REGION" |
   docker login --username AWS --password-stdin "$REGISTRY"
 
 for service in "${SERVICES[@]}"; do
-  source_image="ghcr.io/halng/oopsly-${service}:${TAG}"
-  target_image="${REGISTRY}/oopsly-${service}-${ENVIRONMENT}:${TAG}"
+  source_image="ghcr.io/halng/quizi-${service}:${TAG}"
+  target_image="${REGISTRY}/quizi-${service}-${ENVIRONMENT}:${TAG}"
   echo "==> ${source_image} -> ${target_image}"
   # Fargate runs linux/amd64 here, whatever machine this script runs on.
   docker pull --platform linux/amd64 "$source_image"

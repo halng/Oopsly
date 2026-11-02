@@ -12,10 +12,10 @@ from pathlib import Path
 from noti import events
 from noti.events import Event
 
-APP_URL_DEFAULT = "https://oopsly-web.vercel.app"
+APP_URL_DEFAULT = "https://quizi.tech"
 OTP_MINUTES = 5
 ALARM_MINUTES = 10
-CALENDAR_EVENT = "Learning on Oopsly"
+CALENDAR_EVENT = "Learning on Quizi"
 RESOURCE_DIR = Path(__file__).with_name("resource")
 
 
@@ -49,7 +49,7 @@ def render(event: Event, app_url: str = APP_URL_DEFAULT) -> Message:
             subject="Oops! You got it! Here is your code",
             html=fill(events.OTP, {"NAME": name, "CODE": code, "MINUTES": OTP_MINUTES}),
             text=(
-                f"Hello {name},\n\nYour Oopsly verification code is {code}. "
+                f"Hello {name},\n\nYour Quizi verification code is {code}. "
                 f"It works for the next {OTP_MINUTES} minutes.\n\n"
                 "If you did not request it, you can ignore this email.\n"
             ),
@@ -57,10 +57,10 @@ def render(event: Event, app_url: str = APP_URL_DEFAULT) -> Message:
 
     if event.type == events.WELCOME:
         return Message(
-            subject="Welcome to Oopsly!",
+            subject="Welcome to Quizi!",
             html=fill(events.WELCOME, {"NAME": name, "APP_URL": app_url}),
             text=(
-                f"Hi {name}, welcome to Oopsly!\n\n"
+                f"Hi {name}, welcome to Quizi!\n\n"
                 "Study smart, remember forever: build decks, review them with "
                 f"spaced repetition and keep your streak going.\n\n{app_url}\n"
             ),
@@ -71,7 +71,7 @@ def render(event: Event, app_url: str = APP_URL_DEFAULT) -> Message:
         inviter = str(event.data.get("inviterName") or "").strip()
         who = f"{inviter} invited you" if inviter else "You have been invited"
         return Message(
-            subject=f"You are invited to join {community} on Oopsly",
+            subject=f"You are invited to join {community} on Quizi",
             html=fill(
                 events.COMMUNITY_INVITE,
                 {
@@ -83,7 +83,7 @@ def render(event: Event, app_url: str = APP_URL_DEFAULT) -> Message:
             ),
             text=(
                 f"Hi {name},\n\n{who} to join the {community} community on "
-                f"Oopsly.\n\n{app_url}/leaderboard\n"
+                f"Quizi.\n\n{app_url}/leaderboard\n"
             ),
         )
 

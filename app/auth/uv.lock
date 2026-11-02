@@ -746,7 +746,7 @@ wheels = [
 ]
 
 [[package]]
-name = "oopsly-auth"
+name = "quizi-auth"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
