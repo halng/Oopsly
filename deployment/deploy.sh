@@ -70,7 +70,7 @@ deploy() {
     --stack-name "quizi-${name}-${ENVIRONMENT}" \
     --config-env "$name" \
     --capabilities CAPABILITY_IAM \
-    --s3-bucket "quizi-sam-${ENVIRONMENT}" \
+    --s3-bucket "quizi-cl-template-sam-${ENVIRONMENT}" \
     --no-confirm-changeset \
     --no-fail-on-empty-changeset \
     --parameter-overrides $overrides
