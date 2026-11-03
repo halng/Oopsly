@@ -12,7 +12,7 @@ Internet -> HTTP API --VPC link--> internal ALB (per service) -> Fargate tasks
 
 | File | What it creates |
 |---|---|
-| `network.yaml` | VPC and subnets, ECS cluster, Postgres, Redis, ECR repositories, generated secrets, the HTTP API, its stage and the VPC link, plus (with `HostedZoneId`) the `api.quizi.tech` custom domain, its certificate and the Route 53 records for `api.quizi.tech` and `quizi.tech` |
+| `network.yaml` | VPC and subnets, ECS cluster, Postgres, Redis, ECR repositories, generated secrets, the HTTP API, its stage and the VPC link, plus (with `HostedZoneId`) the `api.quizi.tech` custom domain, its certificate and the Route 53 record for `api.quizi.tech` (the `quizi.tech` record for Vercel is managed by hand) |
 | `auth.yaml` | auth service: ECS service (2 tasks), internal ALB, API routes |
 | `api.yaml` | Java API: same shape; reads the auth stack's internal URLs |
 | `game.yaml` | game service: same shape |
@@ -110,7 +110,7 @@ Per GitHub Environment (`stg`, `prod`):
 | secret | `AWS_SECRET_ACCESS_KEY` | Secret access key of the same IAM user |
 | variable | `RESEND_FROM` | sender the noti Lambda uses, like `Quizi <no-reply@quizi.tech>` (the domain must be verified in Resend) |
 | secret | `RESEND_API_KEY` | Resend API key |
-| variable | `HOSTED_ZONE_ID` | Route 53 hosted zone of `quizi.tech`; with it `prod` serves the API on `api.quizi.tech` and points `quizi.tech` at the UI (optional) |
+| variable | `HOSTED_ZONE_ID` | Route 53 hosted zone of `quizi.tech`; with it `prod` serves the API on `api.quizi.tech` (optional; the `quizi.tech` A record for Vercel is managed by hand in Route 53) |
 | variable | `APP_URL` | web app address used for links in emails (optional) |
 | variable | `ALLOWED_ORIGINS` | comma-separated browser origins for CORS |
 

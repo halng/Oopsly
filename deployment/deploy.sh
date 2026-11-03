@@ -12,10 +12,10 @@
 # the stored secret is left as it is. APP_URL sets the links in emails.
 #
 # Custom domains: HOSTED_ZONE_ID is the Route 53 zone of quizi.tech. With it, network serves
-# the API on API_DOMAIN and the WebSockets on WS_DOMAIN, and (prod) points WEB_DOMAIN at the UI
-# host (WEB_TARGET, default Vercel's 76.76.21.21). The names are fixed per environment:
-#   prod:    api.quizi.tech      ws.quizi.tech      quizi.tech
-#   others:  <env>-api.quizi.tech  <env>-ws.quizi.tech (e.g. stg-api.quizi.tech), no web domain
+# the API on API_DOMAIN and the WebSockets on WS_DOMAIN. The web app's quizi.tech record (Vercel)
+# is managed by hand in Route 53. The names are fixed per environment:
+#   prod:    api.quizi.tech      ws.quizi.tech
+#   others:  <env>-api.quizi.tech  <env>-ws.quizi.tech (e.g. stg-api.quizi.tech)
 # The release-web workflow derives the same URLs, so keep them in step. Without HOSTED_ZONE_ID
 # no custom domain is created.
 #
@@ -48,17 +48,14 @@ APP_URL="${APP_URL:-https://quizi.tech}"
 HOSTED_ZONE_ID="${HOSTED_ZONE_ID:-}"
 if [[ "$ENVIRONMENT" == "prod" ]]; then
   API_DOMAIN="${API_DOMAIN:-api.quizi.tech}"
-  WEB_DOMAIN="${WEB_DOMAIN:-quizi.tech}"
   WS_DOMAIN="${WS_DOMAIN:-ws.quizi.tech}"
 else
   API_DOMAIN="${API_DOMAIN:-${ENVIRONMENT}-api.quizi.tech}"
-  WEB_DOMAIN="${WEB_DOMAIN:-}"
   WS_DOMAIN="${WS_DOMAIN:-${ENVIRONMENT}-ws.quizi.tech}"
 fi
-WEB_TARGET="${WEB_TARGET:-76.76.21.21}"
-NETWORK_OVERRIDES="Environment=${ENVIRONMENT} AllowedOrigins=${ORIGINS} WebTarget=${WEB_TARGET}"
+NETWORK_OVERRIDES="Environment=${ENVIRONMENT} AllowedOrigins=${ORIGINS}"
 if [[ -n "$HOSTED_ZONE_ID" ]]; then
-  NETWORK_OVERRIDES+=" HostedZoneId=${HOSTED_ZONE_ID} ApiDomainName=${API_DOMAIN} WebDomainName=${WEB_DOMAIN} WsDomainName=${WS_DOMAIN}"
+  NETWORK_OVERRIDES+=" HostedZoneId=${HOSTED_ZONE_ID} ApiDomainName=${API_DOMAIN} WsDomainName=${WS_DOMAIN}"
 fi
 
 deploy() {
