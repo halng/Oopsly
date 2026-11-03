@@ -70,7 +70,7 @@ class PlanLimitServiceTest {
 
     @Test
     void freeLimitsAreTheDocumentedOnes() {
-        PlanLimits free = PlanLimits.forPlan("FREE");
+        PlanLimits free = PlanLimits.forPlan(PlanLimits.FREE_PLAN);
         assertEquals(10, free.decks());
         assertEquals(5, free.subjectsPerDeck());
         assertEquals(5, free.testSuitesPerDeck());
@@ -86,26 +86,26 @@ class PlanLimitServiceTest {
 
     @Test
     void proAllowsMoreThanFree() {
-        PlanLimits free = PlanLimits.forPlan("FREE");
-        PlanLimits pro = PlanLimits.forPlan("PRO");
+        PlanLimits free = PlanLimits.forPlan(PlanLimits.FREE_PLAN);
+        PlanLimits pro = PlanLimits.forPlan(PlanLimits.PRO_PLAN);
         assertEquals(true, pro.decks() > free.decks());
         assertEquals(true, pro.cardsPerSubject() > free.cardsPerSubject());
     }
 
     @Test
-    void proMaxHasNoLimits() {
-        PlanLimits max = PlanLimits.forPlan("PRO_PLUS");
-        assertEquals("Pro Max", max.planName());
-        assertEquals(PlanLimits.UNLIMITED, max.decks());
-        assertEquals(PlanLimits.UNLIMITED, max.subjectsPerDeck());
-        assertEquals(PlanLimits.UNLIMITED, max.testSuitesPerDeck());
-        assertEquals(PlanLimits.UNLIMITED, max.cardsPerSubject());
-        assertEquals(PlanLimits.UNLIMITED, max.questionsPerTestSuite());
+    void proPlusHasNoLimits() {
+        PlanLimits proPlus = PlanLimits.forPlan(PlanLimits.PRO_PLUS_PLAN);
+        assertEquals("Pro Plus", proPlus.planName());
+        assertEquals(PlanLimits.UNLIMITED, proPlus.decks());
+        assertEquals(PlanLimits.UNLIMITED, proPlus.subjectsPerDeck());
+        assertEquals(PlanLimits.UNLIMITED, proPlus.testSuitesPerDeck());
+        assertEquals(PlanLimits.UNLIMITED, proPlus.cardsPerSubject());
+        assertEquals(PlanLimits.UNLIMITED, proPlus.questionsPerTestSuite());
     }
 
     @Test
-    void aProMaxUserIsNeverStopped() {
-        when(currentUser.plan()).thenReturn("PRO_PLUS");
+    void aProPlusUserIsNeverStopped() {
+        when(currentUser.plan()).thenReturn(PlanLimits.PRO_PLUS_PLAN);
         when(currentUser.id()).thenReturn(userId);
         when(shelfRepository.countByUserId(userId)).thenReturn(1_000_000L);
         when(cardRepository.countBySubjectAndDeletedFalse(subject)).thenReturn(1_000_000L);
@@ -117,7 +117,7 @@ class PlanLimitServiceTest {
 
     @Test
     void theTenthDeckIsAllowedAndTheEleventhIsNot() {
-        when(currentUser.plan()).thenReturn("FREE");
+        when(currentUser.plan()).thenReturn(PlanLimits.FREE_PLAN);
         when(currentUser.id()).thenReturn(userId);
         when(shelfRepository.countByUserId(userId)).thenReturn(9L);
         assertDoesNotThrow(service::requireDeckSlot);
@@ -131,7 +131,7 @@ class PlanLimitServiceTest {
 
     @Test
     void aProUserGetsTheProLimit() {
-        when(currentUser.plan()).thenReturn("PRO");
+        when(currentUser.plan()).thenReturn(PlanLimits.PRO_PLAN);
         when(currentUser.id()).thenReturn(userId);
         when(shelfRepository.countByUserId(userId)).thenReturn(10L);
         assertDoesNotThrow(service::requireDeckSlot);
@@ -139,7 +139,7 @@ class PlanLimitServiceTest {
 
     @Test
     void subjectsAndTestSuitesAreLimitedPerDeck() {
-        when(currentUser.plan()).thenReturn("FREE");
+        when(currentUser.plan()).thenReturn(PlanLimits.FREE_PLAN);
         when(subjectRepository.countByShelf(deck)).thenReturn(5L);
         when(testSuiteRepository.countByShelf(deck)).thenReturn(4L);
         assertThrows(PlanLimitException.class, () -> service.requireSubjectSlot(deck));
@@ -148,7 +148,7 @@ class PlanLimitServiceTest {
 
     @Test
     void addingCardsCannotPassTheLimitEvenInOneBatch() {
-        when(currentUser.plan()).thenReturn("FREE");
+        when(currentUser.plan()).thenReturn(PlanLimits.FREE_PLAN);
         when(cardRepository.countBySubjectAndDeletedFalse(subject)).thenReturn(20L);
         assertDoesNotThrow(() -> service.requireCardSlots(subject, 5));
         assertThrows(PlanLimitException.class, () -> service.requireCardSlots(subject, 6));
@@ -156,14 +156,14 @@ class PlanLimitServiceTest {
 
     @Test
     void addingQuestionsCannotPassTheLimitEvenInOneBatch() {
-        when(currentUser.plan()).thenReturn("FREE");
+        when(currentUser.plan()).thenReturn(PlanLimits.FREE_PLAN);
         when(questionRepository.countByTestSuite(suite)).thenReturn(25L);
         assertThrows(PlanLimitException.class, () -> service.requireQuestionSlots(suite, 1));
     }
 
     @Test
     void copiesMustFitTheCallersPlan() {
-        when(currentUser.plan()).thenReturn("FREE");
+        when(currentUser.plan()).thenReturn(PlanLimits.FREE_PLAN);
         assertDoesNotThrow(() -> service.requireCardsFit(25));
         assertThrows(PlanLimitException.class, () -> service.requireCardsFit(26));
         assertDoesNotThrow(() -> service.requireQuestionsFit(25));

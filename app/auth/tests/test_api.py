@@ -135,6 +135,10 @@ def test_login_creates_the_user_once_and_names_it_from_the_email(client):
     profile = client.get(f"{BASE}/v1/user-profiles", headers=bearer(second)).json()
     assert profile["data"]["name"] == "test"
     assert profile["data"]["email"] == TEST_EMAIL
+    subscription = client.get(
+        f"{BASE}/v1/subscriptions/me", headers=bearer(second)
+    ).json()["data"]
+    assert subscription["plan"] == "PRO_PLUS"
     claims = [
         jwt.decode(t["access_token"], options={"verify_signature": False})
         for t in (first, second)

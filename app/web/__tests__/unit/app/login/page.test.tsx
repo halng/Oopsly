@@ -189,11 +189,17 @@ describe('AuthPage', () => {
     });
 
     it('moves to sign-up, keeping the email, when login finds no account', async () => {
-        vi.mocked(ApiService.sendOtp).mockResolvedValue({
+        vi.mocked(ApiService.sendOtp).mockResolvedValueOnce({
             isSuccess: false,
             data: null,
             statusCode: 404,
             message: 'No account found for this email. Please sign up.',
+            timestamp: '',
+        } as never);
+        vi.mocked(ApiService.sendOtp).mockResolvedValueOnce({
+            isSuccess: true,
+            data: null,
+            message: '',
             timestamp: '',
         } as never);
         render(<AuthPage />);
@@ -215,5 +221,20 @@ describe('AuthPage', () => {
         expect(screen.getByRole('status')).toHaveTextContent(
             /Tell us your name/
         );
+        expect(ApiService.sendOtp).toHaveBeenNthCalledWith(
+            2,
+            'new@example.com',
+            true
+        );
+        fireEvent.change(screen.getByPlaceholderText('Jane Doe'), {
+            target: { value: 'New Learner' },
+        });
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Continue with Email' })
+        );
+        await waitFor(() =>
+            expect(screen.getByPlaceholderText('123456')).toBeInTheDocument()
+        );
+        expect(ApiService.sendOtp).toHaveBeenCalledTimes(2);
     });
 });

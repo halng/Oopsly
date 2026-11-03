@@ -953,6 +953,7 @@ export const ApiService = {
     getFeatures: () =>
         fetchJson<{
             features: Record<string, { enabled: boolean; source: string }>;
+            plan: string | null;
         }>('/v1/features', undefined, authClient),
 
     getStats: () => fetchJson<StatsData>('/v1/users/me/stats'),

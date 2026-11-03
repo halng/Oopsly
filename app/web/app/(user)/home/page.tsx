@@ -38,8 +38,14 @@ import { OfflineSyncBanner, WelcomeTourModal } from '@/components';
 import SubjectCard from '@/components/home/SubjectCard';
 import { useRouter } from 'next/navigation';
 import { useUserProfileStore, useShelfStore } from '@/store';
+import { useFeaturesStore } from '@/store/Features';
 
 const MAX_ITEMS_PER_PAGE = 50;
+const DECK_LIMITS: Record<string, { max: number; name: string }> = {
+    FREE: { max: 10, name: 'Free' },
+    PRO: { max: 50, name: 'Pro' },
+    PRO_PLUS: { max: Infinity, name: 'Pro Plus' },
+};
 
 const PRESET_ICONS = {
     folder: <Folder className="w-5 h-5" />,
@@ -61,6 +67,7 @@ export const HomePage: React.FC = () => {
     const profile = useUserProfileStore((state) => state.profile);
     const setProfile = useUserProfileStore((state) => state.setProfile);
     const [shelves, setShelves] = useState<Shelf[]>([]);
+    const [totalShelves, setTotalShelves] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [shelfSearchQuery, setShelfSearchQuery] = useState('');
     const [globalSubjectSearchQuery, setGlobalSubjectSearchQuery] =
@@ -73,6 +80,14 @@ export const HomePage: React.FC = () => {
     const [isShelfModalOpen, setIsShelfModalOpen] = useState(false);
     const [editingShelf, setEditingShelf] = useState<Shelf | null>(null);
     const [isJoinGameOpen, setIsJoinGameOpen] = useState(false);
+    const plan = useFeaturesStore((state) => state.plan);
+    const planLimits = plan
+        ? (DECK_LIMITS[plan] ?? DECK_LIMITS.FREE)
+        : undefined;
+    const shelfLimitReached =
+        planLimits !== undefined &&
+        Number.isFinite(planLimits.max) &&
+        totalShelves >= planLimits.max;
 
     const [totalDue, setTotalDue] = useState(0);
 
@@ -92,6 +107,7 @@ export const HomePage: React.FC = () => {
                 MAX_ITEMS_PER_PAGE
             );
             if (shelvesRes.isSuccess && shelvesRes.data) {
+                setTotalShelves(shelvesRes.data.totalItems);
                 const fetchedShelves = shelvesRes.data.entities;
                 if (fetchedShelves && fetchedShelves.length > 0) {
                     setShelves(fetchedShelves);
@@ -145,13 +161,26 @@ export const HomePage: React.FC = () => {
             const res = await ApiService.updateShelf(editingShelf.id, data);
             if (res.isSuccess) toast.success('Shelf updated');
         } else {
-            ApiService.createShelf(data).then((res) => {
-                if (res.isSuccess) {
-                    toast.success('Shelf created', data.name);
-                    loadShelvesAndSubjects();
-                }
-            });
+            if (shelfLimitReached) {
+                toast.error(
+                    'Shelf limit reached',
+                    `Upgrade your ${planLimits?.name} plan to create more shelves.`
+                );
+                return;
+            }
+            const res = await ApiService.createShelf(data);
+            if (res.isSuccess) {
+                setTotalShelves((count) => count + 1);
+                toast.success('Shelf created', data.name);
+                await loadShelvesAndSubjects();
+            }
         }
+    };
+
+    const openCreateShelf = () => {
+        if (shelfLimitReached) return;
+        setEditingShelf(null);
+        setIsShelfModalOpen(true);
     };
 
     const handleUpdateNewCommer = async () => {
@@ -297,10 +326,8 @@ export const HomePage: React.FC = () => {
                         </button>
                         <button
                             data-testid="btn-create-shelf"
-                            onClick={() => {
-                                setEditingShelf(null);
-                                setIsShelfModalOpen(true);
-                            }}
+                            onClick={openCreateShelf}
+                            disabled={shelfLimitReached}
                             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-xs font-bold shadow-xs cursor-pointer"
                         >
                             <Plus className="w-4 h-4" />
@@ -364,10 +391,8 @@ export const HomePage: React.FC = () => {
                             No shelves found
                         </h3>
                         <button
-                            onClick={() => {
-                                setEditingShelf(null);
-                                setIsShelfModalOpen(true);
-                            }}
+                            onClick={openCreateShelf}
+                            disabled={shelfLimitReached}
                             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-xs font-bold cursor-pointer"
                         >
                             <Plus className="w-4 h-4" />
@@ -485,6 +510,13 @@ export const HomePage: React.FC = () => {
                             );
                         })}
                     </div>
+                )}
+                {planLimits && shelfLimitReached && (
+                    <p role="status" className="text-sm text-amber-700">
+                        You have reached the {planLimits.name} plan limit of{' '}
+                        {planLimits.max} shelves. Upgrade your plan to create
+                        more.
+                    </p>
                 )}
             </div>
 

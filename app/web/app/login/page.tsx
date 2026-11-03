@@ -20,6 +20,7 @@ const AuthPage = () => {
     const [email, setEmail] = useState('');
     const [otp, setOtp] = useState('');
     const [name, setName] = useState('');
+    const [otpSent, setOtpSent] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [notice, setNotice] = useState('');
@@ -40,19 +41,31 @@ const AuthPage = () => {
         setIsLoading(true);
         setErrorMessage('');
         try {
+            if (mode === 'signup' && otpSent) {
+                setStep('otp');
+                return;
+            }
             const res = await ApiService.sendOtp(
                 email.trim(),
                 mode === 'signup'
             );
             if (res.isSuccess) {
                 setNotice('');
+                setOtpSent(mode === 'signup');
                 setStep('otp');
             } else if (mode === 'login' && res.statusCode === 404) {
                 // No account for this email yet: carry on as a sign-up.
                 setMode('signup');
+                const signupRes = await ApiService.sendOtp(email.trim(), true);
+                setOtpSent(signupRes.isSuccess);
                 setNotice(
-                    "We couldn't find an account for this email. Tell us your name to create one."
+                    "We couldn't find an account for this email. Tell us your name to create one. We sent a verification code to this email."
                 );
+                if (!signupRes.isSuccess) {
+                    setErrorMessage(
+                        signupRes.message || 'Failed to send verification code.'
+                    );
+                }
             } else {
                 setErrorMessage(
                     res.message || 'Failed to send verification code.'
@@ -126,6 +139,7 @@ const AuthPage = () => {
         e.preventDefault();
         e.stopPropagation();
         setOtp('');
+        setOtpSent(false);
         setErrorMessage('');
         setNotice('');
         setStep('email');
@@ -216,7 +230,10 @@ const AuthPage = () => {
                                         required
                                         placeholder="name@example.com"
                                         value={email}
-                                        onChange={onTextChange(setEmail)}
+                                        onChange={(e) => {
+                                            setOtpSent(false);
+                                            onTextChange(setEmail)(e);
+                                        }}
                                         className="w-full pl-12 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-900 focus:ring-2 focus:ring-[var(--theme-accent)] focus:outline-none transition-all"
                                     />
                                 </div>
@@ -297,6 +314,7 @@ const AuthPage = () => {
                                     type="button"
                                     onClick={() => {
                                         setNotice('');
+                                        setOtpSent(false);
                                         setMode(
                                             mode === 'login'
                                                 ? 'signup'

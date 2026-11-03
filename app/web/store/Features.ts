@@ -3,6 +3,7 @@ import { ApiService } from '@/services/api';
 
 interface FeaturesState {
     flags: Record<string, boolean>;
+    plan: string | null;
     load: () => Promise<void>;
 }
 
@@ -12,10 +13,12 @@ interface FeaturesState {
  */
 export const useFeaturesStore = create<FeaturesState>((set) => ({
     flags: {},
+    plan: null,
     load: async () => {
         const res = await ApiService.getFeatures();
         if (res.isSuccess && res.data) {
             set({
+                plan: res.data.plan,
                 flags: Object.fromEntries(
                     Object.entries(res.data.features).map(([key, f]) => [
                         key,

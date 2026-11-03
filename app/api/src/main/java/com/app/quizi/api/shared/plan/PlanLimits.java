@@ -24,9 +24,9 @@ public record PlanLimits(
         int cardsPerSubject,
         int questionsPerTestSuite) {
 
-    public static final String FREE = "FREE";
-    public static final String PRO = "PRO";
-    public static final String PRO_PLUS = "PRO_PLUS";
+    public static final String FREE_PLAN = "FREE";
+    public static final String PRO_PLAN = "PRO";
+    public static final String PRO_PLUS_PLAN = "PRO_PLUS";
 
     /** No cap: no count can pass it. */
     public static final int UNLIMITED = Integer.MAX_VALUE;
@@ -34,14 +34,14 @@ public record PlanLimits(
     private static final PlanLimits FREE_LIMITS = new PlanLimits("Free", 10, 5, 5, 25, 25);
     private static final PlanLimits PRO_LIMITS = new PlanLimits("Pro", 50, 20, 20, 100, 100);
     private static final PlanLimits PRO_PLUS_LIMITS =
-            new PlanLimits("Pro Max", UNLIMITED, UNLIMITED, UNLIMITED, UNLIMITED, UNLIMITED);
+            new PlanLimits("Pro Plus", UNLIMITED, UNLIMITED, UNLIMITED, UNLIMITED, UNLIMITED);
 
     /** A token without a plan claim, or an unknown plan, gets the free limits. */
     public static PlanLimits forPlan(String plan) {
-        if (PRO.equalsIgnoreCase(plan)) {
+        if (PRO_PLAN.equalsIgnoreCase(plan)) {
             return PRO_LIMITS;
         }
-        if (PRO_PLUS.equalsIgnoreCase(plan)) {
+        if (PRO_PLUS_PLAN.equalsIgnoreCase(plan)) {
             return PRO_PLUS_LIMITS;
         }
         return FREE_LIMITS;

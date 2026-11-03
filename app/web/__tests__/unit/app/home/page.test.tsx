@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HomePage from '@/app/(user)/home/page';
 import { ApiService } from '@/services/api';
 import { useUserProfileStore } from '@/store';
+import { useFeaturesStore } from '@/store/Features';
 import { useToastStore } from '@/store/ToastStore';
 import { shelf } from '@/__tests__/unit/helpers/studyFixtures';
 
@@ -65,10 +66,15 @@ const page = {
 
 describe('HomePage', () => {
     const initialProfileState = useUserProfileStore.getState();
+    const initialFeaturesState = useFeaturesStore.getState();
 
     beforeEach(() => {
         vi.clearAllMocks();
         useUserProfileStore.setState(initialProfileState, true);
+        useFeaturesStore.setState(
+            { ...initialFeaturesState, plan: 'PRO_PLUS' },
+            true
+        );
         vi.mocked(ApiService.getProfile).mockResolvedValue({
             isSuccess: true,
             data: profile,
@@ -119,6 +125,25 @@ describe('HomePage', () => {
             expect(screen.getByText('No shelves found')).toBeInTheDocument()
         );
         expect(screen.getByTestId('btn-create-shelf')).toBeInTheDocument();
+    });
+
+    it('blocks shelf creation at the current plan limit', async () => {
+        useFeaturesStore.setState({ plan: 'FREE' });
+        vi.mocked(ApiService.getShelves).mockResolvedValue({
+            isSuccess: true,
+            data: { ...page, totalItems: 10 },
+            message: '',
+            statusCode: 200,
+            timestamp: '',
+        } as never);
+
+        render(<HomePage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('btn-create-shelf')).toBeDisabled()
+        );
+        expect(
+            screen.getByText(/reached the Free plan limit of 10 shelves/i)
+        ).toBeInTheDocument();
     });
 
     it('filters shelves and opens the create-shelf modal', async () => {
