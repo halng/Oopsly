@@ -6,11 +6,31 @@ ROLE_ADMIN = "ADMIN"
 PLAN_FREE = "FREE"
 PLAN_PRO = "PRO"
 PLAN_PRO_PLUS = "PRO_PLUS"
+# Plans and prices are on hold: everyone who signs up starts on the top plan, for good.
+# Set this back to PLAN_FREE to start new accounts on the free plan again.
+NEW_USER_PLAN = PLAN_PRO_PLUS
 
 STATUS_ACTIVE = "ACTIVE"
 STATUS_EXPIRED = "EXPIRED"
 
 THEMES = ("LIGHT", "DARK", "SYSTEM")
+# Ids of the web app's visual themes, plus the plain light/dark/system choices.
+THEME_IDS = (
+    "light",
+    "dark",
+    "system",
+    "ghibli-meadow",
+    "ghibli-laputa",
+    "ghibli-howl",
+    "ghibli-kiki",
+    "ghibli-night",
+    "botanical",
+    "obsidian",
+    "midnight",
+    "sunset",
+    "nordic",
+    "emerald",
+)
 LANGUAGE_CODES = {"ENGLISH": "en", "VIETNAMESE": "vi", "SPANISH": "es"}
 PLAN_RANK = {PLAN_FREE: 0, PLAN_PRO: 1, PLAN_PRO_PLUS: 2}
 

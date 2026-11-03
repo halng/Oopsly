@@ -74,7 +74,7 @@ def test_failed_requests_log_the_error_once(client, monkeypatch, caplog):
     )
     quiet = client.__class__(client.app, raise_server_exceptions=False)
     with caplog.at_level(logging.INFO, logger="app.main"):
-        quiet.post("/api/auth/v1/otp", params={"email": "a@b.co"})
+        quiet.post("/api/auth/v1/otp", params={"email": "a@b.co", "signup": True})
     errors = [r for r in caplog.records if r.levelno == logging.ERROR]
     assert len(errors) == 1
     assert "Failed after" in errors[0].getMessage()

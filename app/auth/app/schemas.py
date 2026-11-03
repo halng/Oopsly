@@ -9,6 +9,10 @@ class ValidateOtpReq(BaseModel):
     name: str = ""
 
 
+class ThemeReq(BaseModel):
+    theme: str = ""
+
+
 class RefreshReq(BaseModel):
     refresh_token: str = ""
     user_email: str = ""

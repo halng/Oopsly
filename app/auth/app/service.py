@@ -30,6 +30,7 @@ MAX_LOOKUP_IDS = 200
 MAX_DISPLAY_NAME, MAX_BIO = 50, 255
 MIN_AGE, MAX_AGE = 1, 120
 MAX_NAME, MAX_PICTURE_URL = 255, 500
+NO_ACCOUNT = "No account found for this email. Please sign up."
 
 EMAIL_RE = re.compile(r"^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")
 PATCHABLE_FIELDS = {"name", "displayName", "bio", "age", "pictureUrl"}
@@ -113,12 +114,19 @@ class AuthService:
 
     # --- authentication ---
 
-    def send_otp(self, email: str) -> None:
-        """Creates and mails a code (skipped for configured test emails)."""
+    def send_otp(self, email: str, signup: bool = False) -> None:
+        """Creates and mails a code (skipped for configured test emails).
+
+        Logging in with an address that has no account is refused with a 404 so the web
+        app can send the person to sign up; `signup` skips that check (an existing
+        account simply logs in).
+        """
         if not valid_email(email):
             raise bad_request("Invalid Email Format")
         if self.otp.is_test_email(email):
             return
+        if not signup and self._find_user_by_email(email) is None:
+            raise not_found(NO_ACCOUNT)
         code = self.otp.issue(email)
 
         self._send_async("OTP email", email, lambda: self.sender.send_otp(email, code))
@@ -127,6 +135,14 @@ class AuthService:
         """Validates the code and, on success, creates the user if needed."""
         if not valid_email(email) or len(code) < 6:
             raise bad_request("Invalid request body")
+        # An unknown address needs a name to sign up with. Refuse before the code is
+        # used up, so the person can go back, sign up and still use it.
+        if (
+            not name.strip()
+            and not self.otp.is_test_email(email)
+            and self._find_user_by_email(email) is None
+        ):
+            raise not_found(NO_ACCOUNT)
         status = self.otp.verify(email, code)
         if status is not OtpStatus.VALID:
             logger.warning("OTP rejected for %s: %s", mail.mask(email), status.value)
@@ -142,7 +158,9 @@ class AuthService:
             )
         user = self._find_user_by_email(email)
         if user is None:
-            user = self._create_user(email, name or email.split("@", 1)[0])
+            user = self._create_user(
+                email, name.strip()[:MAX_DISPLAY_NAME] or email.split("@", 1)[0]
+            )
             logger.info("user %s signed up", mail.mask(email))
             self._send_async(
                 "welcome email",
@@ -224,7 +242,7 @@ class AuthService:
         user = User(email=email, name=name, display_name=name, role=domain.ROLE_USER)
         self.db.add(user)
         self.db.flush()
-        self.db.add(Subscription(user_id=user.id))
+        self.db.add(Subscription(user_id=user.id, plan=domain.NEW_USER_PLAN))
         self.db.commit()
         return user
 
@@ -382,6 +400,17 @@ class AuthService:
                 user.email, user.name or "", community_name, inviter_name
             ),
         )
+
+    def set_theme(self, user_id: str, theme: str) -> dict:
+        """Remembers the visual theme the user picked, for every device they use."""
+        theme = theme.strip().lower()
+        if theme not in domain.THEME_IDS:
+            raise bad_request("Invalid theme: " + theme)
+        user = self._current_user(user_id)
+        st = self._ensure_settings(user.id)
+        st.theme, st.updated_at = theme, self.now()
+        self.db.commit()
+        return self.profile(user_id)
 
     def mark_not_newcomer(self, user_id: str) -> None:
         user = self._current_user(user_id)

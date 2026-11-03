@@ -21,6 +21,7 @@ from app.schemas import (
     RefreshReq,
     SetSubscriptionReq,
     StudyReminderReq,
+    ThemeReq,
     UpdateProfileReq,
     ValidateOtpReq,
 )
@@ -66,8 +67,10 @@ def jwks(keys: KeyStore = Depends(get_key_store)):
 
 
 @router.post("/v1/otp", tags=["otp"])
-def create_otp(email: str = "", svc: AuthService = Depends(get_service)):
-    svc.send_otp(email)
+def create_otp(
+    email: str = "", signup: bool = False, svc: AuthService = Depends(get_service)
+):
+    svc.send_otp(email, signup)
     return ok("OTP sent successfully to " + email)
 
 
@@ -172,6 +175,15 @@ def study_reminder_calendar(
         "Study reminder calendar generated",
         {"filename": "quizi-study-reminder.ics", "ics": ics},
     )
+
+
+@router.patch("/v1/user-profiles/settings/theme", tags=["profiles"])
+def set_theme(
+    req: ThemeReq,
+    me: Principal = Depends(authenticate),
+    svc: AuthService = Depends(get_service),
+):
+    return ok("Theme saved successfully", svc.set_theme(me.user_id, req.theme))
 
 
 @router.patch("/v1/user-profiles/settings/newcomer", tags=["profiles"])
