@@ -18,7 +18,7 @@ test.describe('Login screen', () => {
         await expect(page.getByPlaceholder('123456')).toBeVisible();
         const otpRequests = await mock.requests('POST', `${AUTH}/v1/otp`);
         expect(otpRequests).toHaveLength(1);
-        expect(otpRequests[0].url).toContain('email=learner@quizi.app');
+        expect(otpRequests[0].url).toContain('email=learner%40quizi.app');
 
         await page.getByPlaceholder('123456').fill('123456');
         await page.getByRole('button', { name: 'Verify' }).click();
