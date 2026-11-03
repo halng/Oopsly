@@ -110,6 +110,9 @@ Per GitHub Environment (`stg`, `prod`):
 | secret | `AWS_SECRET_ACCESS_KEY` | Secret access key of the same IAM user |
 | variable | `RESEND_FROM` | sender the noti Lambda uses, like `Quizi <no-reply@quizi.tech>` (the domain must be verified in Resend) |
 | secret | `RESEND_API_KEY` | Resend API key |
+| secret | `STRIPE_SECRET_KEY` | Stripe secret key (`sk_…`); without it payments stay off. Stored in `quizi-<env>-stripe` when deploying `network` |
+| secret | `STRIPE_WEBHOOK_SECRET` | signing secret (`whsec_…`) of the Stripe webhook endpoint `https://api.quizi.tech/api/auth/v1/billing/webhook` |
+| variable | `STRIPE_PRICE_PRO_MONTHLY`, `STRIPE_PRICE_PRO_YEARLY`, `STRIPE_PRICE_PRO_PLUS_MONTHLY`, `STRIPE_PRICE_PRO_PLUS_YEARLY` | ids (`price_…`) of the four recurring prices created in the Stripe dashboard |
 | variable | `HOSTED_ZONE_ID` | Route 53 hosted zone of `quizi.tech`; with it `prod` serves the API on `api.quizi.tech` (optional; the `quizi.tech` A record for Vercel is managed by hand in Route 53) |
 | variable | `APP_URL` | web app address used for links in emails (optional) |
 | variable | `ALLOWED_ORIGINS` | comma-separated browser origins for CORS |

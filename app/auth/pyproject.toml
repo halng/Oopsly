@@ -15,6 +15,7 @@ dependencies = [
     "jsonpatch>=1.33",
     "ruff>=0.17.3",
     "boto3>=1.43.122",
+    "stripe>=16.1.0",
 ]
 
 [project.optional-dependencies]

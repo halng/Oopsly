@@ -15,7 +15,7 @@ from fastapi import Depends, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from app import avatars, domain, mail
+from app import avatars, billing, domain, mail
 from app import db as database
 from app.config import settings
 from app.db import get_db
@@ -67,6 +67,32 @@ def get_avatar_storage() -> avatars.AvatarStorage | None:
     )
 
 
+@lru_cache
+def get_billing() -> billing.Billing:
+    # The deployed secret holds the placeholder "unset" until Stripe is configured.
+    if not settings.stripe_secret_key.startswith("sk_"):
+        return billing.DisabledBilling()
+
+    def price(value: str) -> str:
+        return value if value.startswith("price_") else ""
+
+    return billing.StripeBilling(
+        settings.stripe_secret_key,
+        settings.stripe_webhook_secret,
+        {
+            domain.PLAN_PRO: {
+                "month": price(settings.stripe_price_pro_monthly),
+                "year": price(settings.stripe_price_pro_yearly),
+            },
+            domain.PLAN_PRO_PLUS: {
+                "month": price(settings.stripe_price_pro_plus_monthly),
+                "year": price(settings.stripe_price_pro_plus_yearly),
+            },
+        },
+        settings.app_url,
+    )
+
+
 def get_tokens(keys: KeyStore = Depends(get_key_store)) -> TokenService:
     return TokenService(keys, settings.access_ttl, settings.refresh_ttl)
 
@@ -82,9 +108,19 @@ def get_service(
     sender: mail.Sender = Depends(get_sender),
     run_async=Depends(get_run_async),
     storage: avatars.AvatarStorage | None = Depends(get_avatar_storage),
+    payments: billing.Billing = Depends(get_billing),
 ) -> AuthService:
     otp = OtpService(kv, settings.test_email_list)
-    return AuthService(db, kv, tokens, otp, sender, run_async, avatar_storage=storage)
+    return AuthService(
+        db,
+        kv,
+        tokens,
+        otp,
+        sender,
+        run_async,
+        avatar_storage=storage,
+        payments=payments,
+    )
 
 
 @dataclass(frozen=True)

@@ -348,6 +348,40 @@ export function defaultStubs(): Stub[] {
             ics: 'BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n',
         }),
         ok('PATCH', `${AUTH}/v1/user-settings`, profile.settings),
+        ok('GET', `${AUTH}/v1/subscriptions/me`, {
+            plan: 'FREE',
+            status: 'ACTIVE',
+            expiresAt: null,
+        }),
+        ok('GET', `${AUTH}/v1/billing/plans`, {
+            enabled: true,
+            plans: [
+                {
+                    plan: 'PRO',
+                    interval: 'month',
+                    amount: 999,
+                    currency: 'usd',
+                },
+                {
+                    plan: 'PRO',
+                    interval: 'year',
+                    amount: 7999,
+                    currency: 'usd',
+                },
+                {
+                    plan: 'PRO_PLUS',
+                    interval: 'month',
+                    amount: 1999,
+                    currency: 'usd',
+                },
+                {
+                    plan: 'PRO_PLUS',
+                    interval: 'year',
+                    amount: 17999,
+                    currency: 'usd',
+                },
+            ],
+        }),
         // api service
         ok('GET', `${API}/v1/ping`, 'pong'),
         ok('GET', `${API}/v1/shelves`, page([shelf])),

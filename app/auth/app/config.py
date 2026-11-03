@@ -50,6 +50,17 @@ class Settings(BaseSettings):
     avatar_s3_endpoint: str = ""
     avatar_s3_public_endpoint: str = ""
 
+    # Card payments. Leave the secret key empty to turn payments off. The prices are the
+    # ids of the recurring prices created in the Stripe dashboard.
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_price_pro_monthly: str = ""
+    stripe_price_pro_yearly: str = ""
+    stripe_price_pro_plus_monthly: str = ""
+    stripe_price_pro_plus_yearly: str = ""
+    # Where Stripe sends people back to after paying.
+    app_url: str = "https://quizi.tech"
+
     allowed_origins: str = "http://localhost:8080,http://localhost:8081"
 
     def database_url_normalized(self) -> str:

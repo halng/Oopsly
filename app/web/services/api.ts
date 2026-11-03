@@ -2,6 +2,10 @@ import axios, { AxiosError } from 'axios';
 import { useAuthStore, useUserProfileStore } from '@/store';
 import {
     ApiResponse,
+    BillingInterval,
+    BillingPlanPrice,
+    PaidPlan,
+    Plan,
     Shelf,
     Subject,
     Card,
@@ -337,6 +341,37 @@ export const ApiService = {
                 method: 'PATCH',
                 body: JSON.stringify(settings),
             },
+            authClient
+        ),
+
+    // Payments (Stripe Checkout). The plan prices come from Stripe itself.
+    getBillingPlans: () =>
+        fetchJson<{ enabled: boolean; plans: BillingPlanPrice[] }>(
+            '/v1/billing/plans',
+            undefined,
+            authClient
+        ),
+
+    getMySubscription: () =>
+        fetchJson<{ plan: Plan; status: string; expiresAt: string | null }>(
+            '/v1/subscriptions/me',
+            undefined,
+            authClient
+        ),
+
+    /** The Stripe page where the user pays; redirect the browser to `url`. */
+    createCheckout: (plan: PaidPlan, interval: BillingInterval) =>
+        fetchJson<{ url: string }>(
+            '/v1/billing/checkout',
+            { method: 'POST', body: JSON.stringify({ plan, interval }) },
+            authClient
+        ),
+
+    /** Stripe's page for changing card or plan, or cancelling. */
+    openBillingPortal: () =>
+        fetchJson<{ url: string }>(
+            '/v1/billing/portal',
+            { method: 'POST' },
             authClient
         ),
 

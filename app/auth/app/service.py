@@ -5,7 +5,7 @@ import logging
 import re
 import uuid
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import jsonpatch
@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr, ValidationErro
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app import avatars, domain, features, mail, reminder
+from app import avatars, billing, domain, features, mail, reminder
 from app.envelope import ApiError, bad_request, not_found, unauthorized
 from app.kv import KV
 from app.models import Settings, Subscription, User
@@ -30,6 +30,9 @@ MAX_LOOKUP_IDS = 200
 MAX_DISPLAY_NAME, MAX_BIO = 50, 255
 MIN_AGE, MAX_AGE = 1, 120
 MAX_NAME, MAX_PICTURE_URL = 255, 500
+
+# A renewal can reach us a little after the period ends; do not drop the plan meanwhile.
+STRIPE_GRACE = timedelta(days=2)
 
 EMAIL_RE = re.compile(r"^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")
 PATCHABLE_FIELDS = {"name", "displayName", "bio", "age", "pictureUrl"}
@@ -101,6 +104,7 @@ class AuthService:
         run_async: Callable[[Callable[[], None]], Any],
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
         avatar_storage: avatars.AvatarStorage | None = None,
+        payments: billing.Billing | None = None,
     ):
         self.db = db
         self.kv = kv
@@ -110,6 +114,7 @@ class AuthService:
         self.run_async = run_async
         self.now = now
         self.avatar_storage = avatar_storage
+        self.billing = payments or billing.DisabledBilling()
 
     # --- authentication ---
 
@@ -495,6 +500,148 @@ class AuthService:
         sub.plan, sub.status, sub.expires_at = plan, domain.STATUS_ACTIVE, expires_at
         self.db.commit()
         return self._subscription_view(plan, domain.STATUS_ACTIVE, expires_at)
+
+    # --- payments (Stripe) ---
+
+    def checkout(self, user_id: str, plan: str, interval: str = "month") -> dict:
+        """A Stripe Checkout page where the user pays for the plan."""
+        if plan not in billing.PAID_PLANS:
+            raise bad_request("Choose the Pro or Pro Max plan")
+        if interval not in ("month", "year"):
+            raise bad_request("Choose monthly or yearly billing")
+        user = self._current_user(user_id)
+        sub = self.db.get(Subscription, user.id)
+        if self.subscription(user_id)["plan"] == plan:
+            raise bad_request("You are already on this plan")
+        url = self.billing.checkout_url(
+            user_id=str(user.id),
+            email=user.email,
+            plan=plan,
+            interval=interval,
+            customer_id=sub.stripe_customer_id if sub else None,
+        )
+        return {"url": url}
+
+    def billing_plans(self) -> dict:
+        """The paid plans and what Stripe charges for them."""
+        try:
+            plans = self.billing.plans()
+        except Exception:
+            logger.exception("could not read the plan prices from the payment provider")
+            plans = []
+        return {"enabled": bool(plans), "plans": plans}
+
+    def billing_portal(self, user_id: str) -> dict:
+        """Stripe's page for changing card, switching plan or cancelling."""
+        user = self._current_user(user_id)
+        sub = self.db.get(Subscription, user.id)
+        if sub is None or not sub.stripe_customer_id:
+            raise bad_request("There is no paid subscription to manage")
+        return {"url": self.billing.portal_url(sub.stripe_customer_id)}
+
+    def stripe_webhook(self, payload: bytes, signature: str) -> None:
+        """Applies a signed Stripe event to the user's subscription."""
+        try:
+            event = self.billing.parse_event(payload, signature)
+        except billing.SignatureError:
+            logger.warning("stripe webhook rejected: bad signature")
+            raise bad_request("Invalid signature") from None
+        kind = event.get("type", "")
+        obj = (event.get("data") or {}).get("object") or {}
+        if kind == "checkout.session.completed":
+            self._stripe_checkout_completed(obj)
+        elif kind in ("customer.subscription.created", "customer.subscription.updated"):
+            self._stripe_subscription_changed(obj)
+        elif kind == "customer.subscription.deleted":
+            self._stripe_subscription_ended(obj)
+        else:
+            logger.info("stripe event %s ignored", kind)
+
+    def _stripe_checkout_completed(self, session: dict) -> None:
+        meta = session.get("metadata") or {}
+        user_id = session.get("client_reference_id") or meta.get("user_id") or ""
+        plan = meta.get("plan", "")
+        parsed = parse_uuid(user_id)
+        if parsed is None or plan not in billing.PAID_PLANS:
+            logger.warning("stripe checkout without a usable user or plan; ignored")
+            return
+        sub = self._subscription_row(parsed)
+        if sub is None:
+            return
+        sub.stripe_customer_id = session.get("customer") or sub.stripe_customer_id
+        sub.stripe_subscription_id = (
+            session.get("subscription") or sub.stripe_subscription_id
+        )
+        self._set_plan(sub, plan, None)
+        self.db.commit()
+        logger.info("user %s upgraded to %s", mail.mask(self._email_of(parsed)), plan)
+
+    def _stripe_subscription_changed(self, stripe_sub: dict) -> None:
+        sub = self._subscription_for_stripe(stripe_sub)
+        if sub is None:
+            return
+        sub.stripe_subscription_id = stripe_sub.get("id") or sub.stripe_subscription_id
+        sub.stripe_customer_id = stripe_sub.get("customer") or sub.stripe_customer_id
+        status = stripe_sub.get("status", "")
+        if status in ("active", "trialing"):
+            items = (stripe_sub.get("items") or {}).get("data") or [{}]
+            price = (items[0].get("price") or {}).get("id", "")
+            plan = (
+                self.billing.plan_for_price(price)
+                or (stripe_sub.get("metadata") or {}).get("plan")
+                or sub.plan
+            )
+            end = stripe_sub.get("current_period_end") or items[0].get(
+                "current_period_end"
+            )
+            expires = datetime.fromtimestamp(end, UTC) + STRIPE_GRACE if end else None
+            if plan in billing.PAID_PLANS:
+                self._set_plan(sub, plan, expires)
+        elif status in ("canceled", "unpaid", "incomplete_expired"):
+            self._set_plan(sub, domain.PLAN_FREE, None)
+            sub.stripe_subscription_id = None
+        # past_due keeps the plan: Stripe retries the card before it gives up.
+        self.db.commit()
+
+    def _stripe_subscription_ended(self, stripe_sub: dict) -> None:
+        sub = self._subscription_for_stripe(stripe_sub)
+        if sub is None:
+            return
+        self._set_plan(sub, domain.PLAN_FREE, None)
+        sub.stripe_subscription_id = None
+        self.db.commit()
+
+    def _subscription_for_stripe(self, stripe_sub: dict) -> Subscription | None:
+        found = self.db.scalars(
+            select(Subscription).where(
+                Subscription.stripe_subscription_id == stripe_sub.get("id")
+            )
+        ).first()
+        if found is not None:
+            return found
+        parsed = parse_uuid((stripe_sub.get("metadata") or {}).get("user_id", ""))
+        return self._subscription_row(parsed) if parsed else None
+
+    def _subscription_row(self, user_id: uuid.UUID) -> Subscription | None:
+        user = self.db.get(User, user_id)
+        if user is None or user.deleted:
+            return None
+        sub = self.db.get(Subscription, user_id)
+        if sub is None:
+            sub = Subscription(user_id=user_id, started_at=self.now())
+            self.db.add(sub)
+        return sub
+
+    def _email_of(self, user_id: uuid.UUID) -> str:
+        user = self.db.get(User, user_id)
+        return user.email if user else ""
+
+    def _set_plan(
+        self, sub: Subscription, plan: str, expires_at: datetime | None
+    ) -> None:
+        if sub.plan != plan:
+            sub.started_at = self.now()
+        sub.plan, sub.status, sub.expires_at = plan, domain.STATUS_ACTIVE, expires_at
 
     # --- internal lookup ---
 

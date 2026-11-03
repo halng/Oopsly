@@ -9,6 +9,11 @@ class ValidateOtpReq(BaseModel):
     name: str = ""
 
 
+class CheckoutReq(BaseModel):
+    plan: str = ""
+    interval: str = "month"
+
+
 class RefreshReq(BaseModel):
     refresh_token: str = ""
     user_email: str = ""

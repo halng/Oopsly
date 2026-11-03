@@ -510,3 +510,15 @@ export interface CreateQuizRoomInput {
     mode: QuizMode;
     questionSeconds: number;
 }
+
+export type Plan = 'FREE' | 'PRO' | 'PRO_PLUS';
+export type PaidPlan = Exclude<Plan, 'FREE'>;
+export type BillingInterval = 'month' | 'year';
+
+export interface BillingPlanPrice {
+    plan: PaidPlan;
+    interval: BillingInterval;
+    /** In the currency's smallest unit (cents). */
+    amount: number;
+    currency: string;
+}

@@ -42,7 +42,7 @@ done
 # Secrets Manager keeps deleted secrets for a recovery window, which blocks recreating a
 # secret with the same name on the next deploy. Remove them for good.
 if wants network; then
-  for secret in db internal-key jwt-passphrase game-database-url resend; do
+  for secret in db internal-key jwt-passphrase game-database-url resend stripe; do
     aws secretsmanager delete-secret \
       --secret-id "quizi-${ENVIRONMENT}-${secret}" \
       --force-delete-without-recovery >/dev/null 2>&1 &&

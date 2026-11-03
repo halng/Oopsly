@@ -184,6 +184,15 @@ Resources:
         PasswordLength: 48
         ExcludePunctuation: true
 
+  # Stripe settings as JSON. Created with placeholders (payments stay off); deploy.sh fills it from the
+  # STRIPE_* variables, and later deploys leave the value alone.
+  StripeSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub quizi-${Environment}-stripe
+      SecretString: >-
+        {"secret_key":"unset","webhook_secret":"unset","price_pro_monthly":"unset","price_pro_yearly":"unset","price_pro_plus_monthly":"unset","price_pro_plus_yearly":"unset"}
+
   GameDatabaseUrlSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
@@ -555,6 +564,10 @@ Outputs:
     Value: !Ref JwtPassphraseSecret
     Export:
       Name: !Sub ${AWS::StackName}-JwtPassphraseSecretArn
+  StripeSecretArn:
+    Value: !Ref StripeSecret
+    Export:
+      Name: !Sub ${AWS::StackName}-StripeSecretArn
   GameDatabaseUrlSecretArn:
     Value: !Ref GameDatabaseUrlSecret
     Export:

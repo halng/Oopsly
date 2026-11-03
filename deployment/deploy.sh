@@ -9,7 +9,13 @@
 #
 # noti (the email Lambda) reads its Resend settings from Secrets Manager. Pass RESEND_API_KEY
 # and RESEND_FROM (like "Quizi <no-reply@quizi.tech>") to store them; without RESEND_API_KEY
-# the stored secret is left as it is. APP_URL sets the links in emails.
+# the stored secret is left as it is. APP_URL sets the links in emails and where Stripe
+# returns people after paying.
+#
+# Payments (Stripe): set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and the four price ids
+# STRIPE_PRICE_PRO_MONTHLY, STRIPE_PRICE_PRO_YEARLY, STRIPE_PRICE_PRO_PLUS_MONTHLY and
+# STRIPE_PRICE_PRO_PLUS_YEARLY when deploying network to store them; without STRIPE_SECRET_KEY
+# payments stay off.
 #
 # Custom domains: HOSTED_ZONE_ID is the Route 53 zone of quizi.tech. With it, network serves
 # the API on API_DOMAIN and the WebSockets on WS_DOMAIN. The web app's quizi.tech record (Vercel)
@@ -107,14 +113,40 @@ print(json.dumps({
   echo "==> stored Resend settings in quizi-${ENVIRONMENT}-resend"
 }
 
+# Writes the Stripe settings (from the environment, never the command line) into the secret
+# the network stack created. Without STRIPE_SECRET_KEY the secret is left as it is and
+# payments stay off.
+store_stripe_settings() {
+  if [[ -z "${STRIPE_SECRET_KEY:-}" ]]; then
+    echo "STRIPE_SECRET_KEY is not set; leaving quizi-${ENVIRONMENT}-stripe as it is." >&2
+    return
+  fi
+  local settings
+  settings="$(python3 -c '
+import json, os
+e = os.environ
+print(json.dumps({
+    "secret_key": e["STRIPE_SECRET_KEY"],
+    "webhook_secret": e.get("STRIPE_WEBHOOK_SECRET", ""),
+    "price_pro_monthly": e.get("STRIPE_PRICE_PRO_MONTHLY", ""),
+    "price_pro_yearly": e.get("STRIPE_PRICE_PRO_YEARLY", ""),
+    "price_pro_plus_monthly": e.get("STRIPE_PRICE_PRO_PLUS_MONTHLY", ""),
+    "price_pro_plus_yearly": e.get("STRIPE_PRICE_PRO_PLUS_YEARLY", ""),
+}))')"
+  aws secretsmanager put-secret-value \
+    --secret-id "quizi-${ENVIRONMENT}-stripe" --secret-string "$settings" >/dev/null
+  echo "==> stored Stripe settings in quizi-${ENVIRONMENT}-stripe (restart auth to pick them up)"
+}
+
 for stack in "${STACKS[@]}"; do
   case "$stack" in
     network)
       deploy network "$NETWORK_OVERRIDES"
+      store_stripe_settings
       ;;
     auth)
       scripts/copy-images.sh "$ENVIRONMENT" "$TAG" auth
-      deploy auth "Environment=${ENVIRONMENT} NetworkStackName=${NETWORK_STACK} ImageTag=${TAG} DesiredCount=${AUTH_COUNT} AllowedOrigins=${ORIGINS}"
+      deploy auth "Environment=${ENVIRONMENT} NetworkStackName=${NETWORK_STACK} ImageTag=${TAG} DesiredCount=${AUTH_COUNT} AllowedOrigins=${ORIGINS} AppUrl=${APP_URL}"
       ;;
     api)
       scripts/copy-images.sh "$ENVIRONMENT" "$TAG" api

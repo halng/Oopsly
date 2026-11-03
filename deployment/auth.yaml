@@ -23,6 +23,10 @@ Parameters:
     Type: String
     Default: http://localhost:3000
     Description: Comma-separated browser origins allowed to call the service.
+  AppUrl:
+    Type: String
+    Default: https://quizi.tech
+    Description: Web app address; Stripe sends people back to it after paying.
 
 Resources:
   ExecutionRole:
@@ -48,6 +52,7 @@ Resources:
                   - Fn::ImportValue: !Sub ${NetworkStackName}-DbSecretArn
                   - Fn::ImportValue: !Sub ${NetworkStackName}-InternalKeySecretArn
                   - Fn::ImportValue: !Sub ${NetworkStackName}-JwtPassphraseSecretArn
+                  - Fn::ImportValue: !Sub ${NetworkStackName}-StripeSecretArn
 
   # What the running container may do: manage profile pictures and invoke the noti Lambda.
   TaskRole:
@@ -136,6 +141,8 @@ Resources:
               Value: !Sub quizi-noti-${Environment}
             - Name: NOTI_REGION
               Value: !Ref AWS::Region
+            - Name: APP_URL
+              Value: !Ref AppUrl
           Secrets:
             - Name: DB_PASSWORD
               ValueFrom: !Sub
@@ -152,6 +159,36 @@ Resources:
                 - "${Secret}"
                 - Secret:
                     Fn::ImportValue: !Sub ${NetworkStackName}-JwtPassphraseSecretArn
+            - Name: STRIPE_SECRET_KEY
+              ValueFrom: !Sub
+                - "${Secret}:secret_key::"
+                - Secret:
+                    Fn::ImportValue: !Sub ${NetworkStackName}-StripeSecretArn
+            - Name: STRIPE_WEBHOOK_SECRET
+              ValueFrom: !Sub
+                - "${Secret}:webhook_secret::"
+                - Secret:
+                    Fn::ImportValue: !Sub ${NetworkStackName}-StripeSecretArn
+            - Name: STRIPE_PRICE_PRO_MONTHLY
+              ValueFrom: !Sub
+                - "${Secret}:price_pro_monthly::"
+                - Secret:
+                    Fn::ImportValue: !Sub ${NetworkStackName}-StripeSecretArn
+            - Name: STRIPE_PRICE_PRO_YEARLY
+              ValueFrom: !Sub
+                - "${Secret}:price_pro_yearly::"
+                - Secret:
+                    Fn::ImportValue: !Sub ${NetworkStackName}-StripeSecretArn
+            - Name: STRIPE_PRICE_PRO_PLUS_MONTHLY
+              ValueFrom: !Sub
+                - "${Secret}:price_pro_plus_monthly::"
+                - Secret:
+                    Fn::ImportValue: !Sub ${NetworkStackName}-StripeSecretArn
+            - Name: STRIPE_PRICE_PRO_PLUS_YEARLY
+              ValueFrom: !Sub
+                - "${Secret}:price_pro_plus_yearly::"
+                - Secret:
+                    Fn::ImportValue: !Sub ${NetworkStackName}-StripeSecretArn
           LogConfiguration:
             LogDriver: awslogs
             Options:

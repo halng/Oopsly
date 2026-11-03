@@ -68,6 +68,8 @@ class Subscription(Base):
     status: Mapped[str] = mapped_column(String, default="ACTIVE")
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    stripe_customer_id: Mapped[str | None] = mapped_column(String)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(String, index=True)
 
 
 class SigningKey(Base):

@@ -16,6 +16,7 @@ from app.keys import KeyStore
 from app.schemas import (
     AvatarConfirmReq,
     AvatarUploadReq,
+    CheckoutReq,
     CommunityInviteNotificationReq,
     LookupReq,
     RefreshReq,
@@ -221,6 +222,45 @@ def get_feature(
     svc: AuthService = Depends(get_service),
 ):
     return ok("Feature retrieved successfully", svc.feature(me and me.user_id, key))
+
+
+# --- payments ---
+
+
+@router.get("/v1/billing/plans", tags=["billing"])
+def billing_plans(svc: AuthService = Depends(get_service)):
+    return ok("Plans retrieved successfully", svc.billing_plans())
+
+
+@router.post("/v1/billing/checkout", tags=["billing"])
+def create_checkout(
+    req: CheckoutReq,
+    me: Principal = Depends(authenticate),
+    svc: AuthService = Depends(get_service),
+):
+    return ok(
+        "Checkout created successfully",
+        svc.checkout(me.user_id, req.plan, req.interval),
+    )
+
+
+@router.post("/v1/billing/portal", tags=["billing"])
+def create_portal(
+    me: Principal = Depends(authenticate), svc: AuthService = Depends(get_service)
+):
+    return ok("Billing portal created successfully", svc.billing_portal(me.user_id))
+
+
+@router.post("/v1/billing/webhook", tags=["billing"])
+async def stripe_webhook(
+    request: Request,
+    svc: AuthService = Depends(get_service),
+):
+    """Called by Stripe, not by browsers; the signature is the only credential."""
+    svc.stripe_webhook(
+        await request.body(), request.headers.get("stripe-signature", "")
+    )
+    return ok("Received")
 
 
 # --- service-to-service ---
