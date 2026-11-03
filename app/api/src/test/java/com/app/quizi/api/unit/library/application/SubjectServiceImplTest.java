@@ -29,6 +29,7 @@ import com.app.quizi.api.shared.application.vm.PagingRes;
 import com.app.quizi.api.shared.exception.NotFoundException;
 import com.app.quizi.api.shared.exception.RetryLaterException;
 import com.app.quizi.api.shared.exception.ValidationException;
+import com.app.quizi.api.shared.plan.PlanLimitService;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shelf.Shelf;
 import com.app.quizi.api.shelf.ShelfRepository;
@@ -64,6 +65,8 @@ class SubjectServiceImplTest {
     @Mock private CurrentUser currentUser;
 
     @Mock private CardRepository cardRepository;
+
+    @Mock private PlanLimitService planLimits;
 
     @InjectMocks private SubjectServiceImpl subjectService;
 

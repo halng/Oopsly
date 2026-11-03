@@ -49,6 +49,12 @@ public class GlobalExceptionHandler {
         return ApiRes.notFound(ex.getMessage());
     }
 
+    @ExceptionHandler(PlanLimitException.class)
+    public ApiRes handlePlanLimitException(PlanLimitException ex) {
+        log.warn("Plan limit reached: {}", ex.getMessage());
+        return ApiRes.forbidden(ex.getMessage());
+    }
+
     @ExceptionHandler(ValidationException.class)
     public ApiRes handleValidationException(ValidationException ex) {
         log.warn("Validation error: {}", ex.getMessage());

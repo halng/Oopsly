@@ -31,6 +31,7 @@ import com.app.quizi.api.shared.application.vm.ApiRes;
 import com.app.quizi.api.shared.exception.NotFoundException;
 import com.app.quizi.api.shared.exception.RetryLaterException;
 import com.app.quizi.api.shared.exception.ValidationException;
+import com.app.quizi.api.shared.plan.PlanLimitService;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shared.util.GamificationRules;
 import com.app.quizi.api.shelf.Shelf;
@@ -82,6 +83,7 @@ class TestSuiteServiceRunAndSubmitTest {
 
     private TestSuiteServiceImpl service;
 
+    @Mock private PlanLimitService planLimits;
     private UUID currentUserId;
     private UserProgress progress;
     private Shelf shelve;
@@ -101,7 +103,8 @@ class TestSuiteServiceRunAndSubmitTest {
                         questionRepository,
                         new QuestionMetadataMapper(new ObjectMapper()),
                         currentUser,
-                        userProgressService);
+                        userProgressService,
+                        planLimits);
 
         currentUserId = UUID.randomUUID();
         progress = UserProgress.builder().userId(currentUserId).totalXp(120).dailyStreak(3).build();

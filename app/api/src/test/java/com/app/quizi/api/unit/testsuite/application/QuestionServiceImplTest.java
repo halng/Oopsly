@@ -25,6 +25,7 @@ import com.app.quizi.api.shared.exception.NotFoundException;
 import com.app.quizi.api.shared.exception.RetryLaterException;
 import com.app.quizi.api.shared.exception.UnauthenticatedException;
 import com.app.quizi.api.shared.exception.ValidationException;
+import com.app.quizi.api.shared.plan.PlanLimitService;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shelf.Shelf;
 import com.app.quizi.api.shelf.ShelfRepository;
@@ -60,6 +61,7 @@ class QuestionServiceImplTest {
     @Mock private TestSuiteRepository testSuiteRepository;
     @Mock private ShelfRepository shelfRepository;
     @Mock private CurrentUser currentUser;
+    @Mock private PlanLimitService planLimits;
 
     private QuestionServiceImpl questionService;
     private UUID userId;
@@ -77,7 +79,8 @@ class QuestionServiceImplTest {
                         testSuiteRepository,
                         shelfRepository,
                         new QuestionMetadataMapper(objectMapper),
-                        currentUser);
+                        currentUser,
+                        planLimits);
         shelfId = UUID.randomUUID();
         testSuiteId = UUID.randomUUID();
         questionId = UUID.randomUUID();

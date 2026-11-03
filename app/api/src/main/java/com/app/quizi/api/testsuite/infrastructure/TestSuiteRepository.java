@@ -40,6 +40,9 @@ public interface TestSuiteRepository extends JpaRepository<TestSuiteEntity, UUID
                     + " t.createdAt, t.id")
     List<TestSuiteEntity> findAllByShelve(Shelf shelve);
 
+    @Query("SELECT COUNT(t) FROM TestSuiteEntity t WHERE t.shelf = ?1 AND t.deleted = false")
+    long countByShelf(Shelf shelve);
+
     @Query(
             "SELECT t.slug FROM TestSuiteEntity t WHERE t.shelf = ?1 AND t.deleted = false AND"
                     + " t.id <> ?2")

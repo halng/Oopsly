@@ -21,6 +21,7 @@ import com.app.quizi.api.shared.exception.NotFoundException;
 import com.app.quizi.api.shared.exception.RetryLaterException;
 import com.app.quizi.api.shared.exception.UnauthenticatedException;
 import com.app.quizi.api.shared.exception.ValidationException;
+import com.app.quizi.api.shared.plan.PlanLimitService;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shelf.Shelf;
 import com.app.quizi.api.shelf.ShelfRepository;
@@ -52,12 +53,14 @@ public class QuestionServiceImpl implements QuestionService {
     private final ShelfRepository shelfRepository;
     private final QuestionMetadataMapper metadataMapper;
     private final CurrentUser currentUser;
+    private final PlanLimitService planLimits;
 
     @Override
     @CircuitBreaker(name = "questionServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID shelveId, UUID testSuiteId, QuestionReq request) {
         log.info("Creating question for test suite {}", testSuiteId);
         TestSuiteEntity testSuite = this.findTestSuite(shelveId, testSuiteId);
+        planLimits.requireQuestionSlots(testSuite, 1);
 
         QuestionEntity question = this.toEntity(request, null);
         question.setTestSuite(testSuite);
@@ -74,6 +77,7 @@ public class QuestionServiceImpl implements QuestionService {
                 request.questions().size(),
                 testSuiteId);
         TestSuiteEntity testSuite = this.findTestSuite(shelveId, testSuiteId);
+        planLimits.requireQuestionSlots(testSuite, request.questions().size());
 
         List<QuestionEntity> entities = new ArrayList<>(request.questions().size());
         for (int i = 0; i < request.questions().size(); i++) {

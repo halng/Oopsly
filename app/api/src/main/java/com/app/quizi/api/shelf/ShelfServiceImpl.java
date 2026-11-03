@@ -24,6 +24,7 @@ import com.app.quizi.api.shared.exception.NotFoundException;
 import com.app.quizi.api.shared.exception.RetryLaterException;
 import com.app.quizi.api.shared.exception.UnauthenticatedException;
 import com.app.quizi.api.shared.exception.ValidationException;
+import com.app.quizi.api.shared.plan.PlanLimitService;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shelf.vm.ShelfReq;
 import com.app.quizi.api.shelf.vm.ShelfRes;
@@ -54,6 +55,7 @@ public class ShelfServiceImpl implements ShelfService {
     private final SubjectRepository subjectRepository;
     private final CardRepository cardRepository;
     private final TestSuiteRepository testSuiteRepository;
+    private final PlanLimitService planLimits;
     private final CurrentUser currentUser;
 
     private static final String TOTAL_CARDS_COUNT = "totalCards";
@@ -64,6 +66,7 @@ public class ShelfServiceImpl implements ShelfService {
     //    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(ShelfReq request) {
         log.info("Creating shelve for user {}", currentUser.id());
+        planLimits.requireDeckSlot();
         Shelf savedEntity = shelfRepository.save(this.toEntity(request, null));
         return ApiRes.created("Created successfully", this.toViewModel(savedEntity, zeroStats()));
     }

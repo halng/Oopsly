@@ -25,6 +25,7 @@ import com.app.quizi.api.shared.exception.NotFoundException;
 import com.app.quizi.api.shared.exception.RetryLaterException;
 import com.app.quizi.api.shared.exception.UnauthenticatedException;
 import com.app.quizi.api.shared.exception.ValidationException;
+import com.app.quizi.api.shared.plan.PlanLimitService;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shared.util.AnswerMatcher;
 import com.app.quizi.api.shared.util.ApiMessages;
@@ -86,12 +87,14 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     private final QuestionMetadataMapper metadataMapper;
     private final CurrentUser currentUser;
     private final UserProgressService userProgressService;
+    private final PlanLimitService planLimits;
 
     @Override
     @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID deckId, TestSuiteReq request) {
         log.info("Creating test suite for shelve {}", deckId);
         Shelf shelve = this.findShelveByIdAndUser(deckId);
+        planLimits.requireTestSuiteSlot(shelve);
 
         TestSuiteEntity testSuite = this.toEntity(request, null);
         testSuite.setShelf(shelve);
@@ -479,6 +482,7 @@ public class TestSuiteServiceImpl implements TestSuiteService {
                 shelveId,
                 numQuestions);
         Shelf shelve = findShelveByIdAndUser(shelveId);
+        planLimits.requireTestSuiteSlot(shelve);
         Subject subject =
                 subjectRepository
                         .findByIdAndShelve(subjectId, shelve)
@@ -561,6 +565,9 @@ public class TestSuiteServiceImpl implements TestSuiteService {
             }
             target = shelves.get(0);
         }
+
+        planLimits.requireTestSuiteSlot(target);
+        planLimits.requireQuestionsFit(questionRepository.countByTestSuite(source));
 
         TestSuiteEntity copy =
                 TestSuiteEntity.builder()

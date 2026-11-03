@@ -28,6 +28,7 @@ import com.app.quizi.api.shared.application.vm.ApiRes;
 import com.app.quizi.api.shared.application.vm.PagingRes;
 import com.app.quizi.api.shared.exception.NotFoundException;
 import com.app.quizi.api.shared.exception.RetryLaterException;
+import com.app.quizi.api.shared.plan.PlanLimitService;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shelf.Shelf;
 import com.app.quizi.api.shelf.ShelfCount;
@@ -67,6 +68,8 @@ class ShelfServiceImplTest {
     @Mock private TestSuiteRepository testSuiteRepository;
 
     @Mock private CurrentUser currentUser;
+
+    @Mock private PlanLimitService planLimits;
 
     @InjectMocks private ShelfServiceImpl shelveService;
 

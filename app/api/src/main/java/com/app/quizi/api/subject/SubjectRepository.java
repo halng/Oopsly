@@ -36,6 +36,9 @@ public interface SubjectRepository extends JpaRepository<Subject, UUID> {
     @Query("SELECT c FROM Subject c WHERE c.shelf = ?1 AND c.deleted = false")
     Page<Subject> findAllByShelve(Shelf shelve, Pageable pageable);
 
+    @Query("SELECT COUNT(c) FROM Subject c WHERE c.shelf = ?1 AND c.deleted = false")
+    long countByShelf(Shelf shelve);
+
     /** Public subjects the user neither owns nor has already cloned. */
     @Query(
             "SELECT s FROM Subject s WHERE s.isPublic = true AND s.deleted = false AND"

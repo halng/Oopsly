@@ -30,6 +30,7 @@ import com.app.quizi.api.shared.exception.NotFoundException;
 import com.app.quizi.api.shared.exception.RetryLaterException;
 import com.app.quizi.api.shared.exception.UnauthenticatedException;
 import com.app.quizi.api.shared.exception.ValidationException;
+import com.app.quizi.api.shared.plan.PlanLimitService;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shared.util.ApiMessages;
 import com.app.quizi.api.shared.util.CardState;
@@ -68,6 +69,7 @@ public class CardServiceImpl implements CardService {
     private final SubjectRepository subjectRepository;
     private final ShelfRepository shelfRepository;
     private final TestSuiteRepository testSuiteRepository;
+    private final PlanLimitService planLimits;
     private final CurrentUser currentUser;
     private final UserProgressService userProgressService;
     private final ReviewLogRepository reviewLogRepository;
@@ -81,6 +83,7 @@ public class CardServiceImpl implements CardService {
                 subjectId,
                 shelfId);
         Subject subject = getSubjectForCurrentUser(shelfId, subjectId);
+        planLimits.requireCardSlots(subject, request.cards().size());
 
         List<Card> cards =
                 request.cards().stream()

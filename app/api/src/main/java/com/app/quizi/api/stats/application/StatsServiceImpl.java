@@ -97,7 +97,7 @@ public class StatsServiceImpl implements StatsService {
 
         StatsRes stats =
                 new StatsRes(
-                        safeInt(progress.getDailyStreak()),
+                        currentStreak(progress),
                         safeInt(progress.getTotalXp()),
                         (int) reviewedToday,
                         (int) reviewedToday,
@@ -220,6 +220,20 @@ public class StatsServiceImpl implements StatsService {
             return progress.getRetentionRate();
         }
         return totalCards == 0 ? 0.0 : 100.0 - (dueCards * 100.0) / totalCards;
+    }
+
+    /**
+     * The stored streak only changes when a card is reviewed, so one that was last extended before
+     * yesterday has already been broken.
+     */
+    private static int currentStreak(UserProgress progress) {
+        int streak = safeInt(progress.getDailyStreak());
+        if (progress.getLastReviewedAt() == null) {
+            return streak;
+        }
+        LocalDate lastReviewed = progress.getLastReviewedAt().atZone(ZoneOffset.UTC).toLocalDate();
+        LocalDate yesterday = LocalDate.now(ZoneOffset.UTC).minusDays(1);
+        return lastReviewed.isBefore(yesterday) ? 0 : streak;
     }
 
     private static int safeInt(Integer value) {
