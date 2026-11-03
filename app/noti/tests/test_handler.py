@@ -27,7 +27,7 @@ def test_sends_the_rendered_template(config):
     )
     assert result == {"status": "sent"}
     assert sent == [
-        (CFG, "ann@example.com", "Oops! You got it! Here is your code", None)
+        (CFG, "ann@example.com", "123456 is your Quizi verification code", None)
     ]
 
 

@@ -3,23 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>You have been invited</title>
+    <meta name="color-scheme" content="light">
+    <title>You are invited to join {{COMMUNITY_NAME}}</title>
 </head>
-<body style="margin:0;padding:0;background:#f2f4f6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#333333;">
-<table role="presentation" width="100%" style="background:#f2f4f6;">
+<body style="margin:0;padding:0;background:#FDFBF7;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#292524;-webkit-text-size-adjust:100%;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#FDFBF7;">{{INVITE_LINE}} to join {{COMMUNITY_NAME}} on Quizi.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FDFBF7;">
     <tr>
         <td align="center" style="padding:40px 12px;">
-            <table role="presentation" width="100%" style="max-width:600px;background:#ffffff;border-radius:8px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
                 <tr>
-                    <td align="center" style="padding:32px 40px 16px 40px;border-bottom:3px solid #4A90E2;">
-                        <h2 style="margin:0;font-size:24px;color:#333333;">Quizi</h2>
+                    <td align="center" style="padding:0 0 24px 0;">
+                        <table role="presentation" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td align="center" width="40" height="40" bgcolor="#5b8c32" style="background:#5b8c32;border-radius:12px;color:#ffffff;font-size:22px;font-weight:900;line-height:40px;">Q</td>
+                                <td style="padding-left:12px;font-size:24px;font-weight:900;letter-spacing:-0.5px;color:#292524;">Quizi</td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
                 <tr>
-                    <td style="padding:32px 40px;">
-                        <p style="margin:0 0 20px 0;font-size:16px;line-height:26px;color:#666666;">Hi <strong>{{NAME}}</strong>,</p>
-                        <p style="margin:0 0 20px 0;font-size:16px;line-height:26px;color:#666666;">{{INVITE_LINE}} to join the <strong>{{COMMUNITY_NAME}}</strong> community on Quizi.</p>
-                        <p style="margin:0 0 20px 0;font-size:16px;line-height:26px;color:#666666;"><a href="{{COMMUNITY_URL}}" style="display:inline-block;background:#4A90E2;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 24px;border-radius:8px;">Open the community</a></p>
+                    <td style="background:#ffffff;border:1px solid #e7e5e4;border-radius:20px;overflow:hidden;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr><td height="6" bgcolor="#5b8c32" style="background:#5b8c32;font-size:0;line-height:0;">&nbsp;</td></tr>
+                            <tr>
+                                <td style="padding:36px 40px 40px 40px;">
+                                    <h1 style="margin:0 0 16px 0;font-size:26px;line-height:34px;font-weight:800;color:#292524;">You are invited! &#127881;</h1>
+                                    <p style="margin:0 0 20px 0;font-size:16px;line-height:26px;color:#57534e;">Hi <strong style="color:#292524;">{{NAME}}</strong>, {{INVITE_LINE}} to join a community on Quizi.</p>
+                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px 0;">
+                                        <tr>
+                                            <td align="center" bgcolor="#f3f7ee" style="background:#f3f7ee;border:1px solid #d9e8c8;border-radius:16px;padding:24px 16px;">
+                                                <div style="font-size:12px;line-height:18px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#5b8c32;">Community</div>
+                                                <div style="margin-top:6px;font-size:24px;line-height:32px;font-weight:800;color:#292524;">{{COMMUNITY_NAME}}</div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <p style="margin:0 0 20px 0;font-size:16px;line-height:26px;color:#57534e;">Study together, climb the leaderboard and keep each other's streaks alive.</p>
+                                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px auto 0 auto;">
+                                        <tr>
+                                            <td align="center" bgcolor="#5b8c32" style="background:#5b8c32;border-radius:12px;">
+                                                <a href="{{COMMUNITY_URL}}" style="display:inline-block;padding:14px 32px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;">Open the community</a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <hr style="border:0;border-top:1px solid #f5f5f4;margin:28px 0 20px 0;">
+                                    <p style="margin:0;font-size:13px;line-height:21px;color:#a8a29e;">Not expecting this invitation? You can safely ignore this email.</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center" style="padding:24px 16px 0 16px;font-size:12px;line-height:20px;color:#a8a29e;">
+                        You are receiving this because someone invited you to a Quizi community.<br>
+                        Quizi &middot; Study smart, remember forever
                     </td>
                 </tr>
             </table>
