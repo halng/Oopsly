@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Quizi notification Lambda: sends OTP, welcome, community invite and study calendar emails through Resend"
 requires-python = ">=3.11"
 # Standard library only; boto3 is provided by the Lambda runtime.
-dependencies = []
+dependencies = [
+    "ruff>=0.17.3",
+]
 
 [project.optional-dependencies]
 dev = [

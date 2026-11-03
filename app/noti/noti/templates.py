@@ -77,7 +77,8 @@ def render(event: Event, app_url: str = APP_URL_DEFAULT) -> Message:
         who = f"{inviter} invited you" if inviter else "You have been invited"
         return Message(
             subject=(
-                f"{_one_line(inviter)} invited you to join {_one_line(community)} on Quizi"
+                f"{_one_line(inviter)} invited you to join {_one_line(community)}"
+                + " on Quizi"
                 if inviter
                 else f"You are invited to join {_one_line(community)} on Quizi"
             ),
