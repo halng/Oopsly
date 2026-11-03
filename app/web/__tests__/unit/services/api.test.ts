@@ -291,7 +291,7 @@ describe('ApiService', () => {
                 () => ApiService.sendOtp('a@b.c'),
                 'auth',
                 'POST',
-                '/v1/otp?email=a@b.c',
+                '/v1/otp?email=a%40b.c',
                 undefined,
             ],
             [

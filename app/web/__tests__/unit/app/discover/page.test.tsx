@@ -150,7 +150,7 @@ describe('DiscoverPage', () => {
             target: { value: 'nothing' },
         });
         expect(screen.getByTestId('discover-empty')).toHaveTextContent(
-            'No test suites found.'
+            'Nothing here'
         );
         fireEvent.change(screen.getByTestId('input-discover-search'), {
             target: { value: 'organelles' },
@@ -268,12 +268,12 @@ describe('DiscoverPage', () => {
         } as never);
         render(<DiscoverPage />);
         expect(await screen.findByTestId('discover-empty')).toHaveTextContent(
-            'No decks found.'
+            'Nothing here'
         );
         expect(setShelves).not.toHaveBeenCalled();
         fireEvent.click(screen.getByTestId('tab-discover-tests'));
         expect(screen.getByTestId('discover-empty')).toHaveTextContent(
-            'No test suites found.'
+            'Nothing here'
         );
     });
 

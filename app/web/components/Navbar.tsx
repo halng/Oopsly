@@ -16,16 +16,16 @@ import {
 } from 'lucide-react';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 import UserMenu from '@/components/UserMenu';
-import { ApiService } from '@/services/api';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUserProfileStore } from '@/store/UserProfile';
+import { useProgressStore } from '@/store/Progress';
 
 const Navbar = () => {
     const router = useRouter();
     const pathname = usePathname() || '';
     const { isOnline, isSyncing, pendingCount, syncNow } = useSyncStatus();
-    const [reviewedToday, setReviewedToday] = React.useState(0);
+    const { streakDays, xp, reviewedToday, refresh } = useProgressStore();
     const userProfile = useUserProfileStore().profile;
     const [syncReady, setSyncReady] = React.useState(false);
 
@@ -33,13 +33,17 @@ const Navbar = () => {
         setSyncReady(true);
     }, []);
 
+    // Progress changes while studying, so reload it on every navigation and when the
+    // tab regains focus.
     React.useEffect(() => {
-        ApiService.getStats().then((res) => {
-            if (res.isSuccess && res.data) {
-                setReviewedToday(res.data.reviewedToday);
-            }
-        });
-    }, [userProfile?.totalReviews]);
+        refresh();
+    }, [pathname, refresh]);
+
+    React.useEffect(() => {
+        const onFocus = () => refresh();
+        window.addEventListener('focus', onFocus);
+        return () => window.removeEventListener('focus', onFocus);
+    }, [refresh]);
 
     const isNavActive = (href: string) =>
         pathname === href || pathname.startsWith(`${href}/`);
@@ -225,7 +229,7 @@ const Navbar = () => {
                             className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800 text-amber-800 dark:text-amber-400 text-xs font-bold shadow-2xs"
                         >
                             <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 fill-amber-500 animate-pulse shrink-0" />
-                            <span>{userProfile?.streakDays}d</span>
+                            <span>{streakDays}d</span>
                         </div>
 
                         {/* Daily Goal Progress Ring */}
@@ -287,7 +291,7 @@ const Navbar = () => {
                             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold shadow-2xs"
                         >
                             <Zap className="w-4 h-4 fill-current shrink-0" />
-                            <span>{userProfile?.xp} XP</span>
+                            <span>{xp.toLocaleString()} XP</span>
                         </div>
 
                         <UserMenu />

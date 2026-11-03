@@ -21,6 +21,7 @@ import { toast } from '@/store/ToastStore';
 import { formatInterval } from '@/utils/fsrs';
 import { ImportCardsModal, CssProgressBar } from '@/components/shared';
 import { useSubjectContext } from '@/hooks/useSubjectContext';
+import { useFeature } from '@/store/Features';
 
 export default function SubjectDetailsPage() {
     const router = useRouter();
@@ -40,6 +41,7 @@ export default function SubjectDetailsPage() {
     const [isAiModalOpen, setIsAiModalOpen] = useState(false);
     const [aiTopic, setAiTopic] = useState('');
     const [aiNotes, setAiNotes] = useState('');
+    const aiEnabled = useFeature('ai.generate');
     const [aiCardCount, setAiCardCount] = useState(5);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -332,15 +334,17 @@ export default function SubjectDetailsPage() {
                             <FileSpreadsheet className="w-3.5 h-3.5" />
                             Import CSV / Excel
                         </button>
-                        <button
-                            type="button"
-                            data-testid="btn-generate-ai"
-                            onClick={() => setIsAiModalOpen(true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs font-bold cursor-pointer"
-                        >
-                            <Sparkles className="w-3.5 h-3.5" />
-                            Generate with AI
-                        </button>
+                        {aiEnabled && (
+                            <button
+                                type="button"
+                                data-testid="btn-generate-ai"
+                                onClick={() => setIsAiModalOpen(true)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs font-bold cursor-pointer"
+                            >
+                                <Sparkles className="w-3.5 h-3.5" />
+                                Generate with AI
+                            </button>
+                        )}
                         <button
                             type="button"
                             data-testid="btn-add-card"
@@ -538,7 +542,7 @@ export default function SubjectDetailsPage() {
                 </div>
             </div>
 
-            {isAiModalOpen && (
+            {aiEnabled && isAiModalOpen && (
                 <div className="fixed inset-0 z-50 bg-stone-900/60 flex items-center justify-center p-4">
                     <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-md w-full p-6 space-y-4">
                         <h2 className="text-lg font-bold">Generate with AI</h2>

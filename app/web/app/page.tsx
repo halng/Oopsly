@@ -19,6 +19,7 @@ import {
     X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { SHOW_PRICING } from '@/utils/pricing';
 
 const HIGHLIGHTS = [
     {
@@ -129,7 +130,9 @@ const PLANS = [
 const FAQ = [
     [
         'Is Quizi free?',
-        'Yes. The Basic plan is free and includes up to 3 decks with FSRS scheduling and basic stats. Upgrade whenever you need more.',
+        SHOW_PRICING
+            ? 'Yes. The Basic plan is free and includes up to 3 decks with FSRS scheduling and basic stats. Upgrade whenever you need more.'
+            : 'Yes. Quizi is free to start, with FSRS scheduling, stats and live quiz rooms.',
     ],
     [
         'What is spaced repetition?',
@@ -143,10 +146,14 @@ const FAQ = [
         'Does it work offline?',
         'Yes. Keep studying without a connection and your progress syncs when you are back online.',
     ],
-    [
-        'Can I switch or cancel my plan?',
-        'You can change plans from the subscription page at any time.',
-    ],
+    ...(SHOW_PRICING
+        ? [
+              [
+                  'Can I switch or cancel my plan?',
+                  'You can change plans from the subscription page at any time.',
+              ],
+          ]
+        : []),
 ];
 
 const LandingPage = () => {
@@ -180,9 +187,11 @@ const LandingPage = () => {
                     <a href="#why" className="hover:text-stone-900">
                         Why Quizi
                     </a>
-                    <a href="#pricing" className="hover:text-stone-900">
-                        Pricing
-                    </a>
+                    {SHOW_PRICING && (
+                        <a href="#pricing" className="hover:text-stone-900">
+                            Pricing
+                        </a>
+                    )}
                     <a href="#faq" className="hover:text-stone-900">
                         FAQ
                     </a>
@@ -423,129 +432,132 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-                {/* Pricing */}
-                <section
-                    id="pricing"
-                    className="py-24 bg-white px-6 scroll-mt-16"
-                >
-                    <div className="max-w-6xl mx-auto">
-                        <div className="text-center mb-10">
-                            <h2 className="text-3xl sm:text-4xl font-black text-stone-900">
-                                Plans &amp; pricing
-                            </h2>
-                            <p className="text-stone-500 mt-4 text-lg">
-                                Start free. Upgrade when you are ready.
-                            </p>
-                        </div>
-                        <div className="flex justify-center mb-12">
-                            <div className="inline-flex p-1 rounded-2xl bg-stone-100">
-                                {[
-                                    ['Monthly', false],
-                                    ['Yearly', true],
-                                ].map(([label, value]) => (
-                                    <button
-                                        key={String(label)}
-                                        type="button"
-                                        aria-pressed={yearly === value}
-                                        data-testid={`landing-billing-${String(label).toLowerCase()}`}
-                                        onClick={() =>
-                                            setYearly(Boolean(value))
-                                        }
-                                        className={`px-6 py-2.5 rounded-xl text-sm font-bold cursor-pointer ${
-                                            yearly === value
-                                                ? 'bg-white shadow-sm'
-                                                : 'text-stone-500'
-                                        }`}
-                                    >
-                                        {label}
-                                    </button>
-                                ))}
+                {SHOW_PRICING && (
+                    <section
+                        id="pricing"
+                        className="py-24 bg-white px-6 scroll-mt-16"
+                    >
+                        <div className="max-w-6xl mx-auto">
+                            <div className="text-center mb-10">
+                                <h2 className="text-3xl sm:text-4xl font-black text-stone-900">
+                                    Plans &amp; pricing
+                                </h2>
+                                <p className="text-stone-500 mt-4 text-lg">
+                                    Start free. Upgrade when you are ready.
+                                </p>
                             </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-                            {PLANS.map((plan) => {
-                                const dark = 'popular' in plan;
-                                const price =
-                                    'once' in plan
-                                        ? plan.once
-                                        : yearly
-                                          ? plan.yearly
-                                          : plan.monthly;
-                                const unit =
-                                    'once' in plan
-                                        ? 'one-time'
-                                        : plan.monthly === '0'
-                                          ? 'forever'
-                                          : '/ month';
-                                return (
-                                    <div
-                                        key={plan.id}
-                                        data-testid={`landing-plan-${plan.id}`}
-                                        className={`relative rounded-3xl p-8 flex flex-col ${
-                                            dark
-                                                ? 'bg-stone-900 text-white'
-                                                : 'bg-white border border-stone-200'
-                                        }`}
-                                    >
-                                        {dark && (
-                                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-950 text-xs font-black px-4 py-1 rounded-full">
-                                                Most Popular
-                                            </div>
-                                        )}
-                                        <h3 className="text-xl font-bold">
-                                            {plan.name}
-                                        </h3>
-                                        <p
-                                            className={`text-sm mt-1 ${dark ? 'text-stone-400' : 'text-stone-500'}`}
-                                        >
-                                            {plan.tagline}
-                                        </p>
-                                        <div className="my-6">
-                                            <span className="text-4xl font-black">
-                                                ${price}
-                                            </span>{' '}
-                                            <span
-                                                className={`text-sm ${dark ? 'text-stone-400' : 'text-stone-500'}`}
-                                            >
-                                                {unit}
-                                            </span>
-                                            {plan.id === 'pro' && yearly && (
-                                                <p className="text-xs text-amber-300 mt-1">
-                                                    Billed yearly, save 20%
-                                                </p>
-                                            )}
-                                        </div>
-                                        <ul
-                                            className={`space-y-3 mb-8 text-sm flex-1 ${dark ? 'text-stone-300' : ''}`}
-                                        >
-                                            {plan.features.map((f) => (
-                                                <li
-                                                    key={f}
-                                                    className="flex gap-2"
-                                                >
-                                                    <Check className="w-5 h-5 shrink-0 text-[var(--theme-accent)]" />
-                                                    {f}
-                                                </li>
-                                            ))}
-                                        </ul>
+                            <div className="flex justify-center mb-12">
+                                <div className="inline-flex p-1 rounded-2xl bg-stone-100">
+                                    {[
+                                        ['Monthly', false],
+                                        ['Yearly', true],
+                                    ].map(([label, value]) => (
                                         <button
+                                            key={String(label)}
                                             type="button"
-                                            onClick={onLoginClick}
-                                            data-testid={`landing-plan-cta-${plan.id}`}
-                                            className={`w-full py-3.5 rounded-xl font-bold text-sm cursor-pointer ${
-                                                dark
-                                                    ? 'bg-[var(--theme-accent)] text-white'
-                                                    : 'bg-stone-900 text-white'
+                                            aria-pressed={yearly === value}
+                                            data-testid={`landing-billing-${String(label).toLowerCase()}`}
+                                            onClick={() =>
+                                                setYearly(Boolean(value))
+                                            }
+                                            className={`px-6 py-2.5 rounded-xl text-sm font-bold cursor-pointer ${
+                                                yearly === value
+                                                    ? 'bg-white shadow-sm'
+                                                    : 'text-stone-500'
                                             }`}
                                         >
-                                            {plan.cta}
+                                            {label}
                                         </button>
-                                    </div>
-                                );
-                            })}
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+                                {PLANS.map((plan) => {
+                                    const dark = 'popular' in plan;
+                                    const price =
+                                        'once' in plan
+                                            ? plan.once
+                                            : yearly
+                                              ? plan.yearly
+                                              : plan.monthly;
+                                    const unit =
+                                        'once' in plan
+                                            ? 'one-time'
+                                            : plan.monthly === '0'
+                                              ? 'forever'
+                                              : '/ month';
+                                    return (
+                                        <div
+                                            key={plan.id}
+                                            data-testid={`landing-plan-${plan.id}`}
+                                            className={`relative rounded-3xl p-8 flex flex-col ${
+                                                dark
+                                                    ? 'bg-stone-900 text-white'
+                                                    : 'bg-white border border-stone-200'
+                                            }`}
+                                        >
+                                            {dark && (
+                                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-950 text-xs font-black px-4 py-1 rounded-full">
+                                                    Most Popular
+                                                </div>
+                                            )}
+                                            <h3 className="text-xl font-bold">
+                                                {plan.name}
+                                            </h3>
+                                            <p
+                                                className={`text-sm mt-1 ${dark ? 'text-stone-400' : 'text-stone-500'}`}
+                                            >
+                                                {plan.tagline}
+                                            </p>
+                                            <div className="my-6">
+                                                <span className="text-4xl font-black">
+                                                    ${price}
+                                                </span>{' '}
+                                                <span
+                                                    className={`text-sm ${dark ? 'text-stone-400' : 'text-stone-500'}`}
+                                                >
+                                                    {unit}
+                                                </span>
+                                                {plan.id === 'pro' &&
+                                                    yearly && (
+                                                        <p className="text-xs text-amber-300 mt-1">
+                                                            Billed yearly, save
+                                                            20%
+                                                        </p>
+                                                    )}
+                                            </div>
+                                            <ul
+                                                className={`space-y-3 mb-8 text-sm flex-1 ${dark ? 'text-stone-300' : ''}`}
+                                            >
+                                                {plan.features.map((f) => (
+                                                    <li
+                                                        key={f}
+                                                        className="flex gap-2"
+                                                    >
+                                                        <Check className="w-5 h-5 shrink-0 text-[var(--theme-accent)]" />
+                                                        {f}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            <button
+                                                type="button"
+                                                onClick={onLoginClick}
+                                                data-testid={`landing-plan-cta-${plan.id}`}
+                                                className={`w-full py-3.5 rounded-xl font-bold text-sm cursor-pointer ${
+                                                    dark
+                                                        ? 'bg-[var(--theme-accent)] text-white'
+                                                        : 'bg-stone-900 text-white'
+                                                }`}
+                                            >
+                                                {plan.cta}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                )}
 
                 {/* FAQ */}
                 <section id="faq" className="py-24 px-6 scroll-mt-16">
@@ -609,9 +621,11 @@ const LandingPage = () => {
                     <a href="#features" className="hover:text-stone-900">
                         Features
                     </a>
-                    <a href="#pricing" className="hover:text-stone-900">
-                        Pricing
-                    </a>
+                    {SHOW_PRICING && (
+                        <a href="#pricing" className="hover:text-stone-900">
+                            Pricing
+                        </a>
+                    )}
                     <a href="#faq" className="hover:text-stone-900">
                         FAQ
                     </a>

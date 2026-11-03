@@ -17,6 +17,7 @@ import { toast } from '@/store/ToastStore';
 import { useLogout } from '@/hooks/useLogout';
 import { useUserProfileStore } from '@/store';
 import { ThemeModal } from '@/components/shared';
+import { SHOW_PRICING } from '@/utils/pricing';
 import AvatarUploader from '@/components/settings/AvatarUploader';
 import StudyReminderPanel from '@/components/settings/StudyReminderPanel';
 import { ThemeId } from '@/types';
@@ -249,17 +250,19 @@ export default function SettingsPage() {
                         </button>
                     </div>
                     {allowReminders && <StudyReminderPanel />}
-                    <div className="grid grid-cols-1 gap-3">
-                        <button
-                            type="button"
-                            data-testid="btn-upgrade-pro"
-                            onClick={() => router.push('/subscribe')}
-                            className="flex items-center gap-2 p-4 bg-stone-50 rounded-2xl border font-bold cursor-pointer"
-                        >
-                            <Sparkles className="w-5 h-5" />
-                            Upgrade to Pro
-                        </button>
-                    </div>
+                    {SHOW_PRICING && (
+                        <div className="grid grid-cols-1 gap-3">
+                            <button
+                                type="button"
+                                data-testid="btn-upgrade-pro"
+                                onClick={() => router.push('/subscribe')}
+                                className="flex items-center gap-2 p-4 bg-stone-50 rounded-2xl border font-bold cursor-pointer"
+                            >
+                                <Sparkles className="w-5 h-5" />
+                                Upgrade to Pro
+                            </button>
+                        </div>
+                    )}
                     <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4 border-t">
                         <button
                             type="button"
@@ -289,7 +292,10 @@ export default function SettingsPage() {
             <ThemeModal
                 isOpen={isThemeOpen}
                 currentTheme={theme}
-                onSelectTheme={setTheme}
+                onSelectTheme={(id) => {
+                    setTheme(id);
+                    void ApiService.saveTheme(id);
+                }}
                 onClose={() => setIsThemeOpen(false)}
             />
         </div>

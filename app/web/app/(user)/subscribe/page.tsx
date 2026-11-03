@@ -1,7 +1,8 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Check, Shield, Sparkles, Star } from 'lucide-react';
+import { SHOW_PRICING } from '@/utils/pricing';
 
 export default function SubscribePage() {
     const router = useRouter();
@@ -11,6 +12,12 @@ export default function SubscribePage() {
     const [checkoutMessage, setCheckoutMessage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const isYearly = billingCycle === 'yearly';
+
+    // Pricing is hidden for now: send anyone who lands here back home.
+    useEffect(() => {
+        if (!SHOW_PRICING) router.replace('/home');
+    }, [router]);
+    if (!SHOW_PRICING) return null;
 
     const handleSubscribe = (planId: string) => {
         setIsLoading(planId);

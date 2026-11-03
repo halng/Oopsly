@@ -2,6 +2,9 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HostGameModal from '@/components/shared/HostGameModal';
 import { ApiService } from '@/services/api';
+import { useFeaturesStore } from '@/store/Features';
+
+vi.mock('@/utils/pricing', () => ({ SHOW_PRICING: true }));
 
 const push = vi.fn();
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
@@ -22,6 +25,7 @@ const res = (data: unknown, isSuccess = true, message = '') =>
 describe('HostGameModal', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        useFeaturesStore.setState({ flags: { 'game.create': true } });
     });
 
     it('creates a room for the given test with the chosen options', async () => {
@@ -91,5 +95,23 @@ describe('HostGameModal', () => {
         );
         fireEvent.click(screen.getByTestId('btn-host-game-close'));
         expect(onClose).toHaveBeenCalled();
+    });
+
+    it('asks free users to upgrade instead of hosting', () => {
+        useFeaturesStore.setState({ flags: { 'game.create': false } });
+        const onClose = vi.fn();
+        render(
+            <HostGameModal
+                shelfId="shelf-1"
+                testSuite={suite}
+                onClose={onClose}
+            />
+        );
+        expect(screen.getByTestId('host-game-upgrade')).toBeInTheDocument();
+        expect(screen.queryByTestId('btn-host-game-submit')).toBeNull();
+        fireEvent.click(screen.getByTestId('btn-host-game-upgrade'));
+        expect(push).toHaveBeenCalledWith('/subscribe');
+        expect(onClose).toHaveBeenCalled();
+        expect(ApiService.createQuizRoom).not.toHaveBeenCalled();
     });
 });

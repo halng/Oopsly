@@ -20,7 +20,7 @@ vi.mock('@/services/api', () => ({
     ApiService: {
         getStats: vi.fn().mockResolvedValue({
             isSuccess: true,
-            data: { reviewedToday: 20 },
+            data: { streakDays: 5, totalXp: 100, reviewedToday: 20 },
         }),
     },
 }));
@@ -42,12 +42,13 @@ describe('Navbar', () => {
     it('renders navigation and updates the daily progress after loading stats', async () => {
         const { container } = render(<Navbar />);
         expect(screen.getByTestId('brand-logo')).toBeInTheDocument();
-        expect(screen.getByTestId('streak-badge')).toHaveTextContent('5d');
         await waitFor(() =>
             expect(
                 screen.getByTitle('Daily Goal: 20 / 20 cards')
             ).toBeInTheDocument()
         );
+        expect(screen.getByTestId('streak-badge')).toHaveTextContent('5d');
+        expect(screen.getByTestId('xp-badge')).toHaveTextContent('100 XP');
         expect(container).toMatchSnapshot();
     });
 

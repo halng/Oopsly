@@ -5,6 +5,8 @@ import { ApiService } from '@/services/api';
 import { useUserProfileStore } from '@/store';
 import { useToastStore } from '@/store/ToastStore';
 
+vi.mock('@/utils/pricing', () => ({ SHOW_PRICING: true }));
+
 const { push, logout } = vi.hoisted(() => ({
     push: vi.fn(),
     logout: vi.fn(),
@@ -15,13 +17,25 @@ vi.mock('@/services/api', () => ({
     ApiService: {
         getProfile: vi.fn(),
         updateProfile: vi.fn(),
+        saveTheme: vi.fn().mockResolvedValue({ isSuccess: true }),
         sendStudyReminder: vi.fn(),
         getStudyReminderCalendar: vi.fn(),
     },
 }));
 vi.mock('@/components/shared', () => ({
-    ThemeModal: ({ isOpen }: { isOpen: boolean }) =>
-        isOpen ? <div data-testid="theme-modal" /> : null,
+    ThemeModal: ({
+        isOpen,
+        onSelectTheme,
+    }: {
+        isOpen: boolean;
+        onSelectTheme: (id: string) => void;
+    }) =>
+        isOpen ? (
+            <button
+                data-testid="theme-modal"
+                onClick={() => onSelectTheme('ghibli-night')}
+            />
+        ) : null,
 }));
 
 const profile = {
@@ -213,5 +227,14 @@ describe('SettingsPage', () => {
         render(<SettingsPage />);
         fireEvent.click(screen.getByTestId('btn-upgrade-pro'));
         expect(push).toHaveBeenCalledWith('/subscribe');
+    });
+
+    it('saves the picked theme on the account right away', async () => {
+        render(<SettingsPage />);
+        fireEvent.click(screen.getByTestId('btn-open-theme'));
+        fireEvent.click(screen.getByTestId('theme-modal'));
+        await waitFor(() =>
+            expect(ApiService.saveTheme).toHaveBeenCalledWith('ghibli-night')
+        );
     });
 });

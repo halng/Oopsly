@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { Flower2, Pause, Play, RotateCcw, Timer } from 'lucide-react';
 import { GardenState, PlantSpecies } from '@/types';
 import { useAuthStore } from '@/store';
+import { useFeature } from '@/store/Features';
 import { GameReward, GameService } from '@/services/gameApi';
 import { openGameSocket, sendGardenAction } from '@/services/gameSocket';
 import { gatherTree, openPlot, pourTree, sowSeed } from '@/game/liveGarden';
@@ -31,13 +32,14 @@ export default function StudyPage() {
     const beforeAction = useRef<GardenState | null>(null);
     const latestAction = useRef<string | null>(null);
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const gardenEnabled = useFeature('garden.game');
 
     useEffect(() => {
         gardenRef.current = garden;
     }, [garden]);
 
     useEffect(() => {
-        if (!isAuthenticated) return;
+        if (!isAuthenticated || !gardenEnabled) return;
         void GameService.getGarden().then((res) => {
             if (res.isSuccess && res.data) setGarden(res.data);
             else setMessage(res.message);
@@ -58,7 +60,7 @@ export default function StudyPage() {
                 setGarden(event.data.garden);
             }
         });
-    }, [isAuthenticated]);
+    }, [isAuthenticated, gardenEnabled]);
 
     useEffect(() => {
         if (!isRunning) return;
@@ -75,6 +77,7 @@ export default function StudyPage() {
     }, [isRunning]);
 
     useEffect(() => {
+        if (!gardenEnabled) return;
         if (!armed.current || secondsLeft !== 0 || claiming.current) return;
         claiming.current = true;
         armed.current = false;
@@ -89,7 +92,7 @@ export default function StudyPage() {
                 setMessage(res.message);
             }
         });
-    }, [minutes, secondsLeft]);
+    }, [minutes, secondsLeft, gardenEnabled]);
 
     const play = (
         requestId: string,
@@ -131,36 +134,38 @@ export default function StudyPage() {
 
     return (
         <div data-testid="study-page" className="space-y-6">
-            <div className="flex gap-2">
-                <button
-                    type="button"
-                    data-testid="btn-tab-timer"
-                    onClick={() => setTab('timer')}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${
-                        tab === 'timer'
-                            ? 'bg-stone-900 text-white'
-                            : 'bg-stone-100'
-                    }`}
-                >
-                    <Timer className="w-4 h-4 inline mr-1" />
-                    Pomodoro
-                </button>
-                <button
-                    type="button"
-                    data-testid="btn-tab-garden"
-                    onClick={() => setTab('garden')}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${
-                        tab === 'garden'
-                            ? 'bg-stone-900 text-white'
-                            : 'bg-stone-100'
-                    }`}
-                >
-                    <Flower2 className="w-4 h-4 inline mr-1" />
-                    Garden
-                </button>
-            </div>
+            {gardenEnabled && (
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        data-testid="btn-tab-timer"
+                        onClick={() => setTab('timer')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${
+                            tab === 'timer'
+                                ? 'bg-stone-900 text-white'
+                                : 'bg-stone-100'
+                        }`}
+                    >
+                        <Timer className="w-4 h-4 inline mr-1" />
+                        Pomodoro
+                    </button>
+                    <button
+                        type="button"
+                        data-testid="btn-tab-garden"
+                        onClick={() => setTab('garden')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${
+                            tab === 'garden'
+                                ? 'bg-stone-900 text-white'
+                                : 'bg-stone-100'
+                        }`}
+                    >
+                        <Flower2 className="w-4 h-4 inline mr-1" />
+                        Garden
+                    </button>
+                </div>
+            )}
 
-            {tab === 'timer' ? (
+            {tab === 'timer' || !gardenEnabled ? (
                 <div className="bg-white dark:bg-stone-900 rounded-3xl border p-8 text-center space-y-6">
                     <h1 className="text-2xl font-bold">Focus Session</h1>
                     <div

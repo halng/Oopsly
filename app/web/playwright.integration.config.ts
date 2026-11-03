@@ -41,6 +41,8 @@ export default defineConfig({
             NEXT_PUBLIC_API_URL: API_URL,
             NEXT_PUBLIC_AUTH_URL: AUTH_URL,
             NEXT_PUBLIC_GAME_API_URL: GAME_URL,
+            // The pricing pages are hidden in production for now; these tests cover them.
+            NEXT_PUBLIC_SHOW_PRICING: 'true',
             NEXT_DIST_DIR: '.next-integration',
         },
     },

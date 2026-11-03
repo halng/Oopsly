@@ -348,6 +348,8 @@ export function defaultStubs(): Stub[] {
             ics: 'BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n',
         }),
         ok('PATCH', `${AUTH}/v1/user-settings`, profile.settings),
+        ok('PATCH', `${AUTH}/v1/user-profiles/settings/theme`, profile),
+        ok('GET', `${AUTH}/v1/features`, { plan: 'FREE', features: {} }),
         // api service
         ok('GET', `${API}/v1/ping`, 'pong'),
         ok('GET', `${API}/v1/shelves`, page([shelf])),

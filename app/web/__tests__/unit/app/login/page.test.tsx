@@ -75,7 +75,8 @@ describe('AuthPage', () => {
         );
         await waitFor(() =>
             expect(ApiService.sendOtp).toHaveBeenCalledWith(
-                'learner@example.com'
+                'learner@example.com',
+                true
             )
         );
     });
@@ -184,6 +185,35 @@ describe('AuthPage', () => {
         render(<AuthPage />);
         expect(screen.getByRole('status').textContent).toMatch(
             /session expired/i
+        );
+    });
+
+    it('moves to sign-up, keeping the email, when login finds no account', async () => {
+        vi.mocked(ApiService.sendOtp).mockResolvedValue({
+            isSuccess: false,
+            data: null,
+            statusCode: 404,
+            message: 'No account found for this email. Please sign up.',
+            timestamp: '',
+        } as never);
+        render(<AuthPage />);
+        fireEvent.change(screen.getByPlaceholderText('name@example.com'), {
+            target: { value: 'new@example.com' },
+        });
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Continue with Email' })
+        );
+        await waitFor(() =>
+            expect(
+                screen.getByRole('heading', { name: 'Create an account' })
+            ).toBeInTheDocument()
+        );
+        expect(screen.getByPlaceholderText('Jane Doe')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('name@example.com')).toHaveValue(
+            'new@example.com'
+        );
+        expect(screen.getByRole('status')).toHaveTextContent(
+            /Tell us your name/
         );
     });
 });

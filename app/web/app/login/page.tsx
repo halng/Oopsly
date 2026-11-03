@@ -22,6 +22,7 @@ const AuthPage = () => {
     const [name, setName] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [notice, setNotice] = useState('');
     const sessionExpired = useAuthStore((state) => state.sessionExpired);
 
     const handleSendOtp = async (e: React.FormEvent) => {
@@ -39,9 +40,19 @@ const AuthPage = () => {
         setIsLoading(true);
         setErrorMessage('');
         try {
-            const res = await ApiService.sendOtp(email.trim());
+            const res = await ApiService.sendOtp(
+                email.trim(),
+                mode === 'signup'
+            );
             if (res.isSuccess) {
+                setNotice('');
                 setStep('otp');
+            } else if (mode === 'login' && res.statusCode === 404) {
+                // No account for this email yet: carry on as a sign-up.
+                setMode('signup');
+                setNotice(
+                    "We couldn't find an account for this email. Tell us your name to create one."
+                );
             } else {
                 setErrorMessage(
                     res.message || 'Failed to send verification code.'
@@ -98,6 +109,7 @@ const AuthPage = () => {
         (e: React.ChangeEvent<HTMLInputElement>) => {
             setter(e.target.value);
             setErrorMessage('');
+            setNotice('');
         };
 
     const onOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,6 +127,7 @@ const AuthPage = () => {
         e.stopPropagation();
         setOtp('');
         setErrorMessage('');
+        setNotice('');
         setStep('email');
     };
 
@@ -156,6 +169,15 @@ const AuthPage = () => {
                         >
                             Your session expired. Please sign in again to
                             continue.
+                        </div>
+                    )}
+
+                    {notice && !errorMessage && (
+                        <div
+                            role="status"
+                            className="p-3 bg-sky-50 border border-sky-200 text-sky-800 text-sm rounded-xl font-medium"
+                        >
+                            {notice}
                         </div>
                     )}
 
@@ -273,13 +295,14 @@ const AuthPage = () => {
                                     : 'Already have an account?'}{' '}
                                 <button
                                     type="button"
-                                    onClick={() =>
+                                    onClick={() => {
+                                        setNotice('');
                                         setMode(
                                             mode === 'login'
                                                 ? 'signup'
                                                 : 'login'
-                                        )
-                                    }
+                                        );
+                                    }}
                                     className="font-bold text-[var(--theme-accent)] hover:text-[#7CB342] cursor-pointer transition-colors"
                                 >
                                     {mode === 'login' ? 'Sign up' : 'Log in'}
