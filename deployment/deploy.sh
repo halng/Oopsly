@@ -5,7 +5,8 @@
 #
 # With no stack names it deploys everything in dependency order:
 #   network -> (copy images to ECR) -> auth -> api -> game -> noti
-# (noti has no dependencies; auth only needs its function name, so any order works)
+# Deploy auth before noti: noti rejects an event without `name`, which only the current auth
+# sends. (The other way round is harmless: noti ignores fields it does not know.)
 #
 # noti (the email Lambda) reads its Resend settings from Secrets Manager. Pass RESEND_API_KEY
 # and RESEND_FROM (like "Quizi <no-reply@quizi.tech>") to store them; without RESEND_API_KEY
