@@ -311,7 +311,7 @@ app
 ```
 
 Note: the backend folder with path `app/api` contains the Spring Boot backend. The backend is organized as a modern spring boot project with DDD (Domain Driven Design) structure.
-The auth folder with path `app/auth` is a separate Python (FastAPI) service. It owns authentication (email OTP), authorization (roles), subscriptions, user profiles and settings, and it issues the RS256 JWT access/refresh tokens (keys rotate weekly). It publishes its public keys at `/.well-known/pub.json` (JWKS); `app/api` (and `app/game`) fetch that list into an in-memory cache, refetch it when a token's `kid` is unknown, and keep a plain `user_id` column instead of a foreign key to the user.
+The auth folder with path `app/auth` is a separate Python (FastAPI) service. It owns authentication (email OTP), authorization (roles), subscriptions, user profiles and settings, and it issues the RS256 JWT access/refresh tokens (keys rotate weekly). It publishes its public keys at `/api/auth/.well-known/pub.json` (JWKS); `app/api` (and `app/game`) fetch that list into an in-memory cache, refetch it when a token's `kid` is unknown, and keep a plain `user_id` column instead of a foreign key to the user.
 The frontend folder with path `app/web` contains the Next.js frontend.
 
 ### Run locally
@@ -322,7 +322,7 @@ Prerequisites: Docker, JDK 21, Node with pnpm, Python 3.12.
 |---|---|---|
 | Postgres / Redis | 5432 / 6379 | via `app/docker-compose.yml` |
 | Auth (FastAPI) | 9010 | `http://localhost:9010/api/auth` |
-| nginx gateway (`app/nginx`) | 8080 | `http://localhost:8080` routes `/api/auth`, `/.well-known`, `/api/quizi`, `/v1/game` and `/` (web) to the services above |
+| nginx gateway (`app/nginx`) | 8080 | `http://localhost:8080` routes `/api/auth`, `/api/quizi`, `/v1/game` and `/` (web) to the services above |
 | API (Spring Boot) | 9009 | `http://localhost:9009/api/quizi` |
 | Game (FastAPI) | 9008 | `http://localhost:9008` |
 | Web (Next.js) | 3000 | `http://localhost:3000` |
@@ -336,9 +336,9 @@ cd app
 docker compose up -d --build   # postgres + redis + auth
 ```
 
-- JWKS: `http://localhost:9010/.well-known/pub.json` (the API and game read it from `JWKS_URL`; this is the default)
+- JWKS: `http://localhost:9010/api/auth/.well-known/pub.json` (the API and game read it from `JWKS_URL`; this is the default)
 - Swagger: `http://localhost:9010/api/auth/docs`
-- Email is not sent locally (`NOTI_FUNCTION_NAME` is empty), so sign in with a test email: `test@quizi.dev` with OTP `000000` (set by `TEST_EMAILS` in the compose file).
+- Auth sends no email when `APP_ENV` is `local`/`dev` (the compose file sets `local`), and there is no test-account bypass, so a local sign-in needs a way to read the code.
 - To run auth outside Docker (hot reload), keep postgres and redis up and generate a internal API key in the `.env` file (set `INTERNAL_API_KEY`) for the auth service to validate internal requests.
 
 ```bash
@@ -371,7 +371,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 9008 --reload
 ```
 
 Defaults: `DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/quizi`,
-`JWKS_URL=http://localhost:9010/.well-known/pub.json`.
+`JWKS_URL=http://localhost:9010/api/auth/.well-known/pub.json`.
 
 #### 4. Web
 
@@ -395,7 +395,7 @@ The web app renews expired access tokens by itself (using the refresh token); if
 
 #### Troubleshooting
 
-- `401 EXPIRED_OR_INVALID_JWT` from the API or game right after starting: they could not reach the JWKS. Check `curl http://localhost:9010/.well-known/pub.json`.
+- `401 EXPIRED_OR_INVALID_JWT` from the API or game right after starting: they could not reach the JWKS. Check `curl http://localhost:9010/api/auth/.well-known/pub.json`.
 - Tokens issued before the move to RS256 are rejected: sign in again.
 - Quiz socket `403`: the web origin is missing from the API's `ALLOWED_ORIGINS`.
 

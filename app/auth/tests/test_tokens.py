@@ -24,7 +24,7 @@ def _b64(data: dict) -> str:
 
 
 def test_access_token_carries_the_claims_and_the_kid(tokens, key_store, clock):
-    token = tokens.access_token("user-1", "a@b.co", "USER", "PRO")
+    token = tokens.access_token("user-1", "a@b.co", "USER", "PRO", "sid-1")
     header = jwt.get_unverified_header(token)
     assert header["alg"] == "RS256"
     assert header["kid"] == key_store.signing_key()[0]
@@ -34,22 +34,28 @@ def test_access_token_carries_the_claims_and_the_kid(tokens, key_store, clock):
         "id": "user-1",
         "role": "USER",
         "plan": "PRO",
+        "sid": "sid-1",
         "iat": int(clock().timestamp()),
         "exp": int((clock() + timedelta(hours=1)).timestamp()),
     }
 
 
 def test_parse_round_trips_and_refresh_tokens_are_distinct(tokens):
-    assert tokens.parse(tokens.access_token("u", "a@b.co", "USER", "FREE"))["id"] == "u"
+    assert (
+        tokens.parse(tokens.access_token("u", "a@b.co", "USER", "FREE", "sid-1"))["id"]
+        == "u"
+    )
     first, second = tokens.refresh_token("a@b.co"), tokens.refresh_token("a@b.co")
     assert first != second
     assert tokens.parse(first)["sub"] == "a@b.co"
 
 
 def test_token_signed_before_rotation_still_verifies(tokens, clock):
-    old = tokens.access_token("u", "a@b.co", "USER", "FREE")
+    old = tokens.access_token("u", "a@b.co", "USER", "FREE", "sid-1")
     clock.advance(days=8)
-    tokens.access_token("u", "a@b.co", "USER", "FREE")  # signs with the new key
+    tokens.access_token(
+        "u", "a@b.co", "USER", "FREE", "sid-1"
+    )  # signs with the new key
     assert tokens.parse(old)["id"] == "u"
 
 
@@ -61,13 +67,13 @@ def test_expired_token_is_rejected(key_store):
         lambda: datetime(2020, 1, 1, tzinfo=UTC),
     )
     with pytest.raises(jwt.ExpiredSignatureError):
-        stale.parse(stale.access_token("u", "a@b.co", "USER", "FREE"))
+        stale.parse(stale.access_token("u", "a@b.co", "USER", "FREE", "sid-1"))
 
 
 def test_tampered_signature_is_rejected(tokens):
-    head, payload, signature = tokens.access_token("u", "a@b.co", "USER", "FREE").split(
-        "."
-    )
+    head, payload, signature = tokens.access_token(
+        "u", "a@b.co", "USER", "FREE", "sid-1"
+    ).split(".")
     forged = ".".join([head, _b64({"id": "admin", "exp": 9999999999}), signature])
     with pytest.raises(jwt.InvalidSignatureError):
         tokens.parse(forged)
@@ -130,4 +136,4 @@ def test_each_service_instance_verifies_the_others_tokens(session_factory, clock
         timedelta(days=1),
         clock,
     )
-    assert b.parse(a.access_token("u", "a@b.co", "USER", "FREE"))["id"] == "u"
+    assert b.parse(a.access_token("u", "a@b.co", "USER", "FREE", "sid-1"))["id"] == "u"

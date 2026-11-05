@@ -143,7 +143,7 @@ export default function ShelfModal({
                         </label>
                         <textarea
                             rows={2}
-                            placeholder="Optional overview of subjects stored in this shelf..."
+                            placeholder="Overview of subjects stored in this shelf..."
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:ring-2 focus:ring-[var(--theme-accent)] focus:outline-none"

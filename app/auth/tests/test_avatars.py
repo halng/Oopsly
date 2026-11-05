@@ -4,10 +4,9 @@ from unittest.mock import MagicMock
 import pytest
 
 from app import avatars, deps
-from app.config import settings
 from app.main import app
-from tests.conftest import INTERNAL_KEY, TEST_EMAIL, bearer, login
-from tests.test_api import PATCH_TYPE, _user_id
+from tests.conftest import INTERNAL_KEY, bearer, login
+from tests.test_api import _user_id
 
 BASE = "/api/auth"
 UPLOAD = f"{BASE}/v1/user-profiles/avatar/upload-url"
@@ -30,12 +29,6 @@ class FakeStorage:
 
     def delete(self, key):
         self.deleted.append(key)
-
-
-@pytest.fixture
-def two_users(monkeypatch):
-    # Both emails skip the OTP step, so a second account can sign in.
-    monkeypatch.setattr(settings, "test_emails", f"{TEST_EMAIL},other@example.com")
 
 
 @pytest.fixture
@@ -90,7 +83,7 @@ def test_only_images_are_accepted(client, storage):
         assert res.status_code == 400
 
 
-def test_confirm_rejects_foreign_missing_and_malformed_keys(client, storage, two_users):
+def test_confirm_rejects_foreign_missing_and_malformed_keys(client, storage):
     tokens = login(client)
     other = login(client, email="other@example.com", name="other")
     theirs = _upload(client, other, storage)
@@ -103,29 +96,30 @@ def test_confirm_rejects_foreign_missing_and_malformed_keys(client, storage, two
     assert storage.deleted == []
 
 
-def test_a_json_patch_cannot_point_at_someone_elses_picture(client, storage, two_users):
+def test_updating_the_profile_cannot_change_the_picture(client, storage):
     tokens = login(client)
     other = login(client, email="other@example.com", name="other")
     theirs = _upload(client, other, storage)
     res = client.patch(
-        f"{BASE}/v1/user-profiles/profile/updates",
-        content=json.dumps([{"op": "replace", "path": "/pictureUrl", "value": theirs}]),
-        headers={**bearer(tokens), **PATCH_TYPE},
+        f"{BASE}/v1/user-profiles",
+        json={"displayName": "Me", "bio": "", "pictureUrl": theirs},
+        headers=bearer(tokens),
     )
-    assert res.status_code == 400
+    assert res.status_code == 200
+    assert res.json()["data"]["avatarUrl"] == ""
 
 
-def test_patching_other_fields_keeps_the_avatar_and_presigns_it(client, storage):
+def test_updating_the_profile_keeps_the_avatar_and_presigns_it(client, storage):
     tokens = login(client)
     key = _upload(client, tokens, storage)
     client.post(CONFIRM, json={"key": key}, headers=bearer(tokens))
     res = client.patch(
-        f"{BASE}/v1/user-profiles/profile/updates",
-        content=json.dumps([{"op": "replace", "path": "/bio", "value": "hi"}]),
-        headers={**bearer(tokens), **PATCH_TYPE},
+        f"{BASE}/v1/user-profiles",
+        json={"displayName": "Me", "bio": "hi"},
+        headers=bearer(tokens),
     )
     assert res.status_code == 200
-    assert res.json()["data"]["pictureUrl"] == f"https://bucket.test/{key}?sig=1"
+    assert res.json()["data"]["avatarUrl"] == f"https://bucket.test/{key}?sig=1"
 
 
 def test_internal_lookup_returns_presigned_pictures(client, storage):

@@ -182,11 +182,11 @@ export const HomePage: React.FC = () => {
         setEditingShelf(null);
         setIsShelfModalOpen(true);
     };
-
+    
     const handleUpdateNewCommer = async () => {
         if (profile) {
             await ApiService.updateNewComer();
-            loadUserData();
+            await loadUserData();
         }
     };
 

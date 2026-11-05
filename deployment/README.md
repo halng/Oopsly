@@ -42,7 +42,7 @@ else stays on the HTTP API.
 
 | Route on the HTTP API | Service |
 |---|---|
-| `/api/auth/v1/*`, `/.well-known/*` | auth |
+| `/api/auth/v1/*`, `/api/auth/.well-known/*` | auth |
 | `/api/quizi/*` | api |
 | `/v1/game/*` | game |
 

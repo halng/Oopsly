@@ -15,13 +15,13 @@ Every invocation payload is `{"template": ..., "to": "<one email>", "data": {...
 
 | template | sent when | `data` |
 |---|---|---|
-| `otp` | someone asks for a login or signup code | `code` (required), `name` |
+| `otp` | someone asks for a login or signup code | `name`, `code` |
 | `welcome` | a user signs up for the first time | `name` |
-| `community_invite` | a user is added to a community | `communityName` (required), `inviterName`, `name` |
-| `study_reminder` | a user asks for their study schedule by email | `ics` (required): the iCalendar body, attached as `quizi-learning.ics` |
+| `community_invite` | a user is added to a community | `name`, `communityName`, `inviterName` (optional) |
+| `study_reminder` | a user asks for their study schedule by email | `name`, `ics`: the iCalendar body, attached as `quizi-learning.ics` |
 
-The calendar event is called **Learning on Quizi**. `name` greets the user and falls back to
-the part of the address before the `@`.
+The calendar event is called **Learning on Quizi**. `name` is required on every event: it
+greets the user, and an event without one is rejected rather than guessed from the address.
 
 Who invokes what:
 

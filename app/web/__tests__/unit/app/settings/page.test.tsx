@@ -17,6 +17,7 @@ vi.mock('@/services/api', () => ({
     ApiService: {
         getProfile: vi.fn(),
         updateProfile: vi.fn(),
+        updateSettings: vi.fn(),
         saveTheme: vi.fn().mockResolvedValue({ isSuccess: true }),
         sendStudyReminder: vi.fn(),
         getStudyReminderCalendar: vi.fn(),
@@ -60,6 +61,46 @@ describe('SettingsPage', () => {
             message: '',
             timestamp: '',
         } as never);
+        vi.mocked(ApiService.updateSettings).mockResolvedValue({
+            isSuccess: true,
+            data: profile,
+            message: '',
+            timestamp: '',
+        } as never);
+    });
+
+    it('saves the switches, goal and retention through the settings endpoint', async () => {
+        render(<SettingsPage />);
+        fireEvent.click(screen.getByTestId('btn-toggle-reminders'));
+        fireEvent.click(screen.getByTestId('btn-toggle-sound'));
+        fireEvent.click(screen.getByTestId('btn-save-settings'));
+        await waitFor(() =>
+            expect(ApiService.updateSettings).toHaveBeenCalledWith({
+                dailyGoal: 20,
+                targetRetentionRate: 0.9,
+                soundEffectsEnabled: false,
+                allowReminders: true,
+            })
+        );
+        expect(ApiService.updateProfile).toHaveBeenCalledWith({
+            displayName: 'Learner',
+            bio: 'Hi',
+        });
+    });
+
+    it('does not claim success when the settings could not be saved', async () => {
+        vi.mocked(ApiService.updateSettings).mockResolvedValue({
+            isSuccess: false,
+            data: null,
+            message: 'nope',
+            timestamp: '',
+        } as never);
+        render(<SettingsPage />);
+        fireEvent.click(screen.getByTestId('btn-save-settings'));
+        await waitFor(() =>
+            expect(ApiService.updateSettings).toHaveBeenCalled()
+        );
+        expect(useToastStore.getState().toasts).toEqual([]);
     });
 
     it('saves profile settings and logs out', async () => {

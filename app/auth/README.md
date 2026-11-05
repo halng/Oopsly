@@ -4,10 +4,11 @@ Python (FastAPI) service that owns authentication, authorization, subscriptions,
 `app/api` and `app/game` only verify the tokens it issues, using the public keys it publishes.
 
 - Base URL: `http://localhost:9010/api/auth`
-- Health: `GET /api/auth/actuator/health` (also `/actuator/health`)
+- Health: `GET /api/auth/actuator/health`
 - Swagger: `http://localhost:9010/api/auth/docs`
 - Tokens: **RS256**, header `kid`. Claims: `sub` (email), `id`, `role`, `plan`, `iat`, `exp`.
-- JWKS: `GET /.well-known/pub.json` (also `/api/auth/.well-known/pub.json`)
+- JWKS: `GET /api/auth/.well-known/pub.json`
+- Nothing is served outside `/api/auth`, including the calls other services make.
 
 ## Run
 
@@ -30,16 +31,15 @@ ruff check . && ruff format --check . && python -m pytest -q --cov=app   # fails
 
 | Method | Path | Auth |
 |---|---|---|
-| POST | `/v1/otp?email=` , `/v1/otp/validate` | public |
+| POST | `/v1/otp?email=&signup=&username=` (`username` is required with `signup=true`; it is who the code email greets), `/v1/otp/validate` | public |
 | POST | `/v1/users/refresh-token` | public |
 | POST | `/v1/users/logout`, GET `/v1/users/validate` | Bearer |
-| GET/PATCH | `/v1/user-profiles`, PATCH `/v1/user-profiles/settings`, `/settings/newcomer` | Bearer |
-| PATCH | `/v1/user-profiles/profile/updates` (`application/json-patch+json`; only name, displayName, bio, age, pictureUrl) | Bearer |
+| GET/PATCH | `/v1/user-profiles` (PATCH takes `displayName`, `bio`, `age`; the picture only changes through the avatar upload), PATCH `/v1/user-settings` (any of `theme`, `language`, `dailyGoal` 1-1000), PATCH `/v1/user-profiles/settings/theme`, `/settings/newcomer` | Bearer |
 | GET | `/v1/subscriptions/me` | Bearer |
 | GET | `/v1/features`, `/v1/features/{key}` -> `{enabled, source}` per feature (see Feature toggles) | optional Bearer |
 | PUT | `/internal/v1/subscriptions/{userId}` `{plan, expiresAt}` | `X-Internal-Key` |
 | POST | `/internal/v1/users/lookup` `{ids:[...]}` (max 200) -> id, name, displayName, pictureUrl, dailyGoal | `X-Internal-Key` |
-| GET | `/.well-known/pub.json` | public |
+| GET | `/.well-known/pub.json` (under `/api/auth`) | public |
 
 Responses use the same envelope as the Java API: `isSuccess, timestamp, message, statusCode, data`
 (the JWKS is the plain RFC 7517 document). Plans: `FREE`, `PRO`, `PRO_PLUS`; an expired subscription is treated as `FREE`.
@@ -55,7 +55,7 @@ Roles: `USER`, `ADMIN`.
   A retired key stays in the JWKS until its last token has expired (longest token TTL + 1h).
 - Rotation runs at startup, hourly in the background, and lazily on token issue. A Postgres advisory lock plus a unique
   `activate_at` make it safe with several instances.
-- `GET /.well-known/pub.json` returns every key whose tokens may still be valid, with `Cache-Control: public, max-age=300`.
+- `GET /api/auth/.well-known/pub.json` returns every key whose tokens may still be valid, with `Cache-Control: public, max-age=300`.
 
 ### Verifying (api, game)
 
@@ -66,16 +66,25 @@ A verifier holds the JWKS in memory and:
 3. when the `kid` is not cached, refetches the JWKS (throttled to once per 30s so random `kid`s cannot hammer this service)
    and retries once; if the refetch fails it keeps using what it has.
 
-Point them at the service with `JWKS_URL` (default `http://localhost:9010/.well-known/pub.json`).
+Point them at the service with `JWKS_URL` (default `http://localhost:9010/api/auth/.well-known/pub.json`).
 
 ## Configuration
 
 `PORT` (9010), `DATABASE_URL` or `DB_HOST/DB_PORT/DB_NAME/DB_USERNAME/DB_PASSWORD`, `REDIS_HOST/REDIS_PORT`,
 `JWT_EXPIRATION_MS`, `JWT_REFRESH_EXPIRATION_MS`, `JWT_KEY_PASSPHRASE`, `JWT_KEY_ROTATION_DAYS`,
-`JWT_KEY_PUBLISH_LEAD_HOURS`, `JWT_KEY_ROTATION_CHECK_SECONDS`, `TEST_EMAILS` (OTP `000000` bypass),
+`JWT_KEY_PUBLISH_LEAD_HOURS`, `JWT_KEY_ROTATION_CHECK_SECONDS`, `APP_ENV`, `NOTI_FUNCTION_NAME`, `NOTI_REGION`,
 `INTERNAL_API_KEY` (internal routes are rejected when unset), `ALLOWED_ORIGINS`.
 
-Email goes through the noti Lambda (`LambdaSender`, set `NOTI_FUNCTION_NAME`; see `app/noti`). Without it `NoOpSender` only logs, and only `TEST_EMAILS` can sign in (code `000000`).
+Email goes through the noti Lambda (`mail.Sender`, set `NOTI_FUNCTION_NAME`; see `app/noti`). When `APP_ENV` is `local`, `dev`,
+`develop` or `development`, no email is sent at all (the skip is logged with the masked address, never the code).
+There is no test-account bypass: a sign-in needs a code that was really mailed.
+
+## Sessions
+
+Every sign-in creates one row in `auth.login_tracker` (one per device, named from the `User-Agent`). Its id is the `sid`
+claim of the access tokens. The refresh token is stored only as a SHA-256 hash and is **replaced on every refresh**
+(the response carries the new one; the old one stops working). `POST /v1/users/logout` ends the current device only.
+Expired rows are removed on the next sign-in.
 
 `JWT_SECRET` is gone: nothing shares a secret any more.
 
@@ -87,14 +96,14 @@ Console logs use the API's logback layout: `2026-10-28 10:20:31,512 INFO  [MainT
 
 ## Data
 
-Tables live in Postgres schema `auth` (`users`, `settings` = preferences only, `subscriptions`, `signing_keys`), migrated
+Tables live in Postgres schema `auth` (`users`, `settings` = preferences only, `subscriptions`, `signing_keys`, `login_tracker`), migrated
 with Alembic (`alembic upgrade head`, run by the container on start under an advisory lock). Migration `001` is idempotent:
 it adopts the tables the previous Go service created and copies existing rows from `public.users`/`public.settings` once
 (same UUIDs); it never modifies `public.*`. Learning progress (xp, streak, league...) is owned by `app/api`.
 
 ## Cutover from the Go service
 
-- Same port, context path, endpoints, envelope and Redis keys (`otp:*`, `refresh_token:*`), so clients keep working.
+- Same port, context path, endpoints and envelope, so clients keep working. (Refresh tokens moved from Redis `refresh_token:*` to `auth.login_tracker`, so everyone signs in once more after this release.)
 - Every token signed with the old shared secret stops verifying once `api` and `game` move to JWKS: users log in again.
   Deploy order: auth first, then api and game with `JWKS_URL` set.
 

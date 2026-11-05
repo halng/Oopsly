@@ -11,7 +11,7 @@ from app.deps import (
     internal_only,
     optional_principal,
 )
-from app.envelope import bad_request, ok, respond
+from app.envelope import ok
 from app.keys import KeyStore
 from app.schemas import (
     AvatarConfirmReq,
@@ -30,24 +30,20 @@ from app.service import AuthService
 CONTEXT_PATH = "/api/auth"
 JWKS_PATH = "/.well-known/pub.json"
 JWKS_MAX_AGE_SECONDS = 300
-MAX_PATCH_BYTES = 1 << 20
 
 logger = logging.getLogger(__name__)
 
+# Every route, including the ones other services call, lives under the context path.
 router = APIRouter(prefix=CONTEXT_PATH)
-# Served at the root as well: verifiers are configured with a plain host.
-root_router = APIRouter()
 
 
 def _health():
     return {"status": "UP"}
 
 
-root_router.add_api_route("/actuator/health", _health, tags=["health"])
 router.add_api_route("/actuator/health", _health, tags=["health"])
 
 
-@root_router.get(JWKS_PATH, tags=["jwks"])
 @router.get(JWKS_PATH, tags=["jwks"])
 def jwks(keys: KeyStore = Depends(get_key_store)):
     """Public keys of every signing key whose tokens may still be valid."""
@@ -68,16 +64,23 @@ def jwks(keys: KeyStore = Depends(get_key_store)):
 
 @router.post("/v1/otp", tags=["otp"])
 def create_otp(
-    email: str = "", signup: bool = False, svc: AuthService = Depends(get_service)
+    email: str = "",
+    signup: bool = False,
+    username: str = "",
+    svc: AuthService = Depends(get_service),
 ):
-    svc.send_otp(email, signup)
+    svc.send_otp(email, signup, username)
     return ok("OTP sent successfully to " + email)
 
 
 @router.post("/v1/otp/validate", tags=["otp"])
-def validate_otp(req: ValidateOtpReq, svc: AuthService = Depends(get_service)):
+def validate_otp(
+    req: ValidateOtpReq, request: Request, svc: AuthService = Depends(get_service)
+):
+    device = request.headers.get("user-agent", "")
     return ok(
-        "Authentication successful.", svc.verify_otp(req.email, req.otp, req.name)
+        "Authentication successful.",
+        svc.verify_otp(req.email, req.otp, req.name, device),
     )
 
 
@@ -96,7 +99,7 @@ def refresh_token(req: RefreshReq, svc: AuthService = Depends(get_service)):
 def logout(
     me: Principal = Depends(authenticate), svc: AuthService = Depends(get_service)
 ):
-    svc.logout(me.user_id)
+    svc.logout(me.user_id, me.session_id)
     return ok("Logged out successfully")
 
 
@@ -125,7 +128,7 @@ def update_profile(
     return ok("Profile retrieved successfully", res)
 
 
-@router.patch("/v1/user-profiles/settings", tags=["profiles"])
+@router.patch("/v1/user-settings", tags=["profiles"])
 def update_settings(
     req: dict = Body(...),
     me: Principal = Depends(authenticate),
@@ -192,23 +195,6 @@ def newcomer(
 ):
     svc.mark_not_newcomer(me.user_id)
     return ok("Updated isNewComer status successfully")
-
-
-@router.patch("/v1/user-profiles/profile/updates", tags=["profiles"])
-async def patch_profile(
-    request: Request,
-    me: Principal = Depends(authenticate),
-    svc: AuthService = Depends(get_service),
-):
-    if not request.headers.get("content-type", "").startswith(
-        "application/json-patch+json"
-    ):
-        return respond(415, "Content-Type must be application/json-patch+json")
-    body = await request.body()
-    if len(body) > MAX_PATCH_BYTES:
-        raise bad_request("Invalid request body")
-    res = svc.patch_profile(me.user_id, body)
-    return ok("User profile updated successfully", res)
 
 
 @router.get("/v1/subscriptions/me", tags=["subscriptions"])

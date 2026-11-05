@@ -32,15 +32,17 @@ class Clock:
 class OutboxSender:
     def __init__(self):
         self.sent: list[tuple[str, str]] = []
-        self.reminders: list[tuple[str, str]] = []
+        self.otp_names: list[str] = []
+        self.reminders: list[tuple[str, str, str]] = []
         self.welcomes: list[tuple[str, str]] = []
         self.invites: list[tuple[str, str, str, str]] = []
 
-    def send_otp(self, to: str, code: str) -> None:
+    def send_otp(self, to: str, code: str, name: str) -> None:
         self.sent.append((to, code))
+        self.otp_names.append(name)
 
-    def send_study_reminder(self, to: str, ics: str) -> None:
-        self.reminders.append((to, ics))
+    def send_study_reminder(self, to: str, name: str, ics: str) -> None:
+        self.reminders.append((to, name, ics))
 
     def send_welcome(self, to: str, name: str) -> None:
         self.welcomes.append((to, name))
@@ -110,7 +112,6 @@ def client(session_factory, kv, outbox, monkeypatch):
 
     monkeypatch.setattr(database, "SessionLocal", session_factory)
     monkeypatch.setattr(settings, "internal_api_key", INTERNAL_KEY)
-    monkeypatch.setattr(settings, "test_emails", TEST_EMAIL)
     monkeypatch.setattr(settings, "jwt_key_rotation_check_seconds", 3600)
     deps.get_key_store.cache_clear()
     keys = make_key_store(session_factory)
@@ -121,15 +122,29 @@ def client(session_factory, kv, outbox, monkeypatch):
     app.dependency_overrides[deps.get_run_async] = lambda: lambda fn: fn()
     with TestClient(app) as test_client:
         test_client.keys = keys
+        test_client.outbox = outbox
         yield test_client
     app.dependency_overrides.clear()
     deps.get_key_store.cache_clear()
 
 
-def login(client: TestClient, email: str = TEST_EMAIL, name: str = "") -> dict:
+def login(
+    client: TestClient,
+    email: str = TEST_EMAIL,
+    name: str = "",
+    device: str = "pytest",
+) -> dict:
+    """Signs in through the real flow: mail a code, then validate it."""
+    name = name or email.split("@")[0]
+    client.post(
+        "/api/auth/v1/otp",
+        params={"email": email, "signup": True, "username": name},
+    )
+    _, code = client.outbox.sent[-1]
     res = client.post(
         "/api/auth/v1/otp/validate",
-        json={"email": email, "otp": "000000", "name": name},
+        json={"email": email, "otp": code, "name": name},
+        headers={"User-Agent": device},
     )
     assert res.status_code == 200, res.text
     return res.json()["data"]

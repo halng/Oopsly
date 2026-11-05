@@ -54,7 +54,7 @@ test.describe('Home screen (library shelves)', () => {
         await page.getByTestId('btn-create-shelf').click();
         await page.getByPlaceholder(/Computer Science/).fill('World History');
         await page
-            .getByPlaceholder(/Optional overview/)
+            .getByPlaceholder(/Overview/)
             .fill('Ancient to modern');
         await page.getByRole('button', { name: 'Save Shelf' }).click();
 

@@ -30,7 +30,7 @@ class AppConfigTest {
         assertNotNull(config.getJwt(), "jwt should be initialized by default");
         assertNotNull(config.getAuth(), "auth should be initialized by default");
 
-        assertEquals("http://localhost:9010/.well-known/pub.json", config.getJwt().getJwksUrl());
+        assertEquals("http://localhost:9010/api/auth/.well-known/pub.json", config.getJwt().getJwksUrl());
         assertEquals("http://localhost:9010/api/auth", config.getAuth().getBaseUrl());
         assertEquals("", config.getAuth().getInternalKey());
     }

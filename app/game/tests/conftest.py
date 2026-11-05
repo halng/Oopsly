@@ -53,7 +53,7 @@ def rsa_key():
 @pytest.fixture(autouse=True)
 def jwks_cache(monkeypatch, rsa_key):
     cache = JwksCache(
-        "http://auth.test/.well-known/pub.json",
+        "http://auth.test/api/auth/.well-known/pub.json",
         fetch=lambda url, timeout: {"keys": [jwk_for(rsa_key)]},
     )
     monkeypatch.setattr(auth_module, "jwks", cache)

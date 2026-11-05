@@ -27,7 +27,7 @@ describe('ShelfModal', () => {
         fireEvent.change(name, { target: { value: '  Biology  ' } });
         fireEvent.change(
             screen.getByPlaceholderText(
-                'Optional overview of subjects stored in this shelf...'
+                'Overview of subjects stored in this shelf...'
             ),
             { target: { value: '  Cells  ' } }
         );

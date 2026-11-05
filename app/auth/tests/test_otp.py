@@ -1,9 +1,9 @@
 from app.kv import MemoryKV
-from app.otp import MAX_ATTEMPTS, TEST_CODE, TTL_SECONDS, OtpService, OtpStatus
+from app.otp import MAX_ATTEMPTS, TTL_SECONDS, OtpService, OtpStatus
 
 
-def _service(kv=None, tests=("test@quizi.dev",)):
-    return OtpService(kv or MemoryKV(), list(tests))
+def _service(kv=None):
+    return OtpService(kv or MemoryKV())
 
 
 def test_issue_creates_a_six_digit_code_that_verifies_once():
@@ -30,15 +30,13 @@ def test_unknown_email_is_expired():
 
 def test_code_expires_with_its_ttl():
     now = [0.0]
-    otp = OtpService(MemoryKV(lambda: now[0]), [])
+    otp = OtpService(MemoryKV(lambda: now[0]))
     code = otp.issue("a@b.co")
     now[0] = TTL_SECONDS + 1
     assert otp.verify("a@b.co", code) is OtpStatus.EXPIRED
 
 
-def test_test_emails_bypass_with_the_fixed_code():
+def test_the_old_fixed_test_code_is_not_accepted():
     otp = _service()
-    assert otp.is_test_email("TEST@quizi.dev")
-    assert otp.verify("test@quizi.dev", TEST_CODE) is OtpStatus.VALID
-    assert not otp.is_test_email("a@b.co")
-    assert otp.verify("a@b.co", TEST_CODE) is OtpStatus.EXPIRED
+    otp.issue("test@quizi.dev")
+    assert otp.verify("test@quizi.dev", "000000") is OtpStatus.INVALID

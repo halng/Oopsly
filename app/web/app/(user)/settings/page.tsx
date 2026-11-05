@@ -69,21 +69,17 @@ export default function SettingsPage() {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
-        const updated = {
-            ...profile,
-            displayName,
-            email,
-            bio,
-            settings: {
-                ...profile?.settings,
-                dailyGoal,
-                targetRetentionRate: targetRetention,
-                soundEffectsEnabled: soundEffects,
-                allowReminders,
-                theme,
-            },
-        };
-        const res = await ApiService.updateProfile(updated);
+        // The profile endpoint only takes the name and bio; the switches and the
+        // goal go to the settings endpoint, or they are lost on the next load.
+        const profileRes = await ApiService.updateProfile({ displayName, bio });
+        const res = profileRes.isSuccess
+            ? await ApiService.updateSettings({
+                  dailyGoal,
+                  targetRetentionRate: targetRetention,
+                  soundEffectsEnabled: soundEffects,
+                  allowReminders,
+              })
+            : profileRes;
         if (res.isSuccess && res.data) {
             setProfile(res.data);
             setSavedSuccess(true);

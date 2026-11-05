@@ -10,7 +10,6 @@ OTP_KEY_PREFIX = "otp:"
 ATTEMPT_KEY_PREFIX = "otp_attempt:"
 TTL_SECONDS = 5 * 60
 MAX_ATTEMPTS = 3
-TEST_CODE = "000000"
 
 
 class OtpStatus(Enum):
@@ -26,12 +25,8 @@ def key(email: str) -> str:
 
 
 class OtpService:
-    def __init__(self, kv: KV, test_emails: list[str]):
+    def __init__(self, kv: KV):
         self._kv = kv
-        self._test_emails = [e.lower() for e in test_emails]
-
-    def is_test_email(self, email: str) -> bool:
-        return email.lower() in self._test_emails
 
     def issue(self, email: str) -> str:
         """Creates a 6-digit code, stores it with a fresh attempt counter."""
@@ -42,8 +37,6 @@ class OtpService:
         return code
 
     def verify(self, email: str, code: str) -> OtpStatus:
-        if self.is_test_email(email) and code == TEST_CODE:
-            return OtpStatus.VALID
         k = key(email)
         stored = self._kv.get(OTP_KEY_PREFIX + k)
         if stored is None:

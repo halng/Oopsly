@@ -218,9 +218,9 @@ export const ApiService = {
         }
     },
     // Auth
-    sendOtp: (email: string, signup = false) =>
+    sendOtp: (email: string, signup = false, username = '') =>
         fetchJson<null>(
-            `/v1/otp?email=${encodeURIComponent(email)}${signup ? '&signup=true' : ''}`,
+            `/v1/otp?email=${encodeURIComponent(email)}${signup ? '&signup=true' : ''}${username ? `&username=${encodeURIComponent(username)}` : ''}`,
             { method: 'POST' },
             authClient,
             // The login form shows this error inline.
@@ -339,7 +339,7 @@ export const ApiService = {
         ),
 
     updateSettings: (settings: Partial<UserSettings>) =>
-        fetchJson<UserSettings>(
+        fetchJson<UserProfile>(
             '/v1/user-settings',
             {
                 method: 'PATCH',

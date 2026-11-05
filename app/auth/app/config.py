@@ -3,6 +3,8 @@ from urllib.parse import quote
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+DEVELOP_ENVS = {"local", "dev", "develop", "development"}
+
 
 def _split(value: str) -> list[str]:
     return [part.strip() for part in value.split(",") if part.strip()]
@@ -11,7 +13,7 @@ def _split(value: str) -> list[str]:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    app_env: str = ""
+    app_env: str = "local"
     port: int = 9010
 
     database_url: str = ""
@@ -35,11 +37,10 @@ class Settings(BaseSettings):
     jwt_key_rotation_check_seconds: int = 3600
     jwt_key_cache_seconds: int = 60
 
-    test_emails: str = ""
-    # Name or ARN of the noti Lambda that sends emails. Leave empty to turn emails off.
+    # Name or ARN of the noti Lambda that sends emails.
     noti_function_name: str = ""
     noti_region: str = ""
-    internal_api_key: str = "Jtz+A7HbztjSTpiLI0FZXd2NffOnP2wm0KGbwfDnFAo="
+    internal_api_key: str = ""
 
     # Profile pictures: leave the bucket empty to turn avatar uploads off.
     avatar_bucket: str = ""
@@ -94,8 +95,9 @@ class Settings(BaseSettings):
         return max(self.access_ttl, self.refresh_ttl) + timedelta(hours=1)
 
     @property
-    def test_email_list(self) -> list[str]:
-        return _split(self.test_emails)
+    def is_develop(self) -> bool:
+        """Develop environments never send real email."""
+        return self.app_env.strip().lower() in DEVELOP_ENVS
 
     @property
     def origins(self) -> list[str]:

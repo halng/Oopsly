@@ -14,8 +14,10 @@ def test_parses_a_valid_event():
     assert (e.type, e.to, e.name) == ("welcome", "ann@example.com", "Ann")
 
 
-def test_name_falls_back_to_the_local_part():
-    assert events.parse(body(data={})).name == "ann"
+def test_the_name_comes_from_the_event_never_from_the_address():
+    assert events.parse(body(data={"name": " Bo "})).name == "Bo"
+    with pytest.raises(events.InvalidEvent):
+        events.parse(body(data={}))
 
 
 @pytest.mark.parametrize(
@@ -27,9 +29,11 @@ def test_name_falls_back_to_the_local_part():
         body(to="not-an-email"),
         body(to="a@b.com, c@d.com"),
         body(data="x"),
-        body(template="otp", data={}),
+        body(template="otp", data={"name": "Ann"}),
+        body(template="otp", data={"code": "123456"}),
         body(template="community_invite", data={"name": "Ann"}),
-        body(template="study_reminder", data={}),
+        body(template="study_reminder", data={"name": "Ann"}),
+        body(data={"name": "  "}),
     ],
 )
 def test_rejects_bad_events(raw):

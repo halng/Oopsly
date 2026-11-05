@@ -113,9 +113,7 @@ class ShelfServiceImplTest {
     @Test
     void create_doesNotSaveWhenDeckLimitIsReached() {
         when(currentUser.id()).thenReturn(currentUserId);
-        doThrow(new PlanLimitException("Deck limit reached"))
-                .when(planLimits)
-                .requireDeckSlot();
+        doThrow(new PlanLimitException("Deck limit reached")).when(planLimits).requireDeckSlot();
 
         assertThrows(PlanLimitException.class, () -> shelveService.create(shelfReq));
         verify(shelfRepository, never()).save(any(Shelf.class));

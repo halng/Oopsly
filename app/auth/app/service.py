@@ -1,6 +1,6 @@
 """Authentication, profile and subscription use cases."""
 
-import json
+import hashlib
 import logging
 import re
 import uuid
@@ -8,36 +8,46 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-import jsonpatch
 import jwt
-from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr, ValidationError
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app import avatars, domain, features, mail, reminder
 from app.envelope import ApiError, bad_request, not_found, unauthorized
-from app.kv import KV
-from app.models import Settings, Subscription, User
+from app.models import LoginTracker, Settings, Subscription, User
 from app.otp import OtpService, OtpStatus
 from app.tokens import TokenService
 
 logger = logging.getLogger(__name__)
 
 TOKEN_TYPE_BEARER = "Bearer"
-REFRESH_TOKEN_KEY_PREFIX = "refresh_token:"
-REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 3600
 MAX_LOOKUP_IDS = 200
 MAX_DISPLAY_NAME, MAX_BIO = 50, 255
 MIN_AGE, MAX_AGE = 1, 120
-MAX_NAME, MAX_PICTURE_URL = 255, 500
+MIN_DAILY_GOAL, MAX_DAILY_GOAL = 1, 1000
+MIN_RETENTION, MAX_RETENTION = 0.75, 0.97
+# Request key -> Settings column, for the on/off switches (both spellings are accepted).
+BOOL_SETTINGS = {
+    "soundEffects": "sound_effects_enabled",
+    "soundEffectsEnabled": "sound_effects_enabled",
+    "hapticFeedback": "haptic_feedback_enabled",
+    "hapticFeedbackEnabled": "haptic_feedback_enabled",
+    "autoPlayAudio": "auto_play_audio",
+    "allowReminders": "allow_reminders",
+}
+RETENTION_KEYS = ("targetRetentionRate", "fsrsTargetRetention")
+MAX_DEVICE = 255
 NO_ACCOUNT = "No account found for this email. Please sign up."
 
 EMAIL_RE = re.compile(r"^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")
-PATCHABLE_FIELDS = {"name", "displayName", "bio", "age", "pictureUrl"}
 
 
 def valid_email(email: str) -> bool:
     return bool(EMAIL_RE.match(email))
+
+
+def _hash(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
 
 
 def parse_uuid(value: str) -> uuid.UUID | None:
@@ -45,16 +55,6 @@ def parse_uuid(value: str) -> uuid.UUID | None:
         return uuid.UUID(value)
     except (ValueError, AttributeError, TypeError):
         return None
-
-
-class _Patchable(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
-
-    name: StrictStr
-    displayName: StrictStr
-    bio: StrictStr
-    age: StrictInt | None
-    pictureUrl: StrictStr
 
 
 def _auth_res(access: str, refresh: str) -> dict:
@@ -74,28 +74,10 @@ def _validate_profile_fields(display_name: str, bio: str, age: int | None) -> No
         raise bad_request("Age must not exceed 120")
 
 
-def _check_patch_paths(ops: Any) -> None:
-    failed = bad_request("Failed to apply JSON patch")
-    if not isinstance(ops, list) or not all(isinstance(op, dict) for op in ops):
-        raise failed
-    for op in ops:
-        for k in ("path", "from"):
-            if k not in op:
-                continue
-            path = op[k]
-            if (
-                not isinstance(path, str)
-                or not path.startswith("/")
-                or path[1:].split("/", 1)[0] not in PATCHABLE_FIELDS
-            ):
-                raise failed
-
-
 class AuthService:
     def __init__(
         self,
         db: Session,
-        kv: KV,
         tokens: TokenService,
         otp: OtpService,
         sender: mail.Sender,
@@ -104,7 +86,6 @@ class AuthService:
         avatar_storage: avatars.AvatarStorage | None = None,
     ):
         self.db = db
-        self.kv = kv
         self.tokens = tokens
         self.otp = otp
         self.sender = sender
@@ -114,34 +95,43 @@ class AuthService:
 
     # --- authentication ---
 
-    def send_otp(self, email: str, signup: bool = False) -> None:
-        """Creates and mails a code (skipped for configured test emails).
+    def send_otp(self, email: str, signup: bool = False, username: str = "") -> None:
+        """Creates and mails a code.
 
         Logging in with an address that has no account is refused with a 404 so the web
         app can send the person to sign up; `signup` skips that check (an existing
         account simply logs in).
         """
+
+        _username = username.strip()
         if not valid_email(email):
             raise bad_request("Invalid Email Format")
-        if self.otp.is_test_email(email):
-            return
-        if not signup and self._find_user_by_email(email) is None:
-            raise not_found(NO_ACCOUNT)
+
+        if signup:
+            if _username == "":
+                raise bad_request("Username must be provided when signing up.")
+
+        else:
+            user = self._find_user_by_email(email)
+            if user is None:
+                raise not_found(NO_ACCOUNT)
+
+            _username = user.name
+
         code = self.otp.issue(email)
+        self._send_async(
+            "OTP email", email, lambda: self.sender.send_otp(email, code, _username)
+        )
 
-        self._send_async("OTP email", email, lambda: self.sender.send_otp(email, code))
-
-    def verify_otp(self, email: str, code: str, name: str) -> dict:
+    def verify_otp(self, email: str, code: str, name: str, device: str = "") -> dict:
         """Validates the code and, on success, creates the user if needed."""
         if not valid_email(email) or len(code) < 6:
             raise bad_request("Invalid request body")
+        user = self._find_user_by_email(email)
+        name = name.strip()
         # An unknown address needs a name to sign up with. Refuse before the code is
         # used up, so the person can go back, sign up and still use it.
-        if (
-            not name.strip()
-            and not self.otp.is_test_email(email)
-            and self._find_user_by_email(email) is None
-        ):
+        if user is None and not name:
             raise not_found(NO_ACCOUNT)
         status = self.otp.verify(email, code)
         if status is not OtpStatus.VALID:
@@ -156,22 +146,20 @@ class AuthService:
                 "OTP has been invalidated due to too many failed attempts. "
                 "Try again after 5 minutes.",
             )
-        user = self._find_user_by_email(email)
         if user is None:
-            user = self._create_user(
-                email, name.strip()[:MAX_DISPLAY_NAME] or email.split("@", 1)[0]
-            )
+            user = self._create_user(email, name[:MAX_DISPLAY_NAME])
             logger.info("user %s signed up", mail.mask(email))
+            welcome_name = user.name
             self._send_async(
                 "welcome email",
                 email,
-                lambda: self.sender.send_welcome(email, user.name),
+                lambda: self.sender.send_welcome(email, welcome_name),
             )
         logger.info("user %s logged in", mail.mask(email))
-        return self._issue_tokens(user)
+        return self._open_session(user, device)
 
     def refresh(self, refresh_token: str, email: str) -> dict:
-        """Issues a new access token for a valid, stored refresh token."""
+        """Swaps a valid refresh token for a new access and refresh token pair."""
         if not refresh_token:
             raise bad_request("Refresh token is required")
         if not valid_email(email):
@@ -186,39 +174,72 @@ class AuthService:
         user = self._find_user_by_email(email)
         if user is None:
             raise unauthorized("User not found with email: " + email)
-        if self.kv.get(REFRESH_TOKEN_KEY_PREFIX + str(user.id)) != refresh_token:
+        session = self.db.scalars(
+            select(LoginTracker).where(
+                LoginTracker.user_id == user.id,
+                LoginTracker.hashed_token == _hash(refresh_token),
+            )
+        ).first()
+        now = self.now()
+        if session is None or domain.utc(session.expires_at) <= now:
             logger.warning("refresh rejected for %s: token revoked", mail.mask(email))
             raise unauthorized("Invalid refresh token")
-        access = self.tokens.access_token(
-            str(user.id), user.email, user.role, self._plan(user.id)
-        )
-        return _auth_res(access, refresh_token)
+        renewed = self.tokens.refresh_token(user.email)
+        session.hashed_token = _hash(renewed)
+        session.expires_at = now + self.tokens.refresh_ttl
+        self.db.commit()
+        return _auth_res(self._access_token(user, session.id), renewed)
 
-    def logout(self, user_id: str) -> None:
-        self.kv.delete(REFRESH_TOKEN_KEY_PREFIX + user_id)
+    def logout(self, user_id: str, session_id: str | None) -> None:
+        """Ends this device's session (every session for a token without one)."""
+        revoke = delete(LoginTracker).where(LoginTracker.user_id == parse_uuid(user_id))
+        if session_id:
+            revoke = revoke.where(LoginTracker.id == parse_uuid(session_id))
+        self.db.execute(revoke)
+        self.db.commit()
         logger.info("user %s logged out", user_id)
 
     def validate_token(self, user_id: str) -> None:
         """Confirms the token's user still exists."""
         self._current_user(user_id)
 
-    def _issue_tokens(self, user: User) -> dict:
-        access = self.tokens.access_token(
-            str(user.id), user.email, user.role, self._plan(user.id)
+    def _open_session(self, user: User, device: str) -> dict:
+        """Starts a session for this device and returns its first tokens."""
+        now = self.now()
+        self.db.execute(
+            delete(LoginTracker).where(
+                LoginTracker.user_id == user.id, LoginTracker.expires_at <= now
+            )
         )
         refresh = self.tokens.refresh_token(user.email)
-        self.kv.set(
-            REFRESH_TOKEN_KEY_PREFIX + str(user.id), refresh, REFRESH_TOKEN_TTL_SECONDS
+        session = LoginTracker(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            device=device[:MAX_DEVICE],
+            hashed_token=_hash(refresh),
+            created_at=now,
+            expires_at=now + self.tokens.refresh_ttl,
         )
-        return _auth_res(access, refresh)
+        self.db.add(session)
+        self.db.commit()
+        return _auth_res(self._access_token(user, session.id), refresh)
 
-    def _plan(self, user_id: uuid.UUID) -> str:
-        sub = self.db.get(Subscription, user_id)
-        if sub is None:
-            return domain.PLAN_FREE
+    def _access_token(self, user: User, session_id: uuid.UUID) -> str:
+        plan = self._effective_subscription(user.id)[0]
+        return self.tokens.access_token(
+            str(user.id), user.email, user.role, plan, str(session_id)
+        )
+
+    def _effective_subscription(
+        self, user_id: uuid.UUID | None
+    ) -> tuple[str, str, datetime | None]:
+        sub = self.db.get(Subscription, user_id) if user_id else None
         return domain.effective_subscription(
-            sub.plan, sub.status, sub.expires_at, self.now()
-        )[0]
+            sub.plan if sub else None,
+            sub.status if sub else None,
+            sub.expires_at if sub else None,
+            self.now(),
+        )
 
     # --- users ---
 
@@ -246,10 +267,14 @@ class AuthService:
         self.db.commit()
         return user
 
-    def _current_user(self, user_id: str) -> User:
+    def _find_user(self, user_id: str) -> User | None:
         parsed = parse_uuid(user_id)
         user = self.db.get(User, parsed) if parsed else None
-        if user is None or user.deleted:
+        return None if user is None or user.deleted else user
+
+    def _current_user(self, user_id: str) -> User:
+        user = self._find_user(user_id)
+        if user is None:
             raise unauthorized("User not found")
         return user
 
@@ -319,12 +344,12 @@ class AuthService:
                 "theme": st.theme,
                 "language": domain.language_code(st.language),
                 "dailyGoal": st.daily_goal,
-                "soundEffects": True,
-                "hapticFeedback": True,
-                "autoPlayAudio": True,
-                "fsrsTargetRetention": 0.95,
-                "targetRetentionRate": 0.95,
-                "allowReminders": True,
+                "soundEffects": st.sound_effects_enabled,
+                "hapticFeedback": st.haptic_feedback_enabled,
+                "autoPlayAudio": st.auto_play_audio,
+                "fsrsTargetRetention": st.target_retention_rate,
+                "targetRetentionRate": st.target_retention_rate,
+                "allowReminders": st.allow_reminders,
                 "isNewComer": st.is_new_comer,
             },
             "xp": 100,
@@ -346,24 +371,61 @@ class AuthService:
         return self.profile(user_id)
 
     def update_settings(self, user_id: str, req: dict) -> dict:
-        theme_in, language_in = req.get("theme"), req.get("language")
-        if not isinstance(theme_in, str) or not theme_in.strip():
-            raise bad_request("Theme cannot be blank")
-        if not isinstance(language_in, str) or not language_in.strip():
-            raise bad_request("Language cannot be blank")
-        if req.get("spaceConfig") is None:
-            raise bad_request("Space configuration cannot be null")
-        if req.get("studySchedule") is None:
-            raise bad_request("Study schedule cannot be null")
-        theme = domain.parse_theme(theme_in)
-        if theme is None:
-            raise bad_request("Invalid theme: " + theme_in)
-        language = domain.parse_language(language_in)
-        if language is None:
-            raise bad_request("Invalid language: " + language_in)
+        """Saves whichever settings the request carries and ignores the rest."""
+        changes: dict[str, Any] = {}
+        if "theme" in req:
+            theme = (
+                domain.parse_theme(req["theme"])
+                if isinstance(req["theme"], str)
+                else None
+            )
+            if theme is None:
+                raise bad_request("Invalid theme: " + str(req["theme"]))
+            changes["theme"] = theme
+        if "language" in req:
+            language = (
+                domain.parse_language(req["language"])
+                if isinstance(req["language"], str)
+                else None
+            )
+            if language is None:
+                raise bad_request("Invalid language: " + str(req["language"]))
+            changes["language"] = language
+        if "dailyGoal" in req:
+            goal = req["dailyGoal"]
+            if (
+                isinstance(goal, bool)
+                or not isinstance(goal, int)
+                or not MIN_DAILY_GOAL <= goal <= MAX_DAILY_GOAL
+            ):
+                raise bad_request(
+                    f"Daily goal must be between {MIN_DAILY_GOAL} and {MAX_DAILY_GOAL}"
+                )
+            changes["daily_goal"] = goal
+        for key, column in BOOL_SETTINGS.items():
+            if key in req:
+                if not isinstance(req[key], bool):
+                    raise bad_request(f"{key} must be true or false")
+                changes[column] = req[key]
+        for key in RETENTION_KEYS:
+            if key in req:
+                value = req[key]
+                if (
+                    isinstance(value, bool)
+                    or not isinstance(value, int | float)
+                    or not MIN_RETENTION <= value <= MAX_RETENTION
+                ):
+                    raise bad_request(
+                        f"{key} must be between {MIN_RETENTION} and {MAX_RETENTION}"
+                    )
+                changes["target_retention_rate"] = float(value)
+        if not changes:
+            raise bad_request("No settings to update")
         user = self._current_user(user_id)
         st = self._ensure_settings(user.id)
-        st.theme, st.language, st.updated_at = theme, language, self.now()
+        for field, value in changes.items():
+            setattr(st, field, value)
+        st.updated_at = self.now()
         self.db.commit()
         return self.profile(user_id)
 
@@ -379,33 +441,35 @@ class AuthService:
     ) -> None:
         """Emails the user a recurring calendar event for their study days."""
         ics = self.study_reminder_ics(days, time, timezone)
-        to = self._current_user(user_id).email
-
+        user = self._current_user(user_id)
+        to, name = user.email, user.name or ""
         self._send_async(
-            "study reminder", to, lambda: self.sender.send_study_reminder(to, ics)
+            "study reminder",
+            to,
+            lambda: self.sender.send_study_reminder(to, name, ics),
         )
 
     def notify_community_invite(
         self, user_id: str, community_name: str, inviter_name: str
     ) -> None:
         """Tells a user they were added to a community; unknown users are skipped."""
-        parsed = parse_uuid(user_id)
-        user = self.db.get(User, parsed) if parsed else None
-        if user is None or user.deleted:
+        user = self._find_user(user_id)
+        if user is None:
             return
+        to, name = user.email, user.name or ""
         self._send_async(
             "community invite",
-            user.email,
+            to,
             lambda: self.sender.send_community_invite(
-                user.email, user.name or "", community_name, inviter_name
+                to, name, community_name, inviter_name
             ),
         )
 
     def set_theme(self, user_id: str, theme: str) -> dict:
         """Remembers the visual theme the user picked, for every device they use."""
-        theme = theme.strip().lower()
-        if theme not in domain.THEME_IDS:
-            raise bad_request("Invalid theme: " + theme)
+        theme = domain.parse_theme(theme)
+        if theme is None:
+            raise bad_request("Invalid theme")
         user = self._current_user(user_id)
         st = self._ensure_settings(user.id)
         st.theme, st.updated_at = theme, self.now()
@@ -422,56 +486,6 @@ class AuthService:
         st.is_new_comer, st.updated_at = False, self.now()
         self.db.commit()
 
-    def patch_profile(self, user_id: str, raw_patch: bytes) -> dict:
-        failed = bad_request("Failed to apply JSON patch")
-        try:
-            ops = json.loads(raw_patch)
-        except ValueError:
-            raise failed from None
-        _check_patch_paths(ops)
-        user = self._current_user(user_id)
-        target = {
-            "name": user.name or "",
-            "displayName": user.display_name or "",
-            "bio": user.bio or "",
-            "age": user.age,
-            "pictureUrl": user.picture_url or "",
-        }
-        try:
-            patched = jsonpatch.JsonPatch(ops).apply(target)
-            fields = _Patchable.model_validate(patched)
-        except (jsonpatch.JsonPatchException, ValidationError, TypeError):
-            raise failed from None
-        try:
-            _validate_profile_fields(fields.displayName, fields.bio, fields.age)
-        except ApiError as exc:
-            raise bad_request("Validation failed: " + exc.message) from None
-        if len(fields.name) > MAX_NAME or len(fields.pictureUrl) > MAX_PICTURE_URL:
-            raise bad_request("Validation failed: value too long")
-        # Object keys are only ever set through confirm_avatar; a patch may keep the
-        # current one but must not point at someone else's picture.
-        if avatars.is_key(fields.pictureUrl) and fields.pictureUrl != (
-            user.picture_url or ""
-        ):
-            raise bad_request("Validation failed: invalid picture")
-        user.name, user.display_name, user.bio = (
-            fields.name,
-            fields.displayName,
-            fields.bio,
-        )
-        user.age, user.picture_url = fields.age, fields.pictureUrl
-        user.updated_at = self.now()
-        self.db.commit()
-        return {
-            "id": str(user.id),
-            "email": user.email,
-            "name": user.name,
-            "displayName": user.display_name,
-            "pictureUrl": self._picture(user.picture_url),
-            "bio": user.bio,
-            "age": user.age,
-        }
-
     # --- subscription ---
 
     @staticmethod
@@ -479,15 +493,9 @@ class AuthService:
         return {"plan": plan, "status": status, "expiresAt": expires_at}
 
     def subscription(self, user_id: str) -> dict:
-        parsed = parse_uuid(user_id)
-        sub = self.db.get(Subscription, parsed) if parsed else None
-        plan, status, expires_at = domain.effective_subscription(
-            sub.plan if sub else None,
-            sub.status if sub else None,
-            sub.expires_at if sub else None,
-            self.now(),
+        return self._subscription_view(
+            *self._effective_subscription(parse_uuid(user_id))
         )
-        return self._subscription_view(plan, status, expires_at)
 
     def features(self, user_id: str | None) -> dict:
         plan = self.subscription(user_id)["plan"] if user_id else None
