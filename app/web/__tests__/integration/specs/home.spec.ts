@@ -20,7 +20,7 @@ test.describe('Home screen (library shelves)', () => {
         ).toBeVisible();
 
         const [shelves] = await mock.requests('GET', `${API}/v1/shelves`);
-        expect(shelves.url).toContain('page=1&size=50');
+        expect(shelves.url).toContain('page=1&size=10');
         expect(shelves.headers.Authorization).toBe('Bearer access-jwt');
         expect(shelves.headers['X-Platform']).toBe('WEB');
         expect(await mock.unmatched()).toEqual([]);

@@ -149,4 +149,43 @@ describe('SubjectDetailsPage', () => {
         );
         expect(useToastStore.getState().toasts).toEqual([]);
     });
+
+    it('shows twenty cards per page and goes back to page one on a new search', async () => {
+        const cards = Array.from({ length: 25 }, (_, i) =>
+            card({ id: `c${i + 1}`, front: `Term ${i + 1}`, back: 'x' })
+        );
+        vi.mocked(ApiService.getSubjectCards).mockResolvedValue({
+            isSuccess: true,
+            data: {
+                entities: cards,
+                currentPage: 1,
+                totalItems: 25,
+                totalPages: 1,
+                hasNextPage: false,
+            },
+            message: '',
+            statusCode: 200,
+            timestamp: '',
+        });
+        render(<SubjectDetailsPage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('card-row-c1')).toBeInTheDocument()
+        );
+        expect(screen.getAllByTestId(/^card-row-/)).toHaveLength(20);
+        expect(screen.getByTestId('cards-pagination-status')).toHaveTextContent(
+            'Page 1 of 2'
+        );
+
+        fireEvent.click(screen.getByTestId('cards-pagination-next'));
+        expect(screen.getAllByTestId(/^card-row-/)).toHaveLength(5);
+        expect(screen.getByTestId('card-row-c25')).toBeInTheDocument();
+
+        fireEvent.change(screen.getByPlaceholderText('Search cards...'), {
+            target: { value: 'Term 2' },
+        });
+        expect(screen.getByTestId('card-row-c2')).toBeInTheDocument();
+        expect(
+            screen.queryByTestId('cards-pagination')
+        ).not.toBeInTheDocument();
+    });
 });

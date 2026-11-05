@@ -89,4 +89,32 @@ describe('TestSuiteDetailsPage', () => {
         fireEvent.click(screen.getByTestId('btn-bulk-add-questions'));
         expect(screen.getByTestId('import-modal')).toBeInTheDocument();
     });
+
+    it('shows twenty questions per page', async () => {
+        const many = Array.from({ length: 25 }, (_, i) => ({
+            ...question,
+            id: `q${i + 1}`,
+            text: `Question ${i + 1}`,
+        }));
+        vi.mocked(ApiService.getQuestions).mockResolvedValue({
+            isSuccess: true,
+            data: many,
+            message: '',
+            statusCode: 200,
+            timestamp: '',
+        });
+        render(<TestSuiteDetailsPage />);
+        await waitFor(() =>
+            expect(screen.getByText('Question 1')).toBeInTheDocument()
+        );
+        expect(screen.getByTestId('question-list').children).toHaveLength(20);
+        expect(
+            screen.getByTestId('questions-pagination-status')
+        ).toHaveTextContent('Page 1 of 2');
+
+        fireEvent.click(screen.getByTestId('questions-pagination-next'));
+        expect(screen.getByTestId('question-list').children).toHaveLength(5);
+        expect(screen.getByText('Question 25')).toBeInTheDocument();
+        expect(screen.queryByText('Question 1')).not.toBeInTheDocument();
+    });
 });

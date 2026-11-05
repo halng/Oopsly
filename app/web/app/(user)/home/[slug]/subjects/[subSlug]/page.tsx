@@ -22,6 +22,9 @@ import { formatInterval } from '@/utils/fsrs';
 import { ImportCardsModal, CssProgressBar } from '@/components/shared';
 import { useSubjectContext } from '@/hooks/useSubjectContext';
 import { useFeature } from '@/store/Features';
+import Pagination from '@/components/shared/Pagination';
+import { usePagination } from '@/hooks/usePagination';
+import { ITEM_PAGE_SIZE } from '@/utils/pagination';
 
 export default function SubjectDetailsPage() {
     const router = useRouter();
@@ -49,6 +52,21 @@ export default function SubjectDetailsPage() {
         null
     );
     const [editingCard, setEditingCard] = useState<Card | null>(null);
+
+    const filteredCards = cards.filter(
+        (c) =>
+            c.front.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            c.back.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            c.tags.some((t) =>
+                t.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+    );
+    const {
+        page: cardPage,
+        totalPages: cardPages,
+        pageItems: cardRows,
+        setPage: setCardPage,
+    } = usePagination(filteredCards, ITEM_PAGE_SIZE, searchQuery);
 
     const subjectId = currentSubject?.id;
     const shelfId = currentShelf?.id;
@@ -210,14 +228,6 @@ export default function SubjectDetailsPage() {
     const isEmpty = cards.length === 0;
     const emptyHint = isEmpty ? 'Add cards to start practising' : undefined;
 
-    const filteredCards = cards.filter(
-        (c) =>
-            c.front.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.back.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.tags.some((t) =>
-                t.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-    );
     const masteredCards = cards.filter(
         (c) => c.stability >= 0.8 && c.intervalDays > 21
     ).length;
@@ -447,7 +457,7 @@ export default function SubjectDetailsPage() {
                             No cards yet. Add one to start studying.
                         </p>
                     ) : (
-                        filteredCards.map((card) => (
+                        cardRows.map((card) => (
                             <div
                                 key={card.id}
                                 data-testid={`card-row-${card.id}`}
@@ -539,6 +549,12 @@ export default function SubjectDetailsPage() {
                             </div>
                         ))
                     )}
+                    <Pagination
+                        page={cardPage}
+                        totalPages={cardPages}
+                        onChange={setCardPage}
+                        testId="cards-pagination"
+                    />
                 </div>
             </div>
 

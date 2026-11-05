@@ -11,6 +11,9 @@ import {
     Users,
 } from 'lucide-react';
 import { TestSuite } from '@/types';
+import Pagination from '@/components/shared/Pagination';
+import { usePagination } from '@/hooks/usePagination';
+import { LIST_PAGE_SIZE } from '@/utils/pagination';
 
 interface TestSuiteListProps {
     testSuites: TestSuite[];
@@ -31,6 +34,10 @@ export default function TestSuiteList({
     onEdit,
     onDelete,
 }: Readonly<TestSuiteListProps>) {
+    const { page, totalPages, pageItems, setPage } = usePagination(
+        testSuites,
+        LIST_PAGE_SIZE
+    );
     return (
         <section data-testid="shelf-test-suites" className="space-y-3">
             <div className="flex items-center justify-between gap-3">
@@ -58,7 +65,7 @@ export default function TestSuiteList({
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {testSuites.map((suite) => (
+                    {pageItems.map((suite) => (
                         <div
                             key={suite.id}
                             data-testid={`test-suite-card-${suite.id}`}
@@ -155,6 +162,12 @@ export default function TestSuiteList({
                     ))}
                 </div>
             )}
+            <Pagination
+                page={page}
+                totalPages={totalPages}
+                onChange={setPage}
+                testId="test-suites-pagination"
+            />
         </section>
     );
 }

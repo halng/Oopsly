@@ -1,5 +1,11 @@
 'use client';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
     ArrowLeft,
@@ -33,6 +39,8 @@ import {
 } from '@/components/shared';
 import SubjectCard from '@/components/home/SubjectCard';
 import TestSuiteList from '@/components/tests/TestSuiteList';
+import Pagination from '@/components/shared/Pagination';
+import { LIST_PAGE_SIZE } from '@/utils/pagination';
 import { loadShelfTestSuites } from '@/hooks/useTestSuiteContext';
 import { resolveShelfBySlug } from '@/hooks/useSubjectContext';
 import { useSubjectStore, useUserProfileStore } from '@/store';
@@ -58,6 +66,12 @@ export default function ShelfPage() {
     const setProfile = useUserProfileStore((state) => state.setProfile);
     const [shelf, setShelf] = useState<Shelf | null>(null);
     const [subjects, setSubjects] = useState<Subject[]>([]);
+    const [subjectPage, setSubjectPage] = useState(1);
+    const [subjectPages, setSubjectPages] = useState(1);
+    const [totalSubjects, setTotalSubjects] = useState(0);
+    // The page a reload (after an edit or a delete) should come back to.
+    const subjectPageRef = useRef(1);
+    const loadedSlugRef = useRef(slug);
     const [isLoading, setIsLoading] = useState(true);
     const [subjectSearchQuery, setSubjectSearchQuery] = useState('');
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -80,6 +94,43 @@ export default function ShelfPage() {
         null
     );
 
+    // One page of subjects. Past the last page (after a delete) it steps back.
+    const loadSubjectsPage = useCallback(
+        async (shelfId: string, pageNumber: number) => {
+            let current = pageNumber;
+            for (;;) {
+                const res = await ApiService.getShelfSubjects(
+                    shelfId,
+                    current,
+                    LIST_PAGE_SIZE
+                );
+                if (!res.isSuccess || !res.data) {
+                    setSubjects([]);
+                    return;
+                }
+                const { entities, totalPages, totalItems } = res.data;
+                if (entities.length === 0 && current > 1) {
+                    current -= 1;
+                    continue;
+                }
+                subjectPageRef.current = current;
+                setSubjectPage(current);
+                setSubjects(entities);
+                setSubjectPages(totalPages ?? 1);
+                setTotalSubjects(totalItems ?? entities.length);
+                useSubjectStore.getState().setSubjects(shelfId, entities);
+                return;
+            }
+        },
+        []
+    );
+
+    const goToSubjectPage = (pageNumber: number) => {
+        subjectPageRef.current = pageNumber;
+        setSubjectPage(pageNumber);
+        if (shelf) void loadSubjectsPage(shelf.id, pageNumber);
+    };
+
     const loadData = useCallback(async () => {
         setIsLoading(true);
 
@@ -91,24 +142,21 @@ export default function ShelfPage() {
         }
 
         setShelf(filteredShelf);
+        if (loadedSlugRef.current !== slug) {
+            // A different shelf starts on its first page.
+            loadedSlugRef.current = slug;
+            subjectPageRef.current = 1;
+        }
         try {
-            const [subjectsRes, suites] = await Promise.all([
-                ApiService.getShelfSubjects(filteredShelf.id),
+            const [, suites] = await Promise.all([
+                loadSubjectsPage(filteredShelf.id, subjectPageRef.current),
                 loadShelfTestSuites(filteredShelf.id),
             ]);
-            if (subjectsRes.isSuccess && subjectsRes.data) {
-                setSubjects(subjectsRes.data.entities);
-                useSubjectStore
-                    .getState()
-                    .setSubjects(filteredShelf.id, subjectsRes.data.entities);
-            } else {
-                setSubjects([]);
-            }
             setTestSuites(suites);
         } finally {
             setIsLoading(false);
         }
-    }, [setProfile, slug]);
+    }, [setProfile, slug, loadSubjectsPage]);
 
     useEffect(() => {
         loadData();
@@ -198,11 +246,11 @@ export default function ShelfPage() {
 
     const stats = useMemo(() => {
         return {
-            subjectCount: subjects.length,
+            subjectCount: totalSubjects || subjects.length,
             cardCount: subjects.reduce((acc, s) => acc + (s.cardCount || 0), 0),
             dueCount: subjects.reduce((acc, s) => acc + (s.dueCount || 0), 0),
         };
-    }, [subjects]);
+    }, [subjects, totalSubjects]);
 
     const dailyGoal = profile?.settings?.dailyGoal || 20;
     const progress = Math.min((reviewedToday / dailyGoal) * 100, 100);
@@ -454,6 +502,12 @@ export default function ShelfPage() {
                     ))}
                 </div>
             )}
+            <Pagination
+                page={subjectPage}
+                totalPages={subjectPages}
+                onChange={goToSubjectPage}
+                testId="subjects-pagination"
+            />
 
             <TestSuiteList
                 testSuites={testSuites}

@@ -146,4 +146,75 @@ describe('ShelfPage', () => {
             ).toBeInTheDocument()
         );
     });
+
+    it('pages the subjects ten at a time from the server', async () => {
+        const other = {
+            ...subject,
+            id: 'sub2',
+            name: 'Chemistry',
+            slug: 'chem',
+        };
+        vi.mocked(ApiService.getShelfSubjects).mockImplementation(
+            async (_shelfId: string, pageNumber = 1) =>
+                ({
+                    isSuccess: true,
+                    data: {
+                        entities: [pageNumber === 1 ? subject : other],
+                        currentPage: pageNumber,
+                        totalItems: 11,
+                        totalPages: 2,
+                        hasNextPage: pageNumber === 1,
+                    },
+                    message: '',
+                    statusCode: 200,
+                    timestamp: '',
+                }) as never
+        );
+        render(<ShelfPage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('subject-card-sub1')).toBeInTheDocument()
+        );
+        expect(ApiService.getShelfSubjects).toHaveBeenCalledWith('s1', 1, 10);
+
+        fireEvent.click(screen.getByTestId('subjects-pagination-next'));
+        await waitFor(() =>
+            expect(screen.getByTestId('subject-card-sub2')).toBeInTheDocument()
+        );
+        expect(ApiService.getShelfSubjects).toHaveBeenLastCalledWith(
+            's1',
+            2,
+            10
+        );
+        expect(
+            screen.queryByTestId('subject-card-sub1')
+        ).not.toBeInTheDocument();
+        // moving between pages does not blank the page behind a loader
+        expect(screen.getByTestId('shelf-page')).toBeInTheDocument();
+    });
+
+    it('shows ten test suites per page', async () => {
+        const suites = Array.from({ length: 12 }, (_, i) => ({
+            ...testSuite,
+            id: `ts${i + 1}`,
+            slug: `suite-${i + 1}`,
+            title: `Suite ${i + 1}`,
+        }));
+        vi.mocked(ApiService.getTestSuites).mockResolvedValue({
+            isSuccess: true,
+            data: suites,
+            message: '',
+            statusCode: 200,
+            timestamp: '',
+        });
+        render(<ShelfPage />);
+        await waitFor(() =>
+            expect(
+                screen.getByTestId('test-suite-card-ts1')
+            ).toBeInTheDocument()
+        );
+        expect(screen.getAllByTestId(/^test-suite-card-/)).toHaveLength(10);
+        fireEvent.click(screen.getByTestId('test-suites-pagination-next'));
+        expect(screen.getAllByTestId(/^test-suite-card-/)).toHaveLength(2);
+        expect(screen.getByTestId('test-suite-card-ts11')).toBeInTheDocument();
+    });
 });

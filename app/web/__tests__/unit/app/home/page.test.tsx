@@ -207,4 +207,50 @@ describe('HomePage', () => {
         fireEvent.click(screen.getByTestId('btn-join-game'));
         expect(screen.getByText('Close join game')).toBeInTheDocument();
     });
+
+    it('asks for ten shelves at a time and pages through them', async () => {
+        const second = { ...shelf, id: 's2', name: 'Maths', slug: 'maths' };
+        vi.mocked(ApiService.getShelves).mockImplementation(
+            async (pageNumber: number) =>
+                ({
+                    isSuccess: true,
+                    data: {
+                        entities: [pageNumber === 1 ? shelf : second],
+                        currentPage: pageNumber,
+                        totalItems: 11,
+                        totalPages: 2,
+                        hasNextPage: pageNumber === 1,
+                    },
+                    message: '',
+                    statusCode: 200,
+                    timestamp: '',
+                }) as never
+        );
+        render(<HomePage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('shelf-card-s1')).toBeInTheDocument()
+        );
+        expect(ApiService.getShelves).toHaveBeenCalledWith(1, 10);
+        expect(
+            screen.getByTestId('shelves-pagination-status')
+        ).toHaveTextContent('Page 1 of 2');
+
+        fireEvent.click(screen.getByTestId('shelves-pagination-next'));
+        await waitFor(() =>
+            expect(screen.getByTestId('shelf-card-s2')).toBeInTheDocument()
+        );
+        expect(ApiService.getShelves).toHaveBeenLastCalledWith(2, 10);
+        expect(screen.queryByTestId('shelf-card-s1')).not.toBeInTheDocument();
+        expect(screen.getByTestId('shelves-pagination-next')).toBeDisabled();
+    });
+
+    it('has no page controls when the shelves fit on one page', async () => {
+        render(<HomePage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('shelf-card-s1')).toBeInTheDocument()
+        );
+        expect(
+            screen.queryByTestId('shelves-pagination')
+        ).not.toBeInTheDocument();
+    });
 });

@@ -36,11 +36,12 @@ import {
 } from '@/components/shared';
 import { OfflineSyncBanner, WelcomeTourModal } from '@/components';
 import SubjectCard from '@/components/home/SubjectCard';
+import Pagination from '@/components/shared/Pagination';
+import { LIST_PAGE_SIZE } from '@/utils/pagination';
 import { useRouter } from 'next/navigation';
 import { useUserProfileStore, useShelfStore } from '@/store';
 import { useFeaturesStore } from '@/store/Features';
 
-const MAX_ITEMS_PER_PAGE = 50;
 const DECK_LIMITS: Record<string, { max: number; name: string }> = {
     FREE: { max: 10, name: 'Free' },
     PRO: { max: 50, name: 'Pro' },
@@ -62,8 +63,8 @@ const PRESET_ICONS = {
 
 export const HomePage: React.FC = () => {
     const router = useRouter();
-    // TODO: will handle next page later
     const [currentPage, setCurrentPage] = useState<number>(1);
+    const [totalPages, setTotalPages] = useState(1);
     const profile = useUserProfileStore((state) => state.profile);
     const setProfile = useUserProfileStore((state) => state.setProfile);
     const [shelves, setShelves] = useState<Shelf[]>([]);
@@ -104,20 +105,24 @@ export const HomePage: React.FC = () => {
         try {
             const shelvesRes = await ApiService.getShelves(
                 currentPage,
-                MAX_ITEMS_PER_PAGE
+                LIST_PAGE_SIZE
             );
             if (shelvesRes.isSuccess && shelvesRes.data) {
                 setTotalShelves(shelvesRes.data.totalItems);
+                setTotalPages(shelvesRes.data.totalPages ?? 1);
                 const fetchedShelves = shelvesRes.data.entities;
                 if (fetchedShelves && fetchedShelves.length > 0) {
                     setShelves(fetchedShelves);
                     useShelfStore.getState().setShelves(fetchedShelves);
+                } else if (currentPage > 1) {
+                    // The last shelf of this page was deleted: go back one page.
+                    setCurrentPage(currentPage - 1);
                 }
             }
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [currentPage]);
 
     useEffect(() => {
         syncManager.init();
@@ -511,6 +516,12 @@ export const HomePage: React.FC = () => {
                         })}
                     </div>
                 )}
+                <Pagination
+                    page={currentPage}
+                    totalPages={totalPages}
+                    onChange={setCurrentPage}
+                    testId="shelves-pagination"
+                />
                 {planLimits && shelfLimitReached && (
                     <p role="status" className="text-sm text-amber-700">
                         You have reached the {planLimits.name} plan limit of{' '}
