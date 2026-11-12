@@ -380,31 +380,6 @@ class ApiSweep(SequentialTaskSet):
                 },
             )
 
-    @task
-    def run_test_suite(self):
-        if self.suite:
-            self.call(
-                "POST",
-                "/v1/shelves/{shelveId}/test-suites/{id}/run",
-                path={**self.lib, "id": self.suite},
-            )
-
-    @task
-    def auto_generate_test_suite(self):
-        if self.subject:
-            self.call(
-                "POST",
-                "/v1/shelves/{shelveId}/test-suites/auto-generate",
-                path=self.lib,
-                expect=(201,),
-                params={"subjectId": self.subject},
-            )
-
-    @task
-    def test_suite_cards(self):
-        if self.suite:
-            self.call("GET", "/test-suites/{testSuiteId}/cards", path={"testSuiteId": self.suite})
-
     # ------------------------------------------------------------ live quiz room
 
     @task
