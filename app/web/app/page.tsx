@@ -18,6 +18,7 @@ import {
     Wand2,
     X,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SHOW_PRICING } from '@/utils/pricing';
 
@@ -230,9 +231,9 @@ const LandingPage = () => {
                     <a href="#faq" className="hover:text-stone-900">
                         FAQ
                     </a>
-                    <a href="/decks" className="hover:text-stone-900">
+                    <Link href="/decks" className="hover:text-stone-900">
                         Decks
-                    </a>
+                    </Link>
                 </nav>
                 <div className="flex items-center gap-4">
                     <button
@@ -667,9 +668,9 @@ const LandingPage = () => {
                     <a href="#faq" className="hover:text-stone-900">
                         FAQ
                     </a>
-                    <a href="/decks" className="hover:text-stone-900">
+                    <Link href="/decks" className="hover:text-stone-900">
                         Decks
-                    </a>
+                    </Link>
                 </nav>
                 <p className="text-stone-500 flex items-center justify-center gap-1">
                     Made with{' '}
