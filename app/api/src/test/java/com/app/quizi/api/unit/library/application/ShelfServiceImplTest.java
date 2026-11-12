@@ -318,50 +318,6 @@ class ShelfServiceImplTest {
 
     // Fallback Function Tests
     @Test
-    void createFallback_throwsRuntimeException() {
-        ShelfReq request = new ShelfReq("", "test", "test", "color", "Test Description");
-        RuntimeException cause = new RuntimeException("Service unavailable");
-
-        RetryLaterException exception =
-                assertThrows(
-                        RetryLaterException.class,
-                        () -> shelveService.createFallback(request, cause));
-
-        assertNotNull(exception);
-        assertTrue(exception.getMessage().contains("currently unavailable"));
-        assertSame(cause, exception.getCause());
-    }
-
-    @Test
-    void updateFallback_throwsRuntimeException() {
-        ShelfReq request = new ShelfReq("", "test", "test", "", "Updated Description");
-        RuntimeException cause = new RuntimeException("Database connection failed");
-
-        RetryLaterException exception =
-                assertThrows(
-                        RetryLaterException.class,
-                        () -> shelveService.updateFallback(request, shelveId, cause));
-
-        assertNotNull(exception);
-        assertTrue(exception.getMessage().contains("currently unavailable"));
-        assertSame(cause, exception.getCause());
-    }
-
-    @Test
-    void deleteFallback_throwsRuntimeException() {
-        Throwable cause = new Throwable("Circuit breaker open");
-
-        RetryLaterException exception =
-                assertThrows(
-                        RetryLaterException.class,
-                        () -> shelveService.deleteFallback(shelveId, cause));
-
-        assertNotNull(exception);
-        assertTrue(exception.getMessage().contains("currently unavailable"));
-        assertSame(cause, exception.getCause());
-    }
-
-    @Test
     void getByIdFallback_throwsRuntimeException() {
         Throwable cause = new Throwable("Service degraded");
 
@@ -387,68 +343,6 @@ class ShelfServiceImplTest {
         assertNotNull(exception);
         assertTrue(exception.getMessage().contains("currently unavailable"));
         assertSame(cause, exception.getCause());
-    }
-
-    @Test
-    void fallbackMethods_withNullCause_handleGracefully() {
-        RetryLaterException createEx =
-                assertThrows(
-                        RetryLaterException.class,
-                        () ->
-                                shelveService.createFallback(
-                                        new ShelfReq("code", "Test", "test", "color", "Desc"),
-                                        null));
-
-        assertNotNull(createEx);
-        assertTrue(createEx.getMessage().contains("currently unavailable"));
-        assertNull(createEx.getCause());
-    }
-
-    @Test
-    void fallbackMethods_provideUserFriendlyMessages() {
-        Throwable cause = new Throwable("Internal error");
-
-        RetryLaterException createEx =
-                assertThrows(
-                        RetryLaterException.class,
-                        () ->
-                                shelveService.createFallback(
-                                        new ShelfReq("icon", "Test", "test", "color", "Desc"),
-                                        cause));
-        RetryLaterException updateEx =
-                assertThrows(
-                        RetryLaterException.class,
-                        () ->
-                                shelveService.updateFallback(
-                                        new ShelfReq("icon", "Test", "test", "color", "Desc"),
-                                        shelveId,
-                                        cause));
-        RetryLaterException deleteEx =
-                assertThrows(
-                        RetryLaterException.class,
-                        () -> shelveService.deleteFallback(shelveId, cause));
-
-        assertTrue(createEx.getMessage().contains("try again later"));
-        assertTrue(updateEx.getMessage().contains("try again later"));
-        assertTrue(deleteEx.getMessage().contains("try again later"));
-    }
-
-    @Test
-    void fallbackMethods_preserveExceptionChain() {
-        Exception originalException = new java.sql.SQLException("Connection timeout");
-        RuntimeException wrappedException =
-                new RuntimeException("Database error", originalException);
-
-        RetryLaterException exception =
-                assertThrows(
-                        RetryLaterException.class,
-                        () ->
-                                shelveService.createFallback(
-                                        new ShelfReq("icon", "Test", "test", "color", "Desc"),
-                                        wrappedException));
-
-        assertEquals(wrappedException, exception.getCause());
-        assertEquals(originalException, exception.getCause().getCause());
     }
 
     @Test

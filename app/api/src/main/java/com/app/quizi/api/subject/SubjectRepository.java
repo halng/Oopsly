@@ -70,4 +70,14 @@ public interface SubjectRepository extends JpaRepository<Subject, UUID> {
                     + " FROM Subject s WHERE s.shelf IN :shelves AND s.deleted = false"
                     + " GROUP BY s.shelf.id")
     List<ShelfCount> countByShelves(@Param("shelves") List<Shelf> shelves);
+
+    /** Public decks with at least one card, newest first, for the crawlable public pages. */
+    @Query(
+            "SELECT s FROM Subject s WHERE s.isPublic = true AND s.deleted = false AND EXISTS"
+                    + " (SELECT 1 FROM cards c WHERE c.subject = s AND c.deleted = false)"
+                    + " ORDER BY s.updatedAt DESC, s.id ASC")
+    Page<Subject> findAllPublicListed(Pageable pageable);
+
+    @Query("SELECT s FROM Subject s WHERE s.id = ?1 AND s.isPublic = true AND s.deleted = false")
+    Optional<Subject> findPublicById(UUID id);
 }

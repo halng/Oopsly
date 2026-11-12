@@ -32,6 +32,8 @@ public interface ShelfRepository extends JpaRepository<Shelf, UUID> {
     @Query("SELECT COUNT(e) FROM Shelf e WHERE e.userId = ?1 AND e.deleted = false")
     long countByUserId(UUID userId);
 
-    @Query("SELECT e FROM Shelf e WHERE e.userId = ?1 AND e.deleted = false")
+    @Query(
+            "SELECT e FROM Shelf e WHERE e.userId = ?1 AND e.deleted = false ORDER BY e.createdAt"
+                    + " ASC, e.id ASC")
     Page<Shelf> findAllByUserId(UUID userId, Pageable pageable);
 }

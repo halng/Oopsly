@@ -47,13 +47,7 @@ class SubjectControllerTest {
     @BeforeEach
     void setUp() {
         subjectReq =
-                new SubjectReq(
-                        "Test Subject",
-                        "Test Description",
-                        "tag1,tag2",
-                        "#FFFFFF",
-                        true,
-                        "test-subject");
+                new SubjectReq("Test Subject", "Test Description", "#FFFFFF", true, "test-subject");
         shelveId = UUID.randomUUID();
         subjectId = UUID.randomUUID();
         expectedResponse = ApiRes.success("Success");

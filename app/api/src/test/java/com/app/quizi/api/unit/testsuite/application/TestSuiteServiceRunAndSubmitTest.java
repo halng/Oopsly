@@ -19,12 +19,8 @@ package com.app.quizi.api.unit.testsuite.application;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
-import com.app.quizi.api.card.Card;
-import com.app.quizi.api.card.CardRepository;
-import com.app.quizi.api.card.DifficultyLevel;
 import com.app.quizi.api.progress.UserProgress;
 import com.app.quizi.api.progress.UserProgressService;
 import com.app.quizi.api.shared.application.vm.ApiRes;
@@ -36,32 +32,23 @@ import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shared.util.GamificationRules;
 import com.app.quizi.api.shelf.Shelf;
 import com.app.quizi.api.shelf.ShelfRepository;
-import com.app.quizi.api.subject.Subject;
-import com.app.quizi.api.subject.SubjectRepository;
 import com.app.quizi.api.testsuite.application.QuestionMetadataMapper;
 import com.app.quizi.api.testsuite.application.TestSuiteServiceImpl;
 import com.app.quizi.api.testsuite.application.vm.QuestionBreakdown;
 import com.app.quizi.api.testsuite.application.vm.TestAttemptRes;
-import com.app.quizi.api.testsuite.application.vm.TestRunCardRes;
 import com.app.quizi.api.testsuite.application.vm.TestSubmissionReq;
 import com.app.quizi.api.testsuite.application.vm.TestSubmissionRes;
-import com.app.quizi.api.testsuite.application.vm.TestSuiteRes;
 import com.app.quizi.api.testsuite.domain.QuestionEntity;
 import com.app.quizi.api.testsuite.domain.QuestionType;
-import com.app.quizi.api.testsuite.domain.SelectionMode;
 import com.app.quizi.api.testsuite.domain.TestSuiteEntity;
-import com.app.quizi.api.testsuite.domain.TestSuiteSelectionPayload;
 import com.app.quizi.api.testsuite.infrastructure.QuestionRepository;
 import com.app.quizi.api.testsuite.infrastructure.TestSuiteRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -69,14 +56,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
-/** Covers the run / submit / auto-generate flows of the test suite service. */
+/** Covers attempt and submit flows of the test suite service. */
 @ExtendWith(MockitoExtension.class)
 class TestSuiteServiceRunAndSubmitTest {
 
     @Mock private TestSuiteRepository testSuiteRepository;
     @Mock private ShelfRepository shelfRepository;
-    @Mock private SubjectRepository subjectRepository;
-    @Mock private CardRepository cardRepository;
     @Mock private QuestionRepository questionRepository;
     @Mock private CurrentUser currentUser;
     @Mock private UserProgressService userProgressService;
@@ -87,7 +72,6 @@ class TestSuiteServiceRunAndSubmitTest {
     private UUID currentUserId;
     private UserProgress progress;
     private Shelf shelve;
-    private Subject subject;
     private TestSuiteEntity suite;
     private UUID shelveId;
     private UUID testSuiteId;
@@ -98,8 +82,6 @@ class TestSuiteServiceRunAndSubmitTest {
                 new TestSuiteServiceImpl(
                         testSuiteRepository,
                         shelfRepository,
-                        subjectRepository,
-                        cardRepository,
                         questionRepository,
                         new QuestionMetadataMapper(new ObjectMapper()),
                         currentUser,
@@ -117,32 +99,14 @@ class TestSuiteServiceRunAndSubmitTest {
         shelve.setId(shelveId);
         shelve.setUserId(currentUserId);
 
-        subject = new Subject();
-        subject.setId(UUID.randomUUID());
-        subject.setName("Algebra");
-        subject.setShelf(shelve);
-
         suite = TestSuiteEntity.builder().title("Chapter 1").isActive(true).shelf(shelve).build();
         suite.setId(testSuiteId);
-        suite.setSubjects(new ArrayList<>(List.of(subject)));
     }
 
     private void currentUserOwnsShelve() {
         when(currentUser.id()).thenReturn(currentUserId);
         when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
-    }
-
-    private Card card(String front, String back) {
-        Card card = new Card();
-        card.setId(UUID.randomUUID());
-        card.setSubject(subject);
-        card.setFront(front);
-        card.setBack(back);
-        card.setDifficultyLevel(DifficultyLevel.GOOD);
-        card.setNextPracticeTime(Instant.now());
-        card.setNumberOfPractice(2);
-        return card;
     }
 
     private QuestionEntity question(String text, String metadata) {
@@ -168,147 +132,6 @@ class TestSuiteServiceRunAndSubmitTest {
     }
 
     // -------------------------------------------------------------------- run
-
-    @Test
-    void run_withoutLinkedSubjectsReturnsEmptySelection() {
-        suite.setSubjects(new ArrayList<>());
-        currentUserOwnsShelve();
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-
-        ApiRes response = service.run(shelveId, testSuiteId);
-
-        assertTrue(response.getBody().isSuccess());
-        assertTrue(this.<List<TestRunCardRes>>dataOf(response).isEmpty());
-        verifyNoInteractions(cardRepository);
-    }
-
-    @Test
-    void run_withNullSubjectsReturnsEmptySelection() {
-        suite.setSubjects(null);
-        currentUserOwnsShelve();
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-
-        assertTrue(this.<List<TestRunCardRes>>dataOf(service.run(shelveId, testSuiteId)).isEmpty());
-    }
-
-    @Test
-    void run_withoutMatchingCardsReturnsEmptySelection() {
-        currentUserOwnsShelve();
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(cardRepository.findAllBySubjectInAndDeletedFalse(anyList())).thenReturn(List.of());
-
-        assertTrue(this.<List<TestRunCardRes>>dataOf(service.run(shelveId, testSuiteId)).isEmpty());
-    }
-
-    @Test
-    void run_defaultSelectionReturnsEveryCard() {
-        Card card = card("2+2", "4");
-        currentUserOwnsShelve();
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(cardRepository.findAllBySubjectInAndDeletedFalse(anyList())).thenReturn(List.of(card));
-
-        List<TestRunCardRes> cards = dataOf(service.run(shelveId, testSuiteId));
-
-        assertEquals(1, cards.size());
-        assertEquals(card.getId(), cards.get(0).id());
-        assertEquals("2+2", cards.get(0).front());
-        assertEquals("4", cards.get(0).back());
-        assertEquals(subject.getId(), cards.get(0).subjectId());
-        assertEquals(DifficultyLevel.GOOD, cards.get(0).difficultyLevel());
-    }
-
-    @Test
-    void run_dueOnlySelectionQueriesDueCards() {
-        suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.DUE_ONLY, null, null));
-        currentUserOwnsShelve();
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(cardRepository.findDueBySubjects(anyList(), any(Instant.class)))
-                .thenReturn(List.of(card("due", "yes")));
-
-        assertEquals(
-                1, this.<List<TestRunCardRes>>dataOf(service.run(shelveId, testSuiteId)).size());
-        verify(cardRepository).findDueBySubjects(anyList(), any(Instant.class));
-    }
-
-    @Test
-    void run_randomSelectionAppliesTheDefaultSampleSize() {
-        List<Card> pool =
-                IntStream.range(0, TestSuiteSelectionPayload.RANDOM_DEFAULT_LIMIT + 5)
-                        .mapToObj(i -> card("q" + i, "a" + i))
-                        .toList();
-        suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.RANDOM, null, null));
-        currentUserOwnsShelve();
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(cardRepository.findAllBySubjectInAndDeletedFalse(anyList())).thenReturn(pool);
-
-        assertEquals(
-                TestSuiteSelectionPayload.RANDOM_DEFAULT_LIMIT,
-                this.<List<TestRunCardRes>>dataOf(service.run(shelveId, testSuiteId)).size());
-    }
-
-    @Test
-    void run_explicitLimitCapsTheSelection() {
-        List<Card> pool = IntStream.range(0, 10).mapToObj(i -> card("q" + i, "a" + i)).toList();
-        suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.ALL, 3, Boolean.TRUE));
-        currentUserOwnsShelve();
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(cardRepository.findAllBySubjectInAndDeletedFalse(anyList())).thenReturn(pool);
-
-        assertEquals(
-                3, this.<List<TestRunCardRes>>dataOf(service.run(shelveId, testSuiteId)).size());
-    }
-
-    @Test
-    void run_negativeLimitIsClampedToOneCard() {
-        List<Card> pool = IntStream.range(0, 4).mapToObj(i -> card("q" + i, "a" + i)).toList();
-        suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.RANDOM, -5, Boolean.FALSE));
-        currentUserOwnsShelve();
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(cardRepository.findAllBySubjectInAndDeletedFalse(anyList())).thenReturn(pool);
-
-        assertEquals(
-                1, this.<List<TestRunCardRes>>dataOf(service.run(shelveId, testSuiteId)).size());
-    }
-
-    @Test
-    void run_selectionWithNullModeFallsBackToAll() {
-        suite.setSelection(new TestSuiteSelectionPayload(null, null, null));
-        currentUserOwnsShelve();
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(cardRepository.findAllBySubjectInAndDeletedFalse(anyList()))
-                .thenReturn(List.of(card("q", "a")));
-
-        assertEquals(
-                1, this.<List<TestRunCardRes>>dataOf(service.run(shelveId, testSuiteId)).size());
-    }
-
-    @Test
-    void run_unknownSuiteThrowsNotFound() {
-        currentUserOwnsShelve();
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> service.run(shelveId, testSuiteId));
-    }
-
-    @Test
-    void run_shelveOfAnotherUserThrowsNotFound() {
-        when(currentUser.id()).thenReturn(currentUserId);
-        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
-                .thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> service.run(shelveId, testSuiteId));
-        verifyNoInteractions(testSuiteRepository);
-    }
 
     // ---------------------------------------------------------------- attempt
 
@@ -591,49 +414,7 @@ class TestSuiteServiceRunAndSubmitTest {
 
     // ----------------------------------------------------------- autoGenerate
 
-    @Test
-    void autoGenerate_createsASuiteForTheSubject() {
-        currentUserOwnsShelve();
-        when(subjectRepository.findByIdAndShelve(subject.getId(), shelve))
-                .thenReturn(Optional.of(subject));
-        when(testSuiteRepository.save(any(TestSuiteEntity.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-
-        ApiRes response = service.autoGenerate(shelveId, subject.getId(), 10);
-
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        TestSuiteRes result = dataOf(response);
-        assertEquals("Auto: Algebra", result.title());
-        assertTrue(result.isActive());
-        assertEquals("auto-algebra", result.slug());
-    }
-
-    @Test
-    void autoGenerate_unknownSubjectThrowsNotFound() {
-        UUID unknownSubject = UUID.randomUUID();
-        currentUserOwnsShelve();
-        when(subjectRepository.findByIdAndShelve(unknownSubject, shelve))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                NotFoundException.class, () -> service.autoGenerate(shelveId, unknownSubject, 5));
-    }
-
     // -------------------------------------------------------------- fallbacks
-
-    @Test
-    void runFallback_wrapsInfrastructureFailures() {
-        assertThrows(
-                RetryLaterException.class,
-                () -> service.runFallback(shelveId, testSuiteId, new IllegalStateException("db")));
-    }
-
-    @Test
-    void runFallback_preservesNotFound() {
-        assertThrows(
-                NotFoundException.class,
-                () -> service.runFallback(shelveId, testSuiteId, new NotFoundException("gone")));
-    }
 
     @Test
     void submitFallback_wrapsInfrastructureFailures() {

@@ -156,6 +156,35 @@ const FAQ = [
         : []),
 ];
 
+const JSON_LD = {
+    '@context': 'https://schema.org',
+    '@graph': [
+        {
+            '@type': 'WebSite',
+            name: 'Quizi',
+            url: 'https://www.quizi.tech/',
+        },
+        {
+            '@type': 'SoftwareApplication',
+            name: 'Quizi',
+            applicationCategory: 'EducationalApplication',
+            operatingSystem: 'Web',
+            url: 'https://www.quizi.tech/',
+            description:
+                'Flashcards with FSRS spaced repetition, test suites and live quizzes.',
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        },
+        {
+            '@type': 'FAQPage',
+            mainEntity: FAQ.map(([question, answer]) => ({
+                '@type': 'Question',
+                name: question,
+                acceptedAnswer: { '@type': 'Answer', text: answer },
+            })),
+        },
+    ],
+};
+
 const LandingPage = () => {
     const router = useRouter();
     const [yearly, setYearly] = useState(true);
@@ -167,6 +196,12 @@ const LandingPage = () => {
 
     return (
         <div className="min-h-screen bg-[#FDFBF7] font-sans selection:bg-[color-mix(in_srgb,var(--theme-accent)_20%,transparent)] selection:text-[var(--theme-secondary)] flex flex-col">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify(JSON_LD).replace(/</g, '\\u003c'),
+                }}
+            />
             {/* Header */}
             <header className="px-6 py-4 flex items-center justify-between border-b border-stone-200/50 bg-white/50 backdrop-blur-md sticky top-0 z-50">
                 <div className="flex items-center gap-2">
@@ -194,6 +229,9 @@ const LandingPage = () => {
                     )}
                     <a href="#faq" className="hover:text-stone-900">
                         FAQ
+                    </a>
+                    <a href="/decks" className="hover:text-stone-900">
+                        Decks
                     </a>
                 </nav>
                 <div className="flex items-center gap-4">
@@ -628,6 +666,9 @@ const LandingPage = () => {
                     )}
                     <a href="#faq" className="hover:text-stone-900">
                         FAQ
+                    </a>
+                    <a href="/decks" className="hover:text-stone-900">
+                        Decks
                     </a>
                 </nav>
                 <p className="text-stone-500 flex items-center justify-center gap-1">

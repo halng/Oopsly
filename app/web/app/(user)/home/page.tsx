@@ -163,8 +163,15 @@ export const HomePage: React.FC = () => {
         icon: string;
     }) => {
         if (editingShelf) {
-            const res = await ApiService.updateShelf(editingShelf.id, data);
-            if (res.isSuccess) toast.success('Shelf updated');
+            // The slug stays, so the shelf keeps its address.
+            const res = await ApiService.updateShelf(editingShelf.id, {
+                ...data,
+                slug: editingShelf.slug,
+            });
+            if (res.isSuccess) {
+                toast.success('Shelf updated');
+                await loadShelvesAndSubjects();
+            }
         } else {
             if (shelfLimitReached) {
                 toast.error(

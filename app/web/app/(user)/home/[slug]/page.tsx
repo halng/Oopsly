@@ -43,7 +43,7 @@ import Pagination from '@/components/shared/Pagination';
 import { LIST_PAGE_SIZE } from '@/utils/pagination';
 import { loadShelfTestSuites } from '@/hooks/useTestSuiteContext';
 import { resolveShelfBySlug } from '@/hooks/useSubjectContext';
-import { useSubjectStore, useUserProfileStore } from '@/store';
+import { useShelfStore, useSubjectStore, useUserProfileStore } from '@/store';
 
 const PRESET_ICONS = {
     folder: <Folder className="w-5 h-5" />,
@@ -86,6 +86,9 @@ export default function ShelfPage() {
         null
     );
     const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
+    const [testSuitePage, setTestSuitePage] = useState(1);
+    const [testSuitePages, setTestSuitePages] = useState(1);
+    const testSuitePageRef = useRef(1);
     const [hostingTestSuite, setHostingTestSuite] = useState<TestSuite | null>(
         null
     );
@@ -125,6 +128,36 @@ export default function ShelfPage() {
         []
     );
 
+    // One page of test suites. Past the last page (after a delete) it steps back.
+    const loadSuitesPage = useCallback(
+        async (shelfId: string, pageNumber: number) => {
+            let current = pageNumber;
+            for (;;) {
+                const result = await loadShelfTestSuites(
+                    shelfId,
+                    current,
+                    LIST_PAGE_SIZE
+                );
+                if (result.suites.length === 0 && current > 1) {
+                    current -= 1;
+                    continue;
+                }
+                testSuitePageRef.current = current;
+                setTestSuitePage(current);
+                setTestSuites(result.suites);
+                setTestSuitePages(result.totalPages);
+                return;
+            }
+        },
+        []
+    );
+
+    const goToTestSuitePage = (pageNumber: number) => {
+        testSuitePageRef.current = pageNumber;
+        setTestSuitePage(pageNumber);
+        if (shelf) void loadSuitesPage(shelf.id, pageNumber);
+    };
+
     const goToSubjectPage = (pageNumber: number) => {
         subjectPageRef.current = pageNumber;
         setSubjectPage(pageNumber);
@@ -146,17 +179,17 @@ export default function ShelfPage() {
             // A different shelf starts on its first page.
             loadedSlugRef.current = slug;
             subjectPageRef.current = 1;
+            testSuitePageRef.current = 1;
         }
         try {
-            const [, suites] = await Promise.all([
+            await Promise.all([
                 loadSubjectsPage(filteredShelf.id, subjectPageRef.current),
-                loadShelfTestSuites(filteredShelf.id),
+                loadSuitesPage(filteredShelf.id, testSuitePageRef.current),
             ]);
-            setTestSuites(suites);
         } finally {
             setIsLoading(false);
         }
-    }, [setProfile, slug, loadSubjectsPage]);
+    }, [setProfile, slug, loadSubjectsPage, loadSuitesPage]);
 
     useEffect(() => {
         loadData();
@@ -169,8 +202,31 @@ export default function ShelfPage() {
         icon?: string;
     }) => {
         if (!shelf) return;
-        const res = await ApiService.updateShelf(shelf.id, data);
-        if (res.isSuccess) toast.success('Shelf updated');
+        // The API replaces the whole shelf, so unchanged fields are sent as they were,
+        // and the slug stays so the address does not change.
+        const next = {
+            name: data.name,
+            slug: shelf.slug,
+            description: data.description ?? shelf.description,
+            icon: data.icon ?? shelf.icon,
+            color: data.color ?? shelf.color,
+        };
+        const res = await ApiService.updateShelf(shelf.id, next);
+        if (res.isSuccess) {
+            toast.success('Shelf updated');
+            // The page reloads the shelf from the store, so update it there too.
+            const stored = useShelfStore.getState().shelves;
+            if (stored) {
+                useShelfStore
+                    .getState()
+                    .setShelves(
+                        stored.map((s) =>
+                            s.id === shelf.id ? { ...s, ...next } : s
+                        )
+                    );
+            }
+            setShelf({ ...shelf, ...next });
+        }
         loadData();
     };
 
@@ -206,7 +262,7 @@ export default function ShelfPage() {
         toast.success(
             editingTestSuite ? 'Test suite updated' : 'Test suite created'
         );
-        setTestSuites(await loadShelfTestSuites(shelf.id));
+        await loadSuitesPage(shelf.id, testSuitePageRef.current);
     };
 
     const handleDeleteTestSuite = async (suite: TestSuite) => {
@@ -218,7 +274,7 @@ export default function ShelfPage() {
         const res = await ApiService.deleteTestSuite(shelf.id, suite.id);
         if (res.isSuccess) {
             toast.success('Test suite deleted', suite.title);
-            setTestSuites(await loadShelfTestSuites(shelf.id));
+            await loadSuitesPage(shelf.id, testSuitePageRef.current);
         }
     };
 
@@ -511,6 +567,9 @@ export default function ShelfPage() {
 
             <TestSuiteList
                 testSuites={testSuites}
+                page={testSuitePage}
+                totalPages={testSuitePages}
+                onPageChange={goToTestSuitePage}
                 onCreate={() => {
                     setEditingTestSuite(null);
                     setIsTestSuiteModalOpen(true);

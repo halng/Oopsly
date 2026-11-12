@@ -139,18 +139,27 @@ test.describe('Shelf screen', () => {
         await expect
             .poll(
                 async () =>
-                    (await mock.requests('PATCH', `${API}/v1/shelves/shelf-1`))
+                    (await mock.requests('PUT', `${API}/v1/shelves/shelf-1`))
                         .length
             )
             .toBe(1);
-        const [patch] = await mock.requests(
-            'PATCH',
-            `${API}/v1/shelves/shelf-1`
-        );
-        expect(patch.json).toMatchObject({
+        const [put] = await mock.requests('PUT', `${API}/v1/shelves/shelf-1`);
+        // A full replacement that keeps the address, and never the delete call.
+        expect(put.json).toEqual({
             name: 'Life Sciences',
+            slug: 'biology',
             description: 'Cells and genetics',
+            icon: 'book',
+            color: '#10b981',
         });
+        expect(
+            await mock.requests('PATCH', `${API}/v1/shelves/shelf-1`)
+        ).toHaveLength(0);
+        // The renamed shelf is still there under the same address.
+        await expect(page).toHaveURL(/\/home\/biology$/);
+        await expect(page.getByTestId('shelf-page')).toContainText(
+            'Life Sciences'
+        );
     });
 
     test('edits a subject from its menu', async ({ page, mock }) => {
@@ -303,7 +312,7 @@ test.describe('Shelf screen', () => {
         await mock.override({
             method: 'GET',
             path: SUITES,
-            body: envelope([]),
+            body: envelope(paged([])),
         });
         await page.goto('/home/biology');
         await expect(page.getByTestId('shelf-test-suites-empty')).toBeVisible();

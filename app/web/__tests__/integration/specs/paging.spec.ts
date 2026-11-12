@@ -96,24 +96,42 @@ test.describe('Paging', () => {
         await expect(page.getByTestId('shelf-page')).toBeVisible();
     });
 
-    test('test suites: ten per page', async ({ page, mock }) => {
-        const suites = Array.from({ length: 12 }, (_, i) => ({
+    test('test suites: ten per page, fetched from the server', async ({
+        page,
+        mock,
+    }) => {
+        const quiz = (n: number) => ({
             ...testSuite,
-            id: `suite-${i + 1}`,
-            slug: `quiz-${i + 1}`,
-            title: `Quiz ${i + 1}`,
-        }));
+            id: `suite-${n}`,
+            slug: `quiz-${n}`,
+            title: `Quiz ${n}`,
+        });
         await mock.override({
             method: 'GET',
             path: SUITES,
-            body: envelope(suites),
+            query: { page: '1', size: '10' },
+            body: serverPage([quiz(1)], 1, 2),
+        });
+        await mock.override({
+            method: 'GET',
+            path: SUITES,
+            query: { page: '2', size: '10' },
+            body: serverPage([quiz(11)], 2, 2),
         });
         await page.goto('/home/biology');
         await expect(page.getByTestId('test-suite-card-suite-1')).toBeVisible();
-        await expect(page.getByTestId(/^test-suite-card-/)).toHaveCount(10);
+        await expect(
+            page.getByTestId('test-suites-pagination-status')
+        ).toHaveText('Page 1 of 2');
 
         await page.getByTestId('test-suites-pagination-next').click();
-        await expect(page.getByTestId(/^test-suite-card-/)).toHaveCount(2);
+        await expect(
+            page.getByTestId('test-suite-card-suite-11')
+        ).toBeVisible();
+        await expect(page.getByTestId('test-suite-card-suite-1')).toHaveCount(
+            0
+        );
+        await expect(page.getByTestId('shelf-page')).toBeVisible();
     });
 
     test('cards: twenty per page', async ({ page, mock }) => {

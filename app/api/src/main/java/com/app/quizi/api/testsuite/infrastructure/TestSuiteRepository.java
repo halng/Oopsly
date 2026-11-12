@@ -40,6 +40,15 @@ public interface TestSuiteRepository extends JpaRepository<TestSuiteEntity, UUID
                     + " t.createdAt, t.id")
     List<TestSuiteEntity> findAllByShelve(Shelf shelve);
 
+    @Query(
+            value =
+                    "SELECT t FROM TestSuiteEntity t WHERE t.shelf = ?1 AND t.deleted = false"
+                            + " ORDER BY t.createdAt, t.id",
+            countQuery =
+                    "SELECT COUNT(t) FROM TestSuiteEntity t WHERE t.shelf = ?1 AND t.deleted ="
+                            + " false")
+    Page<TestSuiteEntity> findAllByShelve(Shelf shelve, Pageable pageable);
+
     @Query("SELECT COUNT(t) FROM TestSuiteEntity t WHERE t.shelf = ?1 AND t.deleted = false")
     long countByShelf(Shelf shelve);
 
@@ -70,11 +79,4 @@ public interface TestSuiteRepository extends JpaRepository<TestSuiteEntity, UUID
             "SELECT COUNT(c) > 0 FROM TestSuiteEntity c WHERE c.clonedFromId = :sourceId AND"
                     + " c.deleted = false AND c.shelf.userId = :userId")
     boolean hasCloneOf(@Param("sourceId") UUID sourceId, @Param("userId") UUID userId);
-
-    // TODO(ai): used by the card-based preset run.
-    @Query(
-            "SELECT DISTINCT t FROM TestSuiteEntity t LEFT JOIN FETCH t.subjects WHERE t.id = :id"
-                    + " AND t.shelf = :shelf AND t.deleted = false")
-    Optional<TestSuiteEntity> findByIdAndShelveWithSubjects(
-            @Param("id") UUID id, @Param("shelf") Shelf shelf);
 }

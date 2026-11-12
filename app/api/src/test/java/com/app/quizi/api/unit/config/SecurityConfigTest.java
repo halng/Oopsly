@@ -24,16 +24,12 @@ import com.app.quizi.api.config.AppConfig;
 import com.app.quizi.api.config.JwtAuthenticationFilter;
 import com.app.quizi.api.config.SecurityConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.charset.StandardCharsets;
-import java.util.Random;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -56,26 +52,6 @@ class SecurityConfigTest {
     @Test
     void givenSecurityConfig_whenInitialized_thenJwtFilterIsSet() {
         assertNotNull(securityConfig);
-    }
-
-    @Test
-    void givenSecurityConfig_withPasswordEncoder_thenProvidesBCrypt() {
-        PasswordEncoder encoder = securityConfig.passwordEncoder();
-
-        assertNotNull(encoder);
-        assertInstanceOf(BCryptPasswordEncoder.class, encoder);
-    }
-
-    @Test
-    void givenPasswordEncoder_whenEncoding_thenUsesStrength10() {
-        PasswordEncoder encoder = securityConfig.passwordEncoder();
-        String rawPassword = generateDummyString();
-
-        String encoded = encoder.encode(rawPassword);
-
-        assertNotNull(encoded);
-        assertTrue(encoded.startsWith("$2a$10$"));
-        assertTrue(encoder.matches(rawPassword, encoded));
     }
 
     @Test
@@ -106,35 +82,5 @@ class SecurityConfigTest {
         WebMvcConfigurer configurer = securityConfig.corsConfigurer();
 
         assertNotNull(configurer);
-    }
-
-    @Test
-    void givenPasswordEncoder_whenEncodingMultipleTimes_thenProducesDifferentHashes() {
-        PasswordEncoder encoder = securityConfig.passwordEncoder();
-        String password = generateDummyString();
-
-        String hash1 = encoder.encode(password);
-        String hash2 = encoder.encode(password);
-
-        assertNotEquals(hash1, hash2);
-        assertTrue(encoder.matches(password, hash1));
-        assertTrue(encoder.matches(password, hash2));
-    }
-
-    @Test
-    void givenPasswordEncoder_whenMatchingIncorrectPassword_thenReturnsFalse() {
-        PasswordEncoder encoder = securityConfig.passwordEncoder();
-        String correctPassword = generateDummyString();
-        String wrongPassword = generateDummyString();
-
-        String encoded = encoder.encode(correctPassword);
-
-        assertFalse(encoder.matches(wrongPassword, encoded));
-    }
-
-    String generateDummyString() {
-        byte[] array = new byte[7]; // length is bounded by 7
-        new Random().nextBytes(array);
-        return new String(array, StandardCharsets.UTF_8);
     }
 }

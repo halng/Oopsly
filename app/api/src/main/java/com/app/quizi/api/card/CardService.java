@@ -20,11 +20,8 @@ import com.app.quizi.api.card.vm.CardItemReq;
 import com.app.quizi.api.card.vm.CardReq;
 import com.app.quizi.api.card.vm.UpdateDifficultyReq;
 import com.app.quizi.api.shared.application.vm.ApiRes;
-import com.app.quizi.api.subject.Subject;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import org.apache.commons.lang3.tuple.Pair;
 
 public interface CardService {
     ApiRes create(UUID shelfId, UUID subjectId, CardReq request);
@@ -37,13 +34,7 @@ public interface CardService {
 
     ApiRes getAllCardsBySubject(UUID shelfId, UUID subjectId, int page, int size);
 
-    ApiRes getCardsByTestSuite(UUID testSuiteId);
-
-    Instant calculateNextPracticeTime(DifficultyLevel difficultyLevel);
-
     ApiRes updateCard(UUID shelfId, UUID subjectId, UUID cardId, CardItemReq request);
-
-    Pair<Integer, Double> getShortPracticeStats(Subject subject);
 
     /**
      * Due review cards (capped by {@code limit}) followed by never-reviewed cards (capped by {@code

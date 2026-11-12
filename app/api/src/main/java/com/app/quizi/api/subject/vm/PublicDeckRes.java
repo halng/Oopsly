@@ -14,11 +14,20 @@
  *    limitations under the License.
  */
 
-package com.app.quizi.api.testsuite.domain;
+package com.app.quizi.api.subject.vm;
 
-/** How cards are selected when building a test run. */
-public enum SelectionMode {
-    ALL,
-    DUE_ONLY,
-    RANDOM
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+/** A public deck as shown on the crawlable pages: no owner and no study progress. */
+public record PublicDeckRes(
+        UUID id,
+        String name,
+        String description,
+        long totalCards,
+        Instant updatedAt,
+        List<PublicCardRes> cards) {
+
+    public record PublicCardRes(String front, String back) {}
 }

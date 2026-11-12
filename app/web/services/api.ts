@@ -398,14 +398,25 @@ export const ApiService = {
         });
     },
 
-    updateShelf: (id: string, data: Partial<Shelf>) =>
-        fetchJson<Shelf>(`/v1/shelves/${id}`, {
-            method: 'PATCH',
-            body: JSON.stringify(data),
+    // PUT replaces the shelf, so every field is required (the API rejects a partial body).
+    updateShelf: (
+        id: string,
+        data: Pick<Shelf, 'name' | 'slug' | 'description' | 'icon' | 'color'>
+    ) =>
+        fetchJson<null>(`/v1/shelves/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                name: data.name,
+                slug: data.slug,
+                description: data.description,
+                icon: data.icon,
+                color: data.color,
+            }),
         }),
 
+    // On the API a PATCH of the shelf itself is the soft delete (shelf, subjects and cards).
     deleteShelf: (id: string) =>
-        fetchJson<Shelf>(`/v1/shelves/${id}/delete`, {
+        fetchJson<null>(`/v1/shelves/${id}`, {
             method: 'PATCH',
         }),
 
@@ -842,8 +853,10 @@ export const ApiService = {
         ),
 
     // Test Suites (shelf level)
-    getTestSuites: (shelfId: string) =>
-        fetchJson<TestSuite[]>(`/v1/shelves/${shelfId}/test-suites`),
+    getTestSuites: (shelfId: string, page: number = 1, size: number = 10) =>
+        fetchJson<PaginatedResponse<TestSuite>>(
+            `/v1/shelves/${shelfId}/test-suites?page=${page}&size=${size}`
+        ),
 
     createTestSuite: (shelfId: string, data: TestSuiteInput) =>
         fetchJson<TestSuite>(`/v1/shelves/${shelfId}/test-suites`, {

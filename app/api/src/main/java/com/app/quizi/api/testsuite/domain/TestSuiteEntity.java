@@ -18,14 +18,11 @@ package com.app.quizi.api.testsuite.domain;
 
 import com.app.quizi.api.shared.domain.Audit;
 import com.app.quizi.api.shelf.Shelf;
-import com.app.quizi.api.subject.Subject;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
 import java.util.UUID;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
@@ -54,10 +51,6 @@ public class TestSuiteEntity extends Audit {
 
     private Integer highestScore;
 
-    // TODO(ai): card-based presets (selection + subjects) are kept for the AI integration.
-    @JdbcTypeCode(SqlTypes.JSON)
-    private TestSuiteSelectionPayload selection;
-
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shelf_id", nullable = false)
@@ -65,11 +58,4 @@ public class TestSuiteEntity extends Audit {
 
     @OneToMany(mappedBy = "testSuite", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuestionEntity> questions;
-
-    @ManyToMany
-    @JoinTable(
-            name = "test_suite_subjects",
-            joinColumns = @JoinColumn(name = "test_suite_id"),
-            inverseJoinColumns = @JoinColumn(name = "subject_id"))
-    private List<Subject> subjects;
 }

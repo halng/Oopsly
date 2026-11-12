@@ -333,7 +333,9 @@ class ApiSweep(SequentialTaskSet):
     @task
     def list_test_suites(self):
         if self.shelf:
-            self.call("GET", "/v1/shelves/{shelveId}/test-suites", path=self.lib)
+            self.call(
+                "GET", "/v1/shelves/{shelveId}/test-suites", path=self.lib, params=PAGE
+            )
 
     @task
     def get_test_suite(self):

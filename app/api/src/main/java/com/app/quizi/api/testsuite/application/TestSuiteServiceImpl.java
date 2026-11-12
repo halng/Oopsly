@@ -16,8 +16,6 @@
 
 package com.app.quizi.api.testsuite.application;
 
-import com.app.quizi.api.card.Card;
-import com.app.quizi.api.card.CardRepository;
 import com.app.quizi.api.progress.UserProgressService;
 import com.app.quizi.api.shared.application.vm.ApiRes;
 import com.app.quizi.api.shared.application.vm.PagingRes;
@@ -33,11 +31,8 @@ import com.app.quizi.api.shared.util.GamificationRules;
 import com.app.quizi.api.shared.util.StringUtils;
 import com.app.quizi.api.shelf.Shelf;
 import com.app.quizi.api.shelf.ShelfRepository;
-import com.app.quizi.api.subject.Subject;
-import com.app.quizi.api.subject.SubjectRepository;
 import com.app.quizi.api.testsuite.application.vm.QuestionBreakdown;
 import com.app.quizi.api.testsuite.application.vm.TestAttemptRes;
-import com.app.quizi.api.testsuite.application.vm.TestRunCardRes;
 import com.app.quizi.api.testsuite.application.vm.TestSubmissionReq;
 import com.app.quizi.api.testsuite.application.vm.TestSubmissionRes;
 import com.app.quizi.api.testsuite.application.vm.TestSuiteReq;
@@ -45,21 +40,16 @@ import com.app.quizi.api.testsuite.application.vm.TestSuiteRes;
 import com.app.quizi.api.testsuite.domain.QuestionEntity;
 import com.app.quizi.api.testsuite.domain.QuestionMetadata;
 import com.app.quizi.api.testsuite.domain.QuestionType;
-import com.app.quizi.api.testsuite.domain.SelectionMode;
 import com.app.quizi.api.testsuite.domain.TestSuiteEntity;
-import com.app.quizi.api.testsuite.domain.TestSuiteSelectionPayload;
 import com.app.quizi.api.testsuite.infrastructure.QuestionRepository;
 import com.app.quizi.api.testsuite.infrastructure.TestSuiteRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -69,6 +59,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -81,8 +72,6 @@ public class TestSuiteServiceImpl implements TestSuiteService {
 
     private final TestSuiteRepository testSuiteRepository;
     private final ShelfRepository shelfRepository;
-    private final SubjectRepository subjectRepository;
-    private final CardRepository cardRepository;
     private final QuestionRepository questionRepository;
     private final QuestionMetadataMapper metadataMapper;
     private final CurrentUser currentUser;
@@ -153,13 +142,30 @@ public class TestSuiteServiceImpl implements TestSuiteService {
     @CircuitBreaker(
             name = "testSuiteServiceCircuitBreaker",
             fallbackMethod = "getAllByShelveFallback")
-    public ApiRes getAllByShelve(UUID shelveId) {
-        log.info("Fetching all test suites for shelve {}", shelveId);
+    public ApiRes getAllByShelve(UUID shelveId, int page, int size) {
+        log.info(
+                "Fetching test suites for shelve {} with page: {} and size: {}",
+                shelveId,
+                page,
+                size);
+        int queryPage = page - 1; // Adjust for zero-based indexing
+        if (queryPage < 0) {
+            throw new ValidationException("Page number must be greater than 0");
+        }
         Shelf shelve = this.findShelveByIdAndUser(shelveId);
-        List<TestSuiteEntity> testSuites = testSuiteRepository.findAllByShelve(shelve);
-        List<TestSuiteRes> responses = testSuites.stream().map(this::toViewModel).toList();
+        Pageable pageable = PageRequest.of(queryPage, size);
+        Page<TestSuiteEntity> pageData = testSuiteRepository.findAllByShelve(shelve, pageable);
+        List<TestSuiteRes> responses =
+                pageData.getContent().stream().map(this::toViewModel).toList();
 
-        return ApiRes.success("Test suites fetched successfully", responses);
+        PagingRes<TestSuiteRes> pagingRes =
+                new PagingRes<>(
+                        responses,
+                        pageable.getPageNumber(),
+                        pageData.getTotalElements(),
+                        pageData.getTotalPages(),
+                        pageData.hasNext());
+        return ApiRes.success("Test suites fetched successfully", pagingRes);
     }
 
     @Override
@@ -193,67 +199,6 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         return ApiRes.success(
                 "Test attempt ready",
                 new TestAttemptRes(suite.getId(), suite.getTitle(), timeLimitSeconds, questions));
-    }
-
-    @Override
-    @CircuitBreaker(name = "testSuiteServiceCircuitBreaker", fallbackMethod = "runFallback")
-    @Transactional
-    public ApiRes run(UUID shelveId, UUID testSuiteId) {
-        log.info("Running test preset {} under shelve {}", testSuiteId, shelveId);
-        Shelf shelve = findShelveByIdAndUser(shelveId);
-        TestSuiteEntity suite =
-                testSuiteRepository
-                        .findByIdAndShelveWithSubjects(testSuiteId, shelve)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Test suite not found with id: " + testSuiteId));
-
-        List<Subject> subjects = suite.getSubjects();
-        if (subjects == null || subjects.isEmpty()) {
-            return ApiRes.success(
-                    "No subjects linked to this preset; add subjectIds when creating or updating.",
-                    Collections.emptyList());
-        }
-
-        TestSuiteSelectionPayload effective = resolveSelection(suite);
-        List<Card> pool =
-                switch (effective.getMode()) {
-                    case ALL -> cardRepository.findAllBySubjectInAndDeletedFalse(subjects);
-                    case DUE_ONLY -> cardRepository.findDueBySubjects(subjects, Instant.now());
-                    case RANDOM -> cardRepository.findAllBySubjectInAndDeletedFalse(subjects);
-                };
-
-        if (pool.isEmpty()) {
-            return ApiRes.success("No cards match this preset.", Collections.emptyList());
-        }
-
-        ArrayList<Card> mutable = new ArrayList<>(pool);
-        if (Boolean.TRUE.equals(effective.getShuffle())
-                || effective.getMode() == SelectionMode.RANDOM) {
-            Collections.shuffle(mutable, new Random());
-        }
-
-        int cap = computeCap(effective, mutable.size());
-        if (mutable.size() > cap) {
-            mutable = new ArrayList<>(mutable.subList(0, cap));
-        }
-
-        List<TestRunCardRes> dto =
-                mutable.stream()
-                        .map(
-                                c ->
-                                        new TestRunCardRes(
-                                                c.getId(),
-                                                c.getSubject().getId(),
-                                                c.getFront(),
-                                                c.getBack(),
-                                                c.getDifficultyLevel(),
-                                                c.getNextPracticeTime(),
-                                                c.getNumberOfPractice()))
-                        .collect(Collectors.toList());
-
-        return ApiRes.success("Cards resolved for preset run", dto);
     }
 
     @Override
@@ -394,30 +339,6 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         return base + "-" + suffix;
     }
 
-    private static int computeCap(TestSuiteSelectionPayload effective, int poolSize) {
-        if (effective.getMode() == SelectionMode.RANDOM) {
-            int lim =
-                    effective.getLimit() != null
-                            ? effective.getLimit()
-                            : TestSuiteSelectionPayload.RANDOM_DEFAULT_LIMIT;
-            return Math.min(poolSize, Math.max(1, lim));
-        }
-        if (effective.getLimit() != null) {
-            return Math.min(poolSize, Math.max(1, effective.getLimit()));
-        }
-        return Math.min(poolSize, TestSuiteSelectionPayload.DEFAULT_MAX_WITHOUT_EXPLICIT_LIMIT);
-    }
-
-    private static TestSuiteSelectionPayload resolveSelection(TestSuiteEntity suite) {
-        TestSuiteSelectionPayload s = suite.getSelection();
-        if (s == null) {
-            return new TestSuiteSelectionPayload(SelectionMode.ALL, null, Boolean.FALSE);
-        }
-        SelectionMode mode = s.getMode() != null ? s.getMode() : SelectionMode.ALL;
-        Boolean shuffle = s.getShuffle() != null ? s.getShuffle() : Boolean.FALSE;
-        return new TestSuiteSelectionPayload(mode, s.getLimit(), shuffle);
-    }
-
     TestSuiteEntity toEntity(@NonNull TestSuiteReq from, TestSuiteEntity to) {
         String description = blankToNull(from.description());
         if (to == null) {
@@ -472,38 +393,6 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         return shelfRepository
                 .findByIdAndUserId(deckId, currentUser.id())
                 .orElseThrow(() -> new NotFoundException("Shelve not found with id: " + deckId));
-    }
-
-    @Override
-    public ApiRes autoGenerate(UUID shelveId, UUID subjectId, int numQuestions) {
-        log.info(
-                "Auto-generating test suite for subject: {} under shelve: {} with {} questions",
-                subjectId,
-                shelveId,
-                numQuestions);
-        Shelf shelve = findShelveByIdAndUser(shelveId);
-        planLimits.requireTestSuiteSlot(shelve);
-        Subject subject =
-                subjectRepository
-                        .findByIdAndShelve(subjectId, shelve)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Subject not found with id: " + subjectId));
-
-        String title = "Auto: " + subject.getName();
-        TestSuiteEntity testSuite =
-                TestSuiteEntity.builder()
-                        .title(title)
-                        .slug(uniqueSlug(shelve, title, null))
-                        .isActive(true)
-                        .shelf(shelve)
-                        .build();
-        testSuite.setSubjects(List.of(subject));
-        TestSuiteEntity saved = testSuiteRepository.save(testSuite);
-
-        log.info("Auto-generated test suite: {} for subject: {}", saved.getId(), subjectId);
-        return ApiRes.created("Test suite auto-generated successfully", this.toViewModel(saved));
     }
 
     @Override
@@ -629,18 +518,13 @@ public class TestSuiteServiceImpl implements TestSuiteService {
         throw unwrapTestSuiteException(t);
     }
 
-    public ApiRes getAllByShelveFallback(UUID shelveId, Throwable t) {
+    public ApiRes getAllByShelveFallback(UUID shelveId, int page, int size, Throwable t) {
         log.error("Test suite service unavailable during getAllByShelve: {}", t.toString());
         throw unwrapTestSuiteException(t);
     }
 
     public ApiRes getAttemptFallback(UUID shelveId, UUID testSuiteId, Throwable t) {
         log.error("Test suite service unavailable during getAttempt: {}", t.toString());
-        throw unwrapTestSuiteException(t);
-    }
-
-    public ApiRes runFallback(UUID shelveId, UUID testSuiteId, Throwable t) {
-        log.error("Test suite service unavailable during run: {}", t.toString());
         throw unwrapTestSuiteException(t);
     }
 

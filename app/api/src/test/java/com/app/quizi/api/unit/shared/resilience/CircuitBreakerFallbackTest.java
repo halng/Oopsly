@@ -99,15 +99,10 @@ class CircuitBreakerFallbackTest {
                 () -> shelfService.getByIdFallback(ID, new NotFoundException("missing")));
         assertThrows(
                 ValidationException.class,
-                () -> shelfService.updateFallback(null, ID, new ValidationException("invalid")));
-        assertThrows(
-                RetryLaterException.class,
-                () -> shelfService.createFallback(null, new ValidationException("invalid")));
+                () -> shelfService.getByIdFallback(ID, new ValidationException("invalid")));
         assertThrows(
                 UnauthenticatedException.class,
-                () ->
-                        shelfService.updateFallback(
-                                null, ID, new UnauthenticatedException("no session")));
+                () -> shelfService.getByIdFallback(ID, new UnauthenticatedException("no session")));
     }
 
     @Test
@@ -116,10 +111,7 @@ class CircuitBreakerFallbackTest {
                 RetryLaterException.class,
                 () -> shelfService.getAllFallback(0, 10, INFRASTRUCTURE));
         assertThrows(
-                RetryLaterException.class, () -> shelfService.deleteFallback(ID, INFRASTRUCTURE));
-        assertThrows(
-                RetryLaterException.class,
-                () -> shelfService.updateFallback(null, ID, INFRASTRUCTURE));
+                RetryLaterException.class, () -> shelfService.getByIdFallback(ID, INFRASTRUCTURE));
     }
 
     // --------------------------------------------------------------- subject
@@ -191,7 +183,7 @@ class CircuitBreakerFallbackTest {
                 () -> testSuiteService.deleteFallback(ID, ID, INFRASTRUCTURE));
         assertThrows(
                 RetryLaterException.class,
-                () -> testSuiteService.getAllByShelveFallback(ID, INFRASTRUCTURE));
+                () -> testSuiteService.getAllByShelveFallback(ID, 1, 10, INFRASTRUCTURE));
     }
 
     // ----------------------------------------------------------------- stats

@@ -44,9 +44,7 @@ import com.app.quizi.api.shelf.Shelf;
 import com.app.quizi.api.shelf.ShelfRepository;
 import com.app.quizi.api.subject.Subject;
 import com.app.quizi.api.subject.SubjectRepository;
-import com.app.quizi.api.testsuite.infrastructure.TestSuiteRepository;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -71,8 +69,6 @@ class CardServiceImplTest {
     @Mock private SubjectRepository subjectRepository;
 
     @Mock private ShelfRepository shelfRepository;
-
-    @Mock private TestSuiteRepository testSuiteRepository;
 
     @Mock private CurrentUser currentUser;
     @Mock private UserProgressService userProgressService;
@@ -414,46 +410,6 @@ class CardServiceImplTest {
     }
 
     @Test
-    void calculateNextPracticeTime_again_returnsOneMinuteLater() {
-        Instant before = Instant.now();
-        Instant result = cardService.calculateNextPracticeTime(DifficultyLevel.AGAIN);
-        Instant expected = before.plus(10, ChronoUnit.MINUTES);
-
-        assertTrue(result.isAfter(before));
-        assertTrue(result.isBefore(expected.plus(1, ChronoUnit.SECONDS)));
-    }
-
-    @Test
-    void calculateNextPracticeTime_hard_returnsTenMinutesLater() {
-        Instant before = Instant.now();
-        Instant result = cardService.calculateNextPracticeTime(DifficultyLevel.HARD);
-        Instant expected = before.plus(1, ChronoUnit.DAYS);
-
-        assertTrue(result.isAfter(before));
-        assertTrue(result.isBefore(expected.plus(1, ChronoUnit.SECONDS)));
-    }
-
-    @Test
-    void calculateNextPracticeTime_good_returnsOneDayLater() {
-        Instant before = Instant.now();
-        Instant result = cardService.calculateNextPracticeTime(DifficultyLevel.GOOD);
-        Instant expected = before.plus(3, ChronoUnit.DAYS);
-
-        assertTrue(result.isAfter(before));
-        assertTrue(result.isBefore(expected.plus(1, ChronoUnit.SECONDS)));
-    }
-
-    @Test
-    void calculateNextPracticeTime_easy_returnsFourDaysLater() {
-        Instant before = Instant.now();
-        Instant result = cardService.calculateNextPracticeTime(DifficultyLevel.EASY);
-        Instant expected = before.plus(15, ChronoUnit.DAYS);
-
-        assertTrue(result.isAfter(before));
-        assertTrue(result.isBefore(expected.plus(1, ChronoUnit.SECONDS)));
-    }
-
-    @Test
     void updateDifficulty_withAllDifficultyLevels_calculatesCorrectNextPracticeTime() {
         for (DifficultyLevel level : DifficultyLevel.values()) {
             Card existingCard = new Card();
@@ -631,124 +587,6 @@ class CardServiceImplTest {
         assertEquals(0, ((List<?>) result.getBody().data()).size());
         verify(cardRepository, never()).findDueReviewCards(any(), any(), any());
         verify(cardRepository, never()).findNewCards(any(), any());
-    }
-
-    @Test
-    void getShortPracticeStats_zeroCards_returnsZeros() {
-        when(cardRepository.countBySubjectAndDeletedFalse(subject)).thenReturn(0L);
-
-        var stats = cardService.getShortPracticeStats(subject);
-
-        assertEquals(0, stats.getLeft());
-        assertEquals(0.0, stats.getRight());
-    }
-
-    @Test
-    void getShortPracticeStats_computesRetention() {
-        when(cardRepository.countBySubjectAndDeletedFalse(subject)).thenReturn(10L);
-        when(cardRepository.countOverdue(subject)).thenReturn(2L);
-
-        var stats = cardService.getShortPracticeStats(subject);
-
-        assertEquals(2, stats.getLeft());
-        assertEquals(80.0, stats.getRight());
-    }
-
-    @Test
-    void getCardsByTestSuite_aggregatesSubjectCards() {
-        UUID suiteId = UUID.randomUUID();
-        shelve.setUserId(currentUserId);
-        com.app.quizi.api.testsuite.domain.TestSuiteEntity suite =
-                new com.app.quizi.api.testsuite.domain.TestSuiteEntity();
-        suite.setId(suiteId);
-        suite.setDeleted(false);
-        suite.setShelf(shelve);
-        suite.setSubjects(List.of(subject));
-        Card card = new Card();
-        card.setId(cardId);
-        card.setFront("Q");
-        card.setBack("A");
-
-        when(testSuiteRepository.findById(suiteId)).thenReturn(Optional.of(suite));
-        when(currentUser.id()).thenReturn(currentUserId);
-        when(cardRepository.findAllBySubject(eq(subject), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(card)));
-
-        ApiRes result = cardService.getCardsByTestSuite(suiteId);
-
-        assertTrue(result.getBody().isSuccess());
-        assertEquals(1, ((List<?>) result.getBody().data()).size());
-    }
-
-    @Test
-    void getCardsByTestSuite_deletedSuite_throws() {
-        UUID suiteId = UUID.randomUUID();
-        com.app.quizi.api.testsuite.domain.TestSuiteEntity suite =
-                new com.app.quizi.api.testsuite.domain.TestSuiteEntity();
-        suite.setDeleted(true);
-        when(testSuiteRepository.findById(suiteId)).thenReturn(Optional.of(suite));
-
-        assertThrows(NotFoundException.class, () -> cardService.getCardsByTestSuite(suiteId));
-    }
-
-    @Test
-    void getCardsByTestSuite_notFound() {
-        UUID suiteId = UUID.randomUUID();
-        when(testSuiteRepository.findById(suiteId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> cardService.getCardsByTestSuite(suiteId));
-    }
-
-    @Test
-    void getCardsByTestSuite_wrongOwner_throws() {
-        UUID suiteId = UUID.randomUUID();
-        Shelf otherShelf = new Shelf();
-        otherShelf.setUserId(UUID.randomUUID());
-        com.app.quizi.api.testsuite.domain.TestSuiteEntity suite =
-                new com.app.quizi.api.testsuite.domain.TestSuiteEntity();
-        suite.setDeleted(false);
-        suite.setShelf(otherShelf);
-        when(testSuiteRepository.findById(suiteId)).thenReturn(Optional.of(suite));
-        when(currentUser.id()).thenReturn(currentUserId);
-
-        assertThrows(NotFoundException.class, () -> cardService.getCardsByTestSuite(suiteId));
-    }
-
-    @Test
-    void getCardsByTestSuite_skipsDeletedSubjectsAndNullSubjects() {
-        UUID suiteId = UUID.randomUUID();
-        shelve.setUserId(currentUserId);
-        Subject deleted = new Subject();
-        deleted.setId(UUID.randomUUID());
-        deleted.setDeleted(true);
-        com.app.quizi.api.testsuite.domain.TestSuiteEntity suite =
-                new com.app.quizi.api.testsuite.domain.TestSuiteEntity();
-        suite.setDeleted(null);
-        suite.setShelf(shelve);
-        suite.setSubjects(List.of(deleted));
-        when(testSuiteRepository.findById(suiteId)).thenReturn(Optional.of(suite));
-        when(currentUser.id()).thenReturn(currentUserId);
-
-        ApiRes result = cardService.getCardsByTestSuite(suiteId);
-
-        assertTrue(result.getBody().isSuccess());
-        assertEquals(0, ((List<?>) result.getBody().data()).size());
-        verify(cardRepository, never()).findAllBySubject(any(), any());
-    }
-
-    @Test
-    void getCardsByTestSuite_nullSubjects_returnsEmpty() {
-        UUID suiteId = UUID.randomUUID();
-        shelve.setUserId(currentUserId);
-        com.app.quizi.api.testsuite.domain.TestSuiteEntity suite =
-                new com.app.quizi.api.testsuite.domain.TestSuiteEntity();
-        suite.setDeleted(false);
-        suite.setShelf(shelve);
-        suite.setSubjects(null);
-        when(testSuiteRepository.findById(suiteId)).thenReturn(Optional.of(suite));
-        when(currentUser.id()).thenReturn(currentUserId);
-
-        ApiRes result = cardService.getCardsByTestSuite(suiteId);
-        assertEquals(0, ((List<?>) result.getBody().data()).size());
     }
 
     @Test

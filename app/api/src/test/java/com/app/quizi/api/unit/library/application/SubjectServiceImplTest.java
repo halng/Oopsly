@@ -94,13 +94,7 @@ class SubjectServiceImplTest {
         subject.setShelf(shelve);
 
         subjectReq =
-                new SubjectReq(
-                        "Test Subject",
-                        "Test Description",
-                        "tag1,tag2",
-                        "#FFFFF",
-                        true,
-                        "test-subject");
+                new SubjectReq("Test Subject", "Test Description", "#FFFFF", true, "test-subject");
     }
 
     @Test
@@ -131,12 +125,7 @@ class SubjectServiceImplTest {
     void update_updatesSubject() {
         SubjectReq updateReq =
                 new SubjectReq(
-                        "Updated Name",
-                        "Updated Description",
-                        "tag1,tag2",
-                        "#000000",
-                        false,
-                        "updated-subject");
+                        "Updated Name", "Updated Description", "#000000", false, "updated-subject");
 
         when(currentUser.id()).thenReturn(currentUserId);
         when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
@@ -155,7 +144,7 @@ class SubjectServiceImplTest {
     @Test
     void update_throwsValidationException_whenNameIsEmpty() {
         SubjectReq invalidReq =
-                new SubjectReq("", "Description", "tag1,tag2", "#000000", false, "updated-subject");
+                new SubjectReq("", "Description", "#000000", false, "updated-subject");
 
         assertThrows(
                 ValidationException.class,
@@ -166,8 +155,7 @@ class SubjectServiceImplTest {
     @Test
     void update_throwsValidationException_whenNameIsNull() {
         SubjectReq invalidReq =
-                new SubjectReq(
-                        null, "Description", "tag1,tag2", "#000000", false, "updated-subject");
+                new SubjectReq(null, "Description", "#000000", false, "updated-subject");
 
         assertThrows(
                 ValidationException.class,
@@ -179,12 +167,7 @@ class SubjectServiceImplTest {
     void update_throwsNotFoundException_whenDeckNotFound() {
         SubjectReq updateReq =
                 new SubjectReq(
-                        "Updated Name",
-                        "Updated Description",
-                        "tag1,tag2",
-                        "#000000",
-                        false,
-                        "updated-subject");
+                        "Updated Name", "Updated Description", "#000000", false, "updated-subject");
 
         when(currentUser.id()).thenReturn(currentUserId);
         when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
@@ -200,12 +183,7 @@ class SubjectServiceImplTest {
     void update_throwsNotFoundException_whenCollectionNotFound() {
         SubjectReq updateReq =
                 new SubjectReq(
-                        "Updated Name",
-                        "Updated Description",
-                        "tag1,tag2",
-                        "#000000",
-                        false,
-                        "updated-subject");
+                        "Updated Name", "Updated Description", "#000000", false, "updated-subject");
 
         when(currentUser.id()).thenReturn(currentUserId);
         when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
@@ -366,8 +344,7 @@ class SubjectServiceImplTest {
     // Fallback Function Tests
     @Test
     void createFallback_throwsRuntimeException() {
-        SubjectReq request =
-                new SubjectReq("Test", "Description", "tag1,tag2", "#FFFFFF", true, "test-subject");
+        SubjectReq request = new SubjectReq("Test", "Description", "#FFFFFF", true, "test-subject");
         RuntimeException cause = new RuntimeException("Service unavailable");
 
         RetryLaterException exception =
@@ -382,13 +359,7 @@ class SubjectServiceImplTest {
     @Test
     void updateFallback_throwsRuntimeException() {
         SubjectReq request =
-                new SubjectReq(
-                        "Updated",
-                        "New Description",
-                        "tag1,tag2",
-                        "#000000",
-                        false,
-                        "updated-subject");
+                new SubjectReq("Updated", "New Description", "#000000", false, "updated-subject");
         RuntimeException cause = new RuntimeException("Database error");
 
         RetryLaterException exception =
@@ -454,12 +425,7 @@ class SubjectServiceImplTest {
                                 subjectService.createFallback(
                                         shelveId,
                                         new SubjectReq(
-                                                "Test",
-                                                "Desc",
-                                                "tag1,tag2",
-                                                "#FFFFFF",
-                                                true,
-                                                "test-subject"),
+                                                "Test", "Desc", "#FFFFFF", true, "test-subject"),
                                         cause));
         assertTrue(createEx.getMessage().contains("try again later"));
     }

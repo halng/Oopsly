@@ -28,10 +28,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import java.util.UUID;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@Validated
 @RequestMapping("/v1/shelves/{shelveId}/test-suites")
 @Tag(
         name = "Test Suite",
@@ -182,8 +185,14 @@ public class TestSuiteController {
                             required = true,
                             example = "123e4567-e89b-12d3-a456-426614174000")
                     @PathVariable
-                    UUID shelveId) {
-        return this.service.getAllByShelve(shelveId);
+                    UUID shelveId,
+            @Parameter(description = "Page number (starts from 1)", required = true, example = "1")
+                    @RequestParam
+                    @Min(value = 1, message = "Page must be greater than or equal to 1") int page,
+            @Parameter(description = "Page size", required = true, example = "10")
+                    @RequestParam
+                    @Min(value = 1, message = "Size must be greater than 0") int size) {
+        return this.service.getAllByShelve(shelveId, page, size);
     }
 
     @Operation(
@@ -204,66 +213,6 @@ public class TestSuiteController {
             @Parameter(description = "Shelve ID", required = true) @PathVariable UUID shelveId,
             @Parameter(description = "Test Suite ID", required = true) @PathVariable UUID id) {
         return this.service.getAttempt(shelveId, id);
-    }
-
-    // TODO(ai): postponed until the AI integration; not used by the web app.
-    @Operation(
-            summary = "Auto-generate test suite",
-            description = "Auto-generates a test suite from cards in a given subject")
-    @ApiResponses(
-            value = {
-                @ApiResponse(
-                        responseCode = "201",
-                        description = "Test suite auto-generated successfully",
-                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(responseCode = "404", description = "Subject or shelve not found"),
-                @ApiResponse(responseCode = "500", description = "Internal server error")
-            })
-    @PostMapping("/auto-generate")
-    public ApiRes autoGenerate(
-            @Parameter(
-                            description = "Shelve ID",
-                            required = true,
-                            example = "123e4567-e89b-12d3-a456-426614174000")
-                    @PathVariable
-                    UUID shelveId,
-            @Parameter(description = "Subject ID", required = true) @RequestParam UUID subjectId,
-            @Parameter(description = "Number of questions", example = "10")
-                    @RequestParam(defaultValue = "10")
-                    int numQuestions) {
-        return this.service.autoGenerate(shelveId, subjectId, numQuestions);
-    }
-
-    // TODO(ai): card-based preset run, postponed until the AI integration.
-    @Operation(
-            summary = "Run test preset",
-            description =
-                    "Returns flashcards matching this suite's linked subjects and selection rules"
-                            + " (read-only snapshot for a practice session)")
-    @ApiResponses(
-            value = {
-                @ApiResponse(
-                        responseCode = "200",
-                        description = "Cards resolved successfully",
-                        content = @Content(schema = @Schema(implementation = ApiRes.class))),
-                @ApiResponse(responseCode = "404", description = "Test suite or shelve not found"),
-                @ApiResponse(responseCode = "500", description = "Internal server error")
-            })
-    @PostMapping("/{id}/run")
-    public ApiRes runPreset(
-            @Parameter(
-                            description = "Shelve ID",
-                            required = true,
-                            example = "123e4567-e89b-12d3-a456-426614174000")
-                    @PathVariable
-                    UUID shelveId,
-            @Parameter(
-                            description = "Test Suite ID",
-                            required = true,
-                            example = "123e4567-e89b-12d3-a456-426614174001")
-                    @PathVariable
-                    UUID id) {
-        return this.service.run(shelveId, id);
     }
 
     @Operation(

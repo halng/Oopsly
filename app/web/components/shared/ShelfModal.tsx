@@ -143,6 +143,9 @@ export default function ShelfModal({
                         </label>
                         <textarea
                             rows={2}
+                            required
+                            minLength={10}
+                            maxLength={100}
                             placeholder="Overview of subjects stored in this shelf..."
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}

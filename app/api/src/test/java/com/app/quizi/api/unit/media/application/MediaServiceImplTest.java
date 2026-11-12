@@ -18,26 +18,14 @@ package com.app.quizi.api.unit.media.application;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.app.quizi.api.card.CardRepository;
 import com.app.quizi.api.media.application.MediaServiceImpl;
 import com.app.quizi.api.shared.application.vm.ApiRes;
-import com.app.quizi.api.shelf.ShelfRepository;
-import com.app.quizi.api.subject.SubjectRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
 class MediaServiceImplTest {
 
-    @Mock private CardRepository cardRepository;
-    @Mock private ShelfRepository shelfRepository;
-    @Mock private SubjectRepository subjectRepository;
-
-    @InjectMocks private MediaServiceImpl mediaService;
+    private final MediaServiceImpl mediaService = new MediaServiceImpl();
 
     @Test
     void getUploadUrl_returnsNotConfiguredMessage() {

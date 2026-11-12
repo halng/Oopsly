@@ -5,6 +5,11 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
   <div
     class="min-h-screen bg-[#FDFBF7] font-sans selection:bg-[color-mix(in_srgb,var(--theme-accent)_20%,transparent)] selection:text-[var(--theme-secondary)] flex flex-col"
   >
+    <script
+      type="application/ld+json"
+    >
+      {"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Quizi","url":"https://www.quizi.tech/"},{"@type":"SoftwareApplication","name":"Quizi","applicationCategory":"EducationalApplication","operatingSystem":"Web","url":"https://www.quizi.tech/","description":"Flashcards with FSRS spaced repetition, test suites and live quizzes.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is Quizi free?","acceptedAnswer":{"@type":"Answer","text":"Yes. The Basic plan is free and includes up to 3 decks with FSRS scheduling and basic stats. Upgrade whenever you need more."}},{"@type":"Question","name":"What is spaced repetition?","acceptedAnswer":{"@type":"Answer","text":"A study method that shows you each card just before you would forget it. FSRS is a modern scheduler that models your memory per card, so you review less and remember more."}},{"@type":"Question","name":"Can I bring my existing questions?","acceptedAnswer":{"@type":"Answer","text":"Yes. Test suites accept bulk imports from CSV, Excel or pasted text, with a preview before anything is added."}},{"@type":"Question","name":"Does it work offline?","acceptedAnswer":{"@type":"Answer","text":"Yes. Keep studying without a connection and your progress syncs when you are back online."}},{"@type":"Question","name":"Can I switch or cancel my plan?","acceptedAnswer":{"@type":"Answer","text":"You can change plans from the subscription page at any time."}}]}]}
+    </script>
     <header
       class="px-6 py-4 flex items-center justify-between border-b border-stone-200/50 bg-white/50 backdrop-blur-md sticky top-0 z-50"
     >
@@ -71,6 +76,12 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
           href="#faq"
         >
           FAQ
+        </a>
+        <a
+          class="hover:text-stone-900"
+          href="/decks"
+        >
+          Decks
         </a>
       </nav>
       <div
@@ -1815,6 +1826,12 @@ exports[`LandingPage > renders correctly (Snapshot) 1`] = `
           href="#faq"
         >
           FAQ
+        </a>
+        <a
+          class="hover:text-stone-900"
+          href="/decks"
+        >
+          Decks
         </a>
       </nav>
       <p

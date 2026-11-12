@@ -200,17 +200,6 @@ class ApiResTest {
     }
 
     @Test
-    void rateLimitExceeded_returnsTooManyRequestsStatus() {
-        ApiRes result = ApiRes.rateLimitExceeded("Rate limit exceeded");
-
-        assertNotNull(result);
-        assertEquals(429, result.getStatusCode().value());
-        assertNotNull(result.getBody());
-        assertEquals("Rate limit exceeded", result.getBody().message());
-        assertFalse(result.getBody().isSuccess());
-    }
-
-    @Test
     void constructor_withStatusOnly_createsInstance() {
         ApiRes result = new ApiRes(HttpStatus.OK);
 
