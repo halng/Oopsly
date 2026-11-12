@@ -1,5 +1,11 @@
 'use client';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
     ArrowLeft,
@@ -33,9 +39,11 @@ import {
 } from '@/components/shared';
 import SubjectCard from '@/components/home/SubjectCard';
 import TestSuiteList from '@/components/tests/TestSuiteList';
+import Pagination from '@/components/shared/Pagination';
+import { LIST_PAGE_SIZE } from '@/utils/pagination';
 import { loadShelfTestSuites } from '@/hooks/useTestSuiteContext';
 import { resolveShelfBySlug } from '@/hooks/useSubjectContext';
-import { useSubjectStore, useUserProfileStore } from '@/store';
+import { useShelfStore, useSubjectStore, useUserProfileStore } from '@/store';
 
 const PRESET_ICONS = {
     folder: <Folder className="w-5 h-5" />,
@@ -58,6 +66,12 @@ export default function ShelfPage() {
     const setProfile = useUserProfileStore((state) => state.setProfile);
     const [shelf, setShelf] = useState<Shelf | null>(null);
     const [subjects, setSubjects] = useState<Subject[]>([]);
+    const [subjectPage, setSubjectPage] = useState(1);
+    const [subjectPages, setSubjectPages] = useState(1);
+    const [totalSubjects, setTotalSubjects] = useState(0);
+    // The page a reload (after an edit or a delete) should come back to.
+    const subjectPageRef = useRef(1);
+    const loadedSlugRef = useRef(slug);
     const [isLoading, setIsLoading] = useState(true);
     const [subjectSearchQuery, setSubjectSearchQuery] = useState('');
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -72,6 +86,9 @@ export default function ShelfPage() {
         null
     );
     const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
+    const [testSuitePage, setTestSuitePage] = useState(1);
+    const [testSuitePages, setTestSuitePages] = useState(1);
+    const testSuitePageRef = useRef(1);
     const [hostingTestSuite, setHostingTestSuite] = useState<TestSuite | null>(
         null
     );
@@ -79,6 +96,73 @@ export default function ShelfPage() {
     const [editingTestSuite, setEditingTestSuite] = useState<TestSuite | null>(
         null
     );
+
+    // One page of subjects. Past the last page (after a delete) it steps back.
+    const loadSubjectsPage = useCallback(
+        async (shelfId: string, pageNumber: number) => {
+            let current = pageNumber;
+            for (;;) {
+                const res = await ApiService.getShelfSubjects(
+                    shelfId,
+                    current,
+                    LIST_PAGE_SIZE
+                );
+                if (!res.isSuccess || !res.data) {
+                    setSubjects([]);
+                    return;
+                }
+                const { entities, totalPages, totalItems } = res.data;
+                if (entities.length === 0 && current > 1) {
+                    current -= 1;
+                    continue;
+                }
+                subjectPageRef.current = current;
+                setSubjectPage(current);
+                setSubjects(entities);
+                setSubjectPages(totalPages ?? 1);
+                setTotalSubjects(totalItems ?? entities.length);
+                useSubjectStore.getState().setSubjects(shelfId, entities);
+                return;
+            }
+        },
+        []
+    );
+
+    // One page of test suites. Past the last page (after a delete) it steps back.
+    const loadSuitesPage = useCallback(
+        async (shelfId: string, pageNumber: number) => {
+            let current = pageNumber;
+            for (;;) {
+                const result = await loadShelfTestSuites(
+                    shelfId,
+                    current,
+                    LIST_PAGE_SIZE
+                );
+                if (result.suites.length === 0 && current > 1) {
+                    current -= 1;
+                    continue;
+                }
+                testSuitePageRef.current = current;
+                setTestSuitePage(current);
+                setTestSuites(result.suites);
+                setTestSuitePages(result.totalPages);
+                return;
+            }
+        },
+        []
+    );
+
+    const goToTestSuitePage = (pageNumber: number) => {
+        testSuitePageRef.current = pageNumber;
+        setTestSuitePage(pageNumber);
+        if (shelf) void loadSuitesPage(shelf.id, pageNumber);
+    };
+
+    const goToSubjectPage = (pageNumber: number) => {
+        subjectPageRef.current = pageNumber;
+        setSubjectPage(pageNumber);
+        if (shelf) void loadSubjectsPage(shelf.id, pageNumber);
+    };
 
     const loadData = useCallback(async () => {
         setIsLoading(true);
@@ -91,24 +175,21 @@ export default function ShelfPage() {
         }
 
         setShelf(filteredShelf);
+        if (loadedSlugRef.current !== slug) {
+            // A different shelf starts on its first page.
+            loadedSlugRef.current = slug;
+            subjectPageRef.current = 1;
+            testSuitePageRef.current = 1;
+        }
         try {
-            const [subjectsRes, suites] = await Promise.all([
-                ApiService.getShelfSubjects(filteredShelf.id),
-                loadShelfTestSuites(filteredShelf.id),
+            await Promise.all([
+                loadSubjectsPage(filteredShelf.id, subjectPageRef.current),
+                loadSuitesPage(filteredShelf.id, testSuitePageRef.current),
             ]);
-            if (subjectsRes.isSuccess && subjectsRes.data) {
-                setSubjects(subjectsRes.data.entities);
-                useSubjectStore
-                    .getState()
-                    .setSubjects(filteredShelf.id, subjectsRes.data.entities);
-            } else {
-                setSubjects([]);
-            }
-            setTestSuites(suites);
         } finally {
             setIsLoading(false);
         }
-    }, [setProfile, slug]);
+    }, [setProfile, slug, loadSubjectsPage, loadSuitesPage]);
 
     useEffect(() => {
         loadData();
@@ -121,8 +202,31 @@ export default function ShelfPage() {
         icon?: string;
     }) => {
         if (!shelf) return;
-        const res = await ApiService.updateShelf(shelf.id, data);
-        if (res.isSuccess) toast.success('Shelf updated');
+        // The API replaces the whole shelf, so unchanged fields are sent as they were,
+        // and the slug stays so the address does not change.
+        const next = {
+            name: data.name,
+            slug: shelf.slug,
+            description: data.description ?? shelf.description,
+            icon: data.icon ?? shelf.icon,
+            color: data.color ?? shelf.color,
+        };
+        const res = await ApiService.updateShelf(shelf.id, next);
+        if (res.isSuccess) {
+            toast.success('Shelf updated');
+            // The page reloads the shelf from the store, so update it there too.
+            const stored = useShelfStore.getState().shelves;
+            if (stored) {
+                useShelfStore
+                    .getState()
+                    .setShelves(
+                        stored.map((s) =>
+                            s.id === shelf.id ? { ...s, ...next } : s
+                        )
+                    );
+            }
+            setShelf({ ...shelf, ...next });
+        }
         loadData();
     };
 
@@ -158,7 +262,7 @@ export default function ShelfPage() {
         toast.success(
             editingTestSuite ? 'Test suite updated' : 'Test suite created'
         );
-        setTestSuites(await loadShelfTestSuites(shelf.id));
+        await loadSuitesPage(shelf.id, testSuitePageRef.current);
     };
 
     const handleDeleteTestSuite = async (suite: TestSuite) => {
@@ -170,7 +274,7 @@ export default function ShelfPage() {
         const res = await ApiService.deleteTestSuite(shelf.id, suite.id);
         if (res.isSuccess) {
             toast.success('Test suite deleted', suite.title);
-            setTestSuites(await loadShelfTestSuites(shelf.id));
+            await loadSuitesPage(shelf.id, testSuitePageRef.current);
         }
     };
 
@@ -198,11 +302,11 @@ export default function ShelfPage() {
 
     const stats = useMemo(() => {
         return {
-            subjectCount: subjects.length,
+            subjectCount: totalSubjects || subjects.length,
             cardCount: subjects.reduce((acc, s) => acc + (s.cardCount || 0), 0),
             dueCount: subjects.reduce((acc, s) => acc + (s.dueCount || 0), 0),
         };
-    }, [subjects]);
+    }, [subjects, totalSubjects]);
 
     const dailyGoal = profile?.settings?.dailyGoal || 20;
     const progress = Math.min((reviewedToday / dailyGoal) * 100, 100);
@@ -454,9 +558,18 @@ export default function ShelfPage() {
                     ))}
                 </div>
             )}
+            <Pagination
+                page={subjectPage}
+                totalPages={subjectPages}
+                onChange={goToSubjectPage}
+                testId="subjects-pagination"
+            />
 
             <TestSuiteList
                 testSuites={testSuites}
+                page={testSuitePage}
+                totalPages={testSuitePages}
+                onPageChange={goToTestSuitePage}
                 onCreate={() => {
                     setEditingTestSuite(null);
                     setIsTestSuiteModalOpen(true);

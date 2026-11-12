@@ -36,10 +36,17 @@ import {
 } from '@/components/shared';
 import { OfflineSyncBanner, WelcomeTourModal } from '@/components';
 import SubjectCard from '@/components/home/SubjectCard';
+import Pagination from '@/components/shared/Pagination';
+import { LIST_PAGE_SIZE } from '@/utils/pagination';
 import { useRouter } from 'next/navigation';
 import { useUserProfileStore, useShelfStore } from '@/store';
+import { useFeaturesStore } from '@/store/Features';
 
-const MAX_ITEMS_PER_PAGE = 50;
+const DECK_LIMITS: Record<string, { max: number; name: string }> = {
+    FREE: { max: 10, name: 'Free' },
+    PRO: { max: 50, name: 'Pro' },
+    PRO_PLUS: { max: Infinity, name: 'Pro Plus' },
+};
 
 const PRESET_ICONS = {
     folder: <Folder className="w-5 h-5" />,
@@ -56,11 +63,12 @@ const PRESET_ICONS = {
 
 export const HomePage: React.FC = () => {
     const router = useRouter();
-    // TODO: will handle next page later
     const [currentPage, setCurrentPage] = useState<number>(1);
+    const [totalPages, setTotalPages] = useState(1);
     const profile = useUserProfileStore((state) => state.profile);
     const setProfile = useUserProfileStore((state) => state.setProfile);
     const [shelves, setShelves] = useState<Shelf[]>([]);
+    const [totalShelves, setTotalShelves] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [shelfSearchQuery, setShelfSearchQuery] = useState('');
     const [globalSubjectSearchQuery, setGlobalSubjectSearchQuery] =
@@ -73,6 +81,14 @@ export const HomePage: React.FC = () => {
     const [isShelfModalOpen, setIsShelfModalOpen] = useState(false);
     const [editingShelf, setEditingShelf] = useState<Shelf | null>(null);
     const [isJoinGameOpen, setIsJoinGameOpen] = useState(false);
+    const plan = useFeaturesStore((state) => state.plan);
+    const planLimits = plan
+        ? (DECK_LIMITS[plan] ?? DECK_LIMITS.FREE)
+        : undefined;
+    const shelfLimitReached =
+        planLimits !== undefined &&
+        Number.isFinite(planLimits.max) &&
+        totalShelves >= planLimits.max;
 
     const [totalDue, setTotalDue] = useState(0);
 
@@ -89,19 +105,24 @@ export const HomePage: React.FC = () => {
         try {
             const shelvesRes = await ApiService.getShelves(
                 currentPage,
-                MAX_ITEMS_PER_PAGE
+                LIST_PAGE_SIZE
             );
             if (shelvesRes.isSuccess && shelvesRes.data) {
+                setTotalShelves(shelvesRes.data.totalItems);
+                setTotalPages(shelvesRes.data.totalPages ?? 1);
                 const fetchedShelves = shelvesRes.data.entities;
                 if (fetchedShelves && fetchedShelves.length > 0) {
                     setShelves(fetchedShelves);
                     useShelfStore.getState().setShelves(fetchedShelves);
+                } else if (currentPage > 1) {
+                    // The last shelf of this page was deleted: go back one page.
+                    setCurrentPage(currentPage - 1);
                 }
             }
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [currentPage]);
 
     useEffect(() => {
         syncManager.init();
@@ -142,22 +163,42 @@ export const HomePage: React.FC = () => {
         icon: string;
     }) => {
         if (editingShelf) {
-            const res = await ApiService.updateShelf(editingShelf.id, data);
-            if (res.isSuccess) toast.success('Shelf updated');
-        } else {
-            ApiService.createShelf(data).then((res) => {
-                if (res.isSuccess) {
-                    toast.success('Shelf created', data.name);
-                    loadShelvesAndSubjects();
-                }
+            // The slug stays, so the shelf keeps its address.
+            const res = await ApiService.updateShelf(editingShelf.id, {
+                ...data,
+                slug: editingShelf.slug,
             });
+            if (res.isSuccess) {
+                toast.success('Shelf updated');
+                await loadShelvesAndSubjects();
+            }
+        } else {
+            if (shelfLimitReached) {
+                toast.error(
+                    'Shelf limit reached',
+                    `Upgrade your ${planLimits?.name} plan to create more shelves.`
+                );
+                return;
+            }
+            const res = await ApiService.createShelf(data);
+            if (res.isSuccess) {
+                setTotalShelves((count) => count + 1);
+                toast.success('Shelf created', data.name);
+                await loadShelvesAndSubjects();
+            }
         }
+    };
+
+    const openCreateShelf = () => {
+        if (shelfLimitReached) return;
+        setEditingShelf(null);
+        setIsShelfModalOpen(true);
     };
 
     const handleUpdateNewCommer = async () => {
         if (profile) {
             await ApiService.updateNewComer();
-            loadUserData();
+            await loadUserData();
         }
     };
 
@@ -297,10 +338,8 @@ export const HomePage: React.FC = () => {
                         </button>
                         <button
                             data-testid="btn-create-shelf"
-                            onClick={() => {
-                                setEditingShelf(null);
-                                setIsShelfModalOpen(true);
-                            }}
+                            onClick={openCreateShelf}
+                            disabled={shelfLimitReached}
                             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-xs font-bold shadow-xs cursor-pointer"
                         >
                             <Plus className="w-4 h-4" />
@@ -364,10 +403,8 @@ export const HomePage: React.FC = () => {
                             No shelves found
                         </h3>
                         <button
-                            onClick={() => {
-                                setEditingShelf(null);
-                                setIsShelfModalOpen(true);
-                            }}
+                            onClick={openCreateShelf}
+                            disabled={shelfLimitReached}
                             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[var(--theme-accent)] hover:bg-[var(--theme-secondary)] text-white text-xs font-bold cursor-pointer"
                         >
                             <Plus className="w-4 h-4" />
@@ -485,6 +522,19 @@ export const HomePage: React.FC = () => {
                             );
                         })}
                     </div>
+                )}
+                <Pagination
+                    page={currentPage}
+                    totalPages={totalPages}
+                    onChange={setCurrentPage}
+                    testId="shelves-pagination"
+                />
+                {planLimits && shelfLimitReached && (
+                    <p role="status" className="text-sm text-amber-700">
+                        You have reached the {planLimits.name} plan limit of{' '}
+                        {planLimits.max} shelves. Upgrade your plan to create
+                        more.
+                    </p>
                 )}
             </div>
 

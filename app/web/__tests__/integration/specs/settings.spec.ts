@@ -159,39 +159,47 @@ test.describe('Settings screen', () => {
         await expect(page.getByTestId('btn-save-settings')).toContainText(
             'Saved!'
         );
-        const [saved] = await mock.requests(
+        // The name and bio go to the profile, the goal and switches to the settings.
+        const [profileSaved] = await mock.requests(
             'PATCH',
             `${AUTH}/v1/user-profiles`
         );
-        expect(saved.json).toMatchObject({
+        expect(profileSaved.json).toMatchObject({
             displayName: 'Lena L.',
             bio: 'Studying cells',
-            settings: { dailyGoal: 30, allowReminders: true },
+        });
+        const [settingsSaved] = await mock.requests(
+            'PATCH',
+            `${AUTH}/v1/user-settings`
+        );
+        expect(settingsSaved.json).toMatchObject({
+            dailyGoal: 30,
+            allowReminders: true,
         });
     });
 
-    test('picking a theme is included in the save', async ({ page, mock }) => {
+    test('picking a theme saves it right away', async ({ page, mock }) => {
         await openLoadedSettings(page);
         await page.getByTestId('btn-open-theme').click();
         await expect(page.getByTestId('theme-modal')).toBeVisible();
         await page.getByTestId('theme-option-ghibli-night').click();
-        await page.getByRole('button', { name: 'Done' }).click();
-        await page.getByTestId('btn-save-settings').click();
 
         await expect
             .poll(
                 async () =>
-                    (await mock.requests('PATCH', `${AUTH}/v1/user-profiles`))
-                        .length
+                    (
+                        await mock.requests(
+                            'PATCH',
+                            `${AUTH}/v1/user-profiles/settings/theme`
+                        )
+                    ).length
             )
             .toBe(1);
         const [saved] = await mock.requests(
             'PATCH',
-            `${AUTH}/v1/user-profiles`
+            `${AUTH}/v1/user-profiles/settings/theme`
         );
-        expect(saved.json).toMatchObject({
-            settings: { theme: 'ghibli-night' },
-        });
+        expect(saved.json).toMatchObject({ theme: 'ghibli-night' });
     });
 
     test('a rejected save does not claim success', async ({ page, mock }) => {
@@ -207,6 +215,24 @@ test.describe('Settings screen', () => {
             'Saved!'
         );
         await expect(page.getByTestId('btn-save-settings')).toBeEnabled();
+    });
+
+    test('a rejected settings save does not claim success', async ({
+        page,
+        mock,
+    }) => {
+        await mock.override({
+            method: 'PATCH',
+            path: `${AUTH}/v1/user-settings`,
+            status: 400,
+            body: failure('Daily goal must be between 1 and 1000', 400),
+        });
+        await openLoadedSettings(page);
+        await page.getByTestId('btn-save-settings').click();
+        await expect(page.getByTestId('btn-save-settings')).not.toContainText(
+            'Saved!'
+        );
+        await expect(page.getByTestId('toast-success')).toHaveCount(0);
     });
 
     test('back returns home', async ({ page }) => {

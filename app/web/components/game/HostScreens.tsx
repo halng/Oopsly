@@ -138,11 +138,13 @@ export function HostLobby({ view, onStart, onMode, onEnd }: HostProps) {
                     {view.players.map((player) => (
                         <li
                             key={player.id}
-                            className={`rounded-full bg-white/15 px-4 py-2 font-bold ${
+                            className={`flex h-10 max-w-[16rem] items-center justify-center rounded-full bg-white/15 px-4 font-bold leading-none ${
                                 player.connected ? '' : 'opacity-40'
                             }`}
                         >
-                            {player.name}
+                            <span className="truncate" title={player.name}>
+                                {player.name}
+                            </span>
                         </li>
                     ))}
                 </ul>

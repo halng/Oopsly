@@ -362,6 +362,7 @@ export interface UserProfile {
 
 export interface StatsData {
     streakDays: number;
+    totalXp?: number;
     reviewedToday: number;
     totalStudiedToday?: number;
     dailyGoal: number;

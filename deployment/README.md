@@ -12,11 +12,11 @@ Internet -> HTTP API --VPC link--> internal ALB (per service) -> Fargate tasks
 
 | File | What it creates |
 |---|---|
-| `network.yaml` | VPC and subnets, ECS cluster, Postgres, Redis, ECR repositories, generated secrets, the HTTP API, its stage and the VPC link, plus (with `HostedZoneId`) the `api.quizi.tech` custom domain, its certificate and the Route 53 records for `api.quizi.tech` and `quizi.tech` |
-| `auth.yaml` | auth service: ECS service (2 tasks), internal ALB, API routes |
+| `network.yaml` | VPC and subnets, ECS cluster, Postgres, Redis, ECR repositories, generated secrets, the HTTP API, its stage and the VPC link, plus (with `HostedZoneId`) the `api.quizi.tech` custom domain, its certificate and the Route 53 record for `api.quizi.tech` (the `quizi.tech` record for Vercel is managed by hand) |
+| `auth.yaml` | auth service: ECS service (1 task by default, `AUTH_COUNT`), internal ALB, API routes |
 | `api.yaml` | Java API: same shape; reads the auth stack's internal URLs |
 | `game.yaml` | game service: same shape |
-| `noti.yaml` | noti Lambda (auth and api invoke it directly; it renders the template and sends through Resend) and its Resend secret |
+| `noti.yaml` | noti Lambda (auth invokes it directly; api asks auth to send community invites; it renders the template and sends through Resend) and its Resend secret |
 | `deploy.sh` | runs `sam deploy` for the stacks in order and copies images to ECR |
 | `scripts/copy-images.sh` | copies `ghcr.io/halng/quizi-*:<tag>` into ECR |
 
@@ -42,7 +42,7 @@ else stays on the HTTP API.
 
 | Route on the HTTP API | Service |
 |---|---|
-| `/api/auth/v1/*`, `/.well-known/*` | auth |
+| `/api/auth/v1/*`, `/api/auth/.well-known/*` | auth |
 | `/api/quizi/*` | api |
 | `/v1/game/*` | game |
 
@@ -61,8 +61,9 @@ ALLOWED_ORIGINS=https://app.example.com ./deploy.sh stg v1a2b3c4          # ever
 ALLOWED_ORIGINS=https://app.example.com ./deploy.sh stg v1a2b3c4 api       # one service
 ```
 
-Order matters: `network` -> `auth` -> `api` / `game` (they import the auth stack's URLs). `noti`
-has no dependencies; auth invokes it by its fixed name `quizi-noti-<env>`.
+Order matters: `network` -> `auth` -> `api` / `game` (they import the auth stack's URLs), and
+`auth` before `noti`: noti requires `name` on every event and only the current auth sends it
+(the default order already does this). Auth invokes noti by its fixed name `quizi-noti-<env>`.
 `AUTH_COUNT` (1), `API_COUNT` (2) and `GAME_COUNT` (1) set the number of tasks per service. At the end the
 script prints the public API URL. The web release workflow already points the web app at the
 fixed domains, which resolve to these values:
@@ -110,7 +111,7 @@ Per GitHub Environment (`stg`, `prod`):
 | secret | `AWS_SECRET_ACCESS_KEY` | Secret access key of the same IAM user |
 | variable | `RESEND_FROM` | sender the noti Lambda uses, like `Quizi <no-reply@quizi.tech>` (the domain must be verified in Resend) |
 | secret | `RESEND_API_KEY` | Resend API key |
-| variable | `HOSTED_ZONE_ID` | Route 53 hosted zone of `quizi.tech`; with it `prod` serves the API on `api.quizi.tech` and points `quizi.tech` at the UI (optional) |
+| variable | `HOSTED_ZONE_ID` | Route 53 hosted zone of `quizi.tech`; with it `prod` serves the API on `api.quizi.tech` (optional; the `quizi.tech` A record for Vercel is managed by hand in Route 53) |
 | variable | `APP_URL` | web app address used for links in emails (optional) |
 | variable | `ALLOWED_ORIGINS` | comma-separated browser origins for CORS |
 
@@ -120,6 +121,16 @@ Validate the templates without AWS access: `uvx cfn-lint *.yaml` (or `sam valida
 
 ## Things to know
 
+- **Everything of auth lives under `/api/auth`**, including `/actuator/health` (the ALB health
+  check) and `/api/auth/.well-known/pub.json` (the JWKS the api and game stacks import as
+  `JwksUrl`). The root paths no longer exist, so deploy auth before api and game and update any
+  hand-set `JWKS_URL` (for example in a GitHub environment) to the prefixed address.
+- **Sessions moved from Redis to Postgres** (`auth.login_tracker`, created by migration `003`
+  when the auth container starts). Everyone signs in once after the first deploy. Redis now
+  only holds sign-in codes.
+- **Develop environments send no email.** auth reads `APP_ENV` (the stack's `Environment`);
+  `local`, `dev`, `develop` and `development` skip every email and log its data, sign-in code
+  included. Use `stg`, `prod` or another name for stacks that must send mail.
 - **WebSockets are not exposed.** An HTTP API cannot proxy WebSockets, and the ALBs are
   internal, so the quiz socket (api) and the garden socket (game) are unreachable from
   browsers. Adding an API Gateway WebSocket API, or a public ALB listener for those

@@ -48,10 +48,6 @@ public class JwtVerifier {
                 }
             };
 
-    public String extractEmail(String token) {
-        return extractClaim(token, Claims::getSubject);
-    }
-
     public String extractUserId(String token) {
         return extractClaim(token, claims -> claims.get("id", String.class));
     }

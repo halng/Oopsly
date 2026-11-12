@@ -11,10 +11,10 @@ STUDY_REMINDER = "study_reminder"
 
 # What each event type must carry in `data`.
 REQUIRED: dict[str, tuple[str, ...]] = {
-    OTP: ("code",),
-    WELCOME: (),
-    COMMUNITY_INVITE: ("communityName",),
-    STUDY_REMINDER: ("ics",),
+    OTP: ("name", "code"),
+    WELCOME: ("name",),
+    COMMUNITY_INVITE: ("name", "communityName"),
+    STUDY_REMINDER: ("name", "ics"),
 }
 
 EMAIL_RE = re.compile(r"^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$")
@@ -32,9 +32,8 @@ class Event:
 
     @property
     def name(self) -> str:
-        """Who to greet: the given name, else the part before the @."""
-        given = str(self.data.get("name") or "").strip()
-        return given or self.to.split("@", 1)[0]
+        """Who to greet: the name the sender put in the event."""
+        return str(self.data.get("name") or "").strip()
 
 
 def parse(raw: Any) -> Event:

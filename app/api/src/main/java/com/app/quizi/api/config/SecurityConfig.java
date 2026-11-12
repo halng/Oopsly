@@ -30,8 +30,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -82,6 +80,7 @@ public class SecurityConfig {
                                                 "/actuator/health",
                                                 "/swagger-ui/**",
                                                 "/api-docs/**",
+                                                "/public/**",
                                                 // STOMP authenticates itself on CONNECT
                                                 QuizChannels.ENDPOINT + "/**")
                                         .permitAll()
@@ -108,11 +107,6 @@ public class SecurityConfig {
                         .allowedHeaders("*");
             }
         };
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(10);
     }
 
     private void writeErrorResponse(HttpServletResponse response, ApiRes apiRes) {

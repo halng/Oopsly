@@ -43,17 +43,17 @@ describe('RootLayout', () => {
         // Verify OpenGraph configuration
         expect(metadata.openGraph).toMatchObject({
             type: 'website',
-            url: 'https://quizi.app/',
+            url: 'https://www.quizi.tech/',
             title: 'Quizi — Active Recall & Spaced Repetition Flashcards',
         });
 
         // Verify Twitter configuration
         expect(metadata.twitter).toMatchObject({
             card: 'summary_large_image',
-            site: 'https://quizi.app/',
+            site: 'https://www.quizi.tech/',
         });
 
         // Verify canonical link
-        expect(metadata.alternates?.canonical).toBe('https://quizi.app/');
+        expect(metadata.alternates?.canonical).toBe('https://www.quizi.tech/');
     });
 });

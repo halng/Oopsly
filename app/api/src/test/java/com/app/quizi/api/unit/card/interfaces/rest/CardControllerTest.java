@@ -17,8 +17,6 @@
 package com.app.quizi.api.unit.card.interfaces.rest;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 import com.app.quizi.api.card.CardController;
@@ -167,13 +165,6 @@ class CardControllerTest {
 
         assertSame(expectedResponse, result);
         verify(cardService).getDueCards(shelveId, subjectId, 10, 3);
-    }
-
-    @Test
-    void getAll_withInvalidPage_returnsBadRequest() {
-        ApiRes result = cardController.getAllCardsBySubject(shelveId, subjectId, -1, 10);
-        assertEquals(400, result.getStatusCode().value());
-        verify(cardService, never()).getAllCardsBySubject(any(), any(), anyInt(), anyInt());
     }
 
     @Test

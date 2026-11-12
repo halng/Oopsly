@@ -33,7 +33,7 @@ def test_invite_without_inviter():
 
 def test_study_reminder_is_named_learning_on_quizi():
     m = render(events.STUDY_REMINDER, {"ics": "BEGIN:VCALENDAR"})
-    assert "Learning on Quizi" in m.subject
+    assert "calendar" in m.subject
 
 
 def test_user_input_is_escaped():
@@ -68,3 +68,21 @@ def test_attribute_values_are_escaped():
         Event(events.WELCOME, "a@b.co", {}), 'https://x.test/"onclick="evil'
     )
     assert 'onclick="evil' not in m.html
+
+
+def test_subjects_are_specific_and_one_line():
+    assert (
+        render(events.OTP, {"code": "123456"}).subject
+        == "123456 is your Quizi verification code"
+    )
+    assert render(events.WELCOME, {"name": "Ann"}).subject.startswith(
+        "Welcome to Quizi, Ann!"
+    )
+    invite = render(
+        events.COMMUNITY_INVITE,
+        {"communityName": "Math\nClub", "inviterName": "Bo\r\n Lee"},
+    )
+    assert invite.subject == "Bo Lee invited you to join Math Club on Quizi"
+    anonymous = render(events.COMMUNITY_INVITE, {"communityName": "Math Club"})
+    assert anonymous.subject == "You are invited to join Math Club on Quizi"
+    assert "\n" not in render(events.WELCOME, {"name": "A\nB"}).subject

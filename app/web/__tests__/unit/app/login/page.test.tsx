@@ -75,7 +75,9 @@ describe('AuthPage', () => {
         );
         await waitFor(() =>
             expect(ApiService.sendOtp).toHaveBeenCalledWith(
-                'learner@example.com'
+                'learner@example.com',
+                true,
+                'Learner'
             )
         );
     });
@@ -185,5 +187,99 @@ describe('AuthPage', () => {
         expect(screen.getByRole('status').textContent).toMatch(
             /session expired/i
         );
+    });
+
+    it('moves to sign-up, keeping the email, when login finds no account', async () => {
+        vi.mocked(ApiService.sendOtp).mockResolvedValueOnce({
+            isSuccess: false,
+            data: null,
+            statusCode: 404,
+            message: 'No account found for this email. Please sign up.',
+            timestamp: '',
+        } as never);
+        render(<AuthPage />);
+        fireEvent.change(screen.getByPlaceholderText('name@example.com'), {
+            target: { value: 'new@example.com' },
+        });
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Continue with Email' })
+        );
+        await waitFor(() =>
+            expect(
+                screen.getByRole('heading', { name: 'Create an account' })
+            ).toBeInTheDocument()
+        );
+        expect(screen.getByPlaceholderText('Jane Doe')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('name@example.com')).toHaveValue(
+            'new@example.com'
+        );
+        expect(screen.getByRole('status')).toHaveTextContent(
+            /Tell us your name/
+        );
+        expect(screen.getByRole('status')).not.toHaveTextContent(/We sent/);
+        expect(ApiService.sendOtp).toHaveBeenCalledTimes(1);
+        fireEvent.change(screen.getByPlaceholderText('Jane Doe'), {
+            target: { value: 'New Learner' },
+        });
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Continue with Email' })
+        );
+        await waitFor(() =>
+            expect(screen.getByPlaceholderText('123456')).toBeInTheDocument()
+        );
+        expect(ApiService.sendOtp).toHaveBeenNthCalledWith(
+            2,
+            'new@example.com',
+            true,
+            'New Learner'
+        );
+        expect(ApiService.sendOtp).toHaveBeenCalledTimes(2);
+    });
+
+    it('shows the error when sending the sign-up code fails', async () => {
+        vi.mocked(ApiService.sendOtp).mockResolvedValue({
+            isSuccess: false,
+            data: null,
+            message: 'Too many requests',
+            timestamp: '',
+        } as never);
+        render(<AuthPage />);
+        fireEvent.click(screen.getByRole('button', { name: 'Sign up' }));
+        fireEvent.change(screen.getByPlaceholderText('Jane Doe'), {
+            target: { value: 'Learner' },
+        });
+        fireEvent.change(screen.getByPlaceholderText('name@example.com'), {
+            target: { value: 'learner@example.com' },
+        });
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Continue with Email' })
+        );
+        await waitFor(() =>
+            expect(screen.getByText('Too many requests')).toBeInTheDocument()
+        );
+        expect(screen.queryByPlaceholderText('123456')).not.toBeInTheDocument();
+    });
+
+    it('stays busy until the code request finishes, so it cannot be sent twice', async () => {
+        let finish: (value: unknown) => void = () => {};
+        vi.mocked(ApiService.sendOtp).mockReturnValue(
+            new Promise((resolve) => {
+                finish = resolve;
+            }) as never
+        );
+        render(<AuthPage />);
+        fireEvent.change(screen.getByPlaceholderText('name@example.com'), {
+            target: { value: 'learner@example.com' },
+        });
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Continue with Email' })
+        );
+        const busy = await screen.findByRole('button', { name: /Processing/ });
+        expect(busy).toBeDisabled();
+        finish({ isSuccess: true, data: null, message: '', timestamp: '' });
+        await waitFor(() =>
+            expect(screen.getByPlaceholderText('123456')).toBeInTheDocument()
+        );
+        expect(ApiService.sendOtp).toHaveBeenCalledTimes(1);
     });
 });

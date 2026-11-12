@@ -117,6 +117,21 @@ class StatsServiceImplTest {
     }
 
     @Test
+    void getUserStats_resetsAStreakNotExtendedSinceBeforeYesterday() {
+        progress.setLastReviewedAt(
+                java.time.Instant.now().minus(3, java.time.temporal.ChronoUnit.DAYS));
+        when(currentUser.id()).thenReturn(userId);
+        when(subjectRepository.findAllByUserId(userId)).thenReturn(List.of());
+        when(reviewLogRepository.findAllByUserIdAndReviewedAtBetween(eq(userId), any(), any()))
+                .thenReturn(List.of());
+
+        StatsRes stats = (StatsRes) statsService.getUserStats().getBody().data();
+
+        assertEquals(0, stats.streakDays());
+        assertEquals(120, stats.totalXp());
+    }
+
+    @Test
     void getUserStats_withNoCards_returnsZeroRetentionAndNullSafeXp() {
         when(currentUser.id()).thenReturn(userId);
         when(subjectRepository.findAllByUserId(userId)).thenReturn(List.of());

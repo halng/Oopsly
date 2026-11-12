@@ -48,7 +48,13 @@ describe('useTestSuiteContext', () => {
         });
         vi.mocked(ApiService.getTestSuites).mockResolvedValue({
             isSuccess: true,
-            data: [testSuite],
+            data: {
+                entities: [testSuite],
+                currentPage: 0,
+                totalItems: 1,
+                totalPages: 1,
+                hasNextPage: false,
+            },
             message: '',
             statusCode: 200,
             timestamp: '',

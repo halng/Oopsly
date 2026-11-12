@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HomePage from '@/app/(user)/home/page';
 import { ApiService } from '@/services/api';
 import { useUserProfileStore } from '@/store';
+import { useFeaturesStore } from '@/store/Features';
 import { useToastStore } from '@/store/ToastStore';
 import { shelf } from '@/__tests__/unit/helpers/studyFixtures';
 
@@ -65,10 +66,15 @@ const page = {
 
 describe('HomePage', () => {
     const initialProfileState = useUserProfileStore.getState();
+    const initialFeaturesState = useFeaturesStore.getState();
 
     beforeEach(() => {
         vi.clearAllMocks();
         useUserProfileStore.setState(initialProfileState, true);
+        useFeaturesStore.setState(
+            { ...initialFeaturesState, plan: 'PRO_PLUS' },
+            true
+        );
         vi.mocked(ApiService.getProfile).mockResolvedValue({
             isSuccess: true,
             data: profile,
@@ -119,6 +125,25 @@ describe('HomePage', () => {
             expect(screen.getByText('No shelves found')).toBeInTheDocument()
         );
         expect(screen.getByTestId('btn-create-shelf')).toBeInTheDocument();
+    });
+
+    it('blocks shelf creation at the current plan limit', async () => {
+        useFeaturesStore.setState({ plan: 'FREE' });
+        vi.mocked(ApiService.getShelves).mockResolvedValue({
+            isSuccess: true,
+            data: { ...page, totalItems: 10 },
+            message: '',
+            statusCode: 200,
+            timestamp: '',
+        } as never);
+
+        render(<HomePage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('btn-create-shelf')).toBeDisabled()
+        );
+        expect(
+            screen.getByText(/reached the Free plan limit of 10 shelves/i)
+        ).toBeInTheDocument();
     });
 
     it('filters shelves and opens the create-shelf modal', async () => {
@@ -181,5 +206,51 @@ describe('HomePage', () => {
         );
         fireEvent.click(screen.getByTestId('btn-join-game'));
         expect(screen.getByText('Close join game')).toBeInTheDocument();
+    });
+
+    it('asks for ten shelves at a time and pages through them', async () => {
+        const second = { ...shelf, id: 's2', name: 'Maths', slug: 'maths' };
+        vi.mocked(ApiService.getShelves).mockImplementation(
+            async (pageNumber: number) =>
+                ({
+                    isSuccess: true,
+                    data: {
+                        entities: [pageNumber === 1 ? shelf : second],
+                        currentPage: pageNumber,
+                        totalItems: 11,
+                        totalPages: 2,
+                        hasNextPage: pageNumber === 1,
+                    },
+                    message: '',
+                    statusCode: 200,
+                    timestamp: '',
+                }) as never
+        );
+        render(<HomePage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('shelf-card-s1')).toBeInTheDocument()
+        );
+        expect(ApiService.getShelves).toHaveBeenCalledWith(1, 10);
+        expect(
+            screen.getByTestId('shelves-pagination-status')
+        ).toHaveTextContent('Page 1 of 2');
+
+        fireEvent.click(screen.getByTestId('shelves-pagination-next'));
+        await waitFor(() =>
+            expect(screen.getByTestId('shelf-card-s2')).toBeInTheDocument()
+        );
+        expect(ApiService.getShelves).toHaveBeenLastCalledWith(2, 10);
+        expect(screen.queryByTestId('shelf-card-s1')).not.toBeInTheDocument();
+        expect(screen.getByTestId('shelves-pagination-next')).toBeDisabled();
+    });
+
+    it('has no page controls when the shelves fit on one page', async () => {
+        render(<HomePage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('shelf-card-s1')).toBeInTheDocument()
+        );
+        expect(
+            screen.queryByTestId('shelves-pagination')
+        ).not.toBeInTheDocument();
     });
 });

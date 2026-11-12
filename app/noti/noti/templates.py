@@ -26,6 +26,11 @@ class Message:
     text: str
 
 
+def _one_line(value: str) -> str:
+    """A name or title for a subject line: one line, no stray whitespace."""
+    return " ".join(value.split())
+
+
 @cache
 def _load(kind: str) -> str:
     return (RESOURCE_DIR / f"{kind}.html").read_text(encoding="utf-8")
@@ -46,7 +51,7 @@ def render(event: Event, app_url: str = APP_URL_DEFAULT) -> Message:
     if event.type == events.OTP:
         code = str(event.data["code"]).strip()
         return Message(
-            subject="Oops! You got it! Here is your code",
+            subject=f"{code} is your Quizi verification code",
             html=fill(events.OTP, {"NAME": name, "CODE": code, "MINUTES": OTP_MINUTES}),
             text=(
                 f"Hello {name},\n\nYour Quizi verification code is {code}. "
@@ -57,7 +62,7 @@ def render(event: Event, app_url: str = APP_URL_DEFAULT) -> Message:
 
     if event.type == events.WELCOME:
         return Message(
-            subject="Welcome to Quizi!",
+            subject=f"Welcome to Quizi, {_one_line(name)}! \U0001f331",
             html=fill(events.WELCOME, {"NAME": name, "APP_URL": app_url}),
             text=(
                 f"Hi {name}, welcome to Quizi!\n\n"
@@ -71,7 +76,12 @@ def render(event: Event, app_url: str = APP_URL_DEFAULT) -> Message:
         inviter = str(event.data.get("inviterName") or "").strip()
         who = f"{inviter} invited you" if inviter else "You have been invited"
         return Message(
-            subject=f"You are invited to join {community} on Quizi",
+            subject=(
+                f"{_one_line(inviter)} invited you to join {_one_line(community)}"
+                + " on Quizi"
+                if inviter
+                else f"You are invited to join {_one_line(community)} on Quizi"
+            ),
             html=fill(
                 events.COMMUNITY_INVITE,
                 {
@@ -88,7 +98,7 @@ def render(event: Event, app_url: str = APP_URL_DEFAULT) -> Message:
         )
 
     return Message(
-        subject=f"{CALENDAR_EVENT}: add your study schedule to your calendar",
+        subject="Your study schedule is ready: add it to your calendar",
         html=fill(
             events.STUDY_REMINDER,
             {

@@ -8,7 +8,11 @@ CFG = resend.ResendConfig("re_key", "no-reply@quizi.test")
 
 
 def payload(**over):
-    base = {"template": "otp", "to": "ann@example.com", "data": {"code": "123456"}}
+    base = {
+        "template": "otp",
+        "to": "ann@example.com",
+        "data": {"name": "Ann", "code": "123456"},
+    }
     base.update(over)
     return base
 
@@ -27,14 +31,14 @@ def test_sends_the_rendered_template(config):
     )
     assert result == {"status": "sent"}
     assert sent == [
-        (CFG, "ann@example.com", "Oops! You got it! Here is your code", None)
+        (CFG, "ann@example.com", "123456 is your Quizi verification code", None)
     ]
 
 
 def test_study_reminder_attaches_the_ics(config):
     sent = []
     handler.handler(
-        payload(template=events.STUDY_REMINDER, data={"ics": "ICS"}),
+        payload(template=events.STUDY_REMINDER, data={"name": "Ann", "ics": "ICS"}),
         None,
         send=lambda cfg, to, msg, ics=None: sent.append(ics),
     )

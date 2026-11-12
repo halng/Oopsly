@@ -21,6 +21,10 @@ import { toast } from '@/store/ToastStore';
 import { formatInterval } from '@/utils/fsrs';
 import { ImportCardsModal, CssProgressBar } from '@/components/shared';
 import { useSubjectContext } from '@/hooks/useSubjectContext';
+import { useFeature } from '@/store/Features';
+import Pagination from '@/components/shared/Pagination';
+import { usePagination } from '@/hooks/usePagination';
+import { ITEM_PAGE_SIZE } from '@/utils/pagination';
 
 export default function SubjectDetailsPage() {
     const router = useRouter();
@@ -40,6 +44,7 @@ export default function SubjectDetailsPage() {
     const [isAiModalOpen, setIsAiModalOpen] = useState(false);
     const [aiTopic, setAiTopic] = useState('');
     const [aiNotes, setAiNotes] = useState('');
+    const aiEnabled = useFeature('ai.generate');
     const [aiCardCount, setAiCardCount] = useState(5);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -47,6 +52,21 @@ export default function SubjectDetailsPage() {
         null
     );
     const [editingCard, setEditingCard] = useState<Card | null>(null);
+
+    const filteredCards = cards.filter(
+        (c) =>
+            c.front.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            c.back.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            c.tags.some((t) =>
+                t.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+    );
+    const {
+        page: cardPage,
+        totalPages: cardPages,
+        pageItems: cardRows,
+        setPage: setCardPage,
+    } = usePagination(filteredCards, ITEM_PAGE_SIZE, searchQuery);
 
     const subjectId = currentSubject?.id;
     const shelfId = currentShelf?.id;
@@ -208,14 +228,6 @@ export default function SubjectDetailsPage() {
     const isEmpty = cards.length === 0;
     const emptyHint = isEmpty ? 'Add cards to start practising' : undefined;
 
-    const filteredCards = cards.filter(
-        (c) =>
-            c.front.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.back.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.tags.some((t) =>
-                t.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-    );
     const masteredCards = cards.filter(
         (c) => c.stability >= 0.8 && c.intervalDays > 21
     ).length;
@@ -332,15 +344,17 @@ export default function SubjectDetailsPage() {
                             <FileSpreadsheet className="w-3.5 h-3.5" />
                             Import CSV / Excel
                         </button>
-                        <button
-                            type="button"
-                            data-testid="btn-generate-ai"
-                            onClick={() => setIsAiModalOpen(true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs font-bold cursor-pointer"
-                        >
-                            <Sparkles className="w-3.5 h-3.5" />
-                            Generate with AI
-                        </button>
+                        {aiEnabled && (
+                            <button
+                                type="button"
+                                data-testid="btn-generate-ai"
+                                onClick={() => setIsAiModalOpen(true)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs font-bold cursor-pointer"
+                            >
+                                <Sparkles className="w-3.5 h-3.5" />
+                                Generate with AI
+                            </button>
+                        )}
                         <button
                             type="button"
                             data-testid="btn-add-card"
@@ -443,7 +457,7 @@ export default function SubjectDetailsPage() {
                             No cards yet. Add one to start studying.
                         </p>
                     ) : (
-                        filteredCards.map((card) => (
+                        cardRows.map((card) => (
                             <div
                                 key={card.id}
                                 data-testid={`card-row-${card.id}`}
@@ -535,10 +549,16 @@ export default function SubjectDetailsPage() {
                             </div>
                         ))
                     )}
+                    <Pagination
+                        page={cardPage}
+                        totalPages={cardPages}
+                        onChange={setCardPage}
+                        testId="cards-pagination"
+                    />
                 </div>
             </div>
 
-            {isAiModalOpen && (
+            {aiEnabled && isAiModalOpen && (
                 <div className="fixed inset-0 z-50 bg-stone-900/60 flex items-center justify-center p-4">
                     <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-md w-full p-6 space-y-4">
                         <h2 className="text-lg font-bold">Generate with AI</h2>

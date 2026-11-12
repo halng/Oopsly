@@ -103,10 +103,6 @@ public class ApiRes extends ResponseEntity<Res> {
         return build(HttpStatus.OK, true, message, data);
     }
 
-    public static ApiRes rateLimitExceeded(String message) {
-        return build(HttpStatus.TOO_MANY_REQUESTS, false, message, null);
-    }
-
     public static ApiRes forbidden(String message, Object data) {
         return build(HttpStatus.FORBIDDEN, false, message, data);
     }

@@ -17,6 +17,8 @@
 package com.app.quizi.api.unit.quiz.domain;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.app.quizi.api.quiz.domain.QuizPlan;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -37,5 +39,12 @@ class QuizPlanTest {
     @ValueSource(strings = {"GOLD", ""})
     void from_fallsBackToFree(String claim) {
         assertEquals(QuizPlan.FREE, QuizPlan.from(claim));
+    }
+
+    @org.junit.jupiter.api.Test
+    void canHost_isForPaidPlansOnly() {
+        assertFalse(QuizPlan.FREE.canHost());
+        assertTrue(QuizPlan.PRO.canHost());
+        assertTrue(QuizPlan.PRO_PLUS.canHost());
     }
 }

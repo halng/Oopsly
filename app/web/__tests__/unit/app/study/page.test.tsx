@@ -6,6 +6,7 @@ import { GardenState } from '@/types';
 import { GameService } from '@/services/gameApi';
 import { sendGardenAction } from '@/services/gameSocket';
 import { useAuthStore } from '@/store';
+import { useFeaturesStore } from '@/store/Features';
 
 vi.mock('next/dynamic', () => ({
     default: (importer: () => Promise<{ default: React.ComponentType }>) => {
@@ -119,6 +120,7 @@ const ok = <T,>(data: T) => ({
 describe('StudyPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        useFeaturesStore.setState({ flags: { 'garden.game': true } });
         useAuthStore
             .getState()
             .setCredentials('learner@quizi.app', 'token', 'refresh');
@@ -213,5 +215,14 @@ describe('StudyPage', () => {
             'wildflower_meadow'
         );
         vi.useRealTimers();
+    });
+
+    it('shows only the Pomodoro timer while the garden is switched off', () => {
+        useFeaturesStore.setState({ flags: { 'garden.game': false } });
+        render(<StudyPage />);
+        expect(screen.getByTestId('pomodoro-display')).toBeInTheDocument();
+        expect(screen.queryByTestId('btn-tab-garden')).toBeNull();
+        expect(screen.queryByTestId('btn-tab-timer')).toBeNull();
+        expect(GameService.getGarden).not.toHaveBeenCalled();
     });
 });

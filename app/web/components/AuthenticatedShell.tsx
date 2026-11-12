@@ -4,6 +4,10 @@ import { usePathname } from 'next/navigation';
 import { Navbar } from '@/components';
 import { syncManager } from '@/services/syncManager';
 import { startTokenRefreshTimer } from '@/services/tokenRefresh';
+import { useFeaturesStore } from '@/store/Features';
+import { useUserProfileStore } from '@/store/UserProfile';
+import { ApiService } from '@/services/api';
+import { THEME_OPTIONS, applyTheme, getSavedTheme } from '@/utils/theme';
 import AuthGuard from './AuthGuard';
 
 interface AuthenticatedShellProps {
@@ -21,6 +25,30 @@ const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
     }, []);
 
     useEffect(() => startTokenRefreshTimer(), []);
+
+    // The theme chosen on the account wins; until the profile arrives, use the copy this
+    // browser remembers so the page does not flash the default.
+    const profile = useUserProfileStore((s) => s.profile);
+    const setProfile = useUserProfileStore((s) => s.setProfile);
+    useEffect(() => {
+        applyTheme(getSavedTheme());
+    }, []);
+    useEffect(() => {
+        if (profile) return;
+        void ApiService.getProfile().then((res) => {
+            if (res.isSuccess && res.data) setProfile(res.data);
+        });
+    }, [profile, setProfile]);
+    const savedTheme = profile?.settings?.theme;
+    useEffect(() => {
+        const match = THEME_OPTIONS.find((t) => t.id === savedTheme);
+        if (match) applyTheme(match.id);
+    }, [savedTheme]);
+
+    const loadFeatures = useFeaturesStore((s) => s.load);
+    useEffect(() => {
+        loadFeatures();
+    }, [loadFeatures]);
 
     return (
         <AuthGuard>

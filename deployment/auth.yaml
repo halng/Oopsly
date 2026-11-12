@@ -106,6 +106,9 @@ Resources:
             - ContainerPort: 9010
               Protocol: tcp
           Environment:
+            # local, dev, develop and development are develop environments: auth sends no
+            # email there and logs each skipped email's data (sign-in codes included).
+            # Name real stacks stg, prod and so on.
             - Name: APP_ENV
               Value: !Ref Environment
             - Name: PORT
@@ -211,7 +214,7 @@ Resources:
       Port: 9010
       Protocol: HTTP
       TargetType: ip
-      HealthCheckPath: /actuator/health
+      HealthCheckPath: /api/auth/actuator/health
       HealthCheckIntervalSeconds: 30
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
@@ -290,7 +293,7 @@ Resources:
     Properties:
       ApiId:
         Fn::ImportValue: !Sub ${NetworkStackName}-HttpApiId
-      RouteKey: "ANY /.well-known/{proxy+}"
+      RouteKey: "ANY /api/auth/.well-known/{proxy+}"
       Target: !Sub integrations/${Integration}
 
 Outputs:
@@ -299,7 +302,7 @@ Outputs:
     Value: !Sub http://${LoadBalancer.DNSName}
   JwksUrl:
     Description: Internal JWKS URL, used by the api and game stacks.
-    Value: !Sub http://${LoadBalancer.DNSName}/.well-known/pub.json
+    Value: !Sub http://${LoadBalancer.DNSName}/api/auth/.well-known/pub.json
     Export:
       Name: !Sub ${AWS::StackName}-JwksUrl
   AuthBaseUrl:

@@ -23,14 +23,22 @@ class Feature:
 
 FEATURES: tuple[Feature, ...] = (
     Feature("quiz.play", "Play quiz games", common=True),
-    Feature("game.create", "Host a quiz game", common=True),
-    Feature("review.basic", "Spaced-repetition review", common=True),
+    # Anyone can join a quiz game; hosting one is for paid plans.
     Feature(
-        "ai.hint",
-        "AI generated hints",
+        "game.create",
+        "Host a quiz game",
         common=False,
         plans={domain.PLAN_PRO: True, domain.PLAN_PRO_PLUS: True},
     ),
+    Feature("review.basic", "Spaced-repetition review", common=True),
+    # AI is switched off for everyone for now. To bring it back, set common=True, or
+    # give plans={domain.PLAN_PRO: True, domain.PLAN_PRO_PLUS: True} to limit it to
+    # paid plans.
+    Feature("ai.hint", "AI generated hints", common=False),
+    Feature("ai.generate", "AI flashcard generation", common=False),
+    # The Garden game on the Study page is switched off for now; only the Pomodoro
+    # timer shows.
+    Feature("garden.game", "Garden game", common=False),
     Feature(
         "analytics.advanced",
         "Advanced learning analytics",

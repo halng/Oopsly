@@ -2,7 +2,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
   Quizi shared infrastructure: VPC, ECS cluster, Postgres, Redis, ECR repositories,
   generated secrets and the HTTP API (API Gateway) that fronts every service, with its
-  custom domain (api.quizi.tech) and the DNS record for the web app (quizi.tech) in Route 53.
+  custom domains (api.quizi.tech, ws.quizi.tech) in Route 53. The web app's record (quizi.tech)
+  is managed by hand, outside this stack.
   Deploy this stack first; auth, api and game import its outputs.
 
 Parameters:
@@ -38,14 +39,6 @@ Parameters:
     Type: String
     Default: ""
     Description: Domain the WebSocket endpoints answer on, e.g. ws.quizi.tech. Needs HostedZoneId.
-  WebDomainName:
-    Type: String
-    Default: ""
-    Description: Domain the web app is served on, e.g. quizi.tech. Needs HostedZoneId.
-  WebTarget:
-    Type: String
-    Default: 76.76.21.21
-    Description: IPv4 address the web domain points at (Vercel's apex address).
 
 Conditions:
   HasApiDomain: !And
@@ -54,9 +47,6 @@ Conditions:
   HasWsDomain: !And
     - !Not [!Equals [!Ref HostedZoneId, ""]]
     - !Not [!Equals [!Ref WsDomainName, ""]]
-  HasWebDomain: !And
-    - !Not [!Equals [!Ref HostedZoneId, ""]]
-    - !Not [!Equals [!Ref WebDomainName, ""]]
 
 Resources:
   # ---------------------------------------------------------------- network
@@ -382,18 +372,6 @@ Resources:
       AliasTarget:
         DNSName: !GetAtt ApiDomain.RegionalDomainName
         HostedZoneId: !GetAtt ApiDomain.RegionalHostedZoneId
-
-  # quizi.tech: the UI is hosted outside AWS (Vercel); Route 53 only points the name at it.
-  WebRecord:
-    Type: AWS::Route53::RecordSet
-    Condition: HasWebDomain
-    Properties:
-      HostedZoneId: !Ref HostedZoneId
-      Name: !Ref WebDomainName
-      Type: A
-      TTL: "300"
-      ResourceRecords:
-        - !Ref WebTarget
 
   # ------------------------------------------------------------ WebSocket entry
   # The HTTP API cannot upgrade a connection, so the two socket endpoints (api: STOMP at

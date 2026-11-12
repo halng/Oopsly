@@ -71,7 +71,6 @@ class JwtVerifierTest {
     void givenValidRs256Token_whenExtracting_thenClaimsAreReturned() {
         String token = rs256("k1", 60_000);
 
-        assertEquals("a@b.c", verifier.extractEmail(token));
         assertEquals("u-1", verifier.extractUserId(token));
         assertEquals("USER", verifier.extractUserRole(token));
         assertEquals("PRO", verifier.extractPlan(token));

@@ -24,6 +24,7 @@ import com.app.quizi.api.shared.exception.NotFoundException;
 import com.app.quizi.api.shared.exception.RetryLaterException;
 import com.app.quizi.api.shared.exception.UnauthenticatedException;
 import com.app.quizi.api.shared.exception.ValidationException;
+import com.app.quizi.api.shared.plan.PlanLimitService;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shelf.vm.ShelfReq;
 import com.app.quizi.api.shelf.vm.ShelfRes;
@@ -54,6 +55,7 @@ public class ShelfServiceImpl implements ShelfService {
     private final SubjectRepository subjectRepository;
     private final CardRepository cardRepository;
     private final TestSuiteRepository testSuiteRepository;
+    private final PlanLimitService planLimits;
     private final CurrentUser currentUser;
 
     private static final String TOTAL_CARDS_COUNT = "totalCards";
@@ -61,15 +63,14 @@ public class ShelfServiceImpl implements ShelfService {
     private static final String TOTAL_DUE_CARDS_COUNT = "totalDue";
 
     @Override
-    //    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(ShelfReq request) {
         log.info("Creating shelve for user {}", currentUser.id());
+        planLimits.requireDeckSlot();
         Shelf savedEntity = shelfRepository.save(this.toEntity(request, null));
         return ApiRes.created("Created successfully", this.toViewModel(savedEntity, zeroStats()));
     }
 
     @Override
-    //    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "updateFallback")
     public ApiRes update(ShelfReq request, UUID id) {
         log.info("Updating shelve {} for user {}", id, currentUser.id());
         Shelf existingEntity =
@@ -85,7 +86,6 @@ public class ShelfServiceImpl implements ShelfService {
 
     @Override
     @Transactional
-    //    @CircuitBreaker(name = "shelveServiceCircuitBreaker", fallbackMethod = "deleteFallback")
     public ApiRes delete(UUID id) {
         log.info("Deleting shelve {} for user {}", id, currentUser.id());
         Shelf existingEntity =
@@ -184,6 +184,9 @@ public class ShelfServiceImpl implements ShelfService {
         to.setName(from.name());
         to.setDescription(from.description());
         to.setIcon(from.icon());
+        if (from.color() != null) {
+            to.setColor(from.color());
+        }
         return to;
     }
 
@@ -241,13 +244,6 @@ public class ShelfServiceImpl implements ShelfService {
 
     /** FALLBACK METHODS */
 
-    // Fallback method for create
-    public ApiRes createFallback(ShelfReq request, Throwable t) {
-        log.error("Shelve service unavailable during create");
-        throw new RetryLaterException(
-                "Shelve service is currently unavailable. Please try again later.", t);
-    }
-
     // Fallback method for getAll
     public ApiRes getAllFallback(int page, int size, Throwable t) {
         log.error("Shelve service unavailable during getAll: {}", t.toString());
@@ -258,18 +254,6 @@ public class ShelfServiceImpl implements ShelfService {
     // Fallback method for getById
     public ApiRes getByIdFallback(UUID id, Throwable t) {
         log.error("Shelve service unavailable during getById: {}", t.toString());
-        throw unwrapShelfException(t);
-    }
-
-    // Fallback method for delete
-    public ApiRes deleteFallback(UUID id, Throwable t) {
-        log.error("Shelve service unavailable during delete: {}", t.toString());
-        throw unwrapShelfException(t);
-    }
-
-    // Fallback method for update
-    public ApiRes updateFallback(ShelfReq request, UUID id, Throwable t) {
-        log.error("Shelve service unavailable during update: {}", t.toString());
         throw unwrapShelfException(t);
     }
 

@@ -83,3 +83,19 @@ class SigningKey(Base):
     activate_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), unique=True)
     retire_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class LoginTracker(Base):
+    """One signed-in device. Its id is the `sid` claim of the access tokens; the
+    refresh token is kept only as a hash and is replaced each time it is used."""
+
+    __tablename__ = "login_tracker"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("auth.users.id"), index=True
+    )
+    device: Mapped[str] = mapped_column(String(255), default="")
+    hashed_token: Mapped[str] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

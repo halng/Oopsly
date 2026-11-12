@@ -39,7 +39,10 @@ class QuiziUser(HttpUser):
         self.suffix = f"{_run_id}-{number}-{id(self) % 10_000}"
 
         def token(role: str) -> str:
-            return mint_token(f"perf-{role}-{_run_id}-{number}@quizi.dev", _signing_key)
+            # Pro Max: hosting a room is paid-only and the plan limits would cap the seeded data.
+            return mint_token(
+                f"perf-{role}-{_run_id}-{number}@quizi.dev", _signing_key, plan="PRO_PLUS"
+            )
 
         self.token = token("owner")
         self.other_token = token("member")

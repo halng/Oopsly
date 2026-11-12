@@ -1,3 +1,5 @@
+import sys
+import types
 from datetime import timedelta
 
 import pytest
@@ -5,7 +7,6 @@ from fastapi import HTTPException
 
 from app import deps, domain, mail
 from app.config import Settings
-from app.envelope import ApiError
 from app.kv import MemoryKV, RedisKV
 
 
@@ -33,7 +34,6 @@ def test_derived_settings():
         redis_port=1,
         jwt_expiration_ms=1000,
         jwt_refresh_expiration_ms=2000,
-        test_emails=" a@b.co, ,c@d.co",
         allowed_origins="http://x, http://y",
         jwt_key_rotation_days=7,
         jwt_key_publish_lead_hours=24,
@@ -41,11 +41,17 @@ def test_derived_settings():
     assert s.redis_url() == "redis://r:1"
     assert s.access_ttl == timedelta(seconds=1)
     assert s.refresh_ttl == timedelta(seconds=2)
-    assert s.test_email_list == ["a@b.co", "c@d.co"]
     assert s.origins == ["http://x", "http://y"]
     assert s.key_rotation_interval == timedelta(days=7)
     assert s.key_publish_lead == timedelta(days=1)
     assert s.key_retention == timedelta(seconds=2, hours=1)
+
+
+def test_develop_environments():
+    for env in ("local", "DEV", " development "):
+        assert Settings(app_env=env).is_develop
+    for env in ("", "stg", "prod"):
+        assert not Settings(app_env=env).is_develop
 
 
 def test_publish_lead_never_exceeds_half_the_rotation_interval():
@@ -54,28 +60,18 @@ def test_publish_lead_never_exceeds_half_the_rotation_interval():
 
 
 def test_domain_helpers():
-    assert domain.parse_theme("dark") == "DARK" and domain.parse_theme("x") is None
+    assert domain.parse_theme(" Midnight ") == "midnight"
+    assert domain.parse_theme("dark") is None
     assert domain.parse_language("VI") == "VIETNAMESE"
     assert domain.parse_language("zz") is None
     assert domain.language_code("SPANISH") == "es"
     assert domain.language_code("KLINGON") == "en"
-    assert domain.plan_at_least("PRO_PLUS", "PRO")
-    assert not domain.plan_at_least("FREE", "PRO")
-    assert not domain.plan_at_least("???", "PRO")
-    assert not domain.plan_at_least("PRO", "???")
     assert domain.valid_plan("FREE") and not domain.valid_plan("GOLD")
 
 
-def test_mail_helpers_and_template(caplog):
+def test_mask_hides_the_local_part():
     assert mail.mask("hao@example.com") == "h***@example.com"
     assert mail.mask("a@b.co") == "***"
-    html = mail.render_otp("<b>x</b>@example.com", "123<456")
-    assert "123&lt;456" in html and "&lt;b&gt;x&lt;/b&gt;" in html
-    assert "{{OTP_CODE}}" not in html and "{{USER_NAME}}" not in html
-    with caplog.at_level("INFO"):
-        mail.NoOpSender().send_otp("hao@example.com", "123456")
-    assert "h***@example.com" in caplog.text
-    assert "123456" not in caplog.text
 
 
 def test_memory_kv_expiry_and_delete():
@@ -119,27 +115,20 @@ def test_redis_kv_delegates_to_the_client():
 
 
 def test_dependency_singletons_are_built_from_settings(monkeypatch):
+    monkeypatch.setitem(
+        sys.modules,
+        "boto3",
+        types.SimpleNamespace(client=lambda name, region_name=None: object()),
+    )
     deps.get_kv.cache_clear()
     deps.get_sender.cache_clear()
     deps.get_key_store.cache_clear()
     assert isinstance(deps.get_kv(), RedisKV)  # lazy connection, nothing is contacted
-    assert isinstance(deps.get_sender(), mail.NoOpSender)
+    assert isinstance(deps.get_sender(), mail.Sender)
     assert deps.get_key_store() is deps.get_key_store()
     assert callable(deps.get_run_async())
     for fn in (deps.get_kv, deps.get_sender, deps.get_key_store):
         fn.cache_clear()
-
-
-def test_role_and_plan_guards():
-    principal = deps.Principal("id", "a@b.co", "USER", "PRO")
-    assert deps.require_role("USER", "ADMIN")(principal) is principal
-    assert deps.require_plan("PRO")(principal) is principal
-    with pytest.raises(ApiError) as role:
-        deps.require_role("ADMIN")(principal)
-    assert role.value.status == 403
-    with pytest.raises(ApiError) as plan:
-        deps.require_plan("PRO_PLUS")(principal)
-    assert plan.value.status == 403
 
 
 def test_get_db_closes_its_session(session_factory, monkeypatch):

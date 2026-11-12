@@ -30,6 +30,7 @@ import com.app.quizi.api.shared.exception.NotFoundException;
 import com.app.quizi.api.shared.exception.RetryLaterException;
 import com.app.quizi.api.shared.exception.UnauthenticatedException;
 import com.app.quizi.api.shared.exception.ValidationException;
+import com.app.quizi.api.shared.plan.PlanLimitService;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shared.util.ApiMessages;
 import com.app.quizi.api.shared.util.CardState;
@@ -42,8 +43,6 @@ import com.app.quizi.api.stats.domain.ReviewLogEntity;
 import com.app.quizi.api.stats.infrastructure.ReviewLogRepository;
 import com.app.quizi.api.subject.Subject;
 import com.app.quizi.api.subject.SubjectRepository;
-import com.app.quizi.api.testsuite.domain.TestSuiteEntity;
-import com.app.quizi.api.testsuite.infrastructure.TestSuiteRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -53,7 +52,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -67,7 +65,7 @@ public class CardServiceImpl implements CardService {
     private final CardRepository cardRepository;
     private final SubjectRepository subjectRepository;
     private final ShelfRepository shelfRepository;
-    private final TestSuiteRepository testSuiteRepository;
+    private final PlanLimitService planLimits;
     private final CurrentUser currentUser;
     private final UserProgressService userProgressService;
     private final ReviewLogRepository reviewLogRepository;
@@ -81,6 +79,7 @@ public class CardServiceImpl implements CardService {
                 subjectId,
                 shelfId);
         Subject subject = getSubjectForCurrentUser(shelfId, subjectId);
+        planLimits.requireCardSlots(subject, request.cards().size());
 
         List<Card> cards =
                 request.cards().stream()
@@ -162,49 +161,6 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public ApiRes getCardsByTestSuite(UUID testSuiteId) {
-        TestSuiteEntity testSuite =
-                testSuiteRepository
-                        .findById(testSuiteId)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Test suite not found with id: " + testSuiteId));
-        if (testSuite.getDeleted() != null && testSuite.getDeleted()) {
-            throw new NotFoundException("Test suite not found with id: " + testSuiteId);
-        }
-        if (!testSuite.getShelf().getUserId().equals(currentUser.id())) {
-            throw new NotFoundException("Test suite not found with id: " + testSuiteId);
-        }
-        List<Card> allCards = new ArrayList<>();
-        if (testSuite.getSubjects() != null) {
-            for (Subject subject : testSuite.getSubjects()) {
-                if (subject.getDeleted() != null && subject.getDeleted()) {
-                    continue;
-                }
-                List<Card> subjectCards =
-                        cardRepository
-                                .findAllBySubject(subject, PageRequest.of(0, Integer.MAX_VALUE))
-                                .getContent();
-                allCards.addAll(subjectCards);
-            }
-        }
-        List<CardRes> result = allCards.stream().map(this::toCardRes).collect(Collectors.toList());
-        return ApiRes.success("Fetched successfully", result);
-    }
-
-    @Override
-    public Instant calculateNextPracticeTime(DifficultyLevel difficultyLevel) {
-        Instant now = Instant.now();
-        return switch (difficultyLevel) {
-            case AGAIN -> now.plus(10, ChronoUnit.MINUTES);
-            case HARD -> now.plus(1, ChronoUnit.DAYS);
-            case GOOD -> now.plus(3, ChronoUnit.DAYS);
-            case EASY -> now.plus(15, ChronoUnit.DAYS);
-        };
-    }
-
-    @Override
     @CircuitBreaker(name = "cardServiceCircuitBreaker", fallbackMethod = "updateCardFallback")
     public ApiRes updateCard(UUID shelfId, UUID subjectId, UUID cardId, CardItemReq item) {
         Subject subject = getSubjectForCurrentUser(shelfId, subjectId);
@@ -222,18 +178,6 @@ public class CardServiceImpl implements CardService {
         cardRepository.save(existingCard);
         log.info("Successfully updated card: {}", cardId);
         return ApiRes.success("Updated successfully", toCardRes(existingCard));
-    }
-
-    @Override
-    public Pair<Integer, Double> getShortPracticeStats(Subject subject) {
-        log.info("Calculating short practice stats for subject: {}", subject.getId());
-        long totalCards = cardRepository.countBySubjectAndDeletedFalse(subject);
-        long dueCards = cardRepository.countOverdue(subject);
-        if (totalCards == 0) {
-            return Pair.of(0, 0.0);
-        }
-        double percentage = 100.0 - (dueCards * 100.0) / totalCards;
-        return Pair.of((int) dueCards, percentage);
     }
 
     @Override

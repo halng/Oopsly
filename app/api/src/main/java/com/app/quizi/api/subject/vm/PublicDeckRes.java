@@ -14,17 +14,20 @@
  *    limitations under the License.
  */
 
-package com.app.quizi.api.testsuite.application.vm;
+package com.app.quizi.api.subject.vm;
 
-import com.app.quizi.api.card.DifficultyLevel;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
-public record TestRunCardRes(
+/** A public deck as shown on the crawlable pages: no owner and no study progress. */
+public record PublicDeckRes(
         UUID id,
-        UUID subjectId,
-        String front,
-        String back,
-        DifficultyLevel difficultyLevel,
-        Instant nextPracticeTime,
-        Integer numberOfPractice) {}
+        String name,
+        String description,
+        long totalCards,
+        Instant updatedAt,
+        List<PublicCardRes> cards) {
+
+    public record PublicCardRes(String front, String back) {}
+}

@@ -1,18 +1,32 @@
 from datetime import UTC, datetime
 
 ROLE_USER = "USER"
-ROLE_ADMIN = "ADMIN"
 
 PLAN_FREE = "FREE"
 PLAN_PRO = "PRO"
 PLAN_PRO_PLUS = "PRO_PLUS"
+# Plans and prices are on hold: everyone who signs up starts on the top plan, for good.
+# Set this back to PLAN_FREE to start new accounts on the free plan again.
+NEW_USER_PLAN = PLAN_PRO_PLUS
 
 STATUS_ACTIVE = "ACTIVE"
 STATUS_EXPIRED = "EXPIRED"
 
-THEMES = ("LIGHT", "DARK", "SYSTEM")
+THEME_IDS = (
+    "ghibli-meadow",
+    "ghibli-laputa",
+    "ghibli-howl",
+    "ghibli-kiki",
+    "ghibli-night",
+    "botanical",
+    "obsidian",
+    "midnight",
+    "sunset",
+    "nordic",
+    "emerald",
+)
 LANGUAGE_CODES = {"ENGLISH": "en", "VIETNAMESE": "vi", "SPANISH": "es"}
-PLAN_RANK = {PLAN_FREE: 0, PLAN_PRO: 1, PLAN_PRO_PLUS: 2}
+PLANS = (PLAN_FREE, PLAN_PRO, PLAN_PRO_PLUS)
 
 
 def utc(value: datetime | None) -> datetime | None:
@@ -23,7 +37,8 @@ def utc(value: datetime | None) -> datetime | None:
 
 
 def parse_theme(value: str) -> str | None:
-    return next((t for t in THEMES if t.lower() == value.lower()), None)
+    theme = value.strip().lower()
+    return theme if theme in THEME_IDS else None
 
 
 def parse_language(code: str) -> str | None:
@@ -38,15 +53,7 @@ def language_code(name: str) -> str:
 
 
 def valid_plan(plan: str) -> bool:
-    return plan in PLAN_RANK
-
-
-def plan_at_least(have: str, minimum: str) -> bool:
-    return (
-        have in PLAN_RANK
-        and minimum in PLAN_RANK
-        and (PLAN_RANK[have] >= PLAN_RANK[minimum])
-    )
+    return plan in PLANS
 
 
 def effective_subscription(

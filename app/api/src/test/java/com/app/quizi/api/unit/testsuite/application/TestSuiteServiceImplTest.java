@@ -21,28 +21,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import com.app.quizi.api.card.Card;
-import com.app.quizi.api.card.CardRepository;
 import com.app.quizi.api.shared.application.vm.ApiRes;
 import com.app.quizi.api.shared.application.vm.PagingRes;
 import com.app.quizi.api.shared.exception.NotFoundException;
 import com.app.quizi.api.shared.exception.RetryLaterException;
 import com.app.quizi.api.shared.exception.UnauthenticatedException;
 import com.app.quizi.api.shared.exception.ValidationException;
+import com.app.quizi.api.shared.plan.PlanLimitService;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shelf.Shelf;
 import com.app.quizi.api.shelf.ShelfRepository;
-import com.app.quizi.api.subject.Subject;
-import com.app.quizi.api.subject.SubjectRepository;
 import com.app.quizi.api.testsuite.application.QuestionMetadataMapper;
 import com.app.quizi.api.testsuite.application.TestSuiteServiceImpl;
 import com.app.quizi.api.testsuite.application.vm.TestSuiteReq;
 import com.app.quizi.api.testsuite.application.vm.TestSuiteRes;
 import com.app.quizi.api.testsuite.domain.QuestionEntity;
 import com.app.quizi.api.testsuite.domain.QuestionType;
-import com.app.quizi.api.testsuite.domain.SelectionMode;
 import com.app.quizi.api.testsuite.domain.TestSuiteEntity;
-import com.app.quizi.api.testsuite.domain.TestSuiteSelectionPayload;
 import com.app.quizi.api.testsuite.infrastructure.QuestionRepository;
 import com.app.quizi.api.testsuite.infrastructure.TestSuiteRepository;
 import java.util.ArrayList;
@@ -56,6 +51,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
@@ -65,15 +61,13 @@ class TestSuiteServiceImplTest {
 
     @Mock private ShelfRepository shelfRepository;
 
-    @Mock private SubjectRepository subjectRepository;
-
     @Mock private CurrentUser currentUser;
-
-    @Mock private CardRepository cardRepository;
 
     @Mock private QuestionRepository questionRepository;
 
     @Mock private QuestionMetadataMapper metadataMapper;
+
+    @Mock private PlanLimitService planLimits;
 
     @InjectMocks private TestSuiteServiceImpl testSuiteService;
 
@@ -227,7 +221,8 @@ class TestSuiteServiceImplTest {
     }
 
     @Test
-    void getAllByShelve_returnsAllTestSuites() {
+    @SuppressWarnings("unchecked")
+    void getAllByShelve_returnsOnePageOfTestSuites() {
         List<TestSuiteEntity> testSuites = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             TestSuiteEntity testSuite = new TestSuiteEntity();
@@ -241,12 +236,29 @@ class TestSuiteServiceImplTest {
         when(currentUser.id()).thenReturn(currentUserId);
         when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
                 .thenReturn(Optional.of(shelve));
-        when(testSuiteRepository.findAllByShelve(shelve)).thenReturn(testSuites);
+        when(testSuiteRepository.findAllByShelve(eq(shelve), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(testSuites, PageRequest.of(1, 3), 8));
 
-        ApiRes result = testSuiteService.getAllByShelve(shelveId);
+        ApiRes result = testSuiteService.getAllByShelve(shelveId, 2, 3);
 
-        assertNotNull(result);
-        verify(testSuiteRepository, times(1)).findAllByShelve(shelve);
+        org.mockito.ArgumentCaptor<Pageable> asked =
+                org.mockito.ArgumentCaptor.forClass(Pageable.class);
+        verify(testSuiteRepository, times(1)).findAllByShelve(eq(shelve), asked.capture());
+        // The API counts pages from 1, the repository from 0.
+        assertEquals(1, asked.getValue().getPageNumber());
+        assertEquals(3, asked.getValue().getPageSize());
+        PagingRes<TestSuiteRes> body = (PagingRes<TestSuiteRes>) result.getBody().data();
+        assertEquals(3, body.entities().size());
+        assertEquals(8, body.totalItems());
+        assertEquals(3, body.totalPages());
+        assertTrue(body.hasNextPage());
+    }
+
+    @Test
+    void getAllByShelve_rejectsPageZero() {
+        assertThrows(
+                ValidationException.class, () -> testSuiteService.getAllByShelve(shelveId, 0, 10));
+        verify(testSuiteRepository, never()).findAllByShelve(any(), any(Pageable.class));
     }
 
     @Test
@@ -349,178 +361,12 @@ class TestSuiteServiceImplTest {
         RetryLaterException thrown =
                 assertThrows(
                         RetryLaterException.class,
-                        () -> testSuiteService.getAllByShelveFallback(shelveId, exception));
+                        () -> testSuiteService.getAllByShelveFallback(shelveId, 1, 10, exception));
 
         assertEquals(
                 "Test suite service is currently unavailable. Please try again later.",
                 thrown.getMessage());
         assertSame(exception, thrown.getCause());
-    }
-
-    @Test
-    void run_returnsEmpty_whenNoSubjectsLinked() {
-        TestSuiteEntity suite = new TestSuiteEntity();
-        suite.setId(testSuiteId);
-        suite.setSubjects(new ArrayList<>());
-
-        when(currentUser.id()).thenReturn(currentUserId);
-        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
-                .thenReturn(Optional.of(shelve));
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-
-        ApiRes result = testSuiteService.run(shelveId, testSuiteId);
-
-        assertNotNull(result);
-        verify(cardRepository, never()).findAllBySubjectInAndDeletedFalse(any());
-    }
-
-    @Test
-    void run_loadsCards_forAllMode() {
-        UUID subjectId = UUID.randomUUID();
-        Subject subject = new Subject();
-        subject.setId(subjectId);
-
-        TestSuiteEntity suite = new TestSuiteEntity();
-        suite.setId(testSuiteId);
-        suite.setSubjects(List.of(subject));
-        suite.setSelection(null);
-
-        Card card = Card.builder().front("Q").back("A").numberOfPractice(0).build();
-        card.setId(UUID.randomUUID());
-        card.setSubject(subject);
-
-        when(currentUser.id()).thenReturn(currentUserId);
-        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
-                .thenReturn(Optional.of(shelve));
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(cardRepository.findAllBySubjectInAndDeletedFalse(List.of(subject)))
-                .thenReturn(List.of(card));
-
-        ApiRes result = testSuiteService.run(shelveId, testSuiteId);
-
-        assertNotNull(result);
-        verify(cardRepository, times(1)).findAllBySubjectInAndDeletedFalse(List.of(subject));
-    }
-
-    @Test
-    void testRunFallback() {
-        RuntimeException exception = new RuntimeException("Database connection failed");
-
-        RetryLaterException thrown =
-                assertThrows(
-                        RetryLaterException.class,
-                        () -> testSuiteService.runFallback(shelveId, testSuiteId, exception));
-
-        assertEquals(
-                "Test suite service is currently unavailable. Please try again later.",
-                thrown.getMessage());
-        assertSame(exception, thrown.getCause());
-    }
-
-    @Test
-    void run_dueOnlyMode_usesDueQuery() {
-        Subject subject = new Subject();
-        subject.setId(UUID.randomUUID());
-        TestSuiteEntity suite = new TestSuiteEntity();
-        suite.setId(testSuiteId);
-        suite.setSubjects(List.of(subject));
-        suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.DUE_ONLY, 2, true));
-
-        Card card = Card.builder().front("Q").back("A").numberOfPractice(0).build();
-        card.setId(UUID.randomUUID());
-        card.setSubject(subject);
-
-        when(currentUser.id()).thenReturn(currentUserId);
-        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
-                .thenReturn(Optional.of(shelve));
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(cardRepository.findDueBySubjects(eq(List.of(subject)), any()))
-                .thenReturn(List.of(card));
-
-        ApiRes result = testSuiteService.run(shelveId, testSuiteId);
-
-        assertTrue(result.getBody().isSuccess());
-        verify(cardRepository).findDueBySubjects(eq(List.of(subject)), any());
-    }
-
-    @Test
-    void run_randomMode_emptyPool_returnsEmptyMessage() {
-        Subject subject = new Subject();
-        subject.setId(UUID.randomUUID());
-        TestSuiteEntity suite = new TestSuiteEntity();
-        suite.setId(testSuiteId);
-        suite.setSubjects(List.of(subject));
-        suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.RANDOM, null, false));
-
-        when(currentUser.id()).thenReturn(currentUserId);
-        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
-                .thenReturn(Optional.of(shelve));
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(cardRepository.findAllBySubjectInAndDeletedFalse(List.of(subject)))
-                .thenReturn(List.of());
-
-        ApiRes result = testSuiteService.run(shelveId, testSuiteId);
-
-        assertTrue(result.getBody().message().contains("No cards match"));
-    }
-
-    @Test
-    void run_randomMode_capsResults() {
-        Subject subject = new Subject();
-        subject.setId(UUID.randomUUID());
-        TestSuiteEntity suite = new TestSuiteEntity();
-        suite.setId(testSuiteId);
-        suite.setSubjects(List.of(subject));
-        suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.RANDOM, 1, null));
-
-        List<Card> cards = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            Card card = Card.builder().front("Q" + i).back("A").numberOfPractice(0).build();
-            card.setId(UUID.randomUUID());
-            card.setSubject(subject);
-            cards.add(card);
-        }
-
-        when(currentUser.id()).thenReturn(currentUserId);
-        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
-                .thenReturn(Optional.of(shelve));
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(cardRepository.findAllBySubjectInAndDeletedFalse(List.of(subject))).thenReturn(cards);
-
-        ApiRes result = testSuiteService.run(shelveId, testSuiteId);
-
-        assertEquals(1, ((List<?>) result.getBody().data()).size());
-    }
-
-    @Test
-    void autoGenerate_createsSuiteForSubject() {
-        UUID subjectId = UUID.randomUUID();
-        Subject subject = new Subject();
-        subject.setId(subjectId);
-        subject.setName("Biology");
-
-        when(currentUser.id()).thenReturn(currentUserId);
-        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
-                .thenReturn(Optional.of(shelve));
-        when(subjectRepository.findByIdAndShelve(subjectId, shelve))
-                .thenReturn(Optional.of(subject));
-        when(testSuiteRepository.save(any(TestSuiteEntity.class)))
-                .thenAnswer(
-                        inv -> {
-                            TestSuiteEntity t = inv.getArgument(0);
-                            t.setId(UUID.randomUUID());
-                            return t;
-                        });
-
-        ApiRes result = testSuiteService.autoGenerate(shelveId, subjectId, 5);
-
-        assertEquals(201, result.getStatusCode().value());
-        verify(testSuiteRepository).save(any(TestSuiteEntity.class));
     }
 
     @Test
@@ -647,58 +493,6 @@ class TestSuiteServiceImplTest {
         assertThrows(
                 UnauthenticatedException.class,
                 () -> testSuiteService.createFallback(shelveId, testSuiteReq, ue));
-    }
-
-    @Test
-    void run_withExplicitLimitOnAllMode_caps() {
-        Subject subject = new Subject();
-        subject.setId(UUID.randomUUID());
-        TestSuiteEntity suite = new TestSuiteEntity();
-        suite.setId(testSuiteId);
-        suite.setSubjects(List.of(subject));
-        suite.setSelection(new TestSuiteSelectionPayload(SelectionMode.ALL, 1, false));
-
-        List<Card> cards = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            Card card = Card.builder().front("Q" + i).back("A").numberOfPractice(0).build();
-            card.setId(UUID.randomUUID());
-            card.setSubject(subject);
-            cards.add(card);
-        }
-        when(currentUser.id()).thenReturn(currentUserId);
-        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
-                .thenReturn(Optional.of(shelve));
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(cardRepository.findAllBySubjectInAndDeletedFalse(List.of(subject))).thenReturn(cards);
-
-        ApiRes result = testSuiteService.run(shelveId, testSuiteId);
-        assertEquals(1, ((List<?>) result.getBody().data()).size());
-    }
-
-    @Test
-    void run_withPartialSelectionDefaults() {
-        Subject subject = new Subject();
-        subject.setId(UUID.randomUUID());
-        TestSuiteEntity suite = new TestSuiteEntity();
-        suite.setId(testSuiteId);
-        suite.setSubjects(List.of(subject));
-        TestSuiteSelectionPayload partial = new TestSuiteSelectionPayload(null, null, null);
-        suite.setSelection(partial);
-
-        Card card = Card.builder().front("Q").back("A").numberOfPractice(0).build();
-        card.setId(UUID.randomUUID());
-        card.setSubject(subject);
-        when(currentUser.id()).thenReturn(currentUserId);
-        when(shelfRepository.findByIdAndUserId(shelveId, currentUserId))
-                .thenReturn(Optional.of(shelve));
-        when(testSuiteRepository.findByIdAndShelveWithSubjects(testSuiteId, shelve))
-                .thenReturn(Optional.of(suite));
-        when(cardRepository.findAllBySubjectInAndDeletedFalse(List.of(subject)))
-                .thenReturn(List.of(card));
-
-        ApiRes result = testSuiteService.run(shelveId, testSuiteId);
-        assertTrue(result.getBody().isSuccess());
     }
 
     private TestSuiteEntity publicSuite() {

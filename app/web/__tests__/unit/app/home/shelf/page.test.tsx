@@ -23,14 +23,33 @@ vi.mock('@/services/api', () => ({
         updateSubject: vi.fn(),
         deleteSubject: vi.fn(),
         updateShelf: vi.fn(),
+        deleteShelf: vi.fn(),
         createTestSuite: vi.fn(),
         updateTestSuite: vi.fn(),
         deleteTestSuite: vi.fn(),
     },
 }));
 vi.mock('@/components/shared', () => ({
-    ShelfModal: ({ onClose }: { onClose: () => void }) => (
-        <button onClick={onClose}>Close shelf modal</button>
+    ShelfModal: ({
+        onClose,
+        onSave,
+    }: {
+        onClose: () => void;
+        onSave: (data: { name: string; description: string }) => void;
+    }) => (
+        <div>
+            <button onClick={onClose}>Close shelf modal</button>
+            <button
+                onClick={() =>
+                    onSave({
+                        name: 'Renamed',
+                        description: 'A new description',
+                    })
+                }
+            >
+                Save shelf modal
+            </button>
+        </div>
     ),
     SubjectModal: ({ onClose }: { onClose: () => void }) => (
         <button onClick={onClose}>Close subject modal</button>
@@ -80,7 +99,13 @@ describe('ShelfPage', () => {
         });
         vi.mocked(ApiService.getTestSuites).mockResolvedValue({
             isSuccess: true,
-            data: [testSuite],
+            data: {
+                entities: [testSuite],
+                currentPage: 0,
+                totalItems: 1,
+                totalPages: 1,
+                hasNextPage: false,
+            },
             message: '',
             statusCode: 200,
             timestamp: '',
@@ -144,6 +169,134 @@ describe('ShelfPage', () => {
             expect(
                 screen.getByTestId('shelf-subjects-empty')
             ).toBeInTheDocument()
+        );
+    });
+
+    it('pages the subjects ten at a time from the server', async () => {
+        const other = {
+            ...subject,
+            id: 'sub2',
+            name: 'Chemistry',
+            slug: 'chem',
+        };
+        vi.mocked(ApiService.getShelfSubjects).mockImplementation(
+            async (_shelfId: string, pageNumber = 1) =>
+                ({
+                    isSuccess: true,
+                    data: {
+                        entities: [pageNumber === 1 ? subject : other],
+                        currentPage: pageNumber,
+                        totalItems: 11,
+                        totalPages: 2,
+                        hasNextPage: pageNumber === 1,
+                    },
+                    message: '',
+                    statusCode: 200,
+                    timestamp: '',
+                }) as never
+        );
+        render(<ShelfPage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('subject-card-sub1')).toBeInTheDocument()
+        );
+        expect(ApiService.getShelfSubjects).toHaveBeenCalledWith('s1', 1, 10);
+
+        fireEvent.click(screen.getByTestId('subjects-pagination-next'));
+        await waitFor(() =>
+            expect(screen.getByTestId('subject-card-sub2')).toBeInTheDocument()
+        );
+        expect(ApiService.getShelfSubjects).toHaveBeenLastCalledWith(
+            's1',
+            2,
+            10
+        );
+        expect(
+            screen.queryByTestId('subject-card-sub1')
+        ).not.toBeInTheDocument();
+        // moving between pages does not blank the page behind a loader
+        expect(screen.getByTestId('shelf-page')).toBeInTheDocument();
+    });
+
+    it('pages the test suites ten at a time from the server', async () => {
+        const second = {
+            ...testSuite,
+            id: 'ts2',
+            slug: 'final',
+            title: 'Final',
+        };
+        vi.mocked(ApiService.getTestSuites).mockImplementation(
+            async (_shelfId: string, pageNumber = 1) =>
+                ({
+                    isSuccess: true,
+                    data: {
+                        entities: [pageNumber === 1 ? testSuite : second],
+                        currentPage: pageNumber - 1,
+                        totalItems: 11,
+                        totalPages: 2,
+                        hasNextPage: pageNumber === 1,
+                    },
+                    message: '',
+                    statusCode: 200,
+                    timestamp: '',
+                }) as never
+        );
+        render(<ShelfPage />);
+        await waitFor(() =>
+            expect(
+                screen.getByTestId('test-suite-card-ts1')
+            ).toBeInTheDocument()
+        );
+        expect(ApiService.getTestSuites).toHaveBeenCalledWith('s1', 1, 10);
+        expect(
+            screen.getByTestId('test-suites-pagination-status')
+        ).toHaveTextContent('Page 1 of 2');
+
+        fireEvent.click(screen.getByTestId('test-suites-pagination-next'));
+        await waitFor(() =>
+            expect(
+                screen.getByTestId('test-suite-card-ts2')
+            ).toBeInTheDocument()
+        );
+        expect(ApiService.getTestSuites).toHaveBeenLastCalledWith('s1', 2, 10);
+        expect(
+            screen.queryByTestId('test-suite-card-ts1')
+        ).not.toBeInTheDocument();
+        expect(screen.getByTestId('shelf-page')).toBeInTheDocument();
+    });
+
+    it('renames the shelf with a full update that keeps its address, and never deletes it', async () => {
+        vi.mocked(ApiService.updateShelf).mockResolvedValue({
+            isSuccess: true,
+            data: null,
+            message: '',
+            statusCode: 200,
+            timestamp: '',
+        });
+        render(<ShelfPage />);
+        await waitFor(() =>
+            expect(screen.getByTestId('shelf-page')).toBeInTheDocument()
+        );
+        fireEvent.click(screen.getByTestId('btn-edit-active-shelf'));
+        fireEvent.click(screen.getByText('Save shelf modal'));
+
+        await waitFor(() =>
+            expect(ApiService.updateShelf).toHaveBeenCalledWith('s1', {
+                name: 'Renamed',
+                slug: 'science',
+                description: 'A new description',
+                icon: shelf.icon,
+                color: shelf.color,
+            })
+        );
+        // The shelf is still there, under its new name, with the same address.
+        await waitFor(() =>
+            expect(screen.getByTestId('shelf-page')).toHaveTextContent(
+                'Renamed'
+            )
+        );
+        expect(ApiService.deleteShelf).not.toHaveBeenCalled();
+        expect(useShelfStore.getState().getCurrentShelf('science')?.name).toBe(
+            'Renamed'
         );
     });
 });

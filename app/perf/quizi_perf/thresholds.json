@@ -15,7 +15,6 @@
         "GET /garden",
         "GET /leaderboard",
         "GET /tags",
-        "GET /test-suites/{testSuiteId}/cards",
         "GET /v1/cards/due",
         "GET /v1/ping",
         "GET /v1/shelves",
@@ -53,8 +52,6 @@
         "POST /v1/shelves/{shelfId}/subjects/{subjectId}/cards",
         "POST /v1/shelves/{shelfId}/subjects/{subjectId}/study-sessions",
         "POST /v1/shelves/{shelveId}/test-suites",
-        "POST /v1/shelves/{shelveId}/test-suites/auto-generate",
-        "POST /v1/shelves/{shelveId}/test-suites/{id}/run",
         "POST /v1/shelves/{shelveId}/test-suites/{id}/submit",
         "POST /v1/shelves/{shelveId}/test-suites/{testSuiteId}/questions",
         "PUT /v1/shelves/{shelfId}",
@@ -72,10 +69,6 @@
         "max_failure_ratio": 0.01
       },
       "endpoints": {
-        "POST /v1/shelves/{shelveId}/test-suites/auto-generate": {
-          "p95_ms": 1500,
-          "max_failure_ratio": 0.01
-        },
         "POST /ai/generate-cards": {
           "p95_ms": 1500,
           "max_failure_ratio": 0.01
@@ -98,7 +91,6 @@
         "GET /garden",
         "GET /leaderboard",
         "GET /tags",
-        "GET /test-suites/{testSuiteId}/cards",
         "GET /v1/cards/due",
         "GET /v1/ping",
         "GET /v1/shelves",
@@ -136,8 +128,6 @@
         "POST /v1/shelves/{shelfId}/subjects/{subjectId}/cards",
         "POST /v1/shelves/{shelfId}/subjects/{subjectId}/study-sessions",
         "POST /v1/shelves/{shelveId}/test-suites",
-        "POST /v1/shelves/{shelveId}/test-suites/auto-generate",
-        "POST /v1/shelves/{shelveId}/test-suites/{id}/run",
         "POST /v1/shelves/{shelveId}/test-suites/{id}/submit",
         "POST /v1/shelves/{shelveId}/test-suites/{testSuiteId}/questions",
         "PUT /v1/shelves/{shelfId}",

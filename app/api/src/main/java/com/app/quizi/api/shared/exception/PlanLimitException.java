@@ -13,12 +13,11 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+package com.app.quizi.api.shared.exception;
 
-package com.app.quizi.api.testsuite.domain;
-
-/** How cards are selected when building a test run. */
-public enum SelectionMode {
-    ALL,
-    DUE_ONLY,
-    RANDOM
+/** The caller's plan does not allow creating more of something. Answered with 403. */
+public class PlanLimitException extends ValidationException {
+    public PlanLimitException(String message) {
+        super(message);
+    }
 }

@@ -3,23 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
     <title>Welcome to Quizi</title>
 </head>
-<body style="margin:0;padding:0;background:#f2f4f6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#333333;">
-<table role="presentation" width="100%" style="background:#f2f4f6;">
+<body style="margin:0;padding:0;background:#FDFBF7;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#292524;-webkit-text-size-adjust:100%;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#FDFBF7;">Your learning journey starts now.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FDFBF7;">
     <tr>
         <td align="center" style="padding:40px 12px;">
-            <table role="presentation" width="100%" style="max-width:600px;background:#ffffff;border-radius:8px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
                 <tr>
-                    <td align="center" style="padding:32px 40px 16px 40px;border-bottom:3px solid #4A90E2;">
-                        <h2 style="margin:0;font-size:24px;color:#333333;">Quizi</h2>
+                    <td align="center" style="padding:0 0 24px 0;">
+                        <table role="presentation" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td align="center" width="40" height="40" bgcolor="#5b8c32" style="background:#5b8c32;border-radius:12px;color:#ffffff;font-size:22px;font-weight:900;line-height:40px;">Q</td>
+                                <td style="padding-left:12px;font-size:24px;font-weight:900;letter-spacing:-0.5px;color:#292524;">Quizi</td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
                 <tr>
-                    <td style="padding:32px 40px;">
-                        <p style="margin:0 0 20px 0;font-size:16px;line-height:26px;color:#666666;">Hi <strong>{{NAME}}</strong>, welcome to Quizi!</p>
-                        <p style="margin:0 0 20px 0;font-size:16px;line-height:26px;color:#666666;">Study smart, remember forever: build decks, review them with spaced repetition and keep your streak going.</p>
-                        <p style="margin:0 0 20px 0;font-size:16px;line-height:26px;color:#666666;"><a href="{{APP_URL}}" style="display:inline-block;background:#4A90E2;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 24px;border-radius:8px;">Start learning</a></p>
+                    <td style="background:#ffffff;border:1px solid #e7e5e4;border-radius:20px;overflow:hidden;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr><td height="6" bgcolor="#5b8c32" style="background:#5b8c32;font-size:0;line-height:0;">&nbsp;</td></tr>
+                            <tr>
+                                <td style="padding:36px 40px 40px 40px;">
+                                    <h1 style="margin:0 0 16px 0;font-size:26px;line-height:34px;font-weight:800;color:#292524;">Welcome aboard, {{NAME}}! &#127807;</h1>
+                                    <p style="margin:0 0 20px 0;font-size:16px;line-height:26px;color:#57534e;">Your account is ready. Quizi helps you remember what you learn, using spaced repetition that shows each card right before you would forget it.</p>
+                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">
+                                        <tr><td style="padding:10px 0;font-size:15px;line-height:24px;color:#57534e;"><span style="color:#5b8c32;font-weight:800;">&#10003;</span>&nbsp; Build decks of rich flashcards</td></tr>
+                                        <tr><td style="padding:10px 0;border-top:1px solid #f5f5f4;font-size:15px;line-height:24px;color:#57534e;"><span style="color:#5b8c32;font-weight:800;">&#10003;</span>&nbsp; Review on a smart schedule</td></tr>
+                                        <tr><td style="padding:10px 0;border-top:1px solid #f5f5f4;font-size:15px;line-height:24px;color:#57534e;"><span style="color:#5b8c32;font-weight:800;">&#10003;</span>&nbsp; Keep your streak and grow your garden</td></tr>
+                                    </table>
+                                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                                        <tr>
+                                            <td align="center" bgcolor="#5b8c32" style="background:#5b8c32;border-radius:12px;">
+                                                <a href="{{APP_URL}}" style="display:inline-block;padding:14px 32px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;">Start learning</a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center" style="padding:24px 16px 0 16px;font-size:12px;line-height:20px;color:#a8a29e;">
+                        You are receiving this because you created a Quizi account.<br>
+                        Quizi &middot; Study smart, remember forever
                     </td>
                 </tr>
             </table>

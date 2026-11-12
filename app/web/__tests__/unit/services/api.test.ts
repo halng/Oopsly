@@ -179,7 +179,11 @@ describe('ApiService', () => {
             );
             const res = await ApiService.updateShelf('s1', {
                 name: 'x',
-            } as never);
+                slug: 'x',
+                description: 'a description',
+                icon: 'i',
+                color: 'c',
+            });
             expect(res).toMatchObject({ isSuccess: false, statusCode: 500 });
             expect(toasts()).toHaveLength(1);
             expect(toasts()[0]).toMatchObject({
@@ -291,7 +295,7 @@ describe('ApiService', () => {
                 () => ApiService.sendOtp('a@b.c'),
                 'auth',
                 'POST',
-                '/v1/otp?email=a@b.c',
+                '/v1/otp?email=a%40b.c',
                 undefined,
             ],
             [
@@ -340,18 +344,33 @@ describe('ApiService', () => {
             ],
             [
                 'updateShelf',
-                () => ApiService.updateShelf('s1', { name: 'n' }),
+                () =>
+                    ApiService.updateShelf('s1', {
+                        name: 'n',
+                        slug: 'n',
+                        description: 'a description',
+                        icon: 'i',
+                        color: 'c',
+                        // not part of the update, so it must not be sent
+                        stats: { totalCards: 1 },
+                    } as never),
                 'api',
-                'PATCH',
+                'PUT',
                 '/v1/shelves/s1',
-                { name: 'n' },
+                {
+                    name: 'n',
+                    slug: 'n',
+                    description: 'a description',
+                    icon: 'i',
+                    color: 'c',
+                },
             ],
             [
                 'deleteShelf',
                 () => ApiService.deleteShelf('s1'),
                 'api',
                 'PATCH',
-                '/v1/shelves/s1/delete',
+                '/v1/shelves/s1',
                 undefined,
             ],
             [
@@ -437,7 +456,7 @@ describe('ApiService', () => {
                 () => ApiService.getTestSuites('s'),
                 'api',
                 'GET',
-                '/v1/shelves/s/test-suites',
+                '/v1/shelves/s/test-suites?page=1&size=10',
                 undefined,
             ],
             [

@@ -30,14 +30,10 @@ public interface TestSuiteService {
 
     ApiRes getById(UUID shelveId, UUID testSuiteId);
 
-    ApiRes getAllByShelve(UUID shelveId);
+    ApiRes getAllByShelve(UUID shelveId, int page, int size);
 
     /** Returns the questions of a suite without their answers, for taking the test. */
     ApiRes getAttempt(UUID shelveId, UUID testSuiteId);
-
-    // TODO(ai): card-based preset run, postponed until the AI integration.
-    /** Resolves flashcards from the preset (read-only; does not change SRS schedules). */
-    ApiRes run(UUID shelveId, UUID testSuiteId);
 
     /** Grades a finished test run, awards XP and returns a per-question breakdown. */
     ApiRes submit(UUID shelveId, UUID testSuiteId, TestSubmissionReq request);
@@ -47,7 +43,4 @@ public interface TestSuiteService {
 
     /** Copies a public test suite and its questions into one of the current user's shelves. */
     ApiRes cloneSuite(UUID testSuiteId, UUID shelfId);
-
-    // TODO(ai): will generate questions with AI; currently creates an empty suite.
-    ApiRes autoGenerate(UUID shelveId, UUID subjectId, int numQuestions);
 }

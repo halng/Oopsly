@@ -34,6 +34,11 @@ public enum QuizPlan {
         return maxPlayers;
     }
 
+    /** Only paid plans host games; anyone, on any plan, can join one. */
+    public boolean canHost() {
+        return this != FREE;
+    }
+
     /** Unknown or missing claims (tokens issued before plans existed) fall back to FREE. */
     public static QuizPlan from(String claim) {
         if (claim == null) {

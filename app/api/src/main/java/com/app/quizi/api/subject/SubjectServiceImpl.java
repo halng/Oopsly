@@ -24,6 +24,7 @@ import com.app.quizi.api.shared.exception.NotFoundException;
 import com.app.quizi.api.shared.exception.RetryLaterException;
 import com.app.quizi.api.shared.exception.UnauthenticatedException;
 import com.app.quizi.api.shared.exception.ValidationException;
+import com.app.quizi.api.shared.plan.PlanLimitService;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shelf.Shelf;
 import com.app.quizi.api.shelf.ShelfRepository;
@@ -54,14 +55,15 @@ public class SubjectServiceImpl implements SubjectService {
     private final ShelfRepository shelfRepository;
     private final CurrentUser currentUser;
     private final CardRepository cardRepository;
+    private final PlanLimitService planLimits;
 
     @Override
     @CircuitBreaker(name = "subjectServiceCircuitBreaker", fallbackMethod = "createFallback")
     public ApiRes create(UUID shelfId, SubjectReq request) {
         log.info("Creating subject for shelf: {}", shelfId);
         Shelf shelf = getShelfForCurrentUser(shelfId);
+        planLimits.requireSubjectSlot(shelf);
 
-        //        TODO: Validate tags exist and belong to the user and add them to the subject
         Subject subject =
                 Subject.builder()
                         .name(request.name())
@@ -69,7 +71,6 @@ public class SubjectServiceImpl implements SubjectService {
                         .color(request.color())
                         .shelf(shelf)
                         .isPublic(request.isPublic())
-                        //                        .tags(request.tags())
                         .slug(request.slug())
                         .build();
 
@@ -240,8 +241,7 @@ public class SubjectServiceImpl implements SubjectService {
     }
 
     /**
-     * Loads total and overdue card counts for a page of subjects in two grouped queries instead of
-     * calling {@code getShortPracticeStats} per row.
+     * Loads total and overdue card counts for a page of subjects in two grouped queries.
      *
      * @return subject id → {@code [overdue, totalCards]}
      */
@@ -331,6 +331,14 @@ public class SubjectServiceImpl implements SubjectService {
                 return ApiRes.badRequest("No shelves found. Create a shelf first.");
             }
             targetShelf = shelves.get(0);
+        }
+
+        planLimits.requireSubjectSlot(targetShelf);
+        if (source.getCards() != null) {
+            planLimits.requireCardsFit(
+                    source.getCards().stream()
+                            .filter(c -> !Boolean.TRUE.equals(c.getDeleted()))
+                            .count());
         }
 
         Subject cloned =

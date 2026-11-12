@@ -63,13 +63,13 @@ class FakeLambda:
         self.calls.append((FunctionName, InvocationType, json.loads(Payload)))
 
 
-def test_lambda_sender_invokes_the_template_asynchronously():
+def test_sender_invokes_the_template_asynchronously():
     fake = FakeLambda()
-    sender = mail.LambdaSender("quizi-noti-stg", client=fake)
-    sender.send_otp("a@b.co", "123456")
+    sender = mail.Sender("quizi-noti-stg", client=fake)
+    sender.send_otp("a@b.co", "123456", "Ann")
     sender.send_welcome("a@b.co", "Ann")
     sender.send_community_invite("a@b.co", "Ann", "Math Club", "Bo")
-    sender.send_study_reminder("a@b.co", "ICS")
+    sender.send_study_reminder("a@b.co", "Ann", "ICS")
     assert [c[2]["template"] for c in fake.calls] == [
         "otp",
         "welcome",
@@ -80,7 +80,7 @@ def test_lambda_sender_invokes_the_template_asynchronously():
     assert fake.calls[0][2] == {
         "template": "otp",
         "to": "a@b.co",
-        "data": {"code": "123456"},
+        "data": {"code": "123456", "name": "Ann"},
     }
     assert fake.calls[2][2]["data"] == {
         "name": "Ann",
@@ -89,7 +89,7 @@ def test_lambda_sender_invokes_the_template_asynchronously():
     }
 
 
-def test_lambda_sender_builds_its_own_client(monkeypatch):
+def test_sender_builds_its_own_client(monkeypatch):
     import sys
     import types
 
@@ -100,21 +100,38 @@ def test_lambda_sender_builds_its_own_client(monkeypatch):
         return FakeLambda()
 
     monkeypatch.setitem(sys.modules, "boto3", types.SimpleNamespace(client=client))
-    mail.LambdaSender("quizi-noti-stg", "ap-southeast-1")
+    mail.Sender("quizi-noti-stg", "ap-southeast-1")
     assert made == {"name": "lambda", "region": "ap-southeast-1"}
-
-
-def test_noop_sender_only_logs(caplog):
-    sender = mail.NoOpSender()
-    with caplog.at_level("INFO"):
-        sender.send_welcome("hao@example.com", "Hao")
-        sender.send_community_invite("hao@example.com", "Hao", "Club", "Bo")
-    assert caplog.text.count("h***@example.com") == 2
 
 
 def test_sender_follows_the_function_setting(monkeypatch):
     deps.get_sender.cache_clear()
+    monkeypatch.setattr(settings, "app_env", "stg")
     monkeypatch.setattr(settings, "noti_function_name", "quizi-noti-stg")
-    monkeypatch.setattr(mail, "LambdaSender", lambda name, region: ("lambda", name))
-    assert deps.get_sender() == ("lambda", "quizi-noti-stg")
+    monkeypatch.setattr(
+        mail, "Sender", lambda name, region, enabled: ("lambda", name, enabled)
+    )
+    assert deps.get_sender() == ("lambda", "quizi-noti-stg", True)
     deps.get_sender.cache_clear()
+
+
+def test_develop_mode_sends_nothing(monkeypatch, caplog):
+    deps.get_sender.cache_clear()
+    monkeypatch.setattr(settings, "app_env", "Local")
+    sender = deps.get_sender()  # builds no boto3 client
+    with caplog.at_level("INFO"):
+        sender.send_otp("hao@example.com", "123456", "Hao")
+        sender.send_welcome("hao@example.com", "Hao")
+    assert caplog.text.count("h***@example.com") == 2
+    assert "hao@example.com" not in caplog.text
+    # The skipped email's data is logged, so a local run can read its sign-in code.
+    assert "123456" in caplog.text
+    deps.get_sender.cache_clear()
+
+
+def test_a_disabled_sender_never_touches_the_client():
+    fake = FakeLambda()
+    mail.Sender("quizi-noti-stg", client=fake, enabled=False).send_otp(
+        "a@b.co", "123456", "Ann"
+    )
+    assert fake.calls == []

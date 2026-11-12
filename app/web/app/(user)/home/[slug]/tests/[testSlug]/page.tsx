@@ -17,6 +17,9 @@ import { ApiService } from '@/services/api';
 import { toast } from '@/store/ToastStore';
 import { useTestSuiteContext } from '@/hooks/useTestSuiteContext';
 import QuestionEditor from '@/components/tests/QuestionEditor';
+import Pagination from '@/components/shared/Pagination';
+import { usePagination } from '@/hooks/usePagination';
+import { ITEM_PAGE_SIZE } from '@/utils/pagination';
 import { HostGameModal, ImportQuestionsModal } from '@/components/shared';
 import {
     QUESTION_TYPE_LABELS,
@@ -83,6 +86,12 @@ export default function TestSuiteDetailsPage() {
                 )
         );
     }, [questions, search]);
+
+    const { page, totalPages, pageItems, setPage } = usePagination(
+        filtered,
+        ITEM_PAGE_SIZE,
+        search
+    );
 
     const afterChange = async () => {
         await loadQuestions();
@@ -277,7 +286,7 @@ export default function TestSuiteDetailsPage() {
                 </div>
             ) : (
                 <ol className="space-y-2" data-testid="question-list">
-                    {filtered.map((question) =>
+                    {pageItems.map((question) =>
                         editingId === question.id ? (
                             <li key={question.id}>
                                 <QuestionEditor
@@ -345,6 +354,12 @@ export default function TestSuiteDetailsPage() {
                     )}
                 </ol>
             )}
+            <Pagination
+                page={page}
+                totalPages={totalPages}
+                onChange={setPage}
+                testId="questions-pagination"
+            />
             {shelf && (
                 <ImportQuestionsModal
                     isOpen={isImporting}

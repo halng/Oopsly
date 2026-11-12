@@ -1,5 +1,6 @@
 """Issues and verifies RS256 tokens. Access tokens carry sub (email), id, role, plan,
-iat and exp; every token header carries the kid of the signing key."""
+sid (the device session), iat and exp; every token header carries the kid of the
+signing key."""
 
 import uuid
 from collections.abc import Callable
@@ -23,6 +24,10 @@ class TokenService:
         self._refresh_ttl = refresh_ttl
         self._now = now
 
+    @property
+    def refresh_ttl(self) -> timedelta:
+        return self._refresh_ttl
+
     def _sign(self, claims: dict, ttl: timedelta) -> str:
         now = self._now()
         kid, key = self._keys.signing_key()
@@ -33,8 +38,16 @@ class TokenService:
         }
         return jwt.encode(payload, key, algorithm=ALGORITHM, headers={"kid": kid})
 
-    def access_token(self, user_id: str, email: str, role: str, plan: str) -> str:
-        claims = {"sub": email, "id": user_id, "role": role, "plan": plan}
+    def access_token(
+        self, user_id: str, email: str, role: str, plan: str, session_id: str
+    ) -> str:
+        claims = {
+            "sub": email,
+            "id": user_id,
+            "role": role,
+            "plan": plan,
+            "sid": session_id,
+        }
         return self._sign(claims, self._access_ttl)
 
     def refresh_token(self, email: str) -> str:

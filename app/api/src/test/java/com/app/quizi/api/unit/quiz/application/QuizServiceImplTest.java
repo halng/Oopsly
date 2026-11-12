@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.app.quizi.api.quiz.application.QuizPublisher;
@@ -41,6 +42,7 @@ import com.app.quizi.api.quiz.infrastructure.QuizRoomStore;
 import com.app.quizi.api.shared.client.AuthClient;
 import com.app.quizi.api.shared.client.AuthProfile;
 import com.app.quizi.api.shared.exception.NotFoundException;
+import com.app.quizi.api.shared.exception.PlanLimitException;
 import com.app.quizi.api.shared.exception.ValidationException;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shelf.Shelf;
@@ -137,11 +139,24 @@ class QuizServiceImplTest {
     }
 
     @Test
+    void createRoom_isForPaidPlansOnly() {
+        when(currentUser.id()).thenReturn(UUID.fromString(HOST));
+        CreateRoomReq request = new CreateRoomReq(UUID.randomUUID(), UUID.randomUUID(), null, 30);
+
+        when(currentUser.plan()).thenReturn("FREE");
+        assertThrows(PlanLimitException.class, () -> service.createRoom(request));
+        when(currentUser.plan()).thenReturn(null);
+        assertThrows(PlanLimitException.class, () -> service.createRoom(request));
+        verifyNoInteractions(store);
+    }
+
+    @Test
     void createRoom_rejectsSuitesWithoutHostableQuestions() {
         UUID hostId = UUID.fromString(HOST);
         Shelf shelf = new Shelf();
         TestSuiteEntity suite = TestSuiteEntity.builder().title("Empty").build();
         when(currentUser.id()).thenReturn(hostId);
+        when(currentUser.plan()).thenReturn("PRO");
         when(shelfRepository.findByIdAndUserId(any(), eq(hostId))).thenReturn(Optional.of(shelf));
         when(suiteRepository.findByIdAndShelve(any(), eq(shelf))).thenReturn(Optional.of(suite));
         when(questionRepository.findAllByTestSuite(suite)).thenReturn(List.of());
@@ -153,6 +168,7 @@ class QuizServiceImplTest {
     @Test
     void createRoom_requiresOwnedShelfAndSuite() {
         when(currentUser.id()).thenReturn(UUID.fromString(HOST));
+        when(currentUser.plan()).thenReturn("PRO");
         when(shelfRepository.findByIdAndUserId(any(), any())).thenReturn(Optional.empty());
         CreateRoomReq request = new CreateRoomReq(UUID.randomUUID(), UUID.randomUUID(), null, 30);
         assertThrows(NotFoundException.class, () -> service.createRoom(request));

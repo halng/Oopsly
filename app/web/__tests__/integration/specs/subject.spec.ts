@@ -105,7 +105,8 @@ test.describe('Subject details screen', () => {
         await expect(page.getByTestId('card-row-card-1')).toHaveCount(0);
     });
 
-    test('generates cards with AI and saves each one', async ({
+    // AI is switched off (ai.generate flag); re-enable these with the flag.
+    test.skip('generates cards with AI and saves each one', async ({
         page,
         mock,
     }) => {
@@ -127,7 +128,7 @@ test.describe('Subject details screen', () => {
         ).toEqual(['What is DNA?', 'What is RNA?']);
     });
 
-    test('keeps the AI dialog open when generation fails', async ({
+    test.skip('keeps the AI dialog open when generation fails', async ({
         page,
         mock,
     }) => {

@@ -20,7 +20,6 @@ import com.app.quizi.api.card.Card;
 import com.app.quizi.api.shared.domain.Audit;
 import com.app.quizi.api.shelf.Shelf;
 import com.app.quizi.api.tag.Tag;
-import com.app.quizi.api.testsuite.domain.TestSuiteEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
@@ -69,9 +68,6 @@ public class Subject extends Audit {
     @JsonIgnore
     @OneToMany(mappedBy = "subject", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Card> cards;
-
-    @ManyToMany(mappedBy = "subjects")
-    private List<TestSuiteEntity> testSuites;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

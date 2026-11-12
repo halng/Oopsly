@@ -46,11 +46,13 @@ def test_exceptions_are_appended_to_the_line():
 def test_every_request_is_logged_with_status_duration_and_request_id(client, caplog):
     with caplog.at_level(logging.INFO, logger="app.main"):
         client.get(
-            "/actuator/health", headers={"X-Request-ID": "rid-1", "X-Platform": "WEB"}
+            "/api/auth/actuator/health",
+            headers={"X-Request-ID": "rid-1", "X-Platform": "WEB"},
         )
     (record,) = [r for r in caplog.records if r.name == "app.main"]
     assert re.fullmatch(
-        r"Request: GET /actuator/health \| Status: 200 \| \d+ ms", record.getMessage()
+        r"Request: GET /api/auth/actuator/health \| Status: 200 \| \d+ ms",
+        record.getMessage(),
     )
 
 
@@ -61,7 +63,7 @@ def test_a_request_id_is_generated_when_the_caller_sends_none(client):
     original = main.logger.info
     main.logger.info = lambda *a, **k: seen.append(request_id.get())
     try:
-        client.get("/actuator/health")
+        client.get("/api/auth/actuator/health")
     finally:
         main.logger.info = original
     assert re.fullmatch(r"[0-9a-f-]{36}", seen[0])
@@ -70,11 +72,16 @@ def test_a_request_id_is_generated_when_the_caller_sends_none(client):
 def test_failed_requests_log_the_error_once(client, monkeypatch, caplog):
     monkeypatch.setattr(
         "app.service.AuthService.send_otp",
-        lambda self, email: (_ for _ in ()).throw(RuntimeError("secret detail")),
+        lambda self, email, signup=False, username="": (_ for _ in ()).throw(
+            RuntimeError("secret detail")
+        ),
     )
     quiet = client.__class__(client.app, raise_server_exceptions=False)
     with caplog.at_level(logging.INFO, logger="app.main"):
-        quiet.post("/api/auth/v1/otp", params={"email": "a@b.co"})
+        quiet.post(
+            "/api/auth/v1/otp",
+            params={"email": "a@b.co", "signup": True, "username": "Tester"},
+        )
     errors = [r for r in caplog.records if r.levelno == logging.ERROR]
     assert len(errors) == 1
     assert "Failed after" in errors[0].getMessage()

@@ -59,8 +59,8 @@ def test_endpoint_emails_the_calendar_to_the_user(client, outbox):
         headers=bearer(tokens),
     )
     assert res.status_code == 200
-    ((to, ics),) = outbox.reminders
-    assert "@" in to
+    ((to, name, ics),) = outbox.reminders
+    assert "@" in to and name == "test"
     assert "BYDAY=MO,TU" in ics
 
 

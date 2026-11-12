@@ -88,10 +88,55 @@ class TestSuiteControllerTest extends AbstractControllerTest {
                 .andExpect(jsonPath("$.data.timeLimitMinutes").value(5))
                 .andExpect(jsonPath("$.data.questionCount").value(0));
 
-        mockMvc.perform(get(SUITES, library.shelfId()).with(bearer(session)))
+        mockMvc.perform(get(SUITES + "?page=1&size=10", library.shelfId()).with(bearer(session)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data", hasSize(2)))
-                .andExpect(jsonPath("$.data[1].slug").value("final-exam-2"));
+                .andExpect(jsonPath("$.data.entities", hasSize(2)))
+                .andExpect(jsonPath("$.data.entities[1].slug").value("final-exam-2"));
+    }
+
+    @Test
+    void list_isPaged_inCreationOrder_andRejectsMissingOrInvalidParameters() throws Exception {
+        for (int i = 1; i <= 5; i++) {
+            createSuite("Quiz " + i);
+        }
+
+        mockMvc.perform(get(SUITES + "?page=1&size=2", library.shelfId()).with(bearer(session)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.entities", hasSize(2)))
+                .andExpect(jsonPath("$.data.entities[0].title").value("Quiz 1"))
+                .andExpect(jsonPath("$.data.entities[1].title").value("Quiz 2"))
+                .andExpect(jsonPath("$.data.totalItems").value(5))
+                .andExpect(jsonPath("$.data.totalPages").value(3))
+                .andExpect(jsonPath("$.data.hasNextPage").value(true));
+        mockMvc.perform(get(SUITES + "?page=3&size=2", library.shelfId()).with(bearer(session)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.entities", hasSize(1)))
+                .andExpect(jsonPath("$.data.entities[0].title").value("Quiz 5"))
+                .andExpect(jsonPath("$.data.hasNextPage").value(false));
+        // past the last page: nothing, not an error
+        mockMvc.perform(get(SUITES + "?page=9&size=2", library.shelfId()).with(bearer(session)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.entities", hasSize(0)));
+
+        mockMvc.perform(get(SUITES, library.shelfId()).with(bearer(session)))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get(SUITES + "?page=0&size=2", library.shelfId()).with(bearer(session)))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get(SUITES + "?page=1&size=0", library.shelfId()).with(bearer(session)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void list_leavesOutDeletedSuites_inTheCountToo() throws Exception {
+        UUID gone = createSuite("Old");
+        createSuite("Kept");
+        mockMvc.perform(patch(SUITE, library.shelfId(), gone).with(bearer(session)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get(SUITES + "?page=1&size=10", library.shelfId()).with(bearer(session)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalItems").value(1))
+                .andExpect(jsonPath("$.data.entities[0].title").value("Kept"));
     }
 
     @Test
@@ -220,19 +265,5 @@ class TestSuiteControllerTest extends AbstractControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"answers\":{}}"))
                 .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void legacyRunAndAutoGenerate_stillRespond() throws Exception {
-        UUID suiteId = createSuite("Legacy");
-
-        mockMvc.perform(post(SUITE + "/run", library.shelfId(), suiteId).with(bearer(session)))
-                .andExpect(status().isOk());
-        mockMvc.perform(
-                        post(SUITES + "/auto-generate", library.shelfId())
-                                .param("subjectId", library.subjectId().toString())
-                                .with(bearer(session)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.slug").value("auto-integration-subject"));
     }
 }

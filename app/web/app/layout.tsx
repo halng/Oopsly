@@ -16,6 +16,8 @@ const playfairDisplay = Playfair_Display({
 });
 
 export const metadata: Metadata = {
+    metadataBase: new URL('https://www.quizi.tech'),
+    applicationName: 'Quizi',
     title: 'Quizi — Active Recall & Spaced Repetition Flashcards',
     description:
         'Master any subject with Quizi. A cross-platform flashcard app combining the scientifically-proven FSRS spaced repetition algorithm with a relaxing, gamified Ghibli-inspired forest sanctuary.',
@@ -31,18 +33,21 @@ export const metadata: Metadata = {
     ],
     authors: [{ name: 'Quizi' }],
     alternates: {
-        canonical: 'https://quizi.app/',
+        canonical: 'https://www.quizi.tech/',
     },
     openGraph: {
         type: 'website',
-        url: 'https://quizi.app/',
+        url: 'https://www.quizi.tech/',
+        siteName: 'Quizi',
+        locale: 'en_US',
         title: 'Quizi — Active Recall & Spaced Repetition Flashcards',
         description:
             'Master any subject with Quizi. Combine the proven FSRS spaced repetition algorithm with a relaxing, gamified Ghibli-inspired forest sanctuary.',
     },
+    robots: { index: true, follow: true },
     twitter: {
         card: 'summary_large_image',
-        site: 'https://quizi.app/',
+        site: 'https://www.quizi.tech/',
         title: 'Quizi — Active Recall & Spaced Repetition Flashcards',
         description:
             'Master any subject with Quizi. Combine the proven FSRS spaced repetition algorithm with a relaxing, gamified Ghibli-inspired forest sanctuary.',

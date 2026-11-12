@@ -1,27 +1,18 @@
 """Hands emails to the noti Lambda, which owns templates and delivery (via Resend)."""
 
-import html
 import json
 import logging
-from pathlib import Path
-from typing import Any, Protocol
+from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
-OTP_SUBJECT = "Oops! You got it! Here is your code"
-_TEMPLATE = Path(__file__).with_name("email-otp.html")
 
-
-class Sender(Protocol):
-    def send_otp(self, to: str, code: str) -> None: ...
-
-    def send_study_reminder(self, to: str, ics: str) -> None: ...
-
-    def send_welcome(self, to: str, name: str) -> None: ...
-
-    def send_community_invite(
-        self, to: str, name: str, community_name: str, inviter_name: str
-    ) -> None: ...
+class EmailType(Enum):
+    OTP = "otp"
+    STUDY_REMINDER = "study_reminder"
+    WELCOME = "welcome"
+    COMMUNITY_INVITE = "community_invite"
 
 
 def mask(email: str) -> str:
@@ -32,74 +23,60 @@ def mask(email: str) -> str:
     return email[:1] + "***" + email[at:]
 
 
-def render_otp(to: str, code: str) -> str:
-    user = html.escape(to.split("@", 1)[0])
-    return (
-        _TEMPLATE.read_text(encoding="utf-8")
-        .replace("{{OTP_CODE}}", html.escape(code))
-        .replace("{{USER_NAME}}", user)
-    )
-
-
-class NoOpSender:
-    """Logs instead of sending; used when no noti function is configured."""
-
-    def send_otp(self, to: str, code: str) -> None:
-        logger.info("mail disabled; skipping OTP email to %s", mask(to))
-
-    def send_study_reminder(self, to: str, ics: str) -> None:
-        logger.info(
-            "mail disabled; skipping study reminder to %s (%d byte calendar)",
-            mask(to),
-            len(ics),
-        )
-
-    def send_welcome(self, to: str, name: str) -> None:
-        logger.info("mail disabled; skipping welcome email to %s", mask(to))
-
-    def send_community_invite(
-        self, to: str, name: str, community_name: str, inviter_name: str
-    ) -> None:
-        logger.info("mail disabled; skipping community invite to %s", mask(to))
-
-
-class LambdaSender:
+class Sender:
     """Invokes the noti Lambda once per email, naming the template to render.
 
     The invocation is asynchronous (`Event`): Lambda queues it and retries failures
     itself, so signing up or inviting someone never waits on (or fails because of)
-    the mail provider.
+    the mail provider. A disabled sender (develop mode) only logs what it skipped.
     """
 
-    def __init__(self, function_name: str, region: str = "", client: Any = None):
-        if client is None:
+    def __init__(
+        self,
+        function_name: str,
+        region: str = "",
+        client: Any = None,
+        enabled: bool = True,
+    ):
+        if client is None and enabled:
             import boto3
 
             client = boto3.client("lambda", region_name=region or None)
         self._client = client
         self._function_name = function_name
+        self._enabled = enabled
 
-    def _invoke(self, template: str, to: str, data: dict[str, Any]) -> None:
+    def _invoke(self, template: EmailType, to: str, data: dict[str, Any]) -> None:
+        if not self._enabled:
+            logger.info(
+                "develop mode: %s email to %s not sent. Here is the data %s",
+                template.value,
+                mask(to),
+                json.dumps(data),
+            )
+            return
         self._client.invoke(
             FunctionName=self._function_name,
             InvocationType="Event",
-            Payload=json.dumps({"template": template, "to": to, "data": data}).encode(),
+            Payload=json.dumps(
+                {"template": template.value, "to": to, "data": data}
+            ).encode(),
         )
 
-    def send_otp(self, to: str, code: str) -> None:
-        self._invoke("otp", to, {"code": code})
+    def send_otp(self, to: str, code: str, name: str) -> None:
+        self._invoke(EmailType.OTP, to, {"code": code, "name": name})
 
-    def send_study_reminder(self, to: str, ics: str) -> None:
-        self._invoke("study_reminder", to, {"ics": ics})
+    def send_study_reminder(self, to: str, name: str, ics: str) -> None:
+        self._invoke(EmailType.STUDY_REMINDER, to, {"name": name, "ics": ics})
 
     def send_welcome(self, to: str, name: str) -> None:
-        self._invoke("welcome", to, {"name": name})
+        self._invoke(EmailType.WELCOME, to, {"name": name})
 
     def send_community_invite(
         self, to: str, name: str, community_name: str, inviter_name: str
     ) -> None:
         self._invoke(
-            "community_invite",
+            EmailType.COMMUNITY_INVITE,
             to,
             {
                 "name": name,

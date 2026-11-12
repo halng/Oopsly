@@ -12,7 +12,6 @@ dependencies = [
     "pydantic-settings>=2.6.0",
     "pyjwt[crypto]>=2.10.0",
     "redis>=5.2.0",
-    "jsonpatch>=1.33",
     "ruff>=0.17.3",
     "boto3>=1.43.122",
 ]

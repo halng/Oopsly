@@ -4,6 +4,8 @@ import LandingPage from '@/app/page';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+vi.mock('@/utils/pricing', () => ({ SHOW_PRICING: true }));
+
 // 1. Mock the Next.js App Router
 const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({

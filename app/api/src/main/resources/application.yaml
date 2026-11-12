@@ -7,7 +7,7 @@ app:
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080,http://localhost:8081}
   jwt:
     # The auth service signs tokens (RS256) and publishes its public keys here; this service only verifies them.
-    jwks-url: ${JWKS_URL:http://localhost:9010/.well-known/pub.json}
+    jwks-url: ${JWKS_URL:http://localhost:9010/api/auth/.well-known/pub.json}
   auth:
     base-url: ${AUTH_BASE_URL:http://localhost:9010/api/auth}
     internal-key: ${AUTH_INTERNAL_KEY:changeme}

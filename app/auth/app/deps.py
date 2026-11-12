@@ -15,7 +15,7 @@ from fastapi import Depends, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from app import avatars, domain, mail
+from app import avatars, mail
 from app import db as database
 from app.config import settings
 from app.db import get_db
@@ -49,9 +49,11 @@ def get_kv() -> KV:
 
 @lru_cache
 def get_sender() -> mail.Sender:
-    if not settings.noti_function_name:
-        return mail.NoOpSender()
-    return mail.LambdaSender(settings.noti_function_name, settings.noti_region)
+    return mail.Sender(
+        settings.noti_function_name,
+        settings.noti_region,
+        enabled=not settings.is_develop,
+    )
 
 
 @lru_cache
@@ -83,8 +85,9 @@ def get_service(
     run_async=Depends(get_run_async),
     storage: avatars.AvatarStorage | None = Depends(get_avatar_storage),
 ) -> AuthService:
-    otp = OtpService(kv, settings.test_email_list)
-    return AuthService(db, kv, tokens, otp, sender, run_async, avatar_storage=storage)
+    return AuthService(
+        db, tokens, OtpService(kv), sender, run_async, avatar_storage=storage
+    )
 
 
 @dataclass(frozen=True)
@@ -92,9 +95,7 @@ class Principal:
     """The authenticated caller taken from the access token."""
 
     user_id: str
-    email: str
-    role: str
-    plan: str
+    session_id: str | None
 
 
 def authenticate(
@@ -116,9 +117,7 @@ def authenticate(
     user_id = str(claims.get("id", ""))
     if parse_uuid(user_id) is None:
         raise unauthorized("EXPIRED_OR_INVALID_JWT")
-    return Principal(
-        user_id, claims.get("sub", ""), claims.get("role", ""), claims.get("plan", "")
-    )
+    return Principal(user_id, claims.get("sid"))
 
 
 def optional_principal(
@@ -129,24 +128,6 @@ def optional_principal(
     if credentials is None or not credentials.credentials:
         return None
     return authenticate(credentials, tokens)
-
-
-def require_role(*roles: str):
-    def check(principal: Principal = Depends(authenticate)) -> Principal:
-        if principal.role not in roles:
-            raise forbidden("You do not have permission to access this resource.")
-        return principal
-
-    return check
-
-
-def require_plan(minimum: str):
-    def check(principal: Principal = Depends(authenticate)) -> Principal:
-        if not domain.plan_at_least(principal.plan, minimum):
-            raise forbidden("Your subscription plan does not include this resource.")
-        return principal
-
-    return check
 
 
 def internal_only(x_internal_key: str | None = Header(default=None)) -> None:

@@ -16,23 +16,14 @@
 
 package com.app.quizi.api.media.application;
 
-import com.app.quizi.api.card.CardRepository;
 import com.app.quizi.api.shared.application.vm.ApiRes;
-import com.app.quizi.api.shelf.ShelfRepository;
-import com.app.quizi.api.subject.SubjectRepository;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MediaServiceImpl implements MediaService {
-
-    private final CardRepository cardRepository;
-    private final ShelfRepository shelfRepository;
-    private final SubjectRepository subjectRepository;
 
     @Override
     public ApiRes getUploadUrl(

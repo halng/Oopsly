@@ -11,9 +11,14 @@ import {
     Users,
 } from 'lucide-react';
 import { TestSuite } from '@/types';
+import Pagination from '@/components/shared/Pagination';
 
 interface TestSuiteListProps {
+    /** The suites of the current page; the server does the paging. */
     testSuites: TestSuite[];
+    page: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
     onCreate: () => void;
     onOpen: (suite: TestSuite) => void;
     onTake: (suite: TestSuite) => void;
@@ -24,6 +29,9 @@ interface TestSuiteListProps {
 
 export default function TestSuiteList({
     testSuites,
+    page,
+    totalPages,
+    onPageChange,
     onCreate,
     onOpen,
     onTake,
@@ -155,6 +163,12 @@ export default function TestSuiteList({
                     ))}
                 </div>
             )}
+            <Pagination
+                page={page}
+                totalPages={totalPages}
+                onChange={onPageChange}
+                testId="test-suites-pagination"
+            />
         </section>
     );
 }

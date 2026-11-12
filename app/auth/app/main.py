@@ -19,7 +19,7 @@ from app.logging_config import (
     request_platform,
     setup_logging,
 )
-from app.routes import CONTEXT_PATH, root_router, router
+from app.routes import CONTEXT_PATH, router
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -53,7 +53,6 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "OPTIONS"],
     allow_headers=["*"],
 )
-app.include_router(root_router)
 app.include_router(router)
 
 

@@ -113,7 +113,7 @@ public class CardController {
                     @Min(value = 1, message = "Page must be greater than or equal to 1") int page,
             @Parameter(description = "Page size", required = true, example = "10") @RequestParam
                     int size) {
-        if (page < 0 || size < 1) {
+        if (size < 1) {
             return ApiRes.badRequest("Invalid pagination parameters");
         }
         log.debug(

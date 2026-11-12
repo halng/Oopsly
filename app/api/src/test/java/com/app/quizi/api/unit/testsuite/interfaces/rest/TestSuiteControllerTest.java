@@ -94,12 +94,12 @@ class TestSuiteControllerTest {
 
     @Test
     void getAllByShelve_delegatesToTestSuiteService() {
-        when(testSuiteService.getAllByShelve(shelveId)).thenReturn(expectedResponse);
+        when(testSuiteService.getAllByShelve(shelveId, 2, 10)).thenReturn(expectedResponse);
 
-        ApiRes result = testSuiteController.getAllByShelve(shelveId);
+        ApiRes result = testSuiteController.getAllByShelve(shelveId, 2, 10);
 
         assertSame(expectedResponse, result);
-        verify(testSuiteService, times(1)).getAllByShelve(shelveId);
+        verify(testSuiteService, times(1)).getAllByShelve(shelveId, 2, 10);
     }
 
     @Test
@@ -107,26 +107,5 @@ class TestSuiteControllerTest {
         when(testSuiteService.getAttempt(shelveId, testSuiteId)).thenReturn(expectedResponse);
 
         assertSame(expectedResponse, testSuiteController.getAttempt(shelveId, testSuiteId));
-    }
-
-    @Test
-    void runPreset_delegatesToTestSuiteService() {
-        when(testSuiteService.run(shelveId, testSuiteId)).thenReturn(expectedResponse);
-
-        ApiRes result = testSuiteController.runPreset(shelveId, testSuiteId);
-
-        assertSame(expectedResponse, result);
-        verify(testSuiteService, times(1)).run(shelveId, testSuiteId);
-    }
-
-    @Test
-    void autoGenerate_delegatesToTestSuiteService() {
-        UUID subjectId = UUID.randomUUID();
-        when(testSuiteService.autoGenerate(shelveId, subjectId, 8)).thenReturn(expectedResponse);
-
-        ApiRes result = testSuiteController.autoGenerate(shelveId, subjectId, 8);
-
-        assertSame(expectedResponse, result);
-        verify(testSuiteService).autoGenerate(shelveId, subjectId, 8);
     }
 }

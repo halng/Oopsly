@@ -41,19 +41,8 @@ public interface CardRepository extends JpaRepository<Card, UUID> {
 
     long countBySubjectAndDeletedFalse(Subject subject);
 
-    @Query(
-            "SELECT COUNT(c) FROM cards c WHERE c.subject = ?1 AND c.nextPracticeTime <"
-                    + " CURRENT_DATE AND c.deleted = false")
-    long countOverdue(Subject subject);
-
     @Query("SELECT c FROM cards c WHERE c.subject IN :subjects AND c.deleted = false")
     List<Card> findAllBySubjectInAndDeletedFalse(@Param("subjects") List<Subject> subjects);
-
-    @Query(
-            "SELECT c FROM cards c WHERE c.subject IN :subjects AND c.deleted = false AND "
-                    + "c.nextPracticeTime <= :now")
-    List<Card> findDueBySubjects(
-            @Param("subjects") List<Subject> subjects, @Param("now") Instant now);
 
     @Query(
             "SELECT c FROM cards c JOIN FETCH c.subject s JOIN FETCH s.shelf shelf"

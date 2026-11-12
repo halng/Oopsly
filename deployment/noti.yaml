@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >-
-  Quizi noti service: a Lambda that auth and api invoke directly with a template name and
-  its data, renders the email and sends it through the Resend API (OTP codes, welcome,
-  community invites, study calendar events).
+  Quizi noti service: a Lambda that auth invokes directly with a template name and its
+  data (always including the recipient's name), renders the email and sends it through the
+  Resend API (OTP codes, welcome, community invites, study calendar events).
 
 Parameters:
   Environment:

@@ -6,13 +6,30 @@ import { ApiService } from '@/services/api';
 import { useShelfStore, useTestSuiteStore } from '@/store';
 import { resolveShelfBySlug } from './useSubjectContext';
 
+// Enough for looking a suite up by its slug without paging through the shelf.
+const HYDRATE_PAGE_SIZE = 100;
+
+export interface TestSuitePage {
+    suites: TestSuite[];
+    totalPages: number;
+    totalItems: number;
+}
+
+/** One page of a shelf's test suites, also written to the store. */
 export async function loadShelfTestSuites(
-    shelfId: string
-): Promise<TestSuite[]> {
-    const res = await ApiService.getTestSuites(shelfId);
-    const list = res.isSuccess && res.data ? res.data : [];
-    useTestSuiteStore.getState().setTestSuites(shelfId, list);
-    return list;
+    shelfId: string,
+    page: number = 1,
+    size: number = HYDRATE_PAGE_SIZE
+): Promise<TestSuitePage> {
+    const res = await ApiService.getTestSuites(shelfId, page, size);
+    const data = res.isSuccess && res.data ? res.data : null;
+    const suites = data?.entities ?? [];
+    useTestSuiteStore.getState().setTestSuites(shelfId, suites);
+    return {
+        suites,
+        totalPages: data?.totalPages ?? 1,
+        totalItems: data?.totalItems ?? suites.length,
+    };
 }
 
 export async function resolveTestSuiteBySlug(

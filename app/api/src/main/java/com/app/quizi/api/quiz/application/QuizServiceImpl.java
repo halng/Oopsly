@@ -30,6 +30,7 @@ import com.app.quizi.api.quiz.domain.RoomState.Question;
 import com.app.quizi.api.quiz.infrastructure.QuizRoomStore;
 import com.app.quizi.api.shared.client.AuthClient;
 import com.app.quizi.api.shared.exception.NotFoundException;
+import com.app.quizi.api.shared.exception.PlanLimitException;
 import com.app.quizi.api.shared.exception.ValidationException;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shared.util.AnswerMatcher;
@@ -87,6 +88,12 @@ public class QuizServiceImpl implements QuizService {
     @Override
     public RoomView createRoom(CreateRoomReq request) {
         UUID hostId = currentUser.id();
+        QuizPlan plan = QuizPlan.from(currentUser.plan());
+        if (!plan.canHost()) {
+            throw new PlanLimitException(
+                    "Hosting a Quizzly game needs the Pro or Pro Max plan. Upgrade your plan to"
+                            + " host.");
+        }
         Shelf shelf =
                 shelfRepository
                         .findByIdAndUserId(request.shelfId(), hostId)
@@ -111,7 +118,7 @@ public class QuizServiceImpl implements QuizService {
         room.setHostName(authClient.lookup(hostId).label());
         room.setTitle(suite.getTitle());
         room.setMode(request.mode() == null ? QuizMode.MANUAL : request.mode());
-        room.setMaxPlayers(QuizPlan.from(currentUser.plan()).maxPlayers());
+        room.setMaxPlayers(plan.maxPlayers());
         room.setQuestionSeconds(
                 request.questionSeconds() == null
                         ? GamificationRules.QUIZ_DEFAULT_QUESTION_SECONDS
